@@ -10,7 +10,9 @@ description: "Configure development tools, Apple services, and external integrat
 
 The **Settings** page at `/settings` is where the app is connected to everything outside itself: the editor it opens worktrees in, the Apple services it signs and pushes with, and the Jira, GitHub, and cache accounts it reads from.
 
-Every secret entered here is written through the server-only credential service. Values are stored server-side, never returned to the browser, and appear on the [Credentials](/system/credentials) page as metadata only.
+Every credential-backed value entered here is written through the server-only credential service. That includes secrets and the connection settings required to use them, such as service URLs and public key identifiers. Secret values are stored server-side and never returned to the browser. The [Credentials](/system/credentials) page shows metadata for every stored item without exposing its payload.
+
+When `CREDENTIAL_VAULT_READ_ONLY=true`, credential-backed fields and destructive credential actions are disabled. You can still use existing credentials, run available connection tests, and edit settings that remain in the application database, such as polling intervals.
 
 The page is organized into three groups.
 
@@ -167,9 +169,10 @@ Removing these settings hides the Actions Cache page until it is reconfigured.
 
 ## Notes
 
-- Credentials entered here are stored server-side and never returned to the browser.
+- Credential-backed settings are stored server-side. Secret values are never returned to the browser.
 - Saving GitHub, GitHub App, Jira, App Store Connect, and cache-server credentials verifies the connection before it is used, so a bad value fails at save time rather than at first use.
 - Every secret field follows the same convention: leave it blank to keep the stored value, enter a new value to replace it.
+- A read-only Vault disables credential-backed inputs and removals. Update shared values from a read-write install.
 - Registering the Jira webhook needs the **Administer Jira** global permission on the account that owns the API token. Without it, Jira answers `403` and the card falls back to the manual steps.
 
 ## Related pages

@@ -16,7 +16,7 @@ This is device push, not the browser alerts the dashboard raises for itself. For
 
 <Steps>
   <Step title="Configure APNs credentials" icon="key">
-    On [Settings](/system/settings), add either a **token key** (`.p8` with its Team ID and Key ID) or one or more **certificates** (password-protected `.p12`, bound to a topic and environment). Token authentication covers apps, Live Activities, VoIP, and everything except MDM; MDM wake-ups require a certificate. Secrets are held by the [credential service](/system/credentials), never in the database.
+    On [Settings](/system/settings), add either a **token key** (`.p8` with its Team ID and Key ID) or one or more **certificates** (password-protected `.p12`, bound to a topic and environment). Token authentication covers apps, Live Activities, VoIP, and everything except MDM; MDM wake-ups require a certificate. The [credential service](/system/credentials) holds the key, certificate, and companion settings in the selected backend.
   </Step>
   <Step title="Register devices" icon="mobile">
     Your app posts its APNs token to `POST /api/ios/apns-devices` with the topic, environment, display name, and the push types it supports. Registrations show up as recipients here and on [Devices](/system/devices).

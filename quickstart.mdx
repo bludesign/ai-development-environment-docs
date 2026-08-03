@@ -141,7 +141,7 @@ The dashboard needs at least one enrolled Mac before it can create worktrees, ru
 
 ## Set up credential storage
 
-Long-lived Jira, GitHub, cache-server, MCP, iOS signing, App Store Connect, and APNs secrets go through a server-only credential service. Choose a backend with `CREDENTIAL_STORAGE_TYPE`.
+Long-lived Jira, GitHub, cache-server, MCP, iOS signing, App Store Connect, and APNs credentials go through a server-only credential service. The service also stores the connection settings needed to use them, such as the Jira site URL, GitHub App ID, cache-server URL and headers, and Apple key identifiers. Choose a backend with `CREDENTIAL_STORAGE_TYPE`.
 
 <Tabs>
   <Tab title="Database">
@@ -175,7 +175,7 @@ Long-lived Jira, GitHub, cache-server, MCP, iOS signing, App Store Connect, and 
     VAULT_TOKEN="hvs..."
     ```
 
-    The app needs data read/write plus permanent metadata deletion, and never `LIST`:
+    A read-write install needs data read/write plus permanent metadata deletion. Grant `list` on metadata when this or another install must discover every item already under the prefix:
 
     ```hcl
     path "secret/data/ai-development-environment/credentials/*" {
@@ -183,13 +183,35 @@ Long-lived Jira, GitHub, cache-server, MCP, iOS signing, App Store Connect, and 
     }
 
     path "secret/metadata/ai-development-environment/credentials/*" {
-      capabilities = ["delete"]
+      capabilities = ["list", "delete"]
     }
     ```
+
+    On startup, the server adopts existing items under the configured mount and prefix. It rebuilds the local metadata rows that point to those Vault payloads, so a fresh install can reuse the connection settings and secrets written by another install. The **Credentials** page reports how many items were adopted.
+
+    `list` is optional for credentials stored at fixed paths. Without it, startup still probes known Jira, GitHub, cache-server, signing, and Apple paths. Grant it to discover dynamically addressed external MCP header bundles and APNs certificate bundles.
+
+    Set `CREDENTIAL_VAULT_READ_ONLY=true` for an install that may use the shared credentials but must not change them. Credential-backed fields become read-only, and the server refuses writes and deletions before sending a Vault request. A read-only policy can use:
+
+    ```hcl
+    path "secret/data/ai-development-environment/credentials/*" {
+      capabilities = ["read"]
+    }
+
+    path "secret/metadata/ai-development-environment/credentials/*" {
+      capabilities = ["read", "list"]
+    }
+    ```
+
+    The flag applies only to Vault. Database and Keychain backends ignore it and show a warning. A Vault token that denies a write produces the same read-only error even when the flag is unset.
   </Tab>
 </Tabs>
 
 Changing `CREDENTIAL_STORAGE_TYPE` does not migrate anything. Items belonging to the previous backend are reported as mismatched and must be re-entered through their own settings forms.
+
+<Warning>
+  The upgrade that moves connection settings into the credential backend intentionally does not copy their old database values. After upgrading from an earlier release, re-enter the Jira site, account, and webhook settings; GitHub App identifiers and webhook URL; cache-server URL and headers; App Store Connect identifiers; and APNs token and certificate details. Existing secret payloads remain in their current credential backend.
+</Warning>
 
 ## Optional: public HTTPS
 
