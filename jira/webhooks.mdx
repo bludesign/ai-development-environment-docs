@@ -14,10 +14,26 @@ The webhook is optional. Without it, Jira triggers only fire when something alre
 
 ## Using the page
 
-- Review each delivery's **Received** time, **Event**, **Issue**, and **Outcome** (received, processed, ignored, or error).
-- For `jira:issue_updated` deliveries, review each changed field and its before and after values under **Details**.
-- New deliveries appear at the top of the first page without a refresh.
-- **Clear history** and page through past deliveries.
+Deliveries are listed newest first, 50 per page. New ones appear at the top of the first page without a refresh.
+
+| Column | What it shows |
+| --- | --- |
+| **Received** | When the delivery arrived |
+| **Event** | The Jira event name, such as `jira:issue_updated`, with a retry count when Jira resent it |
+| **Issue** | The issue key and its project |
+| **Outcome** | Received, Processed, Ignored, or Error |
+| **Details** | Each changed field with its before and after values for `jira:issue_updated`, the error if there was one, and when processing finished |
+
+**Clear history** empties the list; new deliveries keep arriving afterwards.
+
+### Outcomes
+
+| Outcome | Meaning |
+| --- | --- |
+| **Received** | Recorded, still being processed |
+| **Processed** | The delivery refreshed a ticket, started a workflow, or updated an open page |
+| **Ignored** | Valid and verified, but nothing here needed it |
+| **Error** | Processing failed; the reason is in **Details** |
 
 ## Setting up the webhook
 
@@ -96,3 +112,14 @@ A workflow started by a webhook-driven Jira update receives the normalized chang
 - **Disable webhook** removes a registered webhook from Jira as well. A webhook someone already deleted there is treated as disabled.
 - Removing your Jira credentials, or changing the Jira site, also clears the webhook secret and its delivery history.
 - Deliveries and their stored changelogs older than 30 days are pruned automatically.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Jira Tickets" icon="ticket" href="/jira/jira-tickets">
+    The boards and queries that update live when deliveries arrive.
+  </Card>
+  <Card title="Workflows" icon="workflow" href="/workflows/workflows">
+    The triggers these deliveries fire.
+  </Card>
+</Columns>

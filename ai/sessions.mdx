@@ -8,13 +8,80 @@ description: "Managed provider Sessions that run against a worktree."
   <img className="hidden dark:block" src="/images/dark/sessions.png" alt="Sessions page in dark theme" />
 </Frame>
 
-The **Sessions** page at `/sessions` lists managed provider Sessions that run against a worktree.
+The **Sessions** page at `/sessions` lists implementation runs. A Session drives an AI tool against one worktree with write access, no approval prompts, and an exclusive lease on that worktree for as long as it runs. It is the half of the pairing that changes code — the surveying half is a [Plan](/ai/plans).
 
-## Using the page
+<Warning>
+  Sessions run without approval prompts and with unrestricted access while holding an exclusive worktree lease. Point one at a worktree you are willing to have rewritten, not at your main checkout.
+</Warning>
 
-- **New Session** starts a managed run against a selected worktree.
-- Search and filter Sessions, and open one for its live transcript.
+## The worktree lease
+
+Creating a Session takes a lease on its worktree, and a second Session against the same worktree is refused with the number of the one that already owns it. Plans take no lease, so surveying work can carry on alongside.
+
+The lease is released when the Session reaches a terminal status, and it can be handed over rather than dropped:
+
+- Starting a resumed follow-up from a **paused** Session cancels the parent and atomically transfers the lease to the child, so there is no window in which neither owns the worktree.
+- Answering a question on a Session that has lost its lease re-takes it.
+
+## The run list
+
+Rows are grouped by creation day, with active runs pulled into a leading **Active** group.
+
+| Column | What it shows |
+| --- | --- |
+| ID | `#1234`, the Session's display number |
+| Status | **In progress**, **Paused**, **Completed**, **Cancelled**, or **Failed**, plus a phase badge when the phase differs |
+| Repository / branch | Links to the worktree while it exists |
+| Ticket | Jira issue key, opening the ticket drawer in place |
+| Plan | The source Plan this Session was played from, if any |
+| Prompt | The initial prompt, clamped to two lines |
+| Cost | Estimated cost for the run |
+| Model / effort | Tool icon, model name, effort icon, and start time |
+| Actions | Archive or restore, delete |
+
+The **Plan** column is the one structural difference from the Plans list — it links back to the Plan that produced this Session, or shows the plain number when that Plan has since been deleted.
+
+## Filtering
+
+| Control | Options |
+| --- | --- |
+| Search | Matches across the run's text |
+| Archive | **Active**, **Archived**, **All** |
+| Tool | **All tools**, **Codex**, **Claude**, **OpenCode** |
+| Origin | **All origins**, **Managed**, **Imported** |
+
+Filter choices persist in a cookie scoped to Sessions, separately from the Plans list. The table loads 200 rows at a time and extends as you scroll, and an `agentRunsChanged` subscription keeps statuses and costs current without a reload.
+
+<Note>
+  **Imported** Sessions are ones the agent discovered on disk rather than started here. They cannot be paused, steered, or cancelled. If an imported Session is active in a worktree a managed Session already leases, its detail page carries an **Imported worktree conflict** warning — the app cannot apply concurrency control to a run it does not own.
+</Note>
+
+## Bulk edits
+
+**Edit** adds checkboxes, a header select-all, and a per-day select-all, then archive, restore, and delete act on the whole selection at once.
+
+<Warning>
+  Deleting removes the AI tool's own native session history before the local record. This cannot be undone.
+</Warning>
 
 ## Notes
 
-- Sessions run without approval prompts and with unrestricted access while holding an exclusive worktree lease.
+- A Session started by playing a Plan carries that Plan's proposal as its context and stamps the Plan as run — a Plan can be played only once.
+- Cancelling a Session releases its lease; the worktree is left in whatever state the run reached, and the Git checkpoints on the detail page show what changed.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Session details" icon="terminal" href="/ai/session-detail">
+    Live transcript, steering, questions, checkpoints, and cost.
+  </Card>
+  <Card title="New run" icon="plus" href="/ai/run-new">
+    Pick a worktree, model, effort, and tools, then start.
+  </Card>
+  <Card title="Plans" icon="clipboard-list" href="/ai/plans">
+    Read-only surveys that propose the work a Session carries out.
+  </Card>
+  <Card title="Worktrees" icon="git-branch" href="/worktrees/worktrees">
+    The checkouts Sessions lease and modify.
+  </Card>
+</Columns>

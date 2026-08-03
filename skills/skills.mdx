@@ -8,14 +8,79 @@ description: "Manage reusable AI skill packages across the database, clients, ag
   <img className="hidden dark:block" src="/images/dark/skills.png" alt="Skills page in dark theme" />
 </Frame>
 
-The **Skills** page at `/skills` manages reusable AI skill packages and keeps them synchronized across clients, agents, and repositories.
+The **Skills** page at `/skills` is the control plane for reusable AI skill packages. A skill is a folder with a `SKILL.md` and any supporting files, and AI clients read those folders from well-known locations on disk. This page keeps one canonical copy of each skill in the database and reconciles it against every copy sitting on every enrolled Mac.
 
-## Using the page
+## The model
 
-- Browse **Database skills** (the canonical packages) and **Client skills** (discovered in the selected AI client).
-- **Add skill**, **Sync all**, or open **Settings** to choose participating clients and enable auto-sync.
-- Open a skill to edit its files, or use **Manage groups** for project skill bundles.
+<Columns cols={2}>
+  <Card title="Database skills" icon="database">
+    The canonical packages stored in the control plane. Each has a name, a description, a set of files, and a package hash covering their contents.
+  </Card>
+  <Card title="Client skills" icon="folder-tree">
+    Packages discovered on disk in a configured AI client's skill directory, on a specific Mac, at either global or project scope.
+  </Card>
+  <Card title="Skill groups" icon="folder-tree">
+    Bundles of project-only skills assigned to repositories, so a checkout gets exactly the skills its repository calls for.
+  </Card>
+  <Card title="Sync runs" icon="refresh-cw">
+    A scan, a set of proposed changes, and an apply step. Nothing moves until you review and confirm.
+  </Card>
+</Columns>
+
+## Browsing
+
+A tab strip switches between **Database** and one tab per AI client that is both enabled in settings and actually detected on at least one agent. Supported clients are Cursor, GitHub Copilot, OpenAI Codex, Claude Code, and OpenCode. The search box spans names, descriptions, groups, repositories, agents, and paths.
+
+The **Database skills** table lists name, description, scope (**Global** or **Group only**), the groups it belongs to, its file count, and when it was last updated. Clicking a name opens the [skill editor](/skills/skill-detail).
+
+A client tab lists the installations discovered for that client:
+
+| Column | What it shows |
+| --- | --- |
+| Name | The skill name and description read from its `SKILL.md` |
+| Scope | **Global** or **Project**, with the repository named for project installations |
+| Agent | Which Mac the copy lives on |
+| Location | The absolute path on disk, plus a **Tracked** badge when this app deployed it |
+| Status | **In sync**, **To database**, or **Conflict** |
+
+<Note>
+  Status compares package hashes. **In sync** means the client copy matches the database exactly. **To database** means there is no database skill of that name yet, so the next sync would import it. **Conflict** means the contents diverge and a human has to choose — resolved on the [sync run](/skills/skill-sync-run) page.
+</Note>
+
+## Settings
+
+**Settings** opens a dialog with two things in it:
+
+- **Auto-sync project skill groups** — keeps assigned groups current in every registered checkout and worktree, without you starting a sync by hand.
+- **Enabled AI clients** — which of the five clients take part. Each row reports how many agents have that client configured, or **Not detected**.
+
+A client that is disabled here is excluded from scanning and deployment entirely, and its tab disappears from the page.
+
+## Starting a sync
+
+**Sync all** prepares a reconciliation across every enabled client on every agent and takes you to the [sync run](/skills/skill-sync-run) page, where you review proposed changes and resolve conflicts before anything is written. To reconcile one group instead, use **Sync group** on a [skill group](/skills/skill-group-detail).
+
+**Add skill** opens the editor on a new package at `/skills/new`, prefilled with a `SKILL.md` skeleton.
 
 ## Notes
 
-- Client skill status shows whether each package is tracked, in sync, ahead of the database, or in conflict.
+- Where a skill is written depends on which clients are enabled. Claude Code has its own location; the shared `AGENTS` location covers Codex, global GitHub Copilot, and any other enabled client when Claude Code is not in play. One deployment can therefore serve several clients at once.
+- **Tracked** marks an installation this app deployed, which is what lets a sync safely update or remove it. An untracked copy that diverges is always treated as a conflict rather than being overwritten.
+- Deleting a database skill removes its managed copies during the next sync.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Skill editor" icon="file-pen" href="/skills/skill-detail">
+    Edit a package's metadata and every file it contains.
+  </Card>
+  <Card title="Skill groups" icon="folder-tree" href="/skills/skill-groups">
+    Bundle project-only skills and assign them to repositories.
+  </Card>
+  <Card title="Skill synchronization" icon="refresh-cw" href="/skills/skill-sync-run">
+    Review proposed changes and resolve conflicts.
+  </Card>
+  <Card title="Agents" icon="laptop" href="/agents/agents">
+    The Macs skills are scanned on and deployed to.
+  </Card>
+</Columns>

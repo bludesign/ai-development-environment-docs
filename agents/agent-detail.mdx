@@ -8,18 +8,109 @@ description: "Inspect one enrolled Mac's hardware, capabilities, codebases, and 
   <img className="hidden dark:block" src="/images/dark/agent-detail.png" alt="Agent details page in dark theme" />
 </Frame>
 
-The agent details page at `/agents/{id}` shows a single enrolled Mac and lets you invoke its capabilities, review its work, and tune its behavior.
+The agent details page at `/agents/{id}` is the full control surface for one enrolled Mac: what it is, what it can do, what it is hosting, how often it checks in, and where it puts things on disk.
 
-## Using the page
+## General information
 
-- Review **General information** — CPU, operating system, architecture, IP, memory, and disk usage update with each heartbeat.
-- Search **Capabilities**, then expand one to invoke it and inspect its live response.
-- Inspect registered **Codebases** and **Job history**, and queue jobs.
-- Tune **Agent cadence** — codebase scan, durable job reconciliation, Git fetch, and heartbeat intervals (in seconds).
-- Set the **Base repository directory**, **Xcode Derived Data** location, and **Builds directory**.
-- **Delete agent** to permanently remove it and all of its jobs and codebase registrations.
+Hardware and resource figures come from the agent's heartbeat, so they are as fresh as the heartbeat interval allows.
 
-## Notes
+| Field | Notes |
+| --- | --- |
+| Version | The running `control-agent` build |
+| CPU model | Reported by the agent, or **Unavailable** |
+| Operating system | macOS version string |
+| Architecture | For example `arm64` |
+| IP address | The address the agent reported at connection time |
+| Last seen | Time of the most recent heartbeat, or **Never** |
+| Memory | Used and free, with a usage bar |
+| Disk space | Used and free for the agent's volume |
 
-- An offline agent shows its stored information read-only until it reconnects.
-- Capabilities can only be invoked while the agent is connected.
+## Capabilities
+
+An agent advertises the set of job kinds it knows how to execute. Because capabilities are declared by the agent itself, an older `control-agent` build simply advertises fewer of them — which is how the UI decides whether a feature is available on that Mac.
+
+<Steps>
+  <Step title="Find a capability" icon="magnifying-glass">
+    Search by capability name. The table shows each capability and its **kind**.
+  </Step>
+  <Step title="Expand it" icon="chevron-down">
+    Expanding a capability reveals a JSON payload editor, pre-filled with a sample payload shaped for that capability.
+  </Step>
+  <Step title="Invoke and inspect" icon="play">
+    **Invoke capability** queues the job and shows the live response inline.
+  </Step>
+</Steps>
+
+<Info>
+  Capabilities come in two kinds. A **job** is durable work that appears in job history with its own id and log stream. An **event** is a fire-and-forget signal — the codebase reconcile event, for example, requests an immediate scan and takes no payload.
+</Info>
+
+<Warning>
+  Capabilities can only be invoked while the agent is connected. When it is offline, the page tells you to connect it first.
+</Warning>
+
+## Codebases
+
+Every codebase registered on this agent, with its repository and current status. Use this to confirm what a given Mac is actually hosting before you send work to it. Full branch and stash management lives on the [codebase details page](/codebases/codebase-detail).
+
+## Job history
+
+Durable jobs that have run on this agent, newest first, with **Job** kind, **Status**, **Created**, and **Finished** columns. Selecting a row opens the [job details page](/agents/job-detail) with its live log.
+
+Statuses are **Queued**, **Running**, **Cancelling**, **Succeeded**, **Failed**, **Cancelled**, and **Timed out**.
+
+## Agent cadence
+
+Four intervals control how often this agent performs recurring work. Codebase scan and Git fetch start from the global codebase defaults; saving here pins this agent's own values. All values are whole numbers of seconds.
+
+| Setting | What it drives | Range |
+| --- | --- | --- |
+| Codebase scan | Inspects registered repositories and reports branch, sync, availability, and worktree state | 10 – 3600 |
+| Durable job reconciliation | Queries the control plane for queued, running, or cancelled jobs so work recovers after missed events or a restart | 5 – 3600 |
+| Git fetch | Runs `git fetch origin` when a registered codebase has not fetched within the interval | 60 – 86400 |
+| Agent heartbeat | Reports connection liveness, agent inventory, and current resource usage | 5 – 300 |
+
+<Tip>
+  Shorter intervals mean fresher data and more load. The heartbeat is the cheapest to lower; the codebase scan is the most expensive on a Mac hosting many repositories.
+</Tip>
+
+## Directories
+
+<AccordionGroup>
+  <Accordion title="Base repository directory" icon="folder">
+    The folder on this agent that contains its repositories. Worktree paths inside it are displayed relative to this folder, which keeps long absolute paths out of the UI.
+
+    Browse the agent's filesystem to pick a directory, or **Clear directory** to unset it. Browsing requires the agent to be online and recent enough to advertise the directory-browse capability.
+  </Accordion>
+  <Accordion title="Xcode Derived Data" icon="hammer">
+    Chooses where this agent stores Xcode's DerivedData, in one of three modes:
+
+    - **Default Xcode location** — leave Xcode's own behavior alone.
+    - **Custom absolute directory** — one fixed path on this agent.
+    - **Relative to every worktree** — a folder name checked beneath every active tracked worktree, giving each checkout its own DerivedData.
+  </Accordion>
+  <Accordion title="Builds directory" icon="box">
+    Build logs, copied products, archives, and exports are written into one folder per build. The default is the base repository directory with `/Builds` appended. Override it with a custom absolute directory, or **Use base repository default** to go back.
+
+    The page shows the **effective directory** so you can confirm what will actually be used.
+  </Accordion>
+</AccordionGroup>
+
+## Deleting an agent
+
+**Delete agent** permanently removes the agent along with all of its jobs and codebase registrations. It is confirmed by name and cannot be undone.
+
+<Warning>
+  Deleting an agent does not touch anything on the Mac itself — repositories, worktrees, and build output stay on disk. To manage that machine again you have to enroll it afresh.
+</Warning>
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Agents" icon="laptop" href="/agents/agents">
+    The list of enrolled Macs and the enrollment flow.
+  </Card>
+  <Card title="Codebases" icon="folder-tree" href="/codebases/codebases">
+    Repositories and checkouts registered across every agent.
+  </Card>
+</Columns>

@@ -8,15 +8,123 @@ description: "Browse, configure, and run built-in and external MCP tools."
   <img className="hidden dark:block" src="/images/dark/tools.png" alt="Tools page in dark theme" />
 </Frame>
 
-The **Tools** page at `/tools` discovers, configures, and runs built-in and external MCP tools.
+The **Tools** page at `/tools` is the control surface for everything this server exposes over MCP. Every capability an agent can invoke — listing codebases, dispatching builds, querying Jira, sending push notifications — is a tool, and this page lets you browse them, run them by hand with real arguments, expose a restricted subset to outside clients, and audit every call that has been made.
 
-## Using the page
+Running a tool here is the fastest way to answer "is the integration itself broken, or is the agent calling it wrong?".
 
-- Browse the **Tool catalog**, expand a tool, enter its parameters, and **Run** it to inspect the response.
-- Add and manage **External MCP servers** over Streamable HTTP or legacy SSE.
-- **Connect external clients** using the server URL and configuration, and review the **Audit** tab.
+## Tool catalog
+
+Tools are grouped by source. Built-in tools ship with the server and cover agents, builds, codebases, commands, worktrees, GitHub, Jira, skills, runs, notifications, push notifications, signing assets, iOS devices, disk space, usage and costs, and debugging. Each external MCP server you add contributes its own group.
+
+Expand a tool to see its description and a form generated from its input schema. Fill in the parameters and **Run tool** to execute it; the complete response — not a summary — appears underneath and can be copied.
+
+Parameters render as typed controls where the schema allows it, and fall back to a JSON editor for objects and arrays. The editor validates before it will let you run.
+
+Search filters across tool names, descriptions, and server names at once. **Refresh tools** re-queries every group, which is what you want after changing an external server's configuration.
+
+### Tool badges
+
+Each tool carries MCP annotations that drive both its badge and whether running it needs confirmation.
+
+| Badge | Meaning | Confirmation |
+| --- | --- | --- |
+| **Read-only** | Does not change state | Runs immediately |
+| **Write** | Can change application or external state | Confirmation dialog before running |
+| **Destructive** | Can permanently delete or overwrite data | Stronger confirmation, with its own **Run destructive tool** action |
+| **External effect** | Reaches outside this server — a third-party API, a remote host | Shown alongside the others |
+
+<Note>
+  A tool with no annotations at all is treated as unknown rather than safe: it is assumed to reach external systems and is not given the read-only shortcut. External MCP servers that omit annotations therefore always prompt.
+</Note>
+
+## External MCP servers
+
+The **External MCP servers** card registers third-party tool providers, whose tools then appear in the catalog and are callable everywhere built-in tools are.
+
+| Field | Notes |
+| --- | --- |
+| **Name** | How the server appears in the catalog |
+| **URL** | The server endpoint |
+| **Transport** | **HTTP (Streamable)** or **SSE (legacy)** |
+| **Tool name prefix** | Applied literally to every tool from this server, both in the UI and when invoking |
+| **Custom headers** | Any headers the provider requires, such as an API key |
+
+<Tip>
+  Set a prefix on every external server. Two providers exposing a `search` tool collide otherwise, and the prefix is applied verbatim — `acme_` gives you `acme_search`, not `acme.search`.
+</Tip>
+
+Header values are saved server-side and never returned to the browser. When editing a server, leaving a header value blank keeps the stored value rather than clearing it. Deleting a server deletes its saved headers with it.
+
+If a server cannot be reached, its group appears in the catalog carrying the connection error instead of a tool list — the rest of the catalog keeps working.
+
+## Connecting external clients
+
+The **Connect external clients** card gives you what any Streamable HTTP MCP client needs to call this server: Claude Code, Cursor, or anything else that speaks MCP.
+
+The endpoint is `/api/mcp` on this server's origin. Pick the **Server host** from the detected options, or enter a custom host when clients reach the server through a different address than your browser does. The card renders both the server URL and a ready-to-paste client configuration block.
+
+### Authentication
+
+Access is controlled by the `TOOLS_API_TOKEN` environment variable:
+
+| State | Behavior |
+| --- | --- |
+| Not set | Authentication is disabled. Any client that can reach the endpoint can call every built-in tool |
+| Set | Clients must send `Authorization: Bearer <token>`; the comparison is timing-safe and mismatches get `401` |
+
+<Warning>
+  With `TOOLS_API_TOKEN` unset, anyone who can reach the server can invoke destructive tools without confirmation — the confirmation dialogs are a UI affordance, not an API restriction. Set the token before exposing this server beyond localhost, and keep it out of source control and screenshots.
+</Warning>
+
+The token field on this page is only used to test calls from the browser and is held in page memory alone — it is never persisted.
+
+## MCP tool presets
+
+Presets are reusable least-privilege sets of built-in tools. Rather than handing a client the full catalog, you define exactly which tools it gets and share a preset-scoped URL: `/api/mcp?preset=<id>`.
+
+Each preset carries a name, an optional description, an icon, and flags for whether it is offered for [Plans](/ai/plans) and [Sessions](/ai/sessions). A preset marked for neither is **Direct URL only** — usable by clients that have the link, invisible in the run pickers.
+
+<Note>
+  Selecting a group when building a preset expands to that group's tools *at that moment*. It is a snapshot, not a subscription: tools added to the group later are not granted automatically. That is deliberate — a preset should not quietly widen.
+</Note>
+
+Deleting a preset does not break existing drafts or workflows; references to it are simply ignored on future runs.
+
+## Audit
+
+The **Audit** tab lists tool calls in the order they were made, with enough detail to reconstruct what happened and nothing that would leak what was passed.
+
+| Column | What it shows |
+| --- | --- |
+| **Started** / **Finished** | Call timestamps |
+| **Tool** | The tool name, prefix included |
+| **Status** | Succeeded, Failed, or Running |
+| **Source** | **Tools page**, **Workflow**, or an MCP client |
+| **Caller** | `anonymous@<address>`, or `bearer:<fingerprint>@<address>` when a token was used |
+| **Group** | The catalog group the tool came from |
+| **Duration** | How long the call took |
+| **Correlation ID** | Supplied by the client via `x-request-id`, or generated |
+| **Arguments SHA-256** | A hash of the arguments — never the arguments themselves |
+
+Search matches tool names, callers, sources, IDs, and hashes. **Clear audit** deletes completed records while preserving calls still in flight.
+
+<Tip>
+  The arguments hash is how you correlate without exposing. Identical hashes mean identical arguments, so a retry storm or a duplicated workflow step is visible at a glance even though the payloads are never stored.
+</Tip>
 
 ## Notes
 
-- Write and destructive tools prompt for confirmation before running.
-- Saved custom header values stay server-side and are never returned to the browser. The MCP endpoint is `/api/mcp`.
+- The bearer fingerprint in the **Caller** column is the first 12 hex characters of the token's SHA-256 hash, so you can distinguish clients without recording the token.
+- Client addresses are resolved from `CF-Connecting-IP` and `X-Forwarded-For`, falling back to `unknown` behind a proxy that forwards neither.
+- Confirmation dialogs apply to runs started from this page. Calls arriving over `/api/mcp` execute directly.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Workflows" icon="workflow" href="/workflows/workflows">
+    Automations that call these same tools, and show up in the audit.
+  </Card>
+  <Card title="Sessions" icon="message-square" href="/ai/sessions">
+    Where tool presets are selected for a run.
+  </Card>
+</Columns>

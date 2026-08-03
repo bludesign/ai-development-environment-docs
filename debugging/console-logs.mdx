@@ -8,14 +8,245 @@ description: "Inspect searchable console output collected from builds and device
   <img className="hidden dark:block" src="/images/dark/console-logs.png" alt="Console Logs page in dark theme" />
 </Frame>
 
-The **Console Logs** page at `/console-logs` inspects searchable console output collected from builds and devices.
+The **Console Logs** page at `/console-logs` is a live log viewer for the apps you build here. Your app posts structured log records to a REST endpoint on the control plane, and this page stores, searches, annotates, and exports them — so output you saw on a device five builds ago is still there, still searchable, next to the build that produced it.
 
-## Using the page
+It is one of three views over the same timeline. Console Logs shows console records only; [Analytics Events](/debugging/analytics-events) shows product events only; the [Unified View](/debugging/unified-events) interleaves both.
 
-- Search output with **text**, **glob**, or **regex** modes, and apply **advanced filters**.
-- Manage **columns**, add timeline **separators**, and **export** selected or matching rows.
-- Open **Settings → API help** for the REST ingestion contract.
+## What a console record contains
 
-## Notes
+Every record your app sends carries seven fields. The server adds three more on arrival.
 
-- Console logs are sent to the app through a REST endpoint documented on the page's API help.
+| Field | Sent by | Notes |
+| --- | --- | --- |
+| `message` | Your app | The log line — up to 64 KiB |
+| `time` | Your app | ISO-8601 with `Z` or an explicit UTC offset |
+| `level` | Your app | Free-form: `info`, `error`, `debug` — anything up to 256 characters |
+| `category` | Your app | Free-form subsystem name, up to 256 characters |
+| `buildId` | Your app | Ties the record back to a build |
+| `sessionId` | Your app | Ties records from one app launch together |
+| `attributes` | Your app | A JSON object of structured context |
+| `receivedAt` | Server | When the control plane accepted the record |
+| `deviceIp` | Server | Resolved from the request |
+| `id` | Server | A UUID |
+
+<Note>
+  `level` and `category` are not enumerations. Whatever strings your app sends become the values you can filter on. The page colors well-known ones — `error` and `fatal` red, `warn` amber, `debug` and `trace` grey, `info` blue — and assigns a stable color to everything else.
+</Note>
+
+Anything in `attributes` is flattened into dotted paths — `{"cache": {"hit": true}}` becomes the field `cache.hit` — and each path becomes searchable, filterable, and available as a table column.
+
+## Searching
+
+The search box matches against a flattened text rendering of the whole record: every field name and every value, including nested attribute paths. Three modes are available from the dropdown beside the box.
+
+| Mode | Behavior |
+| --- | --- |
+| **Text** | Substring match |
+| **Glob** | `*`, `?`, and `[...]` character classes, anchored to the whole value |
+| **Regex** | RE2 syntax — linear time, no catastrophic backtracking |
+
+**Case sensitive** applies to whichever mode is active. Patterns are limited to 1024 characters, and searching is debounced, so the timeline updates shortly after you stop typing.
+
+<Tip>
+  A case-sensitive **Text** search is the fastest option — it is the one mode the server can push down into the database before scanning.
+</Tip>
+
+## Filtering
+
+### Quick filters
+
+Five dropdowns sit under the search box — **Level**, **Category**, **Device IP**, **Build ID**, and **Session ID**. Each lists the distinct values actually present in the stored records, so an empty dropdown means nothing has arrived with that field yet. Selecting several values within one dropdown matches any of them; selections across dropdowns must all match.
+
+### Advanced filters
+
+**Filters** opens a sheet for conditions that quick filters cannot express. Each condition targets one field — including flattened attribute paths — with an operator and a value.
+
+| Operator | Matches when the field |
+| --- | --- |
+| **contains** / **does not contain** | Includes, or does not include, the value |
+| **is** / **is not** | Equals, or does not equal, the value exactly |
+| **matches glob** | Matches a glob pattern |
+| **matches regex** / **no regex match** | Matches, or fails to match, an RE2 pattern |
+| **is empty** / **is not empty** | Has no value, or has one — covering `null`, `""`, `[]`, and `{}` |
+
+Set **Match** to **All conditions** or **Any condition**, and give each condition its own case sensitivity. The **Filters** button shows a badge with the number of active conditions.
+
+Right-clicking any cell or attribute row offers **Filter by value**, which adds the right condition for you — a quick filter if the field has one, otherwise an advanced condition.
+
+### Saved filters
+
+Name a set of conditions and **Save filter** to reuse it. Saved filters are stored per view, so a Console Logs filter does not clutter the Analytics Events sheet. The filter marked active is reapplied the next time you open the page.
+
+## Columns
+
+**Columns** opens the column manager. The starting set is **Time**, **Level**, **Category**, **Message**, **Build ID**, and **Session ID**; **Device IP**, **Received**, and **Attributes** are also available, along with every attribute path discovered in the stored records.
+
+<Steps>
+  <Step title="Choose and order" icon="columns-3">
+    Add fields, remove them, and move them up or down. Up to 100 columns are allowed, and one must always remain.
+  </Step>
+  <Step title="Promote an attribute" icon="plus">
+    Expand a record and click the **+** beside any attribute path to add it as a column without opening the manager. Hover a column header and click **✕** to drop it again.
+  </Step>
+  <Step title="Save a preset" icon="bookmark">
+    Name the current layout and save it. Mark one preset as the default for this view, or **Reset columns** to return to the shipped set.
+  </Step>
+</Steps>
+
+The **12h** / **24h** toggle changes time rendering for the table and for exports, and it is saved with the view.
+
+## Reading the timeline
+
+Records are listed newest first, 200 at a time, with **Load more** at the bottom. The counter above the table reads *matching of total*.
+
+- Rows are grouped under a **local-day header**.
+- Clicking a row expands it: the full message, a metadata grid — time, received, device IP, build ID, session ID, level, category — and the attributes dictionary rendered as path and value pairs.
+- Newly arrived rows flash briefly, so you can see ingestion happening live.
+- Right-click a cell for **Copy `<column>`: value**, **Copy value**, and **Filter by value**. Right-click the attributes block for **Copy JSON dictionary** or **Copy path: values**.
+- The expanded row carries a **Highlight** swatch strip — 19 colors plus a clear button — that tints the row for everyone using the app, and a **Delete** button for that single record.
+
+## Separators
+
+Separators are horizontal markers in the timeline. They are shared across all three views and come from two places.
+
+| Kind | Created by |
+| --- | --- |
+| **Manual** | **+ Separator** in the page header, with an optional name |
+| **Build** | Automatically when a build starts, named `Build · <configuration> · <destination>` and badged with the build ID |
+
+Because a build separator lands at the moment the build was created, everything above it is output from that build. Hovering a separator reveals a delete button.
+
+## Editing and clearing
+
+**Edit** turns on selection checkboxes and a destructive toolbar.
+
+<Steps>
+  <Step title="Select" icon="check">
+    Check individual rows, a whole day via its header, everything above a separator via that separator's checkbox, or **Select all matching rows** in the header — which selects the entire filtered result set, not just what is loaded.
+  </Step>
+  <Step title="Clear selected" icon="trash">
+    Deletes exactly what is selected. With **Select all** active it deletes every record matching the current search and filters, minus anything you unchecked.
+  </Step>
+  <Step title="Clear all" icon="triangle-exclamation">
+    Asks whether to **Clear records** or **Clear with separators**, then deletes every console record — filters are ignored.
+  </Step>
+  <Step title="Clear before latest separator" icon="scissors">
+    Deletes everything older than the most recent separator. Useful for keeping only the current build's output.
+  </Step>
+</Steps>
+
+<Warning>
+  Deletion is immediate and permanent — there is no undo and no archive. **Clear all** ignores whatever filters are on screen.
+</Warning>
+
+## Exporting
+
+**Export** writes the current view to a file. When rows are selected the dialog exports the selection; otherwise it exports everything matching the current search and filters.
+
+- Formats: **CSV**, **Markdown**, and **PDF**.
+- Pick up to 30 fields; the export starts from your current columns.
+- Your locale, time zone, and 12h/24h preference are applied to timestamps.
+- The file downloads as `observability-<YYYY-MM-DD>.<ext>`, and the export records the search and filters that produced it.
+
+## Collection and endpoints
+
+The header button reading **Console on** or **Console off** is the ingestion switch. Turning it off does not reject requests — the endpoint keeps validating payloads and answers `202 Accepted` without storing anything, so a device in the field never sees an error.
+
+The gear icon opens **Observability settings**, shared by all three views.
+
+| Setting | Purpose |
+| --- | --- |
+| **Local base URL** | The origin simulators post to — detected from the address you are browsing on when it is a private host, otherwise from the enrollment server origins |
+| **Remote base URL** | The origin physical devices post to — detected from `PUBLIC_BASE_URL`, falling back to the current origin |
+
+Each row shows the detected value, the effective value, and copyable console and analytics endpoints for both origins. Overrides must be a plain HTTP(S) origin — no path, credentials, query, or fragment.
+
+<Tip>
+  Build scripts receive these values. A pre-build script gets a `telemetry` object with `selectedBaseUrl`, `consoleLogsUrl`, `analyticsEventsUrl`, and both collection flags, so you can bake the right endpoint into the app for the destination being built. See [Builds](/builds/builds).
+</Tip>
+
+## Sending console logs
+
+The **?** icon in the header opens **Send console logs**, which renders the ingestion contract against your own configured origins and offers **Copy Markdown docs** to paste into a client project.
+
+Send one record, or an atomic batch as `{ "items": [...] }` with up to 500 records. The endpoint is unauthenticated, `Content-Type` must be `application/json`, and the request body is capped at 2 MiB.
+
+<CodeGroup>
+
+```bash Single record
+curl --request POST 'http://127.0.0.1:3000/api/telemetry/console-logs' \
+  --header 'content-type: application/json' \
+  --data '{
+    "message": "Checkout completed",
+    "time": "2026-07-20T18:30:00.000Z",
+    "level": "info",
+    "category": "checkout",
+    "buildId": "build-123",
+    "sessionId": "session-456",
+    "attributes": { "durationMs": 412, "cache": { "hit": true } }
+  }'
+```
+
+```json Batch body
+{
+  "items": [
+    {
+      "message": "Checkout completed",
+      "time": "2026-07-20T18:30:00.000Z",
+      "level": "info",
+      "category": "checkout",
+      "buildId": "build-123",
+      "sessionId": "session-456",
+      "attributes": { "durationMs": 412 }
+    }
+  ]
+}
+```
+
+</CodeGroup>
+
+### Validation rules
+
+All seven fields are required, and unknown fields are rejected. Server-owned fields — `id`, `entryType`, `receivedAt`, `deviceIp`, `highlightColor`, `separatorKind`, `separatorName` — may be present but are ignored.
+
+| Rule | Limit |
+| --- | --- |
+| `message` | 1–65,536 characters |
+| `level`, `category`, `buildId`, `sessionId` | 1–256 characters |
+| `time` | ISO-8601 with `Z` or an offset; normalized to UTC |
+| `attributes` nesting | 10 levels |
+| `attributes` paths | 500 |
+| `attributes` size | 512 KiB serialized |
+| String values inside `attributes` | 256 characters |
+
+### Responses
+
+| Status | Meaning |
+| --- | --- |
+| `201` | Records collected — the body lists each `id`, `receivedAt`, and `deviceIp` |
+| `202` | Payload valid, but console collection is off; nothing was stored |
+| `400` | Malformed or invalid payload — the body names the offending field |
+| `413` | Body exceeds 2 MiB |
+| `415` | `Content-Type` is not `application/json` |
+| `500` | Server error |
+
+## Live updates
+
+The page subscribes to telemetry changes and reconciles in place. New records appear as they are ingested, highlights and deletions from other browsers apply immediately, and settings changes made elsewhere refresh the toolbar. Returning to the tab triggers a reconcile, so you never look at a stale timeline.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Analytics Events" icon="chart-line" href="/debugging/analytics-events">
+    Product events with their default and additional parameters.
+  </Card>
+  <Card title="Unified View" icon="layer-group" href="/debugging/unified-events">
+    Console logs and analytics events in one timeline.
+  </Card>
+  <Card title="Build details" icon="hammer" href="/builds/build-detail">
+    The build a separator marks, with its own log stream.
+  </Card>
+  <Card title="GraphQL API" icon="diagram-project" href="/graphql/overview">
+    `telemetryTimeline`, `clearTelemetry`, and the rest of the telemetry graph.
+  </Card>
+</Columns>

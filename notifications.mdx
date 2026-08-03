@@ -8,18 +8,133 @@ description: "Review notification history and choose how each event reaches you.
   <img className="hidden dark:block" src="/images/dark/notifications.png" alt="Notifications page in dark theme" />
 </Frame>
 
-The **Notifications** page at `/notifications` shows your notification history and lets you control how each event type reaches you across the sidebar, browser alerts, and Web Push.
+The **Notifications** page at `/notifications` has two jobs: it is the permanent record of every notification the control plane has raised, and it is where you decide which of three delivery channels each event type uses.
 
-## Using the page
+The page has two tabs — **History** and **Settings**.
 
-- **Switch tabs** between **History** and **Settings**.
-- Under **Notification types**, toggle **Sidebar**, **Browser**, and **Web Push** independently for each event type.
-- Under **Browser delivery**, enable **Browser alerts** and subscribe to **Web Push** — each browser is configured separately.
-- Send a **Test** notification to a subscribed browser, or **Remove** browsers that should no longer receive Web Push.
-- In **History**, delete selected items, mute or unmute sounds, and clear the sidebar.
+## Delivery channels
 
-## Notes
+Every notification type can be routed to three independent channels. They are evaluated when the notification is created and the decision is stored on the record itself, so changing a preference affects future notifications rather than rewriting past ones.
 
-- Web Push requires a supported browser and a secure HTTPS context.
-- On iPhone or iPad, install the app from **Share → Add to Home Screen** before subscribing to Web Push.
-- Channels are independent — enabling both Browser and Web Push can produce two alerts.
+| Channel | Where it shows | Requirements |
+| --- | --- | --- |
+| **Sidebar** | The notification panel inside the app shell | None — always available |
+| **Browser** | A native OS notification from the open tab | Notification permission granted, tab loaded |
+| **Web Push** | An OS notification delivered even when the app is closed | A registered push subscription per browser |
+
+<Warning>
+  Channels are independent, not a fallback chain. Turning on both **Browser** and **Web Push** for the same type means you get two alerts for one event.
+</Warning>
+
+## Notification types
+
+Types are grouped into five categories on the **Settings** tab. Every type defaults to **Sidebar** and **Browser** on, and **Web Push** off — except **Plan or session cancelled**, which defaults to Sidebar only.
+
+<AccordionGroup>
+  <Accordion title="Builds" icon="hammer">
+    | Type | Fires when |
+    | --- | --- |
+    | iOS build succeeded | An iOS build finishes successfully. |
+    | iOS build failed | An iOS build finishes with a failure. |
+  </Accordion>
+  <Accordion title="Commands" icon="terminal">
+    | Type | Fires when |
+    | --- | --- |
+    | Command run succeeded | A saved command finishes successfully. |
+    | Command run failed | A saved command finishes with a failure. |
+  </Accordion>
+  <Accordion title="GitHub" icon="github">
+    | Type | Fires when |
+    | --- | --- |
+    | GitHub Actions succeeded | A GitHub Actions workflow finishes successfully. |
+    | GitHub Actions failed | A GitHub Actions workflow finishes with a failure. |
+  </Accordion>
+  <Accordion title="Plans and Sessions" icon="robot">
+    | Type | Fires when |
+    | --- | --- |
+    | Plan or session needs an answer | A managed Plan or Session asks for user input. |
+    | Plan or session completed | A managed Plan or Session completes successfully. |
+    | Plan or session failed | A managed Plan or Session fails. |
+    | Plan or session cancelled | A managed Plan or Session is cancelled. |
+    | Plan or session paused after recovery | A managed Plan or Session is paused after its agent restarts. |
+  </Accordion>
+  <Accordion title="Workflows" icon="diagram-project">
+    | Type | Fires when |
+    | --- | --- |
+    | Workflow message | A workflow sends a generic notification. |
+    | Workflow needs attention | A workflow is waiting for data or a decision. |
+    | Workflow completed | A workflow run completes successfully. |
+    | Workflow failed | A workflow run fails. |
+    | Workflow paused after recovery | A workflow pauses while recovering durable work. |
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  Individual workflows can opt out of their own success notifications without changing the global preference — see [Workflow editor](/workflows/workflow-edit).
+</Tip>
+
+## History
+
+<Steps>
+  <Step title="Browse by day" icon="calendar">
+    Notifications are grouped into local-day sections, newest first, and load 100 at a time. Scrolling to the bottom loads the next page automatically.
+  </Step>
+  <Step title="Open the source" icon="arrow-up-right-from-square">
+    Each entry links to the resource that raised it — a build, a worktree, a Plan or Session, or a workflow run. Entries tied to a worktree inherit its highlight color.
+  </Step>
+  <Step title="Select and delete" icon="trash">
+    **Edit** turns on selection. Select individual notifications, a whole day, or **Select all**, then **Delete selected**. **Delete all** permanently clears history and cannot be undone.
+  </Step>
+  <Step title="Control the sidebar and sound" icon="volume-high">
+    Mute or unmute the arrival chime, dismiss a single item, or **Clear sidebar** to empty the panel. Clearing the sidebar dismisses items from the panel only — they stay in history.
+  </Step>
+</Steps>
+
+<Note>
+  The sound preference is stored per browser in local storage, so muting on your laptop does not mute your desktop.
+</Note>
+
+## Settings
+
+### Notification types
+
+A grid of every type with a **Sidebar**, **Browser**, and **Web Push** toggle in each row. Each toggle saves on change.
+
+### Browser delivery
+
+Browser permission and Web Push subscription are configured separately for each browser you use.
+
+<Steps>
+  <Step title="Enable browser alerts" icon="bell">
+    **Enable** requests notification permission. The page reports whether permission has not been requested yet, has been granted, or is blocked in browser settings — a blocked permission has to be cleared in the browser itself.
+  </Step>
+  <Step title="Subscribe to Web Push" icon="cloud">
+    **Subscribe** registers this browser with the control plane. The server generates a VAPID key pair on first use and stores the private key through the [credential service](/system/credentials), so there is no manual key configuration.
+  </Step>
+  <Step title="Verify with a test" icon="paper-plane">
+    **Test** sends a real push to one subscribed browser. If the push service reports the subscription as gone, the row is deleted automatically and the page tells you it expired.
+  </Step>
+</Steps>
+
+### Subscribed browsers
+
+Every subscription is listed with a detected browser name, the push service host, locale, and last-seen time — the browser you are currently using is marked **Current**. **Remove** deletes a subscription; that browser can subscribe again later.
+
+<Warning>
+  Web Push requires a supported browser and a secure HTTPS context. On iPhone or iPad you must install the app first from **Share → Add to Home Screen**; Safari will not allow a subscription from a normal tab.
+</Warning>
+
+## Live updates
+
+The page subscribes to notification changes and applies them in place — creations, dismissals, deletions, sidebar clears, history clears, and preference updates all arrive without a reload.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Action Center" icon="list-check" href="/dashboard">
+    The queue of work that is live, blocked, failed, or waiting on an answer.
+  </Card>
+  <Card title="Push notifications" icon="mobile" href="/debugging/push-notifications">
+    Compose and send Apple push notifications to enrolled iOS devices — a separate system from Web Push.
+  </Card>
+</Columns>

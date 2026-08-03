@@ -8,15 +8,55 @@ description: "Create a new durable automation from a blank canvas."
   <img className="hidden dark:block" src="/images/dark/workflow-new.png" alt="New workflow editor in dark theme" />
 </Frame>
 
-The new workflow page at `/workflows/new` opens the workflow editor on an empty canvas so you can author an automation from scratch.
+The new workflow page at `/workflows/new` opens the [workflow editor](/workflows/workflow-edit) on an empty canvas. It is the same editor you get when editing an existing workflow — this page just starts you from nothing.
 
-## Using the page
+## Building your first workflow
 
-- Add a **trigger**, then drag **steps** onto the canvas and connect their typed handles.
-- Configure step settings, then **Validate** to check the graph.
-- **Save draft** to keep working, or **Publish** to create the first immutable version.
+<Steps>
+  <Step title="Name it" icon="font">
+    Open **Workflow settings** and give the workflow a name and description. Both show up wherever the workflow is listed or offered as a button.
+  </Step>
+  <Step title="Add a trigger" icon="play">
+    Drag exactly one trigger onto the canvas. Start with **Manual** if you just want to run it by hand, or a **Resource** trigger if it should be launched from a worktree, pull request, or ticket page.
+  </Step>
+  <Step title="Add steps" icon="code-fork">
+    Drag steps from the palette and connect each one's handles. Most steps offer `success` and `failure`; control-flow steps name their own branches.
+  </Step>
+  <Step title="Configure each step" icon="sliders">
+    Fill in the typed configuration form. Bind values to session data where a step should read something an earlier step produced, rather than hard-coding it.
+  </Step>
+  <Step title="Validate" icon="circle-check">
+    **Validate** checks the whole graph and reports diagnostics against the specific nodes and edges at fault.
+  </Step>
+  <Step title="Save, then publish" icon="upload">
+    **Save draft** keeps your work. **Publish** creates the first immutable version — until then the workflow has nothing to run.
+  </Step>
+</Steps>
 
-## Notes
+## What a valid workflow needs
 
-- A trigger is required and every step must be reachable.
-- See [Workflow editor](/workflows/workflow-edit) for the full set of step and validation options.
+- Exactly one trigger, with no incoming connection.
+- At least one step reachable from that trigger.
+- An acyclic graph with no unreachable steps.
+- Parallel branches reconverged through an explicit join.
+- Every step's required session paths provided by something upstream.
+- No secrets typed as literals.
+
+<Tip>
+  Import is often faster than starting blank. On the [Workflows](/workflows/workflows) page, **Import** loads an exported definition as a draft — a good way to adapt a workflow from another control plane.
+</Tip>
+
+<Note>
+  A new workflow is a draft until you publish it, and its triggers do not fire until it is also enabled.
+</Note>
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Workflow editor" icon="pencil" href="/workflows/workflow-edit">
+    The full reference for the canvas, step configuration, settings, and diagnostics.
+  </Card>
+  <Card title="Workflows" icon="diagram-project" href="/workflows/workflows">
+    The index of definitions and runs, plus import and export.
+  </Card>
+</Columns>

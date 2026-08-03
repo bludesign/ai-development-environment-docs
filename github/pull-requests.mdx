@@ -8,16 +8,112 @@ description: "Review your GitHub pull requests and monitored repositories in one
   <img className="hidden dark:block" src="/images/dark/pull-requests.png" alt="Pull Requests page in dark theme" />
 </Frame>
 
-The **Pull Requests** page at `/pull-requests` reviews your GitHub pull requests and monitored repositories together, with pipeline and approval status.
+The **Pull Requests** page at `/pull-requests` is the review queue. It gathers the pull requests you author, the ones waiting on your review, and the ones open in each managed repository, and adds pipeline status, review decision, unresolved comment count, linked Jira ticket, and linked worktree to every row — so you can tell what needs attention without opening GitHub.
 
-## Using the page
+## The three tabs
 
-- Switch between the **Mine**, **Review requests**, and **Repositories** tabs, and filter by state or repository.
-- Review each pull request's **Pipeline** and **Approval** status and open comments.
-- **Merge** a pull request (squash, merge commit, or rebase) with commit message and email options.
-- **Manage** monitored repositories and how Jira keys are parsed from pull request titles.
+Each tab is its own GitHub search and keeps its own pagination.
+
+| Tab | What it lists |
+| --- | --- |
+| **Mine** | Pull requests you authored, plus pull requests assigned to you that someone else authored |
+| **Review requests** | Pull requests where your review has been requested |
+| **Repositories** | Every pull request in one managed repository — pick the repository from the selector |
+
+The **Pull request state** filter — All, Open, Closed, or Merged — applies to whichever tab is showing. Results are sorted by most recently updated and grouped under the day they were created. Scrolling to the bottom of the list loads the next page.
+
+<Note>
+  The **Repositories** tab only offers repositories you added under **Manage**. The other two tabs search all of GitHub through your token, whether or not a repository is managed here.
+</Note>
+
+## Reading a row
+
+| Column | What it shows |
+| --- | --- |
+| **Number** | The pull request number, linking to its [details page](/github/pull-request-detail) |
+| **Pull request / Repository** | Title, `owner/name`, and the head branch |
+| **Labels** | GitHub labels on the pull request |
+| **Ticket** | The Jira key parsed from the pull request — click it to open the ticket beside the list |
+| **Pipeline** | The combined check status; click it for the per-check breakdown |
+| **Approval** | Approved, changes requested, review required, or no decision |
+| **Open comments** | Unresolved review threads, linking to [Comments](/github/comments) filtered to this pull request |
+| **Age** | State badge and the relative creation time |
+
+A pull request whose branch has a worktree here inherits that worktree's highlight color, so a branch you flagged on the [Worktrees](/worktrees/worktrees) page is just as easy to pick out of the review queue.
+
+### The pipeline menu
+
+The **Pipeline** badge opens the list of check suites and status contexts reported for the head commit, each with its own state and a link to GitHub. Checks that came from a GitHub Actions check suite get a **Retry** button.
+
+| Pipeline state | Meaning |
+| --- | --- |
+| Passed, Neutral, Skipped | Finished without blocking the merge |
+| Pending, Expected, Queued, In progress | Still running, or not reported yet |
+| Action required | GitHub is waiting on a manual step |
+| Failed, Error, Cancelled, Timed out, Startup failed, Stale | Needs attention |
+| No checks | Nothing was reported for this commit |
+
+When **Retry** is unavailable it explains why on hover: no verified GitHub App, the run is not complete, the check is not a GitHub Actions run, GitHub reported no workflow run for the check suite, or the attempt is a read-only historical one.
+
+## Merging a pull request
+
+**Merge** on an open pull request opens a dialog that reads the merge requirements from GitHub first.
+
+<Steps>
+  <Step title="Choose a merge type" icon="code-merge">
+    Only the methods the repository allows are offered: **Squash and merge**, **Create a merge commit**, or **Rebase and merge**.
+  </Step>
+  <Step title="Edit the commit message" icon="pen">
+    The headline and description are prefilled with GitHub's defaults for the chosen method. The headline cannot be empty.
+  </Step>
+  <Step title="Pick a commit email" icon="envelope">
+    Use your GitHub account default, or any verified address the token can read.
+  </Step>
+  <Step title="Merge" icon="check">
+    GitHub's own blocking reason — failing checks, missing reviews, conflicts, branch protection — is shown in the dialog rather than failing on submit. The list refreshes once the merge lands.
+  </Step>
+</Steps>
+
+<Tip>
+  To merge as soon as the required checks and reviews pass, rather than waiting for them yourself, use **Auto Merge** on the worktree instead. See [Worktrees](/worktrees/worktrees).
+</Tip>
+
+## Managing repositories
+
+**Manage** controls which repositories get their own tab, and how ticket keys are parsed.
+
+<AccordionGroup>
+  <Accordion title="Adding a repository" icon="plus">
+    **Browse** searches the repositories your token can see — private ones are marked, and repositories already managed are labeled so you cannot add them twice. **Enter manually** takes an `owner/name` for anything the search does not surface.
+  </Accordion>
+  <Accordion title="Ticket key parsing" icon="ticket">
+    The **Default ticket key regex** applies to every managed repository. A repository can override it with its own **Jira key regex**, or clear the field to disable parsing there.
+
+    The first capture group is used when the pattern has one; otherwise the whole match is used. An invalid expression is rejected on save.
+  </Accordion>
+  <Accordion title="Removing a repository" icon="trash">
+    Removing a repository drops its pull request tab and its regex override. Nothing changes on GitHub, and your credentials are untouched.
+  </Accordion>
+</AccordionGroup>
+
+## Requirements
+
+- A GitHub personal access token in [Settings](/system/settings) with pull-request read and write access. Merging also needs Contents: read and write, and the commit-email list needs Email addresses: read.
+- Retrying a pipeline from the pipeline menu needs a verified GitHub App with Actions write access.
 
 ## Notes
 
-- Requires a GitHub personal access token in Settings with pull-request read and write access.
-- GitHub search returns at most 1,000 results.
+- GitHub search returns at most 1,000 results per query. When a tab reaches that ceiling the page says so; narrow the state filter or work from the **Repositories** tab.
+- Reads are served from the [GitHub cache](/github/github-cache), so a refresh can return the same data until the TTL expires. A merge clears the cache.
+- Pipeline badges update live while the page is open when enhanced pipeline webhooks are enabled on the [GitHub App](/github/webhooks).
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Pull request details" icon="code-pull-request" href="/github/pull-request-detail">
+    Description, review threads, pipelines, and metadata for one pull request.
+  </Card>
+  <Card title="Comments" icon="comments" href="/github/comments">
+    Reply to and resolve review threads across every open pull request.
+  </Card>
+</Columns>

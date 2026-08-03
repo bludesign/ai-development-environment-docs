@@ -8,13 +8,51 @@ description: "Bundle project-only skills and assign them to repositories."
   <img className="hidden dark:block" src="/images/dark/skill-groups.png" alt="Skill groups page in dark theme" />
 </Frame>
 
-The **Skill groups** page at `/skills/groups` bundles project-only skills and assigns them to repositories.
+The **Skill groups** page at `/skills/groups` is where project-scoped skills get their destinations. A skill marked **Sync globally** reaches every Mac's personal skill directory on its own; a skill that is not needs a group, and a group needs repositories. The group is the join between the two.
 
-## Using the page
+## Why groups exist
 
-- **Add group**, then choose its skills and the repositories that use it.
-- Review each group's skill and repository counts, and open a group to manage it.
+<Columns cols={2}>
+  <Card title="Global skills" icon="globe">
+    Deployed to each agent's personal skill directory for every enabled AI client. No group needed.
+  </Card>
+  <Card title="Project skills" icon="folder-tree">
+    Deployed into the checkouts and worktrees of specific repositories. Reached only through a group assigned to those repositories.
+  </Card>
+</Columns>
+
+A skill can be both: global sync and group membership are independent settings on the [skill editor](/skills/skill-detail).
+
+## The group list
+
+| Column | What it shows |
+| --- | --- |
+| **Name** | The group's name. The whole row opens it |
+| **Skills** | How many database skills are in the group |
+| **Repositories** | How many repositories the group is assigned to |
+| **Updated** | When the group last changed |
+
+**Add group** asks only for a name — you pick its skills and repositories on the [group's own page](/skills/skill-group-detail) immediately afterwards.
 
 ## Notes
 
-- Groups bundle project-only skills; assigned groups reconcile into every checkout and worktree for the repository.
+- A group with skills but no repositories deploys nothing, and a group with repositories but no skills has nothing to deploy. Both are valid intermediate states while you set one up.
+- With **Auto-sync project skill groups** enabled in **Settings** on the [Skills](/skills/skills) page, assigned groups reconcile into every registered checkout and worktree on their own; otherwise use **Sync group** or **Sync all**.
+- A project skill discovered on a client with no matching group cannot be imported until you tell the sync which group it belongs to. That choice is offered inline on the [sync run](/skills/skill-sync-run) page.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Skill group details" icon="file-text" href="/skills/skill-group-detail">
+    Membership, repository assignment, and deployment for one group.
+  </Card>
+  <Card title="Skills" icon="sparkles" href="/skills/skills">
+    The catalog and client-by-client view.
+  </Card>
+  <Card title="Skill synchronization" icon="refresh-cw" href="/skills/skill-sync-run">
+    Review and apply what a group sync proposes.
+  </Card>
+  <Card title="Codebases" icon="folder-git-2" href="/codebases/codebases">
+    The repositories a group is assigned to.
+  </Card>
+</Columns>

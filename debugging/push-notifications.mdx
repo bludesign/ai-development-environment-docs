@@ -8,15 +8,158 @@ description: "Compose, validate, target, queue, and inspect Apple push notificat
   <img className="hidden dark:block" src="/images/dark/push-notifications.png" alt="Push Notifications page in dark theme" />
 </Frame>
 
-The **Push Notifications** page at `/push-notifications` composes, validates, targets, and sends Apple push notifications and keeps a history of every batch.
+The **Push Notifications** page at `/push-notifications` sends real Apple Push Notification service (APNs) payloads to your own devices and keeps every send on record. It covers all eleven APNs push types, validates the payload and headers before anything leaves the control plane, and reports what APNs said about each individual recipient — status, reason, `apns-id`, attempts, and round-trip time.
 
-## Using the page
+This is device push, not the browser alerts the dashboard raises for itself. For those, see [Notifications](/notifications).
 
-- Build a payload in the **Notification editor** — content, headers, advanced `aps` fields, and specialized push types.
-- Choose **Recipients** (eligible devices or direct tokens), review the live JSON preview, then **Send** or **Save draft**.
-- Reuse **Presets**, manage **Live Activity broadcast channels**, and inspect **History** with per-recipient APNs outcomes.
+## Before you can send
 
-## Notes
+<Steps>
+  <Step title="Configure APNs credentials" icon="key">
+    On [Settings](/system/settings), add either a **token key** (`.p8` with its Team ID and Key ID) or one or more **certificates** (password-protected `.p12`, bound to a topic and environment). Token authentication covers apps, Live Activities, VoIP, and everything except MDM; MDM wake-ups require a certificate. Secrets are held by the [credential service](/system/credentials), never in the database.
+  </Step>
+  <Step title="Register devices" icon="mobile">
+    Your app posts its APNs token to `POST /api/ios/apns-devices` with the topic, environment, display name, and the push types it supports. Registrations show up as recipients here and on [Devices](/system/devices).
+  </Step>
+  <Step title="Match the topic" icon="at">
+    Recipients are matched by exact topic. The **APNs topic** you type in the editor must equal the topic the device registered with — including the suffix a specialized push type requires.
+  </Step>
+</Steps>
 
-- Requires APNs credentials configured under Settings — either a token key (`.p8`) or a certificate (`.p12`).
-- The editor validates APNs headers, byte limits, and eligible devices for the selected push type.
+## Notification editor
+
+The editor is organized into four tabs, and its available fields, byte limit, and eligible devices all change with the selected **Push type**.
+
+<AccordionGroup>
+  <Accordion title="Content" icon="pen">
+    **Push type**, then the alert body itself: **Title**, **Subtitle**, **Body**, **Badge**, **Sound**, **Category**, **Thread ID**, and the toggles **Content available**, **Mutable content**, and **Critical sound** with its **Sound volume**.
+  </Accordion>
+  <Accordion title="Headers" icon="list">
+    **APNs topic**, **Priority** (1, 5, or 10), **APNs ID** (a UUID), **Expiration** (a Unix timestamp, or `0` to deliver once or not at all), and **Collapse ID**. When the push type is `mdm`, a **Certificate credential** selector appears here — every other push type authenticates with the token key.
+  </Accordion>
+  <Accordion title="Advanced aps" icon="sliders">
+    Localization keys and arguments for title, subtitle, and body; **Launch image**; **Summary argument** and count; **Target content ID**; **Interruption level** (`passive`, `active`, `time-sensitive`, `critical`); **Relevance score**; and **Custom root JSON** for keys that sit beside `aps`.
+  </Accordion>
+  <Accordion title="Specialized" icon="bolt">
+    Live Activity fields — **Timestamp**, **Event** (`start`, `update`, `end`), **Attributes type**, **Content state JSON**, **Attributes JSON**, **Stale date**, **Dismissal date**, and **Request an input push token** — plus contextual help for MDM and for framework-specific types.
+  </Accordion>
+</AccordionGroup>
+
+### Push types and their rules
+
+| Push type | Required topic suffix | Priority |
+| --- | --- | --- |
+| `alert` | — | 5 or 10 |
+| `background` | — | 5 only |
+| `complication` | `.complication` | 5 or 10 |
+| `controls` | `.push-type.controls` | 5 or 10 |
+| `fileprovider` | `.pushkit.fileprovider` | 5 or 10 |
+| `liveactivity` | `.push-type.liveactivity` | 5 or 10 |
+| `location` | `.location-query` | 1, 5, or 10 |
+| `mdm` | — | 10 only |
+| `pushtotalk` | `.voip-ptt` | 10 only |
+| `voip` | `.voip` | 10 only |
+| `widgets` | `.push-type.widgets` | 5 or 10 |
+
+Priority 1 is accepted only for `location` notifications. Background pushes must omit `alert`, `badge`, and `sound`, and `content-available: 1` is set for you. Alert pushes require at least one `aps` field. MDM payloads contain only `mdm` — no `aps`, no custom root keys — and each recipient's own PushMagic is substituted at send time.
+
+### Live preview and the byte budget
+
+The **Live JSON preview** shows the exact payload that will be sent, with a badge counting bytes against the limit: **4096 bytes**, or **5120** for `voip`. The badge turns red when you exceed it, and any validation problem — a bad topic suffix, an out-of-range relevance score, malformed custom JSON — replaces the preview with the specific error. **Send** stays disabled until the payload validates.
+
+<Note>
+  Validation is not just client-side courtesy. The server revalidates the editor on save, on send, and on resend, so a payload stored in a preset or in history is always one APNs would accept.
+</Note>
+
+## Choosing recipients
+
+A device is **eligible** when its registration is active, its topic matches the topic in the editor, and its supported push types include the selected type. Anything else is hidden, which is usually why a device you expect is missing.
+
+| Mode | When it is offered | What it targets |
+| --- | --- | --- |
+| **Selected devices** | Always | The registrations you check in the picker |
+| **All eligible devices** | Always | Every eligible registration, resolved at send time |
+| **One-off Live Activity token** | `liveactivity` only | A single token you paste, as HEX or Base64, against sandbox or production |
+| **Broadcast channel** | `liveactivity` only | A channel whose bundle ID matches the topic |
+
+Tokens are validated as exactly 32 bytes. A one-off token is stored only for the duration of the send and deleted afterwards — which is why such a batch cannot be resent later.
+
+## Sending, drafts, and presets
+
+- **Send** validates, queues a batch, and starts delivering immediately. Every send carries a request ID, so a retried submission returns the original batch instead of double-sending.
+- **Save draft** stores a validated payload with no recipients. It appears in **History** with the status `DRAFT`, ready to load, target, and send later.
+- **Save current** names the payload and headers as a **preset**. Presets never include recipients — you choose those each time you send.
+
+## Live Activity broadcast channels
+
+The **Live Activity broadcast channels** card creates channels through APNs itself and lists the ones you have.
+
+- Provide a **Bundle ID**, an environment, and a storage policy of **No storage** or **Most recent message**.
+- Creating and deleting a channel requires token authentication; certificates cannot be used for channel management.
+- The storage policy is fixed once the channel exists.
+- Deleting a channel removes it at APNs as well. Presets and history keep only its identifier.
+
+## History
+
+The 100 most recent sends and drafts are listed newest first, with **Created**, **Push type**, **Delivery** mode, **Recipients**, a **Success / failure** count, and **Status**.
+
+| Batch status | Meaning |
+| --- | --- |
+| `DRAFT` | Saved payload with no recipients |
+| `QUEUED` | Accepted, waiting to be delivered |
+| `SENDING` | Deliveries in flight |
+| `SUCCEEDED` | Every recipient succeeded |
+| `PARTIAL` | Some recipients succeeded, some failed |
+| `FAILED` | Every recipient failed |
+
+Expanding a row shows the stored payload and headers as formatted JSON, then one card per recipient with the delivery status, HTTP code, APNs reason, attempt count, duration, and `apns-id`. A workflow panel on the same row lets you attach a batch to workflow automation.
+
+Row actions: **Load into editor**, **Save as preset**, **Resend**, and **Delete**. **Clear all history** removes every completed send and draft.
+
+<Warning>
+  Queued and sending batches cannot be deleted, and **Clear all history** skips them. Drafts cannot be resent — load one, choose recipients, and send it. One-off Live Activity token batches cannot be resent either, because the token was discarded after delivery.
+</Warning>
+
+## How delivery works
+
+<Steps>
+  <Step title="Queue and claim" icon="inbox">
+    The batch is written with one delivery row per recipient and claimed for sending in a single step, so two workers can never process the same batch.
+  </Step>
+  <Step title="Deliver in parallel" icon="rocket">
+    Up to 16 deliveries run concurrently over HTTP/2 to `api.sandbox.push.apple.com` or `api.push.apple.com`, chosen per recipient from that registration's environment. Token authentication reuses a signed JWT for its lifetime.
+  </Step>
+  <Step title="Retry transient failures" icon="rotate">
+    HTTP 429, 500, and 503 are retried up to four attempts total, honoring `Retry-After` when APNs sends it and backing off exponentially otherwise. The final attempt count is recorded on the delivery.
+  </Step>
+  <Step title="Record the outcome" icon="clipboard-check">
+    Each delivery stores the HTTP status, APNs reason, timestamp, `apns-id`, attempts, and duration. The batch then settles as succeeded, partial, or failed.
+  </Step>
+</Steps>
+
+Failures feed back into the rest of the system. A `410 Unregistered` — with a timestamp no older than the last registration — or a `400 BadDeviceToken` or `DeviceTokenNotForTopic` marks the registration **invalid**, so it stops appearing as an eligible recipient. Other failures record the reason against the registration without deactivating it. Token or certificate errors are written back to the credential, so [Settings](/system/settings) shows the last error and the last successful use.
+
+<Note>
+  If the control plane restarts mid-send, a recovery pass reclaims queued batches and any batch that has been sending for more than two minutes, requeues their unfinished deliveries, and continues. It also runs on a 30-second interval, so nothing is left stranded.
+</Note>
+
+## Live updates
+
+The page subscribes to push notification changes: batch and delivery status, new registrations, credential changes, channels, and presets all update in place while you watch a send progress.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Settings" icon="gear" href="/system/settings">
+    APNs token key and certificate credentials, with test and rotation.
+  </Card>
+  <Card title="Devices" icon="mobile" href="/system/devices">
+    Enrolled iPhones and iPads, including their APNs registrations.
+  </Card>
+  <Card title="Notifications" icon="bell" href="/notifications">
+    The dashboard's own alerts — sidebar, browser, and Web Push.
+  </Card>
+  <Card title="GraphQL API" icon="diagram-project" href="/graphql/overview">
+    `sendPushNotification`, `pushNotificationHistory`, and the rest of the push graph.
+  </Card>
+</Columns>

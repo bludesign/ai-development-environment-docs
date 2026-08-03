@@ -8,15 +8,91 @@ description: "Watch a live workflow run, answer questions, and repair or replay 
   <img className="hidden dark:block" src="/images/dark/workflow-run.png" alt="Workflow run page in dark theme" />
 </Frame>
 
-The workflow run page at `/workflows/runs/{id}` shows a single run's live graph, timeline, and step history.
+The workflow run page at `/workflows/runs/{id}` is the live view of one execution: which step is running, what happened at each attempt, what is in session data, and what the run has touched. It is also where you intervene when a run needs you.
 
-## Using the page
+## Header and controls
 
-- Watch the **Live run graph** and the **Timeline** of events, step attempts, session data, and resources.
-- **Pause**, **Resume**, or **Cancel** the run.
-- Answer a step's question inline when the run is waiting for input.
-- **Repair blocked session data** with an atomic JSON merge patch, or **Replay and rewind** from a selected step.
+The run number, its status badge, and its **generation** — replays append a new generation rather than overwriting the original attempts.
 
-## Notes
+| Control | Available when |
+| --- | --- |
+| **Pause** | The run is executing |
+| **Resume** | The run is paused |
+| **Cancel run** | The run has not reached a terminal state |
+| **Refresh** | Always |
 
-- A replay creates a new append-only generation; external effects are retained and not reversed.
+## Live run graph
+
+The published graph, annotated with live state — which node succeeded, which failed, which is waiting, which is currently active. It updates as the run progresses.
+
+## Answering a question
+
+When a step raises a question, the run moves to **Waiting** and the question appears on this page, labeled with the step that asked it. Pick from the offered buttons or type a **Custom answer**, then **Answer**.
+
+<Tip>
+  The same question also appears in the [Action Center](/dashboard), so you can answer without hunting for the run. Answering in either place resolves it.
+</Tip>
+
+## Repairing blocked session data
+
+A run goes **Blocked** when a step cannot proceed with the session data it has — a missing key, a wrong shape, a value an upstream step failed to write.
+
+**Repair blocked session data** applies an atomic JSON merge patch to the run's session data and then resumes scheduling from the blocked step. Enter the patch, then **Apply repair**.
+
+<Note>
+  A merge patch only describes what changes. Supply the keys you want to add or correct; everything you leave out is untouched.
+</Note>
+
+## Replaying and rewinding
+
+Replay re-executes part of a run from a chosen step.
+
+<Steps>
+  <Step title="Select a step" icon="crosshairs">
+    Choose the step to rewind to.
+  </Step>
+  <Step title="Prepare the replay" icon="eye">
+    **Prepare replay** computes a preview: how many descendant steps will re-run, and which external effects the original pass already caused.
+  </Step>
+  <Step title="Choose how to handle Git state" icon="code-branch">
+    - **Replay without Git restore** — leave the working tree exactly as it is.
+    - **Restore Git and replay** — return the worktree to the state captured at that step first.
+    - **Stash, restore, and replay** — stash current changes, then restore and replay.
+  </Step>
+</Steps>
+
+<Warning>
+  External effects are retained and will not be reversed. A replay does not un-merge a pull request, un-transition a Jira ticket, or un-send a notification — the preview lists exactly what the first pass already did so you can decide before committing.
+</Warning>
+
+Replaying creates a new append-only generation. The original attempts stay in history, marked **Superseded**.
+
+## Tabs
+
+<Tabs>
+  <Tab title="Timeline">
+    Every event the run has emitted, in order. Event types include run lifecycle events — started, pausing, paused, resumed, cancelled, succeeded, failed, data repaired, replayed — and step events: succeeded, failed, blocked, waiting, retry scheduled, recovery blocked, and waiting for codebase.
+  </Tab>
+  <Tab title="Step attempts">
+    One row per attempt with **Step**, **Status**, **Generation**, **Iteration**, **Attempt**, **Duration**, and **Error**. Iteration distinguishes passes through a **For each** body; attempt distinguishes retries of the same step.
+
+    Attempt statuses include Pending, Ready, Running, Waiting, Blocked, Succeeded, Failed, Skipped, Superseded, and Timed out.
+  </Tab>
+  <Tab title="Session data">
+    The run's current session document — the JSON that steps read from and write to. This is what the repair patch modifies.
+  </Tab>
+  <Tab title="Resources">
+    Everything this run is linked to — worktrees, builds, pull requests, tickets, AI runs, command runs — each with an **Open** link to its own page.
+  </Tab>
+</Tabs>
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Workflow details" icon="file-lines" href="/workflows/workflow-detail">
+    The published version, its graph, and recent runs.
+  </Card>
+  <Card title="Action Center" icon="list-check" href="/dashboard">
+    Every run that is waiting, blocked, or failed, in one queue.
+  </Card>
+</Columns>

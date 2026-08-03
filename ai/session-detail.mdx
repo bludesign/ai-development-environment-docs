@@ -8,15 +8,105 @@ description: "Watch a Session's live transcript, steer it, and review changes an
   <img className="hidden dark:block" src="/images/dark/session-detail.png" alt="Session details page in dark theme" />
 </Frame>
 
-The Session details page at `/sessions/{id}` shows a single managed Session's live activity and history.
+The Session details page at `/sessions/{id}` is the live view of an implementation run: what it is doing right now, what it has changed in the worktree, what it has spent, and where to intervene. It is the same page as [Plan details](/ai/plan-detail) — this page focuses on the parts that matter when a run is writing code.
 
-## Using the page
+## Header and lifecycle
 
-- Watch the live **Activity** transcript and **Tool calls**.
-- **Steer** guidance to the active turn, **Answer** questions, and **Pause** or **Resume**.
-- Review **Changes** (Git checkpoints), **Linked items**, and estimated **usage and cost**.
-- **Follow Up**, **Export** (JSON, Markdown, or JSONL), or **Delete** the Session.
+The header shows the Session number, status, phase, the AI tool, an **Imported** badge where relevant, and the repository, branch, and creation time.
+
+| Action | Available when |
+| --- | --- |
+| **Pause** | Managed, in progress, and the tool supports pausing |
+| **Continue** | Managed and paused |
+| **Cancel** | Managed and not yet terminal |
+| **Archive** / **Restore** | Always |
+| **Delete** | Only when the tool supports deleting its own native history |
+
+A failed run surfaces its error at the top of the page. So does a phase like *Start failed*, *Steer failed*, *Cancel failed*, or *Provider delete failed* — the status alone will not tell you which step gave up.
+
+<Warning>
+  **Imported worktree conflict** means this externally managed Session is active in a worktree currently leased by a managed Session. The app cannot apply concurrency control to a run it did not start, so the two are writing to the same checkout.
+</Warning>
+
+## Watching a run
+
+<AccordionGroup>
+  <Accordion title="Activity" icon="activity">
+    The transcript streams over a subscription into a scrolling pane that stays pinned to the newest event unless you scroll away from the bottom. History pages in 500 events at a time, and the search box re-queries the server rather than filtering what has already loaded.
+
+    Related events collapse into a single expandable node — a tool call together with its result, a streamed message with its parts. Expanding a row shows the parsed detail, with the untouched payload available behind a raw toggle and a copy button.
+  </Accordion>
+  <Accordion title="Usage and estimated cost" icon="coins">
+    Tiles for **Reported by provider**, **Model cost catalog**, input, output, cache read, cache write, and reasoning tokens, and the tool-call count. A per-model table breaks the same numbers down, and where an answer revision has retired earlier work a second table separates **Active attempts** from **Superseded** usage. Individual tool calls expand to their input, output, and error JSON.
+  </Accordion>
+  <Accordion title="Changes" icon="file-diff">
+    Every Git checkpoint the run captured — **Start**, **Question**, **Answer rollback**, **Before answer revision**, **Continue**, **Final** — with HEAD SHA, branch, and a full patch or diff summary. The most recent patch is repeated at the top of the card, which is usually the quickest read of what the Session actually did.
+  </Accordion>
+  <Accordion title="Summary" icon="file-text">
+    The run's final output, shown once it reaches a terminal status. On a Plan the same card holds the proposal and is titled **Plan**.
+  </Accordion>
+  <Accordion title="Linked items" icon="git-fork">
+    The source Plan, parent run, and any follow-ups, each with its status. A deleted relation is still shown, dashed and marked **Deleted**.
+  </Accordion>
+</AccordionGroup>
+
+## Intervening
+
+<Steps>
+  <Step title="Steer" icon="send">
+    While a managed Session is in progress and its tool supports steering, the **Steer** card sends extra guidance — with attachments — into the active turn. Guidance queues behind any pending question rather than jumping ahead of it.
+  </Step>
+  <Step title="Answer questions" icon="circle-question-mark">
+    A question batch appears inline as **Answer needed**, with options, optional multi-select, and a free-text field where the run allows one. Submitting resumes the run. Answering also re-takes the worktree lease if the Session has lost it.
+  </Step>
+  <Step title="Revise an answer" icon="rotate-ccw">
+    An answered batch that still has its checkpoint can be revised. The dialog prepares a rollback patch against the checkpoint taken immediately before the question, shows exactly what will be undone, and offers to stash the current tracked and untracked changes first. Confirming starts a new linked Session from the revised answer and keeps the previous one as audit history.
+  </Step>
+  <Step title="Pause or cancel" icon="circle-stop">
+    Pausing holds the run and its lease. Cancelling ends it and releases the lease, leaving the worktree in whatever state the run reached.
+  </Step>
+</Steps>
+
+<Note>
+  Turning off **Undo worktree changes made after this question** during a revision keeps the current worktree contents and changes only the answer. If commits from the rolled-back range have already been pushed, the dialog says so before you continue.
+</Note>
+
+## Follow-ups
+
+| Mode | What the new run receives |
+| --- | --- |
+| **Resume** | The prior conversation, continued. Offered only when the tool supports resuming |
+| **Fresh** | No prior context — just your new prompt |
+| **Resend** | The original prompt again, editable, without prior context |
+
+Switching tools on a resumed follow-up asks how to carry context across, since hidden provider state cannot transfer: **Visible transcript** sends the normalized conversation, **Final summary only** sends just the output.
+
+<Warning>
+  Starting a resumed follow-up from a paused Session cancels the parent and atomically transfers its worktree lease to the child. The page asks you to confirm — the parent will not survive it.
+</Warning>
+
+## Exporting
+
+**Export** in the activity header offers **JSON** and **Markdown** of the complete unfiltered history, including superseded events. Claude, Codex, and OpenCode runs add an export of the tool's own JSONL transcript, and Claude and Codex runs still attached to an agent can download the original session file from disk verbatim.
 
 ## Notes
 
-- Deleting a Session also deletes its native provider history; this cannot be undone.
+- Deleting a Session asks the AI tool to delete its native history first, then removes the local record. This cannot be undone; archive instead if you may want it back.
+- The panel under the header lists workflows that can act on this Session, and any workflow runs already attached to it.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Sessions" icon="terminal" href="/ai/sessions">
+    The list this page opens from.
+  </Card>
+  <Card title="Plan details" icon="clipboard-list" href="/ai/plan-detail">
+    The same page for a read-only Plan.
+  </Card>
+  <Card title="Worktree details" icon="git-branch" href="/worktrees/worktree-detail">
+    The checkout this Session holds a lease on.
+  </Card>
+  <Card title="Costs" icon="coins" href="/ai/costs">
+    The price catalog behind the catalog-cost figure.
+  </Card>
+</Columns>

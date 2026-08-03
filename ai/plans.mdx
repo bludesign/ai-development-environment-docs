@@ -8,14 +8,91 @@ description: "Read-only Plans that survey a codebase and propose work without ch
   <img className="hidden dark:block" src="/images/dark/plans.png" alt="Plans page in dark theme" />
 </Frame>
 
-The **Plans** page at `/plans` lists read-only AI Plans that survey a worktree and propose work without modifying it.
+The **Plans** page at `/plans` lists read-only AI Plans. A Plan runs an AI tool against one worktree with a survey-and-propose brief: it reads the codebase, asks questions if it needs to, and writes a proposal as its final output — it does not implement the work. When you are happy with the proposal, **Run Plan** turns it into an implementation [Session](/ai/sessions) against the same worktree.
 
-## Using the page
+<Note>
+  A Plan and a Session are the same underlying run with different intent and permissions. They share the list, detail, follow-up, and export machinery described here and on [Sessions](/ai/sessions).
+</Note>
 
-- **New Plan** starts a read-only run against a selected worktree.
-- Search and filter Plans, and open one to view its activity and proposed work.
-- **Run Plan** turns a completed Plan into an implementation Session.
+## The run list
+
+Rows are grouped by the day the run was created, with anything still active pulled into a leading **Active** group so in-flight work stays at the top.
+
+| Column | What it shows |
+| --- | --- |
+| ID | `#1234`, the Plan's display number. Links to the [detail page](/ai/plan-detail) |
+| Status | **In progress**, **Paused**, **Completed**, **Cancelled**, or **Failed**, plus a phase badge when the phase differs from the status |
+| Repository / branch | Links to the worktree while it still exists; plain text once it is gone |
+| Ticket | The Jira issue key. Opens the ticket drawer in place rather than leaving the page |
+| Prompt | The initial prompt, clamped to two lines |
+| Cost | Estimated cost for the run, right-aligned |
+| Model / effort | Tool icon, model name, effort icon, and the start time |
+| Actions | Run Plan, archive or restore, delete |
+
+Extra badges appear on the status cell: **Imported** for a run this app discovered rather than started, and **Run** once a Plan has been played into a Session.
+
+<Tip>
+  The whole row is clickable, and the ID, repository, and prompt cells are real links — <kbd>⌘</kbd>-click any of them to open a Plan in a new tab.
+</Tip>
+
+## Filtering
+
+Four controls sit above the table, and your choices are stored in a cookie per run kind, so the list comes back the way you left it.
+
+| Control | Options |
+| --- | --- |
+| Search | Matches across the run's text |
+| Archive | **Active**, **Archived**, **All** |
+| Tool | **All tools**, **Codex**, **Claude**, **OpenCode** |
+| Origin | **All origins**, **Managed**, **Imported** |
+
+<Note>
+  **Managed** runs were started from this control plane and can be paused, steered, and cancelled. **Imported** runs were found on an agent's disk and are read-only records — the app can display and archive them, but not drive them.
+</Note>
+
+The list loads 200 runs at a time and pulls in the next page as you scroll, with a running **Showing *n* of *N*** count underneath. An `agentRunsChanged` subscription refreshes the list in place as runs progress, so status, cost, and token counts update without a reload.
+
+## Running a Plan
+
+<Steps>
+  <Step title="Open the Run Plan action" icon="play">
+    The action is enabled only once the Plan is **Completed**, has a final output, and has not already been run. A Plan can be played exactly once.
+  </Step>
+  <Step title="Choose MCP tool presets" icon="wrench">
+    The dialog lists the presets marked Session-enabled. Nothing is selected by default — grant the new Session only the built-in tools the work needs.
+  </Step>
+  <Step title="Confirm" icon="circle-check">
+    A new Session is created against the same worktree with the Plan's proposal as its context, linked back to the Plan as its source. The Plan is stamped with the Session's number and the **Run** badge appears.
+  </Step>
+</Steps>
+
+## Bulk edits
+
+**Edit** turns the list into a selection surface: a checkbox on every row, a select-all in the header, and a select-all per day group. With a selection made you can archive, restore, or delete in one action. **Done** leaves edit mode.
+
+<Warning>
+  Deleting a run deletes the AI tool's own native history for it before removing the local record. This cannot be undone. Archiving is the reversible option.
+</Warning>
 
 ## Notes
 
-- Plans are read-only — the app warns if a Plan unexpectedly changes the selected worktree.
+- Plans are read-only by intent, not by sandbox. If a Plan does change the worktree, the detail page flags it and shows the resulting patch.
+- Plans do not take an exclusive worktree lease, so several Plans can survey the same worktree at once. Sessions do.
+- The `Plan` column that Sessions carry — the Plan a Session was played from — is absent here, since a Plan has no source Plan of its own.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Plan details" icon="file-text" href="/ai/plan-detail">
+    Activity, cost, proposed work, and follow-ups for one Plan.
+  </Card>
+  <Card title="New run" icon="plus" href="/ai/run-new">
+    Pick a worktree, model, effort, and tools, then start.
+  </Card>
+  <Card title="Sessions" icon="terminal" href="/ai/sessions">
+    The implementation half of the same machinery.
+  </Card>
+  <Card title="Drafts" icon="file-pen" href="/ai/drafts">
+    Prompts saved for later, ready to start as either kind.
+  </Card>
+</Columns>

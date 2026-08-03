@@ -8,16 +8,70 @@ description: "Save a reusable shell command with a target, restart policy, and n
   <img className="hidden dark:block" src="/images/dark/command-new.png" alt="New command editor in dark theme" />
 </Frame>
 
-The new command page at `/commands/new` creates a reusable command definition.
+The new command page at `/commands/new` creates a reusable command definition — a named script, a rule for where it may run, and a policy for what happens when it exits.
 
-## Using the page
+## Command
 
-- Enter a **Name**, **Description**, and the **Shell script** to run.
-- Choose a **Target scope** — any agent home, a specific agent home, any worktree, or a worktree in a repository.
-- Set a **Restart policy** (never, on failure, always) and a failed restart limit.
-- Optionally enable completion **Notifications** and show the command as a **quick action** with an icon and button style.
+| Field | Notes |
+| --- | --- |
+| **Name** | How the command appears in lists, quick actions, and run history |
+| **Description** | Optional context shown alongside the name |
+| **Shell script** | The script to execute |
 
-## Notes
+The script runs through the agent user's non-interactive login shell.
 
-- The script runs through the agent user's non-interactive login shell.
-- Saved commands run with the full permissions of the selected agent account.
+<Warning>
+  Interactive input and PTY applications are not supported. A script that waits on a prompt, opens an editor, or expects a terminal will hang until the job times out.
+</Warning>
+
+## Target scope
+
+The target decides which agents and worktrees the command may run in, and whether you are asked to choose one at launch time.
+
+| Scope | Runs in | Chosen at launch |
+| --- | --- | --- |
+| **Any agent home** | The home directory of any enrolled agent | You pick the agent |
+| **Specific agent home** | One named agent's home directory | Fixed |
+| **Any worktree** | Any tracked worktree on any agent | You pick the worktree |
+| **Worktree in a repository** | Any worktree belonging to one repository | You pick the worktree |
+
+<Tip>
+  Prefer the narrowest scope that still fits. A **Specific agent home** command cannot be launched against the wrong machine by accident, and a repository-scoped worktree command cannot wander into an unrelated checkout.
+</Tip>
+
+## Restart policy
+
+| Policy | Restarts when |
+| --- | --- |
+| **Never** | The command runs once, whatever happens |
+| **On failure** | The attempt exited non-zero or was killed by a signal |
+| **Always** | Every exit, clean or not — useful for long-lived processes |
+
+**Failed restart limit** caps consecutive restarts. Leave it unset for **Unlimited restarts**.
+
+<Note>
+  The limit counts a *burst* of quick failures, not restarts over all time. An attempt that stayed up for at least a minute resets the counter before its exit is evaluated, so a process that runs for hours and then dies still gets a full budget of retries.
+</Note>
+
+A manual **Terminate** never triggers a restart, regardless of policy.
+
+## Notifications
+
+**Notify when this command finishes** is on by default. Turn it off for commands that run constantly or that you do not need to hear about. Which channels those notifications use — sidebar, browser, Web Push — is configured on the [Notifications](/notifications) page.
+
+## Quick action
+
+**Show this command as a quick action** puts the command on the pages of the things it targets: agent-home commands on agent pages, worktree commands on worktree pages.
+
+Pick an **Icon** and a **Button style** — Default, Outline, Secondary, or Destructive. Use Destructive for anything that removes data, so it reads as dangerous at a glance.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Commands" icon="terminal" href="/commands/commands">
+    All definitions and the durable run history.
+  </Card>
+  <Card title="Edit command" icon="pencil" href="/commands/command-edit">
+    Change a saved definition without disturbing past runs.
+  </Card>
+</Columns>

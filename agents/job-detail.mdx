@@ -8,14 +8,57 @@ description: "Watch a durable agent job's live output and status."
   <img className="hidden dark:block" src="/images/dark/job-detail.png" alt="Job details page in dark theme" />
 </Frame>
 
-The job details page at `/jobs/{id}` shows a single durable job running on an agent, including its live output and status.
+The job details page at `/jobs/{id}` shows one durable job on an agent: its kind, its status, its error if it has one, and its full log stream as it arrives.
 
-## Using the page
+Jobs are the unit of work the control plane hands to an agent. Nearly every Git operation, codebase scan, worktree move, and build step in the product runs as a job, so this page is where you go when you need to see exactly what a Mac did.
 
-- Watch the job's streaming output and current status.
-- **Cancel** a queued or running job.
+## What the page shows
 
-## Notes
+- The job **kind** and its id.
+- A **status** badge — **Queued**, **Running**, **Cancelling**, **Succeeded**, **Failed**, **Cancelled**, or **Timed out**.
+- The job's error message, when it failed.
+- A terminal-style log pane with sequence-numbered lines.
 
-- Jobs are durable — they recover after missed events or an agent restart through the agent's job reconciliation cadence.
-- Jobs are linked from an agent's **Job history** on its detail page.
+### Reading the log
+
+Log lines arrive over an `agentJobLogAdded` subscription and are ordered by sequence number, so a reconnect cannot interleave them out of order or duplicate them. Each line is color-coded by stream:
+
+| Stream | Appearance |
+| --- | --- |
+| `STDOUT` | Default |
+| `STDERR` | Amber |
+| `SYSTEM` | Blue |
+
+The pane follows output automatically while you are scrolled to the bottom. Scroll up and it stops following, so you can read earlier output without fighting the stream.
+
+## Cancelling
+
+**Cancel** is offered while the job is **Queued** or **Running**. It moves the job to **Cancelling**; the agent stops the work and reports the final **Cancelled** state.
+
+## Durability
+
+<AccordionGroup>
+  <Accordion title="How a job survives a restart" icon="arrows-rotate">
+    Job records live in the control plane's database, not in agent memory. On its job reconciliation interval, the agent asks the control plane for anything queued, running, or cancelled and picks up where it left off — so a dropped WebSocket, an agent restart, or a missed event does not lose the work.
+
+    Tune that interval under **Agent cadence** on the [agent detail page](/agents/agent-detail).
+  </Accordion>
+  <Accordion title="Timeouts" icon="stopwatch">
+    Every job carries a timeout in seconds. A job that exceeds it is marked **Timed out** rather than being left running indefinitely.
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  Jobs are reachable from the **Job history** table on an agent's detail page, and an embedded compact version of this monitor appears wherever the app kicks off a job for you.
+</Tip>
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Agent details" icon="laptop" href="/agents/agent-detail">
+    Job history, capabilities, and the reconciliation cadence for one Mac.
+  </Card>
+  <Card title="Command run" icon="terminal" href="/commands/command-run">
+    Shell command runs, which have their own richer terminal view.
+  </Card>
+</Columns>

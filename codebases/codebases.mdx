@@ -8,16 +8,105 @@ description: "Track Git repositories and checkouts across every enrolled agent."
   <img className="hidden dark:block" src="/images/dark/codebases.png" alt="Codebases page in dark theme" />
 </Frame>
 
-The **Codebases** page at `/codebases` tracks registered Git repositories and their checkouts across every enrolled agent, with live sync and availability status.
+The **Codebases** page at `/codebases` is the inventory of every Git repository registered on every enrolled Mac, with live sync and availability status for each one.
 
-## Using the page
+## Codebases and repositories
 
-- **Add codebase** — Browse an online agent, inspect a Git repository, confirm its origin, and save it.
-- **Refresh all** or **Fetch all** eligible codebases, and **group by** agents or repositories.
-- Open a codebase to manage its branches and stashes, or open a repository for shared settings.
-- Configure agent scan and fetch intervals in **Settings**.
+Two concepts sit behind this page, and the distinction matters:
+
+<Columns cols={2}>
+  <Card title="Codebase" icon="folder-tree" href="/codebases/codebase-detail">
+    One checkout on one agent — a folder on a specific Mac. Branches and stashes are managed here.
+  </Card>
+  <Card title="Repository" icon="code-fork" href="/codebases/repository-detail">
+    The logical repository behind every checkout that shares an origin. Skill groups, build configurations, and Auto Retry live here and apply everywhere.
+  </Card>
+</Columns>
+
+**Group codebases by** switches the view between **Agents** — what each Mac is hosting — and **Repositories** — where each repository is checked out.
+
+## Status
+
+Each codebase carries two independent statuses.
+
+### Sync state
+
+| State | Meaning |
+| --- | --- |
+| In sync | Local branch matches its upstream |
+| Ahead | Local commits not yet pushed |
+| Behind | Upstream commits not yet pulled |
+| Diverged | Both sides have commits the other lacks |
+| No upstream | The branch tracks nothing |
+| Detached | HEAD is not on a branch |
+| Unknown | Not yet determined |
+
+### Availability
+
+| State | Meaning |
+| --- | --- |
+| Available | The folder is present and is the expected repository |
+| Folder missing | The registered path no longer exists on the agent |
+| Not a Git repository | The folder exists but has no Git metadata |
+| Origin changed | The remote origin no longer matches what was registered |
+| Unavailable | The agent reported an error inspecting it |
+
+Rows also show the folder, origin, current branch, upstream, ahead and behind counts, last checked, and last fetched.
+
+## Adding a codebase
+
+<Steps>
+  <Step title="Pick an online agent" icon="laptop">
+    Only connected agents can be browsed. Offline agents cannot report what is on disk.
+  </Step>
+  <Step title="Browse to the folder" icon="folder-open">
+    Start from the agent's home folder and navigate. **Show hidden folders** reveals dotfiles. Long directories are capped at the first 1,000 entries.
+  </Step>
+  <Step title="Inspect and confirm" icon="code-branch">
+    **Add this folder** inspects the repository and reports its origin and current branch, including a detached HEAD. If the origin already has a registered checkout, the page tells you the shared repository name it will join.
+  </Step>
+  <Step title="Name it and save" icon="floppy-disk">
+    Set the **Repository name** and an optional description, then **Confirm codebase**.
+  </Step>
+</Steps>
+
+## Bulk actions
+
+- **Refresh all** re-inspects registered folders and reports Git status without contacting remotes.
+- **Fetch all** runs `git fetch origin` for eligible codebases.
+
+Both skip codebases whose agent is offline, unsupported, or whose folder is unavailable, and report how many were skipped.
+
+## Settings
+
+Cadence defaults that apply to every updated agent:
+
+| Setting | Notes |
+| --- | --- |
+| **Agent refresh interval** | How long each agent waits after a scan completes before scanning again. Git remotes are not contacted. |
+| **Automatic fetch interval** | How often each agent fetches origin. |
+| **Default Jira branch regex** | Extracts a ticket key from a branch name. The first capture group is used when present, otherwise the whole match. |
+
+<Tip>
+  A single agent can override the refresh and fetch intervals on its own [detail page](/agents/agent-detail), and a repository can override the Jira branch regex on its [repository page](/codebases/repository-detail).
+</Tip>
+
+## Removing a codebase
+
+**Remove** deletes the registration only. The folder and all of its files stay untouched on the agent — the control plane simply stops tracking it.
 
 ## Notes
 
-- Status shows sync state (in sync, ahead, behind, diverged) and availability (available, folder missing, origin changed).
-- Read-only codebase data is also available through REST at `/api/codebases` and through MCP at `/api/mcp`.
+- Read-only codebase data is also available over REST at `/api/codebases` and through MCP at `/api/mcp`.
+- A codebase with a Git operation in flight shows an in-progress indicator and blocks conflicting actions until it finishes.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Codebase details" icon="code-branch" href="/codebases/codebase-detail">
+    Branches and stashes for one checkout.
+  </Card>
+  <Card title="Worktrees" icon="code-fork" href="/worktrees/worktrees">
+    Linked worktrees created from these repositories.
+  </Card>
+</Columns>

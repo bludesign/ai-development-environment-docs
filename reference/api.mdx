@@ -1,13 +1,31 @@
 ---
 title: "APIs"
-description: "The GraphQL API, the read-only codebase REST endpoints, and the MCP endpoint."
+description: "The GraphQL API, the REST endpoints, the OpenAPI contract, and the Streamable HTTP MCP endpoint."
 ---
+
+The control plane exposes three programmable surfaces, all of them thin adapters over the same server-side services. Anything the dashboard can do, a script can do too.
+
+| Surface | Endpoint | Use it for |
+| --- | --- | --- |
+| [GraphQL](#graphql) | `POST /api/graphql`, plus a WebSocket for subscriptions | Everything. This is what the dashboard itself uses |
+| [REST](#rest-endpoints) | `/api/codebases`, `/api/telemetry/*`, `/api/ios/apns-devices` | Narrow, stable, unauthenticated-friendly integrations |
+| [MCP](#mcp) | `/api/mcp` | Giving an AI client a scoped set of tools |
 
 ## GraphQL
 
 An Apollo Server (Federation subgraph) is mounted at `/api/graphql` through a Next.js route handler. Outside production — or when `APOLLO_SANDBOX=true` — introspection and the Apollo sandbox are enabled, so opening `/api/graphql` in a browser lets you explore the schema.
 
-The SDL lives in `schemas/**/*.graphql` and is bundled into the app by `scripts/prebuild-schema.ts`. Resolvers are dependency-injected factories under `src/graphql/resolvers/`.
+The SDL lives in `schemas/**/*.graphql`, one file per domain, and is bundled into the app by `scripts/prebuild-schema.ts`. Resolvers are dependency-injected factories under `src/graphql/resolvers/`.
+
+Subscriptions are served over a separate WebSocket listener rather than the HTTP route:
+
+| Purpose | Address |
+| --- | --- |
+| GraphQL over HTTP | `POST /api/graphql` |
+| Agent WebSocket (Homebrew and npm) | `ws://127.0.0.1:3091/graphql` |
+| Agent WebSocket (development) | `ws://127.0.0.1:3092/graphql` |
+
+Enrolled agents authenticate over that socket by sending their credential as an `authorization` connection parameter; the server resolves it to an agent identity and puts it in the GraphQL context. The app also rewrites `/graphql` on the HTTP origin to the WebSocket listener, so a browser — and a reverse proxy — can reach subscriptions on a single origin.
 
 Every query, mutation, and type is documented in the [GraphQL API](/graphql/overview) tab, generated from that schema.
 
@@ -19,22 +37,190 @@ A placeholder `health` query verifies database connectivity. It returns `"ok"` w
 }
 ```
 
+```bash
+curl -s http://127.0.0.1:3090/api/graphql \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"{ health }"}'
+```
+
 <Warning>
   `/api/graphql` must stay authenticated. Do not add it to a Cloudflare Access bypass — see [Hosting](/reference/hosting).
 </Warning>
 
-## Codebase REST
+## REST endpoints
 
-Read-only codebase data is also available over REST:
+### Codebases
+
+Read-only access to the codebase checkouts registered across every enrolled agent.
 
 | Endpoint | Returns |
 | --- | --- |
-| `GET /api/codebases` | Registered codebase checkouts. |
-| `GET /api/codebases/by-path?path=/absolute/folder` | One checkout resolved by its exact path. |
-| `GET /api/openapi.json` | The OpenAPI 3.1 contract for both operations. |
+| `GET /api/codebases` | `{ "codebases": [...] }` — every registered checkout. |
+| `GET /api/codebases/by-path?path=/absolute/folder` | `{ "codebase": {...} }` — one checkout resolved by its exact path. |
+
+```bash
+curl -s 'http://127.0.0.1:3090/api/codebases/by-path?path=/Users/me/src/acme'
+```
+
+Each record carries the checkout's Git state and the agent it lives on: `id`, `path`, `observedOrigin`, `branch`, `headSha`, `upstream`, `ahead`, `behind`, `syncState`, `availability`, `statusError`, the `lastCheckedAt` / `lastFetchedAt` timestamps, an optional branch listing, plus nested `repository`, `agent`, and `activeJob` objects.
+
+Errors use a consistent envelope — `{ "error": { "code", "message" } }`:
+
+| Status | Code | Cause |
+| --- | --- | --- |
+| `400` | `INVALID_PATH` | The `path` parameter is missing or empty |
+| `404` | `CODEBASE_NOT_FOUND` | No registered checkout uses that path |
+| `409` | `AMBIGUOUS_PATH` | Two agents use the same path; the response adds a `matches` array naming them |
+| `500` | `INTERNAL_ERROR` | Unexpected server error |
+
+<Tip>
+  `AMBIGUOUS_PATH` is common when the same repository is checked out at the same location on more than one Mac. Use the `matches` array to pick an agent, then look the codebase up by `id` over GraphQL or MCP.
+</Tip>
+
+### Telemetry ingestion
+
+Applications under test post their own logs and analytics events here. These endpoints are unauthenticated by design — they are meant to be reachable from a device or simulator.
+
+| Endpoint | Collects |
+| --- | --- |
+| `POST /api/telemetry/console-logs` | Console log records — see [Console logs](/debugging/console-logs) |
+| `POST /api/telemetry/analytics-events` | Analytics events — see [Analytics events](/debugging/analytics-events) |
+| `POST /api/telemetry/export` | Renders a saved telemetry query as CSV, Markdown, or PDF |
+
+Both ingestion endpoints accept either a single record or an atomic `{ "items": [...] }` batch of at most 500 records, with the request body capped at 2 MiB.
+
+| Status | Meaning |
+| --- | --- |
+| `201` | Records collected |
+| `202` | The payload was valid but collection is currently disabled |
+| `400` | The payload failed validation |
+| `413` | The body exceeded 2 MiB |
+| `415` | `Content-Type` was not JSON |
+
+<Note>
+  A `202` is not a failure. It means the server understood the payload and deliberately dropped it because collection is turned off, so a client can keep posting without special-casing the disabled state.
+</Note>
+
+The export endpoint caps its request body at 256 KiB and returns `PAYLOAD_TOO_LARGE` beyond that.
+
+### APNs device registration
+
+| Endpoint | Purpose |
+| --- | --- |
+| `POST /api/ios/apns-devices` | Register or refresh an APNs device token |
+
+The body carries `clientRegistrationId`, `token`, `tokenEncoding` (`HEX` or `BASE64`), `topic`, `environment` (`SANDBOX` or `PRODUCTION`), `supportedPushTypes`, and `displayName`. A new registration returns `201`, refreshing an existing one returns `200`. The body is capped at 32 KiB and each source IP is limited to 120 requests per minute, after which it gets `429`. See [Push notifications](/debugging/push-notifications).
+
+### OpenAPI contract
+
+| Endpoint | Returns |
+| --- | --- |
+| `GET /api/openapi.json` | An OpenAPI 3.1 document covering the codebase, telemetry, and APNs endpoints |
+
+The document is assembled at request time from the same Zod schemas the handlers validate against, so it cannot drift from the implementation. It is served with `cache-control: public, max-age=300`, and is the right thing to point a client generator at.
+
+### Browser and agent routes
+
+The dashboard and the control agents use a handful of further routes. They are part of the application's own plumbing rather than an integration surface, but they are worth knowing when reading logs:
+
+| Endpoint | Used by |
+| --- | --- |
+| `POST` / `GET /api/run-attachments`, `GET /api/run-attachments/{id}` | Uploading and fetching files attached to an AI run |
+| `GET /api/agent/run-attachments/{id}` | An agent fetching an attachment for a run it is executing |
+| `POST /api/build-artifact-uploads/{uploadId}` | An agent streaming a finished build artifact to the server |
+| `GET /api/worktrees/{worktreeId}/diff-image` | Rendering an image diff for a worktree change |
+| `POST /api/ios/enrollment/start` | Starting a signed iOS device enrollment |
+| `GET /api/ios/devices/export.tsv` | Exporting device UDIDs for the Apple Developer portal |
+
+<Warning>
+  These stay behind whatever authentication protects the dashboard. `/api/ios/enrollment/start` and `/api/ios/devices/export.tsv` in particular must never be added to a Cloudflare Access bypass.
+</Warning>
+
+### Public endpoints
+
+Everything under `/api/public/*` is intentionally unauthenticated: iOS enrollment callbacks, short-lived build artifact and over-the-air manifest downloads, and the two signature-verified webhooks. [Hosting and networking](/reference/hosting) lists the full path set and explains how to expose exactly that namespace and nothing else.
 
 ## MCP
 
-`/api/mcp` is a stateless Streamable HTTP MCP endpoint exposing `get_codebases` and `get_codebase`.
+`/api/mcp` is a stateless Streamable HTTP MCP endpoint. Point Claude Code, Cursor, or any other MCP client at it and the server's built-in tools become callable directly.
 
-The [Tools](/system/tools) page discovers and runs these built-in tools. It can also manage and test external Streamable HTTP or legacy SSE MCP servers; saved custom header values stay server-side and are never returned to the browser.
+The catalog spans the whole product: agents, builds and build data, codebases and worktrees, commands and workflows, runs, GitHub and Jira (including their caches), skills, notifications and push notifications, signing assets, iOS devices, disk space, usage and costs, and debugging. Browse it, run tools by hand, and audit every call from the [Tools](/system/tools) page.
+
+### Scopes
+
+The same endpoint serves three scopes, selected by query parameter:
+
+| URL | Exposes | Authenticated by |
+| --- | --- | --- |
+| `/api/mcp` | Every built-in tool | `TOOLS_API_TOKEN`, when set |
+| `/api/mcp?preset=<id>` | Only the tools in that [MCP tool preset](/system/tools#mcp-tool-presets) | `TOOLS_API_TOKEN`, when set |
+| `/api/mcp?run=<runId>` | Only the tools granted to that AI run | An enrolled agent's credential |
+
+Supplying both `preset` and `run`, or either one twice, is rejected with `400 INVALID_MCP_SCOPE`.
+
+### Authentication
+
+Access is controlled by the `TOOLS_API_TOKEN` environment variable. When it is unset, tool calls are accepted without authentication. When it is set, clients must send `Authorization: Bearer <value>`; the comparison is timing-safe, and a mismatch returns `401` with a `WWW-Authenticate: Bearer` header.
+
+```bash
+curl -s http://127.0.0.1:3090/api/mcp \
+  -H "Authorization: Bearer $TOOLS_API_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+The run scope is different: it authenticates the caller as an enrolled agent instead, which is what lets a Session on a managed Mac call back into the control plane with exactly the tools its run was granted.
+
+| Status | Code | Cause |
+| --- | --- | --- |
+| `400` | `INVALID_MCP_SCOPE` | Conflicting or empty `preset` / `run` parameters |
+| `401` | `TOOL_API_UNAUTHORIZED` | Missing or wrong bearer token, or an unrecognized agent credential |
+| `403` | `RUN_MCP_FORBIDDEN` | The run belongs to a different agent |
+| `404` | `RUN_NOT_FOUND` / `MCP_PRESET_NOT_FOUND` | The referenced run or preset does not exist |
+
+<Warning>
+  With `TOOLS_API_TOKEN` unset, anyone who can reach the endpoint can invoke destructive tools. The confirmation dialogs on the Tools page are a UI affordance, not an API restriction. Set the token before exposing this server beyond localhost.
+</Warning>
+
+### Correlation and auditing
+
+Send an `x-request-id` header — up to 128 characters — and it is echoed back on the response and recorded as the call's correlation ID. Without one, the server generates a UUID. Every call is written to the audit log on the [Tools](/system/tools#audit) page with its caller, source, duration, and a SHA-256 hash of its arguments. Arguments themselves are never stored.
+
+Callers are recorded as `anonymous@<address>` when no token is configured, `bearer:<fingerprint>@<address>` when one is, and `agent:<agentId>@<address>` for the run scope.
+
+### Tool HTTP API
+
+The Tools page drives two plain HTTP routes, which are also usable directly when you want a single tool call without speaking MCP:
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /api/tools/catalog` | The full catalog — groups, tools, and their JSON input and output schemas |
+| `POST /api/tools/call` | Invoke one tool with `{ "groupId", "name", "arguments" }` |
+
+`POST /api/tools/call` honours the same `TOOLS_API_TOKEN` bearer check and returns `{ "result", "requestId" }` on success. Failures use `INVALID_TOOL_CALL` (`400`), `CODEBASE_NOT_FOUND` (`404`), `TOOL_CALL_FAILED` (`502`), or a `409` for an ambiguous codebase lookup.
+
+### External MCP servers
+
+The [Tools](/system/tools) page can also manage and test external Streamable HTTP or legacy SSE MCP servers, whose tools then appear in the same catalog and are callable everywhere built-in tools are. Saved custom header values stay server-side and are never returned to the browser.
+
+<Note>
+  External tools are reachable from the Tools page and from workflows and runs, but they are not re-exported over this server's own `/api/mcp` endpoint. That endpoint serves built-in tools only.
+</Note>
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="GraphQL API" icon="diagram-project" href="/graphql/overview">
+    The generated schema reference, subscriptions, and Apollo Studio.
+  </Card>
+  <Card title="Tools" icon="wrench" href="/system/tools">
+    Browse the tool catalog, build presets, and read the audit log.
+  </Card>
+  <Card title="Hosting and networking" icon="globe" href="/reference/hosting">
+    Which of these paths may be exposed publicly, and which must not be.
+  </Card>
+  <Card title="Local development" icon="terminal" href="/reference/development">
+    Regenerating the schema and resolver types.
+  </Card>
+</Columns>
