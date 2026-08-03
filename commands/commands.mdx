@@ -10,7 +10,7 @@ description: "Create reusable shell commands and inspect their durable runs."
 
 The **Commands** page at `/commands` is where you save shell commands you run often and review every execution of them. It has two tabs: **Runs**, the durable history, and **Definitions**, the saved commands themselves.
 
-A command run is durable. The script executes as an agent job, output is retained, restarts are handled by policy, and the run keeps an immutable snapshot of exactly what was executed — so history stays accurate even after you edit the definition.
+A command run is durable. The script executes as an agent job, output is retained, restarts are handled by policy, and the run keeps an immutable snapshot of exactly what was executed — so history stays accurate even after you edit the definition. A concurrency mode decides whether it starts immediately or waits for other command runs on the same target.
 
 <Warning>
   Commands run with the full permissions of the selected agent account. Anyone who can reach the control plane can run them on the machines you have enrolled.
@@ -55,7 +55,7 @@ A table of every run with **Run** number, **Command**, **Status**, **Agent**, **
 
 | Status | Meaning |
 | --- | --- |
-| Queued | Accepted, waiting for the agent |
+| Queued | Accepted, waiting for its target, predecessor, restart delay, or agent |
 | Running | Executing |
 | Restarting | Exited and waiting on the restart policy |
 | Cancelling | Termination requested |
@@ -71,7 +71,7 @@ Each run also records its **origin** — **Manual**, **Quick action**, **Workflo
 - Filter by **Active**, **Archived**, or **All**, and search across commands.
 - **Edit** turns on selection; select individual runs, everything from a day, or **Select all completed runs**.
 - With a selection, **Archive**, **Restore**, or **Delete** in bulk.
-- Per run, **Rerun** starts a fresh run from the same snapshot, and **Terminate** stops an active one.
+- Per run, **Rerun** starts a fresh run from the same snapshot, and **Terminate** stops an active or queued one.
 
 <Warning>
   Deleting runs permanently removes them along with all retained terminal output. Only completed runs can be selected for deletion.
@@ -79,15 +79,18 @@ Each run also records its **origin** — **Manual**, **Quick action**, **Workflo
 
 ## Running a one-off command
 
-**Run custom** executes a script without saving a definition. Choose where it runs, paste the script, and go. The run is still durable and still retained in immutable history — it just has no reusable definition behind it.
+**Run custom** executes a script without saving a definition. Choose where it runs, paste the script, and go. The run is still durable and still retained in immutable history — it just has no reusable definition behind it. Custom runs use non-exclusive concurrency.
 
 ## Quick actions
 
 A saved command can be surfaced as a button on the pages of the things it targets: agent-home commands appear on the [Agents](/agents/agents) page and agent detail, and worktree commands appear on worktree pages. Configure the icon and button style when you create or edit the command.
 
+When the command has active runs on that target, a spinner menu appears beside its button. The menu lists every active run and lets you **Terminate**, **Restart**, or **View** it. Select the command button again to start another run; its concurrency setting decides whether it starts or queues. **Restart** terminates the selected run and creates a successor from its snapshot. The successor waits for the original to finish.
+
 ## Notes
 
 - Scripts run through the agent user's non-interactive login shell. Interactive input and PTY applications are not supported — a script that waits for a prompt will hang until it times out.
+- On macOS and Linux, an agent terminates command process groups left by an earlier instance of the same enrollment before it claims new work. It sends `SIGTERM`, waits five seconds, then uses `SIGKILL` if needed. Other agent enrollments under the same operating-system account are not affected.
 - Older agents may not advertise the saved-command capability. The UI offers **Upgrade agent** rather than letting you launch against a target that cannot run it.
 
 ## Related pages

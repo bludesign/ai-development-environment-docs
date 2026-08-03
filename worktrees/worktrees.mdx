@@ -14,13 +14,16 @@ The **Worktrees** page at `/worktrees` is the busiest page in the product. It sh
 
 - **Search** across branches, agents, repositories, tickets, and codebases.
 - **Filter by agent** and **filter by repository**.
+- Use **Group by agent** or **Group by repository** to choose the primary grouping. The other dimension remains visible on each worktree.
 - Switch between **Card layout** and **Table layout**.
 - **Refresh** re-reads status; **Fetch now** runs `git fetch origin` for eligible codebases.
 
-Each worktree shows its branch, path, base branch, agent, repository, upstream status, base freshness, commit count, and — where they exist — its pull request, latest build, review decision, and comment count.
+Your search, filters, grouping, and layout are saved in the browser and restored the next time you open the page. A saved agent or repository filter is ignored if that item no longer exists.
+
+Each worktree shows its branch, path, base branch, agent, repository, upstream status, base freshness, nonzero commit counts, and — where they exist — its pull request, latest build, review decision, and comment count.
 
 <Tip>
-  **Manage tags** creates reusable global tags with badge colors, and **Highlight** assigns a worktree a color that follows it everywhere — the Action Center, notifications, and run pages all pick it up. With several branches in flight this is the fastest way to tell them apart.
+  **Manage tags** creates reusable global tags with badge colors, and **Highlight** assigns a worktree a color that follows it everywhere — the Action Center, notifications, and run pages all pick it up. The palette includes lavender, maroon, brown, olive, and navy. Use the trash button beside **Highlight** to clear the current color.
 </Tip>
 
 ### Status at a glance
@@ -29,7 +32,7 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
 | --- | --- |
 | Upstream status | Ahead, behind, diverged, in sync, unpublished, detached |
 | Base freshness | Current with an ahead count, or a count of commits behind base |
-| Working tree | Dirty or clean |
+| Working tree | Dirty when staged or unstaged changes exist; otherwise clean |
 | Review decision | Approved, changes requested, review required, or no decision |
 
 ## Creating a worktree
@@ -75,7 +78,12 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
     **Open in VS Code** and **Open in VS Code Insiders** launch the worktree folder on its agent.
   </Accordion>
   <Accordion title="Navigation" icon="arrow-up-right-from-square">
-    **Open details** opens the [worktree details page](/worktrees/worktree-detail). **View codebase**, **View repository**, and **Open in GitHub** jump to the related resource, and **Refresh pull request** re-reads the PR state.
+    Select the card surface or **Open details** in the table to open the [worktree details page](/worktrees/worktree-detail). **View codebase**, **View repository**, and **Open in GitHub** jump to the related resource, and **Refresh pull request** re-reads the PR state.
+  </Accordion>
+  <Accordion title="Quick actions" icon="bolt">
+    Workflow and command quick actions share one row when space allows, separated by a divider. They wrap into separate rows on narrower cards.
+
+    An active command adds a spinner menu beside its button. Open it to **Terminate**, **Restart**, or **View** each active run. The command button remains available, so you can start another run; its concurrency setting decides whether it starts or queues.
   </Accordion>
 </AccordionGroup>
 
