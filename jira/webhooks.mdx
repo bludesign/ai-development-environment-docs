@@ -1,0 +1,98 @@
+---
+title: "Jira Webhooks"
+description: "Review webhook deliveries received from Jira and how each event was handled."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/jira-webhooks.png" alt="Jira Webhooks page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/jira-webhooks.png" alt="Jira Webhooks page in dark theme" />
+</Frame>
+
+The **Jira Webhooks** page at `/jira-webhooks` reviews webhook deliveries received from Jira and how each event was processed.
+
+The webhook is optional. Without it, Jira triggers only fire when something already fetched a ticket — a page load, a query, or a workflow step. With it, Jira pushes changes as they happen, so workflows start on their own and Jira pages update live.
+
+## Using the page
+
+- Review each delivery's **Received** time, **Event**, **Issue**, and **Outcome** (received, processed, ignored, or error).
+- For `jira:issue_updated` deliveries, review each changed field and its before and after values under **Details**.
+- New deliveries appear at the top of the first page without a refresh.
+- **Clear history** and page through past deliveries.
+
+## Setting up the webhook
+
+The **Jira webhook** card in **Settings** registers the webhook for you, using the same API token as every other Jira call.
+
+<Steps>
+  <Step title="Check the webhook URL">
+    The card fills in this server's address. Edit it if Jira reaches the server somewhere else — a private or loopback address is rejected, because Jira would accept it and then fail every delivery.
+  </Step>
+  <Step title="Scope it with JQL">
+    Set a filter such as `project in (ABC, XYZ)` so only the projects you automate send deliveries. Each issue-mutating delivery costs one Jira API call to refresh the ticket, so keep the filter tight. Leave it empty to receive every issue event.
+  </Step>
+  <Step title="Register in Jira">
+    **Register in Jira** creates the webhook, subscribes it to the events below, and stores the signing secret on both sides. Editing the URL or the filter and registering again updates the same webhook rather than creating a second one.
+  </Step>
+</Steps>
+
+The registered webhook subscribes to `jira:issue_created`, `jira:issue_updated`, `jira:issue_deleted`, `comment_created`, `worklog_created`, `attachment_created`, `issuelink_created`, `sprint_started`, and `sprint_closed`.
+
+<Warning>
+  Registration uses Jira's classic webhook API, which requires the **Administer Jira** global permission on the account that owns the API token. Without it Jira answers `403` and you have to add the webhook by hand.
+</Warning>
+
+### Adding the webhook by hand
+
+If the token's account is not a Jira admin, **Generate secret** mints a signing secret without touching Jira.
+
+<Steps>
+  <Step title="Generate a signing secret">
+    Click **Generate secret** and copy the webhook URL and the secret. The secret is shown once and is never returned again.
+  </Step>
+  <Step title="Create the webhook in Jira">
+    In Jira, go to **Settings → System → WebHooks** and choose **Create a WebHook**. Paste the URL into **URL** and the secret into **Secret**.
+  </Step>
+  <Step title="Select the events and scope">
+    Subscribe to the nine events listed above and set the same kind of JQL filter.
+  </Step>
+</Steps>
+
+Once deliveries arrive, the **Settings** card shows the time and outcome of the most recent one.
+
+## Workflow triggers
+
+The webhook drives the existing Jira triggers — status changed, label set, assigned to me, comment added, ticket updated, worklog added, sprint started, sprint ended — without waiting for a fetch. It also enables five triggers that only a webhook can produce:
+
+| Trigger | Fires on |
+| --- | --- |
+| **Ticket created** | `jira:issue_created` |
+| **Ticket deleted** | `jira:issue_deleted` |
+| **Ticket comment command** | A comment matching a command pattern, from an allow-listed account |
+| **Attachment added** | `attachment_created` |
+| **Ticket linked** | `issuelink_created` |
+
+**Ticket comment command** is the only Jira trigger that lets outside text start a workflow, so it is deliberately strict: publishing fails unless the trigger has an explicit list of Jira account IDs and a pattern anchored with `^` and `$`. Copy account IDs from the user's Jira profile URL — Jira has no stable handle.
+
+### Ticket update changelog
+
+For `jira:issue_updated`, the app reads Jira's changelog before it refreshes the cached ticket. The changelog identifies the specialized trigger observations that are relevant to the delivery:
+
+- A `status` change updates **Ticket status changed**.
+- A `label` or `labels` change updates **Jira label set**.
+- An `assignee` change updates **Ticket assigned to me** when the ticket is now assigned to the configured Jira account.
+- A `sprint` change updates **Sprint started** and **Sprint ended**.
+- Every issue update updates **Jira ticket updated**, including updates to fields without a specialized trigger.
+
+If Jira omits the changelog, the app falls back to comparing the refreshed ticket snapshot as before.
+
+A workflow started by a webhook-driven Jira update receives the normalized changelog in `changelog.id` and `changelog.items`. Each item includes `field`, `fieldId`, and `fieldType`, plus the raw `from` and `to` values and the human-readable `fromString` and `toString` values. Use the string values when you need the names shown in Jira. Use the raw values when automation needs stable Jira identifiers.
+
+## Notes
+
+- This page appears only when the Jira webhook is configured in Settings.
+- Deliveries arrive at `/api/public/jira/webhook` and are rejected unless signed with the stored secret.
+- Jira identifies each delivery with `X-Atlassian-Webhook-Identifier`, which stays the same across retries. A retry of a delivery that already finished is recorded as a duplicate and does no work; a retry of one that failed is processed again.
+- Rotating the secret invalidates the old one immediately. A registered webhook is updated in Jira at the same time; a hand-made one has to be updated in Jira before the next delivery.
+- **Disable webhook** removes a registered webhook from Jira as well. A webhook someone already deleted there is treated as disabled.
+- Removing your Jira credentials, or changing the Jira site, also clears the webhook secret and its delivery history.
+- Deliveries and their stored changelogs older than 30 days are pruned automatically.
