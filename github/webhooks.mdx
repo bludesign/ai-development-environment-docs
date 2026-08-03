@@ -1,0 +1,21 @@
+---
+title: "GitHub Webhooks"
+description: "Review webhook deliveries received from GitHub and how each event was handled."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/webhooks.png" alt="GitHub Webhooks page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/webhooks.png" alt="GitHub Webhooks page in dark theme" />
+</Frame>
+
+The **GitHub Webhooks** page at `/webhooks` reviews webhook deliveries received from GitHub and how each event was processed.
+
+## Using the page
+
+- Review each delivery's **Received** time, **Event**, **Repository**, and **Outcome** (received, processed, ignored, or error).
+- **Clear history** and page through past deliveries.
+
+## Notes
+
+- This page appears only when a GitHub App webhook is configured in Settings.
+- Deliveries arrive at the signature-verified endpoint `/api/public/github/webhook`.

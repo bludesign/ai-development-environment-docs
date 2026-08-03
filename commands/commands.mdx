@@ -1,0 +1,23 @@
+---
+title: "Commands"
+description: "Create reusable shell commands and inspect their durable runs."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/commands.png" alt="Commands page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/commands.png" alt="Commands page in dark theme" />
+</Frame>
+
+The **Commands** page at `/commands` lets you save reusable shell commands and review their durable run history.
+
+## Using the page
+
+- Switch between the **Runs** and **Definitions** tabs.
+- **New command** saves a reusable definition; **Run custom** executes a one-off script without saving it.
+- Choose where a command runs — an agent home or a repository worktree.
+- Manage runs: **Archive**, **Restore**, **Delete**, **Rerun**, or **Terminate**.
+
+## Notes
+
+- Commands run with the full permissions of the selected agent account and are retained in immutable run history.
+- Interactive input and PTY applications are not supported.

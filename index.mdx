@@ -1,0 +1,47 @@
+---
+title: "Introduction"
+description: "A self-hosted control plane for AI-assisted development across your Macs."
+---
+
+AI Development Environment is a self-hosted dashboard that coordinates AI-assisted development across every Mac you enroll. It keeps Git worktrees, AI Plans and Sessions, builds, shell commands, and durable workflows in one control plane, so long-running work survives restarts and stays inspectable.
+
+<Frame caption="A pass through the Action Center, Worktrees, a worktree's detail page, and Sessions.">
+  <video className="block dark:hidden w-full" src="/images/light/walkthrough.webm" poster="/images/light/worktrees.png" autoPlay loop muted playsInline />
+  <video className="hidden dark:block w-full" src="/images/dark/walkthrough.webm" poster="/images/dark/worktrees.png" autoPlay loop muted playsInline />
+</Frame>
+
+The [Worktrees](/worktrees/worktrees) page in that tour is a good example of how the product works. From a single view you can create a worktree from a branch or a Jira ticket, open it in VS Code, sync, rebase, push, stash, or move it to another Mac, and turn on **Auto Sync** and **Auto Merge** so branches keep themselves current and merge once required checks pass. Every enrolled agent's checkouts appear side by side.
+
+## What you can do
+
+<Columns cols={2}>
+  <Card title="Run AI Plans and Sessions" icon="robot" href="/ai/plans">
+    Survey a codebase read-only with a Plan, then start a Session from it against a worktree. Steer live transcripts, answer questions, and review the resulting changes and cost.
+  </Card>
+  <Card title="Manage worktrees and codebases" icon="code-branch" href="/worktrees/worktrees">
+    Track repositories and checkouts across agents, manage branches and stashes, and share settings between every checkout of a repository.
+  </Card>
+  <Card title="Build, sign, and ship iOS apps" icon="mobile" href="/builds/builds">
+    Configure and run iOS builds, inspect logs, artifacts, tests, and coverage, then export or install over the air. Manage provisioning profiles and enroll devices with Apple.
+  </Card>
+  <Card title="Automate with workflows and commands" icon="diagram-project" href="/workflows/workflows">
+    Draw durable automations on a typed canvas, publish them, and watch runs live. Save reusable shell commands that run through an enrolled agent's login shell.
+  </Card>
+  <Card title="Stay on top of GitHub and Jira" icon="github" href="/github/pull-requests">
+    Review pull requests and review threads, monitor Actions runs and webhook deliveries, and browse Jira projects, boards, and saved JQL queries.
+  </Card>
+  <Card title="Debug what is running" icon="bug" href="/debugging/unified-events">
+    Search console output from builds and devices, watch analytics events arrive, compose and send Apple push notifications, and read everything on one live timeline.
+  </Card>
+</Columns>
+
+## How it fits together
+
+- The **control plane** is a Next.js app with a GraphQL API and a SQLite database that you run on your own machine or server.
+- Each managed Mac runs a **control agent** that makes outbound HTTP and GraphQL WebSocket connections to the control plane. Managed Macs never expose a listening port.
+- Agent identity and job history are durable, so jobs, builds, and Sessions survive restarts while subscriptions deliver live output.
+- Long-lived Jira, GitHub, signing, and APNs secrets go through a server-only [credential service](/system/credentials) backed by the database, HashiCorp Vault, or the macOS Keychain.
+
+<Card title="Quickstart" icon="rocket" href="/quickstart" horizontal>
+  Install the control plane, enroll your first agent, and open the dashboard.
+</Card>

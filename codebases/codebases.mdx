@@ -1,0 +1,23 @@
+---
+title: "Codebases"
+description: "Track Git repositories and checkouts across every enrolled agent."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/codebases.png" alt="Codebases page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/codebases.png" alt="Codebases page in dark theme" />
+</Frame>
+
+The **Codebases** page at `/codebases` tracks registered Git repositories and their checkouts across every enrolled agent, with live sync and availability status.
+
+## Using the page
+
+- **Add codebase** — Browse an online agent, inspect a Git repository, confirm its origin, and save it.
+- **Refresh all** or **Fetch all** eligible codebases, and **group by** agents or repositories.
+- Open a codebase to manage its branches and stashes, or open a repository for shared settings.
+- Configure agent scan and fetch intervals in **Settings**.
+
+## Notes
+
+- Status shows sync state (in sync, ahead, behind, diverged) and availability (available, folder missing, origin changed).
+- Read-only codebase data is also available through REST at `/api/codebases` and through MCP at `/api/mcp`.

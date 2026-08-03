@@ -1,0 +1,25 @@
+---
+title: "Agent details"
+description: "Inspect one enrolled Mac's hardware, capabilities, codebases, and jobs."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/agent-detail.png" alt="Agent details page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/agent-detail.png" alt="Agent details page in dark theme" />
+</Frame>
+
+The agent details page at `/agents/{id}` shows a single enrolled Mac and lets you invoke its capabilities, review its work, and tune its behavior.
+
+## Using the page
+
+- Review **General information** — CPU, operating system, architecture, IP, memory, and disk usage update with each heartbeat.
+- Search **Capabilities**, then expand one to invoke it and inspect its live response.
+- Inspect registered **Codebases** and **Job history**, and queue jobs.
+- Tune **Agent cadence** — codebase scan, durable job reconciliation, Git fetch, and heartbeat intervals (in seconds).
+- Set the **Base repository directory**, **Xcode Derived Data** location, and **Builds directory**.
+- **Delete agent** to permanently remove it and all of its jobs and codebase registrations.
+
+## Notes
+
+- An offline agent shows its stored information read-only until it reconnects.
+- Capabilities can only be invoked while the agent is connected.

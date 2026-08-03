@@ -1,0 +1,38 @@
+---
+title: "APIs"
+description: "The GraphQL API, the read-only codebase REST endpoints, and the MCP endpoint."
+---
+
+## GraphQL
+
+An Apollo Server (Federation subgraph) is mounted at `/api/graphql` through a Next.js route handler. Outside production — or when `APOLLO_SANDBOX=true` — introspection and the Apollo sandbox are enabled, so opening `/api/graphql` in a browser lets you explore the schema.
+
+The SDL lives in `schemas/**/*.graphql` and is bundled into the app by `scripts/prebuild-schema.ts`. Resolvers are dependency-injected factories under `src/graphql/resolvers/`.
+
+A placeholder `health` query verifies database connectivity. It returns `"ok"` when the database is reachable, and `"degraded"` otherwise:
+
+```graphql
+{
+  health
+}
+```
+
+<Warning>
+  `/api/graphql` must stay authenticated. Do not add it to a Cloudflare Access bypass — see [Hosting](/reference/hosting).
+</Warning>
+
+## Codebase REST
+
+Read-only codebase data is also available over REST:
+
+| Endpoint | Returns |
+| --- | --- |
+| `GET /api/codebases` | Registered codebase checkouts. |
+| `GET /api/codebases/by-path?path=/absolute/folder` | One checkout resolved by its exact path. |
+| `GET /api/openapi.json` | The OpenAPI 3.1 contract for both operations. |
+
+## MCP
+
+`/api/mcp` is a stateless Streamable HTTP MCP endpoint exposing `get_codebases` and `get_codebase`.
+
+The [Tools](/system/tools) page discovers and runs these built-in tools. It can also manage and test external Streamable HTTP or legacy SSE MCP servers; saved custom header values stay server-side and are never returned to the browser.

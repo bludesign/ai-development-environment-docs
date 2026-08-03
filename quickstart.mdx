@@ -1,0 +1,221 @@
+---
+title: "Quickstart"
+description: "Install the control plane, enroll an agent, and open the dashboard."
+---
+
+There are three ways to install AI Development Environment. Pick one, then enroll a control agent so the dashboard has a Mac to work with.
+
+| Method | Best for | Default port | Default credential storage |
+| --- | --- | --- | --- |
+| [Homebrew](#option-1-homebrew-macos) | macOS, run as a background service | `3090` | macOS Keychain |
+| [npm](#option-2-npm) | Any platform, prebuilt standalone build | `3090` | Database |
+| [From source](#option-3-from-source) | Developing the app itself | `3000` | Database |
+
+## Prerequisites
+
+- macOS for the control agent, iOS builds, signing, and Keychain credential storage. The control plane itself also runs on Linux.
+- Node.js 24.16 or newer in the Node 24 line, for the npm and source installs.
+- Homebrew, for the Homebrew install.
+- Xcode and its command line tools, if you plan to run iOS builds.
+
+## Option 1: Homebrew (macOS)
+
+<Steps>
+  <Step title="Install and start the service">
+    ```bash
+    brew tap bludesign/ai-development-environment
+    brew install ai-development-environment
+    brew services start ai-development-environment
+    ```
+
+    The service applies pending database migrations on start and listens on `http://127.0.0.1:3090`, with agent GraphQL WebSockets on `ws://127.0.0.1:3091/graphql`. The formula is maintained in [`bludesign/homebrew-ai-development-environment`](https://github.com/bludesign/homebrew-ai-development-environment).
+  </Step>
+  <Step title="Know where things live">
+    The SQLite database is stored under Homebrew's `var/ai-development-environment/`, logs are in `$(brew --prefix)/var/log/`, and every setting — including the credential and Vault variables — lives in the owner-only file:
+
+    ```bash
+    $(brew --prefix)/etc/ai-development-environment.env
+    ```
+
+    Restart with `brew services restart ai-development-environment` after editing it.
+  </Step>
+</Steps>
+
+<Warning>
+  Run Homebrew services without `sudo`. A root service uses a different or unavailable Keychain and can trigger authorization problems.
+</Warning>
+
+## Option 2: npm
+
+<Steps>
+  <Step title="Install the server and agent">
+    ```bash
+    npm install -g @ai-development-environment/server @ai-development-environment/control-agent
+    ```
+
+    [`@ai-development-environment/server`](https://www.npmjs.com/package/@ai-development-environment/server) is a prebuilt standalone build; [`@ai-development-environment/control-agent`](https://www.npmjs.com/package/@ai-development-environment/control-agent) is the agent.
+  </Step>
+  <Step title="Start the server">
+    ```bash
+    ai-development-environment
+    ```
+
+    The command applies pending migrations, then serves `http://127.0.0.1:3090` with agent GraphQL WebSockets on `ws://127.0.0.1:3091/graphql`. Its SQLite database is stored at `~/.ai-development-environment/production.db`.
+  </Step>
+</Steps>
+
+The npm packages track the repository's `vX.Y.Z` release tags — the `publish-npm` job in `.github/workflows/release.yml` publishes both via npm trusted publishing on every release. They accept the same server and credential variables as the Homebrew service, but default to database credential storage on every platform.
+
+## Option 3: From source
+
+<Steps>
+  <Step title="Clone and install dependencies">
+    ```bash
+    git clone https://github.com/bludesign/ai-development-environment.git
+    cd ai-development-environment
+    npm ci
+    ```
+  </Step>
+  <Step title="Configure the database">
+    Copy the example environment file and adjust `DATABASE_URL` if you want the SQLite file somewhere other than `prisma/dev.db`. Only `file:` URLs are accepted.
+
+    ```bash
+    cp .env.example .env
+    ```
+  </Step>
+  <Step title="Start the development environment">
+    ```bash
+    npm run dev:all
+    ```
+
+    This starts Next.js on `http://127.0.0.1:3000` plus a watch-mode local agent on WebSocket port `3092`, leaving ports `3090` and `3091` free for an installed Homebrew service. The agent waits for Next.js, then enrolls `<hostname>-dev` automatically on its first run and reuses that identity from `~/.config/control-agent-dev/config.json` afterwards.
+  </Step>
+</Steps>
+
+Other useful commands:
+
+- `npm run dev` starts only the development server.
+- `npm run build` creates a deployable standalone build, and `npm run start` runs it.
+- `npm run generate` regenerates the Prisma client, bundled GraphQL SDL, and resolver types.
+- `npm run db:migrate` creates and applies a development migration, `npm run db:deploy` applies committed ones, and `npm run db:studio` opens Prisma Studio.
+- `npm run full-check` formats and fixes the project before checking it.
+
+See [Local development](/reference/development) for the full command list, port overrides, and the screenshot pipeline.
+
+## Enroll a control agent
+
+The dashboard needs at least one enrolled Mac before it can create worktrees, run commands, or start builds. The agent connects outbound only — managed Macs never expose a listening port.
+
+<Steps>
+  <Step title="Install the agent">
+    ```bash
+    brew install control-agent
+    ```
+
+    The npm install in Option 2 already includes `@ai-development-environment/control-agent`, and `npm run dev:all` runs its own development agent, so you can skip this step in those cases.
+  </Step>
+  <Step title="Create a one-time enrollment token">
+    Open the [Agents](/agents/agents) page and create an enrollment command. It builds a shell-safe command for you.
+  </Step>
+  <Step title="Run the enrollment on the target Mac">
+    ```bash
+    control-agent enroll --server http://127.0.0.1:3090 --enrollment-token <one-time-token>
+    ```
+
+    Then start it as a service:
+
+    ```bash
+    brew services start control-agent
+    ```
+
+    If your control plane sits behind Cloudflare Access, add each service-token header with a repeatable `--header "Name: value"` argument. The agent keeps those headers only in its owner-readable `0600` config and redacts them from `status`.
+  </Step>
+  <Step title="Verify">
+    ```bash
+    control-agent status
+    ```
+
+    `control-agent doctor` diagnoses a failing connection. The credential and stable agent ID live at `~/.config/control-agent/config.json`.
+  </Step>
+</Steps>
+
+## Set up credential storage
+
+Long-lived Jira, GitHub, cache-server, MCP, iOS signing, App Store Connect, and APNs secrets go through a server-only credential service. Choose a backend with `CREDENTIAL_STORAGE_TYPE`.
+
+<Tabs>
+  <Tab title="Database">
+    The default for npm, Linux, Docker, and source installs. Without an encryption key, new payloads are stored as plaintext and the dashboard shows a warning. Generate a key, set it, and restart:
+
+    ```bash
+    openssl rand -base64 32
+    ```
+
+    Set the result as `CREDENTIAL_ENCRYPTION_KEY`. It must decode to exactly 32 bytes. Adding a valid key encrypts every existing plaintext credential atomically with AES-256-GCM.
+
+    <Warning>
+      Back up the key and keep it. A missing, invalid, or changed key blocks credential reads and writes while encrypted rows exist, and key rotation is not supported yet.
+    </Warning>
+  </Tab>
+  <Tab title="Keychain">
+    The default for Homebrew installs, and macOS only. It uses the native login Keychain service `com.bludesign.ai-development-environment.credentials`.
+
+    ```bash
+    CREDENTIAL_STORAGE_TYPE="keychain"
+    ```
+
+    Selecting it on Linux or in a container leaves the app running but reports an unsupported-backend error, and credential-dependent operations fail.
+  </Tab>
+  <Tab title="Vault">
+    Uses HashiCorp Vault KV v2. `VAULT_ADDR` is required; `VAULT_TOKEN`, `VAULT_NAMESPACE`, `CREDENTIAL_VAULT_MOUNT` (default `secret`), `CREDENTIAL_VAULT_PATH_PREFIX` (default `ai-development-environment/credentials`), and `CREDENTIAL_VAULT_HEADERS` are optional.
+
+    ```bash
+    CREDENTIAL_STORAGE_TYPE="vault"
+    VAULT_ADDR="https://vault.example.com"
+    VAULT_TOKEN="hvs..."
+    ```
+
+    The app needs data read/write plus permanent metadata deletion, and never `LIST`:
+
+    ```hcl
+    path "secret/data/ai-development-environment/credentials/*" {
+      capabilities = ["create", "read", "update"]
+    }
+
+    path "secret/metadata/ai-development-environment/credentials/*" {
+      capabilities = ["delete"]
+    }
+    ```
+  </Tab>
+</Tabs>
+
+Changing `CREDENTIAL_STORAGE_TYPE` does not migrate anything. Items belonging to the previous backend are reported as mismatched and must be re-entered through their own settings forms.
+
+## Optional: public HTTPS
+
+iOS device enrollment, over-the-air installs, and the GitHub webhook need a publicly trusted HTTPS origin. Set `PUBLIC_BASE_URL` to that origin, or run behind a reverse proxy that sends correct `X-Forwarded-Proto` and `X-Forwarded-Host` headers.
+
+Behind Cloudflare Access, add one more-specific Access application for `/api/public/*` with a **Bypass / Everyone** policy — configure the path without a query string. That namespace holds only intentionally unauthenticated endpoints. Keep `/en/devices*`, `/api/ios/enrollment/start`, `/api/ios/devices/export.tsv`, and `/api/graphql` authenticated.
+
+<Warning>
+  Exposing this server publicly exposes every route, not just build artifacts. Do not put an unprotected origin on an untrusted network.
+</Warning>
+
+[Hosting and networking](/reference/hosting) has the full path list, WAF guidance, and how client IPs are trusted.
+
+## Next steps
+
+<Columns cols={2}>
+  <Card title="Action Center" icon="gauge" href="/dashboard">
+    The home screen: live work, pending decisions, failures, and builds ready to run.
+  </Card>
+  <Card title="Create a worktree" icon="code-branch" href="/worktrees/worktrees">
+    Branch from Git or a Jira ticket on any enrolled agent, then enable Auto Sync.
+  </Card>
+  <Card title="Start a Plan" icon="robot" href="/ai/plans">
+    Survey a codebase read-only, then promote the Plan to a Session.
+  </Card>
+  <Card title="Connect integrations" icon="gear" href="/system/settings">
+    Configure GitHub, Jira, Apple services, and development tools.
+  </Card>
+</Columns>

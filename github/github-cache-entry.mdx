@@ -1,0 +1,20 @@
+---
+title: "Cached GraphQL entry"
+description: "Inspect a single cached GitHub GraphQL response."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/github-cache-entry.png" alt="Cached GraphQL entry page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/github-cache-entry.png" alt="Cached GraphQL entry page in dark theme" />
+</Frame>
+
+The cached GraphQL entry page at `/github-cache/entries/{id}` shows a single cached GitHub GraphQL response in full.
+
+## Using the page
+
+- Inspect the cached **query**, **variables**, and **response data**, plus its authentication mode and freshness.
+- **Force refresh** the entry or **Delete from cache**.
+
+## Notes
+
+- Entries are separated by authentication mode and variables, and show the last exact point cost.

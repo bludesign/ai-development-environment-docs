@@ -1,0 +1,22 @@
+---
+title: "GitHub Cache"
+description: "Inspect cached GraphQL reads, exact point costs, API usage, latency, and rate limits."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/github-cache.png" alt="GitHub Cache page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/github-cache.png" alt="GitHub Cache page in dark theme" />
+</Frame>
+
+The **GitHub Cache** page at `/github-cache` inspects cached GitHub GraphQL reads and shows API usage, latency, point costs, and rate limits.
+
+## Using the page
+
+- Set the global **Cache TTL** and add **Custom GraphQL TTLs** for exact operation names.
+- Review **rate limits** (GraphQL and REST), **API operations**, calls by source, and recent calls.
+- Inspect **cached entries**, then **Force refresh**, **Delete**, or **Clear cache**.
+
+## Notes
+
+- TTL controls cache freshness, not how often a page polls GitHub.
+- Overrides apply across authentication modes, request sources, and variables.

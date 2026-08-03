@@ -1,0 +1,22 @@
+---
+title: "Tools"
+description: "Browse, configure, and run built-in and external MCP tools."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/tools.png" alt="Tools page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/tools.png" alt="Tools page in dark theme" />
+</Frame>
+
+The **Tools** page at `/tools` discovers, configures, and runs built-in and external MCP tools.
+
+## Using the page
+
+- Browse the **Tool catalog**, expand a tool, enter its parameters, and **Run** it to inspect the response.
+- Add and manage **External MCP servers** over Streamable HTTP or legacy SSE.
+- **Connect external clients** using the server URL and configuration, and review the **Audit** tab.
+
+## Notes
+
+- Write and destructive tools prompt for confirmation before running.
+- Saved custom header values stay server-side and are never returned to the browser. The MCP endpoint is `/api/mcp`.

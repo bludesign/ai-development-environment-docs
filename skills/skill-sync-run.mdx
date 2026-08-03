@@ -1,0 +1,21 @@
+---
+title: "Skill synchronization"
+description: "Review proposed skill changes across agents and resolve conflicts before applying."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/skill-sync-run.png" alt="Skill synchronization page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/skill-sync-run.png" alt="Skill synchronization page in dark theme" />
+</Frame>
+
+The skill synchronization page at `/skills/sync/{id}` reconciles database, personal, and project skills across agents.
+
+## Using the page
+
+- Review **Agent sync status** and the **Proposed changes** for each participating agent.
+- Resolve conflicts — use the database version, the client copy, or edit manually — then **Apply sync**.
+- Use **Skip pending clients** to apply only the ready changes.
+
+## Notes
+
+- Manual conflict resolution lets you compare complete packages, including text, binary, and executable files.

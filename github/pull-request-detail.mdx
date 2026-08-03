@@ -1,0 +1,21 @@
+---
+title: "Pull request details"
+description: "Inspect a pull request's description, comments, pipelines, and metadata."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/pull-request-detail.png" alt="Pull request details page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/pull-request-detail.png" alt="Pull request details page in dark theme" />
+</Frame>
+
+The pull request details page at `/pull-requests/{owner}/{repo}/{number}` shows a single pull request's description, review comments, and pipelines.
+
+## Using the page
+
+- Review the **Description**, **Comments**, and **Pipelines** — expand a run to see its jobs and steps.
+- **Retry** a job, open the linked **Worktree**, or open the pull request in GitHub.
+- Review **Details** — branches, changed files, commits, and mergeability — and the people involved.
+
+## Notes
+
+- Availability depends on the configured GitHub token having access to the repository.

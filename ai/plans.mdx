@@ -1,0 +1,21 @@
+---
+title: "Plans"
+description: "Read-only Plans that survey a codebase and propose work without changing it."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/plans.png" alt="Plans page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/plans.png" alt="Plans page in dark theme" />
+</Frame>
+
+The **Plans** page at `/plans` lists read-only AI Plans that survey a worktree and propose work without modifying it.
+
+## Using the page
+
+- **New Plan** starts a read-only run against a selected worktree.
+- Search and filter Plans, and open one to view its activity and proposed work.
+- **Run Plan** turns a completed Plan into an implementation Session.
+
+## Notes
+
+- Plans are read-only — the app warns if a Plan unexpectedly changes the selected worktree.

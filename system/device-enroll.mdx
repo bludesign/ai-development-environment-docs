@@ -1,0 +1,32 @@
+---
+title: "Enroll device"
+description: "Install a temporary signed profile to send a device's development identifier securely."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/device-enroll.png" alt="Enroll device page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/device-enroll.png" alt="Enroll device page in dark theme" />
+</Frame>
+
+The enroll device page at `/devices/enroll` walks through installing a temporary signed profile that returns a device's development identifier.
+
+## Using the page
+
+- Enter a recognizable **Device label** — Apple's profile service cannot read the name set in iOS Settings.
+- Consent to collection of the device identifier, product, software version, and observed IP.
+- **Download enrollment profile** and install it on the iPhone or iPad.
+
+## How the flow works
+
+1. You open the authenticated `/en/devices/enroll` page (or the equivalent locale), supply a device label, and consent to the disclosed collection.
+2. You install the temporary profile, which requests only `UDID`, `PRODUCT`, and `VERSION`.
+3. iOS returns those values to a short-lived, token-authenticated callback. The server also records the IP address observed at profile download and at response time.
+
+## Notes
+
+- Enrollment is disabled unless the address is public HTTPS (or `PUBLIC_BASE_URL` is set).
+- The self-signed profile appears as **Unverified** in iOS — confirm the displayed organization before installing.
+- Each enrollment token carries 256 bits of randomness, expires after 30 minutes, is stored only as a SHA-256 hash, and is consumed atomically.
+- Identical iOS callback retries are idempotent; a different replay is rejected.
+- Expired, unattached enrollments are retained for seven days before cleanup.
+- The first enrollment automatically creates a ten-year RSA-2048/SHA-256 self-signed profile signer. Its certificate and private key live in the [database](/reference/database) and are excluded from ordinary logs and list views.

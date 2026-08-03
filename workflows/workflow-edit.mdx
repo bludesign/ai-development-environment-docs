@@ -1,0 +1,24 @@
+---
+title: "Workflow editor"
+description: "Drag steps onto the canvas, connect typed handles, then validate and publish."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/workflow-edit.png" alt="Workflow editor in light theme" />
+  <img className="hidden dark:block" src="/images/dark/workflow-edit.png" alt="Workflow editor in dark theme" />
+</Frame>
+
+The workflow editor at `/workflows/{id}/edit` is a visual canvas for building durable automations from typed steps.
+
+## Using the page
+
+- Drag steps from the **palette** onto the canvas and connect their typed handles.
+- Configure each step — retry strategy, failure policy, conditions, choices, and model settings.
+- **Validate** to surface diagnostics, **Save draft**, then **Publish** an immutable version.
+- Adjust **Workflow settings**: name, description, overlap policy, maximum concurrent runs, and connector or viewer layout.
+
+## Notes
+
+- Publishing creates an immutable version — save the workflow before publishing it.
+- A trigger is required, and the graph must be acyclic and fully connected.
+- Steps that change external state warn you to configure an idempotency strategy and avoid blind retries.

@@ -1,0 +1,21 @@
+---
+title: "Command run"
+description: "Watch a command's terminal output, attempts, and immutable snapshot."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/command-run.png" alt="Command run page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/command-run.png" alt="Command run page in dark theme" />
+</Frame>
+
+The command run page at `/commands/runs/{id}` shows a single run's live terminal output and history.
+
+## Using the page
+
+- Watch **Terminal output** live — follow output, search, or view the raw log.
+- Review **Attempts**, **Timing**, and the immutable **command snapshot**.
+- **Rerun** the command or **Terminate** an active run.
+
+## Notes
+
+- Restart attempts that run for at least one minute reset the burst counter before their next exit is evaluated.

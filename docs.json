@@ -1,0 +1,225 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "AI Development Environment",
+  "description": "A self-hosted control plane for AI-assisted development across your Macs.",
+  "colors": {
+    "primary": "#1447E6",
+    "light": "#5186FF",
+    "dark": "#133DB8"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "pages": [
+      {
+        "group": "Getting Started",
+        "icon": "rocket",
+        "pages": [
+          "index",
+          "quickstart",
+          "screenshots"
+        ]
+      },
+      {
+        "group": "Dashboard",
+        "icon": "gauge",
+        "pages": [
+          "dashboard",
+          {
+            "group": "Agents",
+            "pages": [
+              "agents/agents",
+              "agents/agent-detail",
+              "agents/job-detail"
+            ]
+          },
+          {
+            "group": "Workflows",
+            "pages": [
+              "workflows/workflows",
+              "workflows/workflow-detail",
+              "workflows/workflow-new",
+              "workflows/workflow-edit",
+              "workflows/workflow-run"
+            ]
+          },
+          {
+            "group": "Commands",
+            "pages": [
+              "commands/commands",
+              "commands/command-new",
+              "commands/command-edit",
+              "commands/command-run"
+            ]
+          },
+          {
+            "group": "Codebases",
+            "pages": [
+              "codebases/codebases",
+              "codebases/codebase-detail",
+              "codebases/repository-detail"
+            ]
+          },
+          {
+            "group": "Worktrees",
+            "pages": [
+              "worktrees/worktrees",
+              "worktrees/worktree-detail"
+            ]
+          },
+          {
+            "group": "Builds",
+            "pages": [
+              "builds/builds",
+              "builds/build-detail",
+              "builds/build-coverage"
+            ]
+          },
+          "notifications"
+        ]
+      },
+      {
+        "group": "AI",
+        "icon": "robot",
+        "pages": [
+          {
+            "group": "Plans",
+            "pages": [
+              "ai/plans",
+              "ai/plan-detail"
+            ]
+          },
+          {
+            "group": "Sessions",
+            "pages": [
+              "ai/sessions",
+              "ai/session-detail"
+            ]
+          },
+          {
+            "group": "Drafts & runs",
+            "pages": [
+              "ai/drafts",
+              "ai/run-new"
+            ]
+          },
+          "ai/usage",
+          "ai/costs",
+          {
+            "group": "Skills",
+            "pages": [
+              "skills/skills",
+              "skills/skill-detail",
+              "skills/skill-groups",
+              "skills/skill-group-detail",
+              "skills/skill-sync-run"
+            ]
+          }
+        ]
+      },
+      {
+        "group": "Debugging",
+        "icon": "bug",
+        "pages": [
+          "debugging/push-notifications",
+          "debugging/console-logs",
+          "debugging/analytics-events",
+          "debugging/unified-events"
+        ]
+      },
+      {
+        "group": "GitHub",
+        "icon": "github",
+        "pages": [
+          "github/pull-requests",
+          "github/pull-request-detail",
+          "github/actions",
+          "github/webhooks",
+          "github/comments",
+          "github/github-cache",
+          "github/github-cache-entry",
+          "github/actions-cache"
+        ]
+      },
+      {
+        "group": "Jira",
+        "icon": "jira",
+        "pages": [
+          "jira/jira-tickets",
+          "jira/jira-ticket-detail",
+          "jira/jira-cache",
+          "jira/jira-cache-ticket"
+        ]
+      },
+      {
+        "group": "System",
+        "icon": "gear",
+        "pages": [
+          "system/polling",
+          "system/build-data",
+          "system/provisioning-profiles",
+          "system/provisioning-profile-detail",
+          "system/devices",
+          "system/device-detail",
+          "system/device-enroll",
+          "system/tools",
+          "system/credentials",
+          "system/settings"
+        ]
+      },
+      {
+        "group": "Reference",
+        "icon": "book",
+        "pages": [
+          "reference/development",
+          "reference/api",
+          "reference/database",
+          "reference/hosting"
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "GitHub Project",
+          "href": "https://github.com/bludesign/ai-development-environment",
+          "icon": "github"
+        }
+      ]
+    }
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Issues",
+        "href": "https://github.com/bludesign/ai-development-environment/issues"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Get started",
+      "href": "/quickstart"
+    }
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/bludesign/ai-development-environment"
+    }
+  }
+}

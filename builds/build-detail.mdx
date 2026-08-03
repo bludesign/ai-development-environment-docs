@@ -1,0 +1,23 @@
+---
+title: "Build details"
+description: "Inspect a build's logs, artifacts, tests, and export or install it."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/build-detail.png" alt="Build details page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/build-detail.png" alt="Build details page in dark theme" />
+</Frame>
+
+The build details page at `/builds/{id}` shows a single immutable build, its output, and its distribution options.
+
+## Using the page
+
+- Watch **Logs** live, review **Artifacts**, the **Overview**, and the command summary.
+- **Export archive** — Debugging, Release Testing, Enterprise, or App Store Connect — locally as an IPA.
+- **Install on device** over the air, **Run** on selected devices, **Rebuild**, or **Cancel**.
+- Parse **Test results** and generate a **coverage report**.
+
+## Notes
+
+- Over-the-air installation requires a public HTTPS address and must be opened on an iPhone or iPad.
+- App Store Connect builds cannot be installed over the air — export with Debugging, Release Testing, or Enterprise instead.

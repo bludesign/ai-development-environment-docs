@@ -1,0 +1,20 @@
+---
+title: "Polling"
+description: "Inspect background server and agent operations, their cadence, freshness, and failures."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/polling.png" alt="Polling page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/polling.png" alt="Polling page in dark theme" />
+</Frame>
+
+The **Polling** page at `/polling` inspects the background operations that keep the control plane and agents in sync.
+
+## Using the page
+
+- Review **Server operations** and **Agent operations** with their **status**, **cadence**, last started and completed times, and next poll.
+
+## Notes
+
+- This page is read-only diagnostics — operation cadence is configured on the relevant settings and agent pages.
+- Operations include codebase scan, Git fetch, agent heartbeat, job reconciliation, and GitHub notifications and auto-retry.

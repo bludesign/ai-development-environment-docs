@@ -1,0 +1,23 @@
+---
+title: "Worktrees"
+description: "Manage primary and linked Git worktrees across every enrolled agent."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktrees.png" alt="Worktrees page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/worktrees.png" alt="Worktrees page in dark theme" />
+</Frame>
+
+The **Worktrees** page at `/worktrees` manages primary and linked Git worktrees across every enrolled agent, with rich Git and automation actions.
+
+## Using the page
+
+- **Create worktree** from a new branch, an existing branch, or a Jira ticket on a chosen agent and repository.
+- Use per-worktree actions: **Open in VS Code**, **Sync**, **Rebase**, **Push**/**Publish**, **Reset**, **Stash**, **Move to agent**, and **Delete**.
+- Enable **Auto Sync** (rebase when the target branch changes) or **Auto Merge** (merge once required checks pass).
+- Search and filter, switch between card and table layouts, and manage worktree **tags**.
+
+## Notes
+
+- Missing worktrees are retained for seven days and restored on rediscovery.
+- Moving a worktree pushes its branch and checks it out on the destination agent.

@@ -1,0 +1,23 @@
+---
+title: "Workflow details"
+description: "Review a workflow's published version, graph, runs, and quick actions."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/workflow-detail.png" alt="Workflow details page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/workflow-detail.png" alt="Workflow details page in dark theme" />
+</Frame>
+
+The workflow details page at `/workflows/{id}` shows a single workflow: its published version, graph, recent runs, and version history.
+
+## Using the page
+
+- Review the **published version**, the **workflow graph**, and **recent runs**.
+- Open **Version history** to inspect or export prior immutable versions.
+- Configure **Quick actions** — where the workflow appears as a button — and its **Repository availability**.
+- Start a run with **Run**, or open a linked resource.
+
+## Notes
+
+- A workflow must be published before it can run.
+- Quick actions appear only when the workflow is published, enabled, and matched to the current resource.

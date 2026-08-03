@@ -1,0 +1,24 @@
+---
+title: "Agents"
+description: "Manage enrolled Macs and durable jobs from one control plane."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/agents.png" alt="Agents page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/agents.png" alt="Agents page in dark theme" />
+</Frame>
+
+The **Agents** page at `/agents` lists every enrolled Mac and lets you pair new ones. Each agent runs `control-agent` and connects outbound to this control plane.
+
+## Using the page
+
+- **Enroll agent** — Generate a one-time enrollment command, then run it on the Mac after installing `control-agent`.
+- Optionally set a **custom server address** and **Cloudflare Access headers** that are added only to that command.
+- **Copy command** and run it on the target Mac. The Mac connects outbound and does not open a listening port.
+- Select any agent to open its detail page (hardware, capabilities, codebases, and jobs).
+
+## Notes
+
+- Each enrollment token expires at the time shown on the command.
+- Columns show **Version**, **Platform**, and **Last seen** for each agent.
+- In development, the first run auto-enrolls a `-dev` agent for the current host.

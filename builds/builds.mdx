@@ -1,0 +1,22 @@
+---
+title: "Builds"
+description: "Configure, run, inspect, deploy, and export iOS builds across codebases and worktrees."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/builds.png" alt="Builds page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/builds.png" alt="Builds page in dark theme" />
+</Frame>
+
+The **Builds** page at `/builds` is the home for iOS build history and the reusable build scripts that run around each build.
+
+## Using the page
+
+- Review build **History**, filter by status, and delete build records along with their folders.
+- Create reusable **Build Scripts** — pre-build and post-build JavaScript hooks — and allow them per repository.
+- Start builds from a worktree using a saved configuration and destination (see [Worktrees](/worktrees/worktrees)).
+
+## Notes
+
+- Build records are immutable; each build has its own folder for logs, products, archives, and exports.
+- Build scripts are trusted Node.js ESM hooks that run from the worktree root with a minimal environment.

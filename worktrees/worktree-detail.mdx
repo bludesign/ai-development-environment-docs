@@ -1,0 +1,22 @@
+---
+title: "Worktree details"
+description: "Inspect a worktree's overview, working tree, changes, and coverage."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-detail.png" alt="Worktree details page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/worktree-detail.png" alt="Worktree details page in dark theme" />
+</Frame>
+
+The worktree details page at `/worktrees/{id}` shows a single worktree's status, commits, changes, and coverage reports.
+
+## Using the page
+
+- Review the **Overview** (repository, origin and base status, HEAD commit) and the **Working tree**.
+- Inspect **Branch changes** and diffs, with side-by-side or overlap views and image transparency comparison.
+- Open **Code coverage** reports generated for the worktree.
+
+## Notes
+
+- Live inspection of commits and changes requires the agent to be online and up to date.
+- Diffs are truncated at a display limit for very large changes.

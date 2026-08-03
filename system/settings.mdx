@@ -1,0 +1,22 @@
+---
+title: "Settings"
+description: "Configure development tools, Apple services, and external integrations."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/settings.png" alt="Settings page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/settings.png" alt="Settings page in dark theme" />
+</Frame>
+
+The **Settings** page at `/settings` configures the development tools, Apple services, and external integrations used throughout the app.
+
+## Using the page
+
+- **Development** — Choose which VS Code edition opens worktrees, or hide editor actions.
+- **Apple services** — Configure the iOS enrollment profile signer, App Store Connect Devices API, and APNs push credentials.
+- **Integrations** — Connect **Jira**, **GitHub** (personal access token and a GitHub App for pipeline retries), and the **Actions Cache Server**.
+
+## Notes
+
+- Credentials entered here are stored server-side and never returned to the browser.
+- Saving GitHub, Jira, and cache-server credentials verifies the connection before it is used.

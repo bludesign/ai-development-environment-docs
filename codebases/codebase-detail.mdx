@@ -1,0 +1,22 @@
+---
+title: "Codebase details"
+description: "Manage one agent checkout's branches and stashes."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/codebase-detail.png" alt="Codebase details page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/codebase-detail.png" alt="Codebase details page in dark theme" />
+</Frame>
+
+The codebase details page at `/codebases/{id}` shows a single agent checkout and lets you manage its Git branches and stashes.
+
+## Using the page
+
+- **Fetch origin** or **Refresh** the checkout's status.
+- Search, switch, check out, pull, or delete local and remote **branches** — when the tree is dirty, use stash-and-switch.
+- Preview, apply, or delete **stashes**, and copy a stash patch.
+
+## Notes
+
+- An offline or unsupported agent shows stored branch information read-only.
+- Git cannot delete the current, default, or another worktree's branch.
