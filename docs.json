@@ -10,171 +10,192 @@
   },
   "favicon": "/favicon.svg",
   "navigation": {
-    "pages": [
+    "tabs": [
       {
-        "group": "Getting Started",
-        "icon": "rocket",
-        "pages": [
-          "index",
-          "quickstart",
-          "screenshots"
-        ]
-      },
-      {
-        "group": "Dashboard",
-        "icon": "gauge",
-        "pages": [
-          "dashboard",
+        "tab": "Documentation",
+        "groups": [
           {
-            "group": "Agents",
+            "group": "Getting Started",
+            "icon": "rocket",
             "pages": [
-              "agents/agents",
-              "agents/agent-detail",
-              "agents/job-detail"
+              "index",
+              "quickstart",
+              "screenshots"
             ]
           },
           {
-            "group": "Workflows",
+            "group": "Dashboard",
+            "icon": "gauge",
             "pages": [
-              "workflows/workflows",
-              "workflows/workflow-detail",
-              "workflows/workflow-new",
-              "workflows/workflow-edit",
-              "workflows/workflow-run"
+              "dashboard",
+              {
+                "group": "Agents",
+                "pages": [
+                  "agents/agents",
+                  "agents/agent-detail",
+                  "agents/job-detail"
+                ]
+              },
+              {
+                "group": "Workflows",
+                "pages": [
+                  "workflows/workflows",
+                  "workflows/workflow-detail",
+                  "workflows/workflow-new",
+                  "workflows/workflow-edit",
+                  "workflows/workflow-run"
+                ]
+              },
+              {
+                "group": "Commands",
+                "pages": [
+                  "commands/commands",
+                  "commands/command-new",
+                  "commands/command-edit",
+                  "commands/command-run"
+                ]
+              },
+              {
+                "group": "Codebases",
+                "pages": [
+                  "codebases/codebases",
+                  "codebases/codebase-detail",
+                  "codebases/repository-detail"
+                ]
+              },
+              {
+                "group": "Worktrees",
+                "pages": [
+                  "worktrees/worktrees",
+                  "worktrees/worktree-detail"
+                ]
+              },
+              {
+                "group": "Builds",
+                "pages": [
+                  "builds/builds",
+                  "builds/build-detail",
+                  "builds/build-coverage"
+                ]
+              },
+              "notifications"
             ]
           },
           {
-            "group": "Commands",
+            "group": "AI",
+            "icon": "robot",
             "pages": [
-              "commands/commands",
-              "commands/command-new",
-              "commands/command-edit",
-              "commands/command-run"
+              {
+                "group": "Plans",
+                "pages": [
+                  "ai/plans",
+                  "ai/plan-detail"
+                ]
+              },
+              {
+                "group": "Sessions",
+                "pages": [
+                  "ai/sessions",
+                  "ai/session-detail"
+                ]
+              },
+              {
+                "group": "Drafts & runs",
+                "pages": [
+                  "ai/drafts",
+                  "ai/run-new"
+                ]
+              },
+              "ai/usage",
+              "ai/costs",
+              {
+                "group": "Skills",
+                "pages": [
+                  "skills/skills",
+                  "skills/skill-detail",
+                  "skills/skill-groups",
+                  "skills/skill-group-detail",
+                  "skills/skill-sync-run"
+                ]
+              }
             ]
           },
           {
-            "group": "Codebases",
+            "group": "Debugging",
+            "icon": "bug",
             "pages": [
-              "codebases/codebases",
-              "codebases/codebase-detail",
-              "codebases/repository-detail"
+              "debugging/push-notifications",
+              "debugging/console-logs",
+              "debugging/analytics-events",
+              "debugging/unified-events"
             ]
           },
           {
-            "group": "Worktrees",
+            "group": "GitHub",
+            "icon": "github",
             "pages": [
-              "worktrees/worktrees",
-              "worktrees/worktree-detail"
+              "github/pull-requests",
+              "github/pull-request-detail",
+              "github/actions",
+              "github/webhooks",
+              "github/comments",
+              "github/github-cache",
+              "github/github-cache-entry",
+              "github/actions-cache"
             ]
           },
           {
-            "group": "Builds",
+            "group": "Jira",
+            "icon": "jira",
             "pages": [
-              "builds/builds",
-              "builds/build-detail",
-              "builds/build-coverage"
-            ]
-          },
-          "notifications"
-        ]
-      },
-      {
-        "group": "AI",
-        "icon": "robot",
-        "pages": [
-          {
-            "group": "Plans",
-            "pages": [
-              "ai/plans",
-              "ai/plan-detail"
+              "jira/jira-tickets",
+              "jira/jira-ticket-detail",
+              "jira/jira-cache",
+              "jira/jira-cache-ticket"
             ]
           },
           {
-            "group": "Sessions",
+            "group": "System",
+            "icon": "gear",
             "pages": [
-              "ai/sessions",
-              "ai/session-detail"
+              "system/polling",
+              "system/build-data",
+              "system/provisioning-profiles",
+              "system/provisioning-profile-detail",
+              "system/devices",
+              "system/device-detail",
+              "system/device-enroll",
+              "system/tools",
+              "system/credentials",
+              "system/settings"
             ]
           },
           {
-            "group": "Drafts & runs",
+            "group": "Reference",
+            "icon": "book",
             "pages": [
-              "ai/drafts",
-              "ai/run-new"
-            ]
-          },
-          "ai/usage",
-          "ai/costs",
-          {
-            "group": "Skills",
-            "pages": [
-              "skills/skills",
-              "skills/skill-detail",
-              "skills/skill-groups",
-              "skills/skill-group-detail",
-              "skills/skill-sync-run"
+              "reference/development",
+              "reference/api",
+              "reference/database",
+              "reference/hosting"
             ]
           }
         ]
       },
       {
-        "group": "Debugging",
-        "icon": "bug",
-        "pages": [
-          "debugging/push-notifications",
-          "debugging/console-logs",
-          "debugging/analytics-events",
-          "debugging/unified-events"
-        ]
-      },
-      {
-        "group": "GitHub",
-        "icon": "github",
-        "pages": [
-          "github/pull-requests",
-          "github/pull-request-detail",
-          "github/actions",
-          "github/webhooks",
-          "github/comments",
-          "github/github-cache",
-          "github/github-cache-entry",
-          "github/actions-cache"
-        ]
-      },
-      {
-        "group": "Jira",
-        "icon": "jira",
-        "pages": [
-          "jira/jira-tickets",
-          "jira/jira-ticket-detail",
-          "jira/jira-cache",
-          "jira/jira-cache-ticket"
-        ]
-      },
-      {
-        "group": "System",
-        "icon": "gear",
-        "pages": [
-          "system/polling",
-          "system/build-data",
-          "system/provisioning-profiles",
-          "system/provisioning-profile-detail",
-          "system/devices",
-          "system/device-detail",
-          "system/device-enroll",
-          "system/tools",
-          "system/credentials",
-          "system/settings"
-        ]
-      },
-      {
-        "group": "Reference",
-        "icon": "book",
-        "pages": [
-          "reference/development",
-          "reference/api",
-          "reference/database",
-          "reference/hosting"
+        "tab": "GraphQL API",
+        "graphql": {
+          "source": "schema.graphql",
+          "directory": "graphql-reference"
+        },
+        "groups": [
+          {
+            "group": "Overview",
+            "icon": "diagram-project",
+            "pages": [
+              "graphql/overview"
+            ]
+          }
         ]
       }
     ],

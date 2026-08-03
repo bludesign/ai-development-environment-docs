@@ -1,0 +1,90 @@
+---
+title: "GraphQL API"
+description: "Endpoint, authentication, subscriptions, and how to read the generated schema reference."
+---
+
+The control plane exposes a single GraphQL endpoint that backs the entire dashboard. Every page in the app — Action Center, agents, builds, Plans and Sessions, workflows — reads and writes through it, so anything the UI can do is available to a script or an external client.
+
+The **Queries**, **Mutations**, and **Types** sections in this tab are generated directly from the shipped schema, so they always match the SDL the server serves.
+
+## Endpoint
+
+| Purpose | Address |
+| --- | --- |
+| GraphQL over HTTP | `POST /api/graphql` |
+| Agent WebSocket (Homebrew service) | `ws://127.0.0.1:3091/graphql` |
+| Agent WebSocket (development) | `ws://127.0.0.1:3092/graphql` |
+
+An Apollo Server (Federation subgraph) is mounted at `/api/graphql` through a Next.js route handler. Outside production — or when `APOLLO_SANDBOX=true` — introspection and the Apollo sandbox are enabled, so opening `/api/graphql` in a browser lets you explore the schema interactively.
+
+Control agents on managed Macs connect outbound to the WebSocket port and never expose a listening port of their own. See [Development](/reference/development) for the environment variables that move those ports.
+
+<Warning>
+  `/api/graphql` must stay authenticated. Do not add it to a Cloudflare Access bypass — see [Hosting](/reference/hosting).
+</Warning>
+
+## Apollo Studio
+
+The published schema is also available as a public graph in Apollo Studio:
+
+<Card title="ai-development-environment on Apollo Studio" icon="rocket" href="https://studio.apollographql.com/public/ai-development-environment/variant/current">
+  Browse the schema, search types and fields, and read the generated docs without running the control plane.
+</Card>
+
+Studio is the easiest way to explore the graph when you do not have a local server: it covers every root type — including subscriptions, which the generated sidebar here omits — and its Explorer builds and formats operations for you. To run those operations, point Explorer at your own `/api/graphql` endpoint and supply the usual authentication; the public graph itself is schema-only.
+
+## Check connectivity
+
+The `health` query verifies database connectivity. It returns `"ok"` when the database is reachable and `"degraded"` otherwise:
+
+```graphql
+query Health {
+  health
+}
+```
+
+```bash
+curl -s http://127.0.0.1:3090/api/graphql \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"{ health }"}'
+```
+
+## Queries and mutations
+
+Queries read control-plane state: agents and their jobs, codebases and worktrees, builds and build logs, AI Plans, Sessions and runs, workflows, commands, skills, GitHub and Jira caches, devices, signing assets, and settings.
+
+Mutations drive the same objects: enroll and configure agents, start and cancel builds, create worktrees, launch AI runs, answer run questions, edit and run workflows and commands, sync skills, and update settings.
+
+```graphql
+query Agents {
+  agents {
+    id
+    name
+    hostname
+    connectionStatus
+    lastSeenAt
+  }
+}
+```
+
+Arguments, return types, deprecations, and a sample response are listed on each generated operation page — for example [`agents`](/graphql-reference/queries/agents) and [`enrollAgent`](/graphql-reference/mutations/enrollAgent). Field types link through to the **Types** section, so you can walk the graph from any operation.
+
+## Subscriptions
+
+The schema also defines subscriptions, which power the dashboard's live output — job and build logs, run events, Action Center changes, and status updates. Mintlify generates pages for `Query` and `Mutation` fields only, so subscriptions do not appear in the sidebar. Their payloads do: each one resolves to a documented type, such as [`BuildLogChunk`](/graphql-reference/types/BuildLogChunk) below. For the full subscription list, use [Apollo Studio](https://studio.apollographql.com/public/ai-development-environment/variant/current) or the Apollo sandbox at `/api/graphql`.
+
+Log chunks arrive Base64-encoded, with a sequence number for ordering:
+
+```graphql
+subscription BuildLogs($buildId: ID!) {
+  buildLogChunkAdded(buildId: $buildId) {
+    sequence
+    stream
+    dataBase64
+  }
+}
+```
+
+## Related endpoints
+
+Read-only codebase data over REST and the Streamable HTTP MCP endpoint are documented in [APIs](/reference/api).
