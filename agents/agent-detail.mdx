@@ -10,6 +10,14 @@ description: "Inspect one enrolled machine's hardware, capabilities, codebases, 
 
 The agent details page at `/agents/{id}` is the full control surface for one enrolled machine or container: what it is, what it can do, what it is hosting, how often it checks in, and where it puts things on disk.
 
+## Renaming an agent
+
+The pencil beside the agent's name edits it in place. Type the new name, then **Save**. Names are 1–200 characters and do not have to be unique, and the change propagates live to every page listing that agent.
+
+<Note>
+  The name is the control plane's label for the machine, not its hostname. Renaming touches nothing on the machine itself and does not require the agent to be online.
+</Note>
+
 ## General information
 
 Hardware and resource figures come from the agent's heartbeat, so they are as fresh as the heartbeat interval allows.

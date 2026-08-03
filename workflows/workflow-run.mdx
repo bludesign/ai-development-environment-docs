@@ -62,7 +62,7 @@ Replay re-executes part of a run from a chosen step.
     Choose the step to rewind to.
   </Step>
   <Step title="Prepare the replay" icon="eye">
-    **Prepare replay** computes a preview: how many descendant steps will re-run, and which external effects the original pass already caused.
+    **Prepare replay** computes a preview: how many descendant steps will re-run and which ones they are, by name; how many other steps keep their current results; and which external effects the original pass already caused.
   </Step>
   <Step title="Choose how to handle Git state" icon="code-branch">
     - **Replay without Git restore** — leave the working tree exactly as it is.
@@ -77,6 +77,13 @@ Replay re-executes part of a run from a chosen step.
 
 Replaying creates a new append-only generation. The original attempts stay in history, marked **Superseded**.
 
+### Steps a replay did not re-run
+
+A replay writes a row for every step of the graph, not just the ones it re-executes. Steps outside the replayed branch are carried forward from the previous generation with their earlier result attached, and are marked so you can tell them apart:
+
+- In the run graph they carry a **Reused** marker and a dimmed status badge, and they show no generation label — the generation belongs to the replay, not to a result that was produced earlier.
+- In **Step attempts** their **Phase** reads **Reused** and the row is dimmed. Steps queued for the replay itself read **Queued for replay** until they start.
+
 ## Tabs
 
 <Tabs>
@@ -84,7 +91,7 @@ Replaying creates a new append-only generation. The original attempts stay in hi
     Every event the run has emitted, in order. Event types include run lifecycle events — started, pausing, paused, resumed, cancelled, succeeded, failed, data repaired, replayed — and step events: succeeded, failed, blocked, waiting, retry scheduled, recovery blocked, and waiting for codebase.
   </Tab>
   <Tab title="Step attempts">
-    One row per attempt with **Step**, **Status**, **Generation**, **Iteration**, **Attempt**, **Duration**, and **Error**. Iteration distinguishes passes through a **For each** body; attempt distinguishes retries of the same step.
+    One row per attempt with **Step**, **Status**, **Phase**, **Generation**, **Iteration**, **Attempt**, **Duration**, and **Error**. Phase is the scheduler's own sub-state for the attempt — including **Reused** and **Queued for replay** after a replay. Iteration distinguishes passes through a **For each** body; attempt distinguishes retries of the same step.
 
     Attempt statuses include Pending, Ready, Running, Waiting, Blocked, Succeeded, Failed, Skipped, Superseded, and Timed out.
   </Tab>

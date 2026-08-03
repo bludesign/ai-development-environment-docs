@@ -549,6 +549,12 @@ type Query {
     first: Int = 1000
   ): [CommandRunOutputChunk!]!
 
+  """Returns an export of a command definition."""
+  exportCommandDefinition(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): JSON!
+
   """Returns command definitions eligible for the specified agent."""
   eligibleCommandsForAgent(
     """Identifier of the agent."""
@@ -1594,6 +1600,15 @@ type Mutation {
     agentId: ID!
   ): Boolean!
 
+  """Renames an agent and returns the updated agent."""
+  renameAgent(
+    """Identifier of the agent."""
+    agentId: ID!
+
+    """The name to use for the request."""
+    name: String!
+  ): Agent!
+
   """Updates an agent base repo directory and returns the updated agent."""
   updateAgentBaseRepoDirectory(
     """Identifier of the agent."""
@@ -2010,6 +2025,20 @@ type Mutation {
     """Values for the requested operation."""
     input: CommandDefinitionInput!
   ): CommandDefinition!
+
+  """Imports a command definition and returns a command definition."""
+  importCommandDefinition(
+    """Values for the requested operation."""
+    input: ImportCommandDefinitionInput!
+  ): CommandDefinition!
+
+  """
+  Deletes a command definition and reports whether the operation succeeded.
+  """
+  deleteCommandDefinition(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): Boolean!
 
   """Archives a command definition and returns a command definition."""
   archiveCommandDefinition(
@@ -7306,6 +7335,15 @@ input CommandDefinitionInput {
 
   """Whether notifications enabled applies to the request."""
   notificationsEnabled: Boolean = true
+}
+
+"""Values used to import a command definition."""
+input ImportCommandDefinitionInput {
+  """The payload to use for the request."""
+  payload: JSON!
+
+  """The name to use for the request."""
+  name: String
 }
 
 """Values used to start a command run."""

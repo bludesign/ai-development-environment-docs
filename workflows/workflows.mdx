@@ -25,7 +25,25 @@ Each workflow shows its name, description, enabled state, version count, and run
 | **Archive** | Hides the workflow from the active view without deleting it |
 | **Export** | Downloads the definition as a file |
 
-**New workflow** opens the editor on a blank canvas. **Import** loads an exported definition file back in as a draft — the round trip is how you move a workflow between control planes.
+Clicking anywhere on a card opens that workflow. The name, the menu, and the links inside the card keep their own behavior.
+
+**New workflow** opens the editor on a blank canvas. **Import** loads exported definition files back in as drafts — the round trip is how you move a workflow between control planes.
+
+### Managing workflows
+
+**Edit** turns on selection on this tab. In selection mode a card toggles instead of opening, and each card header carries a checkbox.
+
+- **Select all** picks up every workflow matching the current search.
+- **Export** downloads one `<name>.workflow.json` file per selected workflow.
+- **Delete** permanently removes the selected workflows.
+
+<Warning>
+  Deleting a workflow is permanent. A workflow that has run history cannot be deleted — archive it instead. Deleting a mixed selection removes what it can and reports what stopped it.
+</Warning>
+
+### Importing several files
+
+**Import** accepts more than one file at a time. A single file opens straight in the [workflow editor](/workflows/workflow-edit); several files import in place and the new cards appear on this tab. Each file is handled on its own, so one unreadable file names itself in the error banner rather than costing you the rest of the batch.
 
 <Note>
   Enabled and published are different things. A workflow must be **published** to have an immutable version to run, and **enabled** for its triggers to fire. Pausing leaves the published version intact and simply stops new runs.

@@ -23,11 +23,15 @@ Instead, this page issues a one-time signed enrollment profile. The tester insta
 | --- | --- |
 | **Device** | The label given at enrollment |
 | **Status** | Local lifecycle status (see below) |
-| **Product** | The Apple model identifier reported by iOS |
+| **Product** | The marketing name for the reported model, with the OS version beneath it |
 | **Last IP** | The most recent address observed during enrollment |
 | **Enrolled** | When enrollment completed |
 | **Apple registration** | Whether and when the device was registered with Apple |
 | **Last seen** | The most recent enrollment activity for this device |
+
+<Note>
+  iOS reports a hardware identifier (`iPhone16,2`) and a software build (`23F84`), not names a person would recognize. The list resolves both locally — `iPhone 15 Pro Max` over `26.5` — with no network call. A model Apple shipped after this build of the app is shown as its raw identifier, and a build number resolves to major and minor only, so `26.5.2` also reads as `26.5`. The [detail page](/system/device-detail) resolves the exact firmware version from IPSW.me.
+</Note>
 
 ### Statuses
 
