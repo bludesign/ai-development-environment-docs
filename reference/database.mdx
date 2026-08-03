@@ -1,0 +1,48 @@
+---
+title: "Database"
+description: "How the SQLite database is configured, migrated, and reclaimed."
+---
+
+Data access uses [Prisma 7](https://www.prisma.io/) with the `prisma-client` generator — a TypeScript query compiler, with no native query-engine binary — and the better-sqlite3 driver adapter.
+
+## Location
+
+The database defaults to a SQLite file at `prisma/dev.db`. Set `DATABASE_URL` to another `file:` URL to change its location; other database URL schemes are rejected.
+
+Each install type picks its own default:
+
+| Install | Database file |
+| --- | --- |
+| Homebrew | Under Homebrew's `var/ai-development-environment/` |
+| npm | `~/.ai-development-environment/production.db` |
+| From source | `prisma/dev.db` |
+
+## Migrations
+
+Migrations are versioned in `prisma/migrations/` and applied with `prisma migrate deploy`. The Homebrew service and the `ai-development-environment` npm command both apply pending migrations on start.
+
+From source, use `npm run db:migrate` to create and apply a development migration and `npm run db:deploy` to apply committed ones.
+
+<Warning>
+  The database file holds the profile signer's private key, device UDIDs, IP history, any App Store Connect `.p8` key, and — with the `database` credential backend — every stored credential. Treat it as sensitive.
+</Warning>
+
+## Reclaiming space
+
+Deleted SQLite pages are reused automatically but do not reduce the database file's size. To return unused pages to the filesystem:
+
+<Steps>
+  <Step title="Stop everything touching the database">
+    Stop the application and any database clients.
+  </Step>
+  <Step title="Check free space">
+    The volume needs enough temporary free space to rebuild the database.
+  </Step>
+  <Step title="Vacuum">
+    ```bash
+    npm run db:vacuum
+    ```
+
+    The command uses `DATABASE_URL` when set, and otherwise vacuums `prisma/dev.db`.
+  </Step>
+</Steps>

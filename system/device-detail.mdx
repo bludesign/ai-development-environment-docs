@@ -1,0 +1,22 @@
+---
+title: "Device details"
+description: "Review a device's identifiers, IP and enrollment history, firmware, and Apple registration."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/device-detail.png" alt="Device details page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/device-detail.png" alt="Device details page in dark theme" />
+</Frame>
+
+The device details page at `/devices/{id}` shows a single enrolled iPhone or iPad.
+
+## Using the page
+
+- Review **General information**, reveal or copy the **UDID**, and inspect **IP** and **enrollment history**.
+- **Register with Apple**, **Retry registration**, **Reject**, or **Delete** the device.
+- Check **iOS firmware** signing status and download links from IPSW.me.
+
+## Notes
+
+- Registering a device with Apple does not rebuild an IPA — create a new provisioning profile and export a new IPA from Builds.
+- Deleting a device removes its local record, enrollment attempts, and IP history, but not Apple's annual registration.

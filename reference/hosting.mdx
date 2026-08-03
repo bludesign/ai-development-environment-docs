@@ -1,0 +1,36 @@
+---
+title: "Hosting and networking"
+description: "Public HTTPS, Cloudflare Access paths, reverse proxies, and how client IPs are trusted."
+---
+
+Most of the app works fine on `http://127.0.0.1`. iOS device enrollment, over-the-air installs, and the GitHub webhook do not: they need a publicly trusted HTTPS origin, because iOS requires a trusted HTTPS callback.
+
+Give the app that origin either by running behind a reverse proxy that sends correct `X-Forwarded-Proto` and `X-Forwarded-Host` values, or by setting `PUBLIC_BASE_URL` to the public HTTPS origin. Direct HTTP localhost and LAN dashboard access stays available, but the enrollment form and profile download are disabled.
+
+The production server accepts the standard Next.js `HOSTNAME` and `PORT` environment variables plus `DATABASE_URL`.
+
+## Cloudflare Access paths
+
+When the dashboard sits behind Cloudflare Access, create one more-specific Access application for `/api/public/*` and attach a **Bypass / Everyone** policy. Configure the path without a query string, because Access path matching does not support one.
+
+That namespace contains only intentionally unauthenticated endpoints: the signed iOS enrollment flow, short-lived build artifact and OTA manifest downloads, and the signature-verified GitHub webhook at `/api/public/github/webhook`.
+
+<Warning>
+  Do **not** bypass `/en/devices*` (or another locale), `/api/ios/enrollment/start`, `/api/ios/devices/export.tsv`, or `/api/graphql`. Those stay behind Cloudflare Access.
+</Warning>
+
+Access applications are path-scoped rather than method-scoped; the route handlers themselves expose only the methods listed above. Avoid JavaScript or CAPTCHA challenges on the callback. Add a WAF skip for the exact `/api/public/ios/profile-response` path only if production logs show that a managed rule blocks genuine iOS callbacks.
+
+## Client IP observation
+
+Cloudflare Tunnel keeps the origin private, so IP observations trust headers in this order:
+
+1. A valid `CF-Connecting-IP`.
+2. The first valid `X-Forwarded-For` entry.
+3. `X-Real-IP`.
+
+The selected header source is saved with every observation. In direct mode this same behavior assumes the existing trusted localhost/LAN deployment boundary.
+
+<Warning>
+  Do not expose an unprotected origin to untrusted networks. Publishing the server publishes every route, not just build artifacts.
+</Warning>

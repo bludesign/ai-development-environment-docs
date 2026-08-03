@@ -1,0 +1,22 @@
+---
+title: "Session details"
+description: "Watch a Session's live transcript, steer it, and review changes and cost."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/session-detail.png" alt="Session details page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/session-detail.png" alt="Session details page in dark theme" />
+</Frame>
+
+The Session details page at `/sessions/{id}` shows a single managed Session's live activity and history.
+
+## Using the page
+
+- Watch the live **Activity** transcript and **Tool calls**.
+- **Steer** guidance to the active turn, **Answer** questions, and **Pause** or **Resume**.
+- Review **Changes** (Git checkpoints), **Linked items**, and estimated **usage and cost**.
+- **Follow Up**, **Export** (JSON, Markdown, or JSONL), or **Delete** the Session.
+
+## Notes
+
+- Deleting a Session also deletes its native provider history; this cannot be undone.

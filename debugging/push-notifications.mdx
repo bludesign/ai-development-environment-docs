@@ -1,0 +1,22 @@
+---
+title: "Push Notifications"
+description: "Compose, validate, target, queue, and inspect Apple push notifications."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/push-notifications.png" alt="Push Notifications page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/push-notifications.png" alt="Push Notifications page in dark theme" />
+</Frame>
+
+The **Push Notifications** page at `/push-notifications` composes, validates, targets, and sends Apple push notifications and keeps a history of every batch.
+
+## Using the page
+
+- Build a payload in the **Notification editor** — content, headers, advanced `aps` fields, and specialized push types.
+- Choose **Recipients** (eligible devices or direct tokens), review the live JSON preview, then **Send** or **Save draft**.
+- Reuse **Presets**, manage **Live Activity broadcast channels**, and inspect **History** with per-recipient APNs outcomes.
+
+## Notes
+
+- Requires APNs credentials configured under Settings — either a token key (`.p8`) or a certificate (`.p12`).
+- The editor validates APNs headers, byte limits, and eligible devices for the selected push type.

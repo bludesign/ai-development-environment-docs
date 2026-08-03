@@ -1,0 +1,33 @@
+---
+title: "Devices"
+description: "Enroll iPhones and iPads, review connection history, and register approved devices with Apple."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/devices.png" alt="Devices page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/devices.png" alt="Devices page in dark theme" />
+</Frame>
+
+The **Devices** page at `/devices` enrolls iPhones and iPads and manages their Apple registration.
+
+## Using the page
+
+- **Add device** to start enrollment, then filter and sort the device list.
+- **Export Apple TSV** for bulk device registration.
+- Open a device to register it with Apple, reject it, or delete it.
+
+## Apple registration
+
+Registering with Apple is optional. In [Settings](/system/settings), provide an issuer ID, key ID, and ES256 PKCS#8 `.p8` key that has Certificates, Identifiers & Profiles access. Saving verifies the credentials against `GET /v1/devices?limit=1`.
+
+Registration first reconciles the UDID with Apple, then calls the Devices API only when needed.
+
+<Note>
+  Registration does not regenerate a provisioning profile or rebuild an IPA. After adding a device, create a new provisioning profile and export a new IPA from [Builds](/builds/builds).
+</Note>
+
+## Notes
+
+- Enrollment requires a public HTTPS address; see the enrollment flow on the [Enroll device](/system/device-enroll) page.
+- The enrollment profile requests only UDID, product, and iOS version, plus the observed IP.
+- Deleting a local device also deletes its enrollment and IP history, but does not remove the device from Apple's annual registration list.

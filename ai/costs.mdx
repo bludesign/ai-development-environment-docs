@@ -1,0 +1,21 @@
+---
+title: "Costs"
+description: "Model prices used to estimate what Plans and Sessions cost."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/costs.png" alt="Costs page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/costs.png" alt="Costs page in dark theme" />
+</Frame>
+
+The **Costs** page at `/costs` manages the model price catalog used to estimate the cost of Plans and Sessions.
+
+## Using the page
+
+- Set a custom **Model cost URL**, or **Use default** to use the built-in catalog.
+- **Fetch latest** prices on demand.
+- Search the **Model prices** table for per-million-token input, output, and cache prices and context windows.
+
+## Notes
+
+- Prices refresh automatically once a day; a failed fetch is reported inline.

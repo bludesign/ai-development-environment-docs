@@ -1,0 +1,23 @@
+---
+title: "New command"
+description: "Save a reusable shell command with a target, restart policy, and notifications."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/command-new.png" alt="New command editor in light theme" />
+  <img className="hidden dark:block" src="/images/dark/command-new.png" alt="New command editor in dark theme" />
+</Frame>
+
+The new command page at `/commands/new` creates a reusable command definition.
+
+## Using the page
+
+- Enter a **Name**, **Description**, and the **Shell script** to run.
+- Choose a **Target scope** — any agent home, a specific agent home, any worktree, or a worktree in a repository.
+- Set a **Restart policy** (never, on failure, always) and a failed restart limit.
+- Optionally enable completion **Notifications** and show the command as a **quick action** with an icon and button style.
+
+## Notes
+
+- The script runs through the agent user's non-interactive login shell.
+- Saved commands run with the full permissions of the selected agent account.

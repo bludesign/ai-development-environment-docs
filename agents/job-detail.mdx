@@ -1,0 +1,21 @@
+---
+title: "Job details"
+description: "Watch a durable agent job's live output and status."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/job-detail.png" alt="Job details page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/job-detail.png" alt="Job details page in dark theme" />
+</Frame>
+
+The job details page at `/jobs/{id}` shows a single durable job running on an agent, including its live output and status.
+
+## Using the page
+
+- Watch the job's streaming output and current status.
+- **Cancel** a queued or running job.
+
+## Notes
+
+- Jobs are durable — they recover after missed events or an agent restart through the agent's job reconciliation cadence.
+- Jobs are linked from an agent's **Job history** on its detail page.

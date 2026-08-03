@@ -1,0 +1,21 @@
+---
+title: "Edit command"
+description: "Update a saved command's script, target, restart policy, and quick action."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/command-edit.png" alt="Edit command editor in light theme" />
+  <img className="hidden dark:block" src="/images/dark/command-edit.png" alt="Edit command editor in dark theme" />
+</Frame>
+
+The edit command page at `/commands/{id}/edit` updates an existing command definition using the same editor as [New command](/commands/command-new).
+
+## Using the page
+
+- Change the **Name**, **Description**, or **Shell script**.
+- Update the **Target scope**, **Restart policy**, and failed restart limit.
+- Adjust completion **Notifications** and **quick action** settings.
+
+## Notes
+
+- Changes apply to future runs; existing run history keeps its immutable command snapshot.

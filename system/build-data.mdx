@@ -1,0 +1,22 @@
+---
+title: "Build Data"
+description: "Inspect and clean up Xcode DerivedData across enrolled agents."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/build-data.png" alt="Build Data page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/build-data.png" alt="Build Data page in dark theme" />
+</Frame>
+
+The **Build Data** page at `/build-data` inspects and cleans up Xcode DerivedData and iOS Device Support files across enrolled agents.
+
+## Using the page
+
+- **Calculate sizes**, then select and **Delete** Derived Data entries or iOS Device Support folders.
+- **Lock** entries to exclude them from automatic cleanup.
+- Review or clear the **Deletion history** from the last 90 days.
+
+## Notes
+
+- Xcode recreates iOS Device Support folders when a matching device is connected.
+- The Disk Space monitor can automatically reclaim the oldest safe Derived Data when free space is low.

@@ -1,0 +1,25 @@
+---
+title: "Notifications"
+description: "Review notification history and choose how each event reaches you."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/notifications.png" alt="Notifications page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/notifications.png" alt="Notifications page in dark theme" />
+</Frame>
+
+The **Notifications** page at `/notifications` shows your notification history and lets you control how each event type reaches you across the sidebar, browser alerts, and Web Push.
+
+## Using the page
+
+- **Switch tabs** between **History** and **Settings**.
+- Under **Notification types**, toggle **Sidebar**, **Browser**, and **Web Push** independently for each event type.
+- Under **Browser delivery**, enable **Browser alerts** and subscribe to **Web Push** — each browser is configured separately.
+- Send a **Test** notification to a subscribed browser, or **Remove** browsers that should no longer receive Web Push.
+- In **History**, delete selected items, mute or unmute sounds, and clear the sidebar.
+
+## Notes
+
+- Web Push requires a supported browser and a secure HTTPS context.
+- On iPhone or iPad, install the app from **Share → Add to Home Screen** before subscribing to Web Push.
+- Channels are independent — enabling both Browser and Web Push can produce two alerts.

@@ -1,0 +1,22 @@
+---
+title: "Provisioning profile details"
+description: "Inspect a provisioning profile's certificates, devices, and installed agents."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/provisioning-profile-detail.png" alt="Provisioning profile details page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/provisioning-profile-detail.png" alt="Provisioning profile details page in dark theme" />
+</Frame>
+
+The provisioning profile details page shows a single Apple provisioning profile, addressed by its composite `uuid:contentHash`.
+
+## Using the page
+
+- Review the profile's **details**, **platforms**, **accepted certificate fingerprints**, and **provisioned devices**.
+- See which **installed agents** hold the profile.
+- **Download** the profile or **Delete** it from listed agents.
+
+## Notes
+
+- Refresh the signing inventory to load the device identifiers stored in a profile.
+- Distribution profiles that are not device-restricted show no individual devices.

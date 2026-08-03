@@ -1,0 +1,21 @@
+---
+title: "Cached Jira ticket"
+description: "Inspect a cached Jira ticket's summary, detail, and comment responses."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/jira-cache-ticket.png" alt="Cached Jira ticket page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/jira-cache-ticket.png" alt="Cached Jira ticket page in dark theme" />
+</Frame>
+
+The cached Jira ticket page at `/jira-cache/tickets/{key}` shows the materialized cache data for a single Jira issue.
+
+## Using the page
+
+- Inspect the cached **summary**, **detail**, and **comments** responses, and their coverage and freshness.
+- Review **related cache entries** that reference the ticket.
+- **Refresh ticket** or **Delete from cache**.
+
+## Notes
+
+- Data levels that have not been fetched are labeled accordingly.

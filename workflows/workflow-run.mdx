@@ -1,0 +1,22 @@
+---
+title: "Workflow run"
+description: "Watch a live workflow run, answer questions, and repair or replay steps."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/workflow-run.png" alt="Workflow run page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/workflow-run.png" alt="Workflow run page in dark theme" />
+</Frame>
+
+The workflow run page at `/workflows/runs/{id}` shows a single run's live graph, timeline, and step history.
+
+## Using the page
+
+- Watch the **Live run graph** and the **Timeline** of events, step attempts, session data, and resources.
+- **Pause**, **Resume**, or **Cancel** the run.
+- Answer a step's question inline when the run is waiting for input.
+- **Repair blocked session data** with an atomic JSON merge patch, or **Replay and rewind** from a selected step.
+
+## Notes
+
+- A replay creates a new append-only generation; external effects are retained and not reversed.

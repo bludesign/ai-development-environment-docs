@@ -1,0 +1,23 @@
+---
+title: "Repository details"
+description: "Manage settings shared by every registered checkout of a repository."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/repository-detail.png" alt="Repository details page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/repository-detail.png" alt="Repository details page in dark theme" />
+</Frame>
+
+The repository details page at `/codebases/repositories/{id}` manages settings that belong to the logical repository and apply across every agent checkout and worktree.
+
+## Using the page
+
+- Edit shared **Repository details**, and assign **Skill groups** synchronized into every checkout.
+- Configure **Quick actions** and **Auto Retry** rules (GitHub-hosted repositories only).
+- Add an **iOS App project** and reusable build configurations, and allow build scripts.
+- Toggle **Keep base branch up to date** to fast-forward the base branch after a successful fetch.
+
+## Notes
+
+- These settings are repository-wide, not per-checkout.
+- Auto Retry is available only for repositories hosted on GitHub.

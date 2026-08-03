@@ -1,0 +1,22 @@
+---
+title: "Provisioning Profiles"
+description: "Inspect, sync, import, and remove Apple signing assets across build agents and the Apple Developer portal."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/provisioning-profiles.png" alt="Provisioning Profiles page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/provisioning-profiles.png" alt="Provisioning Profiles page in dark theme" />
+</Frame>
+
+The **Provisioning Profiles** page at `/provisioning-profiles` manages Apple signing assets across build agents and the Apple Developer portal.
+
+## Using the page
+
+- **Refresh inventory** across signing-capable agents.
+- **Install a provisioning profile** (`.mobileprovision`) or **import a signing identity** (`.p12`) onto selected agents.
+- Manage **Apple portal** profiles and certificates, **create portal profile**, **sync to missing**, and delete expired profiles.
+
+## Notes
+
+- Portal changes immediately affect the Apple Developer account and can break signing on other machines.
+- Profiles are grouped across agents by UUID and content hash.

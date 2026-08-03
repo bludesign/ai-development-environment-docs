@@ -1,0 +1,21 @@
+---
+title: "Jira Cache"
+description: "Inspect cached Jira data, API usage, latency, and errors."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/jira-cache.png" alt="Jira Cache page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/jira-cache.png" alt="Jira Cache page in dark theme" />
+</Frame>
+
+The **Jira Cache** page at `/jira-cache` inspects cached Jira data along with API usage, latency, and errors.
+
+## Using the page
+
+- Set the **Cache TTL**, and review **API operations** and **recent calls** for each rolling window.
+- Inspect **cached tickets** and their coverage and freshness.
+- **Refresh** or **Delete** a ticket, or **Clear cache**.
+
+## Notes
+
+- Clearing the cache keeps API call history but removes cached responses and tickets.
