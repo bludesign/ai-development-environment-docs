@@ -126,9 +126,25 @@ The import creates a host-only build record, so the result appears on the [Build
 | **Name** and **Description** | How the workflow is identified across the app |
 | **Overlap policy** | **Queue every event**, **Run concurrently**, or **Keep latest pending event** |
 | **Maximum concurrent runs** | The ceiling on simultaneous executions |
+| **Reserve the worktree for this workflow** | Wait for earlier work, then keep other workflows, Plans, and Sessions off the worktree until this run finishes |
 | **Notify when this workflow completes successfully** | Turn off to suppress success notifications for this workflow only |
 | **Step connectors** | Handles drawn **On the sides** or **On top and bottom** |
 | **Viewer layout** | **Regular** uses your authored positions in read-only views; **Basic** auto-arranges them for the available width, leaving your positions untouched |
+
+<Note>
+  Worktree reservation is off by default and only applies when a top-level run resolves a worktree. The run waits behind earlier work, then holds the worktree until it succeeds, fails, or is cancelled. Plans and Sessions started by that workflow can still run inside the reservation.
+</Note>
+
+### Worktree admission for AI run steps
+
+**Create plan and wait**, **Run AI session and wait**, **Run completed plan**, and **Follow up run** expose a **Worktree concurrency limit**.
+
+- Plans and Sessions use separate FIFO lanes on each worktree.
+- Plans default to unlimited concurrency. Sessions default to one active run.
+- Enter `1` through `32` for a finite same-kind limit, or `0` for unlimited concurrency.
+- A queued run at the front of a lane is not bypassed by a newer run with a looser limit.
+
+These limits control AI runs on one worktree. They are independent of **Maximum concurrent runs**, which controls top-level executions of the workflow itself.
 
 <Note>
   Turning off completion notifications suppresses successful-run notifications only. Failure and attention notifications still fire. MCP clients can set the same flag as `completionNotificationsEnabled` on `create_workflow` or `update_workflow_settings`.

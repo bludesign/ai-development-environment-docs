@@ -69,6 +69,30 @@ query Agents {
 
 Arguments, return types, deprecations, and a sample response are listed on each generated operation page — for example [`agents`](/graphql-reference/queries/agents) and [`enrollAgent`](/graphql-reference/mutations/enrollAgent). Field types link through to the **Types** section, so you can walk the graph from any operation.
 
+## Worktree admission queues
+
+`worktreeRunQueue` returns the effective queued order for one worktree or the queued entries associated with one workflow. A worktree query combines workflow runs, Plans, and Sessions:
+
+```graphql
+query WorktreeQueue($worktreeId: ID!) {
+  worktreeRunQueue(worktreeId: $worktreeId) {
+    position
+    id
+    kind
+    displayNumber
+    status
+    phase
+    queuedAt
+    exclusiveWorktree
+    worktreeConcurrencyLimit
+  }
+}
+```
+
+`RunConfigurationInput.worktreeConcurrencyLimit` controls same-kind admission on a worktree. Omit it for the kind default: `0` for unlimited Plans or `1` for Sessions. Supply `0` for unlimited concurrency or an integer from `1` through `32` for a finite limit. `playPlan` exposes the same option for the Session it creates.
+
+Set `CreateWorkflowInput.exclusiveWorktree` or `SaveWorkflowDraftInput.exclusiveWorktree` to make each top-level run reserve its resolved worktree. The default is `false`. A queued `WorkflowRun` also exposes its effective `queue`; that field becomes empty after admission.
+
 ## Subscriptions
 
 The schema also defines subscriptions, which power the dashboard's live output — job and build logs, run events, Action Center changes, and status updates. Mintlify generates pages for `Query` and `Mutation` fields only, so subscriptions do not appear in the sidebar. Their payloads do: each one resolves to a documented type, such as [`BuildLogChunk`](/graphql-reference/types/BuildLogChunk) below. For the full subscription list, use [Apollo Studio](https://studio.apollographql.com/public/ai-development-environment/variant/current) or the Apollo sandbox at `/api/graphql`.

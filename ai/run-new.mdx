@@ -14,7 +14,7 @@ The new run page at `/runs/new` is the single form for starting AI work: pick a 
 
 <Steps>
   <Step title="Choose the mode" icon="git-fork">
-    **Plan** surveys the codebase and proposes work without changing it. **Session** implements, with write access and an exclusive lease on the worktree. You can switch modes at any point before starting.
+    **Plan** surveys the codebase and proposes work without changing it. **Session** implements with write access. You can switch modes at any point before starting.
   </Step>
   <Step title="Select a worktree" icon="git-branch">
     The picker lists every worktree across every enrolled Mac, labelled *repository · branch · agent*. Search matches the folder, ticket key, and ticket title as well as the visible label, so you can find a worktree by whatever you happen to remember about it. A worktree on an offline agent, or one that is not currently available, is listed but not selectable. The chosen worktree's full path is shown underneath.
@@ -64,7 +64,7 @@ Models you use get remembered as **Recent**, and you can pin any tool-model-effo
 | The agent advertises `runs.provider.<tool>` | The Mac must be capable of running that specific tool |
 
 <Warning>
-  Choosing **Session** shows the reminder that Sessions run without approval prompts and with unrestricted access while holding an exclusive worktree lease. Starting a Session against a worktree another Session already leases is refused, naming the run that owns it.
+  Choosing **Session** shows the reminder that Sessions run without approval prompts and with unrestricted access. An active Session alone does not prevent creation. The new Session remains **Queued** until the worktree's Session lane has capacity.
 </Warning>
 
 ## Notes
@@ -72,6 +72,7 @@ Models you use get remembered as **Recent**, and you can pin any tool-model-effo
 - Starting a run from a draft consumes the draft — it is removed once the run is created.
 - Attachments uploaded here are held against the draft or the run's first input; they appear on the prompt card of the detail page as downloadable files.
 - The control plane checks free disk space on the worktree before a run may start.
+- Runs started from this page use the defaults: unlimited concurrent Plans and one active Session per worktree. Workflow steps and GraphQL clients can override the same-kind limit from `0` through `32`, where `0` means unlimited.
 
 ## Related pages
 

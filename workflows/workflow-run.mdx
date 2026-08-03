@@ -21,6 +21,16 @@ The run number, its status badge, and its **generation** — replays append a ne
 | **Cancel run** | The run has not reached a terminal state |
 | **Refresh** | Always |
 
+## Waiting for worktree admission
+
+A queued run shows a live **Queue** card before the run graph. It displays the combined workflow, Plan, and Session admission order for the run's worktree. The current workflow run is highlighted, and exclusive workflow runs carry an **Exclusive** badge.
+
+The card updates as workflow and AI run state changes. It disappears after this run is admitted and starts scheduling.
+
+<Note>
+  Queue position is an effective display order, not a promise that every row starts serially. Plans and Sessions have separate lanes and may advance independently until an exclusive workflow becomes the admission barrier.
+</Note>
+
 ## Live run graph
 
 The published graph, annotated with live state — which node succeeded, which failed, which is waiting, which is currently active. It updates as the run progresses.

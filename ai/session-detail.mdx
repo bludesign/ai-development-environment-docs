@@ -14,6 +14,8 @@ The Session details page at `/sessions/{id}` is the live view of an implementati
 
 The header shows the Session number, status, phase, the AI tool, an **Imported** badge where relevant, and the repository, branch, and creation time.
 
+A managed Session may begin as **Queued** with the phase **Waiting for worktree**. It starts automatically when its worktree's Session lane has capacity. You can cancel it before it starts.
+
 | Action | Available when |
 | --- | --- |
 | **Pause** | Managed, in progress, and the tool supports pausing |
@@ -61,13 +63,13 @@ A failed run surfaces its error at the top of the page. So does a phase like *St
     While a managed Session is in progress and its tool supports steering, the **Steer** card sends extra guidance — with attachments — into the active turn. Guidance queues behind any pending question rather than jumping ahead of it.
   </Step>
   <Step title="Answer questions" icon="circle-question-mark">
-    A question batch appears inline as **Answer needed**, with options, optional multi-select, and a free-text field where the run allows one. Submitting resumes the run. Answering also re-takes the worktree lease if the Session has lost it.
+    A question batch appears inline as **Answer needed**, with options, optional multi-select, and a free-text field where the run allows one. Submitting resumes the run. A Session waiting for an answer keeps its worktree admission slot.
   </Step>
   <Step title="Revise an answer" icon="rotate-ccw">
     An answered batch that still has its checkpoint can be revised. The dialog prepares a rollback patch against the checkpoint taken immediately before the question, shows exactly what will be undone, and offers to stash the current tracked and untracked changes first. Confirming starts a new linked Session from the revised answer and keeps the previous one as audit history.
   </Step>
   <Step title="Pause or cancel" icon="circle-stop">
-    Pausing holds the run and its lease. Cancelling ends it and releases the lease, leaving the worktree in whatever state the run reached.
+    Pausing holds the run and its admission slot. Cancelling ends it and releases the slot, leaving the worktree in whatever state the run reached.
   </Step>
 </Steps>
 
@@ -86,7 +88,7 @@ A failed run surfaces its error at the top of the page. So does a phase like *St
 Switching tools on a resumed follow-up asks how to carry context across, since hidden provider state cannot transfer: **Visible transcript** sends the normalized conversation, **Final summary only** sends just the output.
 
 <Warning>
-  Starting a resumed follow-up from a paused Session cancels the parent and atomically transfers its worktree lease to the child. The page asks you to confirm — the parent will not survive it.
+  Starting a resumed follow-up from a paused Session cancels the parent and atomically transfers its worktree admission slot to the child. The page asks you to confirm — the parent will not survive it.
 </Warning>
 
 ## Exporting
@@ -108,7 +110,7 @@ Switching tools on a resumed follow-up asks how to carry context across, since h
     The same page for a read-only Plan.
   </Card>
   <Card title="Worktree details" icon="git-branch" href="/worktrees/worktree-detail">
-    The checkout this Session holds a lease on.
+    The checkout this Session queued against and modifies.
   </Card>
   <Card title="Costs" icon="coins" href="/ai/costs">
     The price catalog behind the catalog-cost figure.
