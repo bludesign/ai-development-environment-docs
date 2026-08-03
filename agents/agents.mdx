@@ -8,17 +8,90 @@ description: "Manage enrolled Macs and durable jobs from one control plane."
   <img className="hidden dark:block" src="/images/dark/agents.png" alt="Agents page in dark theme" />
 </Frame>
 
-The **Agents** page at `/agents` lists every enrolled Mac and lets you pair new ones. Each agent runs `control-agent` and connects outbound to this control plane.
+The **Agents** page at `/agents` lists every enrolled Mac and is where you pair new ones. Each Mac runs the `control-agent` binary, which opens outbound HTTP and GraphQL WebSocket connections to the control plane.
 
-## Using the page
+<Note>
+  Managed Macs never open a listening port. Every connection is initiated by the agent, so a Mac behind NAT or a firewall works with no inbound rules.
+</Note>
 
-- **Enroll agent** — Generate a one-time enrollment command, then run it on the Mac after installing `control-agent`.
-- Optionally set a **custom server address** and **Cloudflare Access headers** that are added only to that command.
-- **Copy command** and run it on the target Mac. The Mac connects outbound and does not open a listening port.
-- Select any agent to open its detail page (hardware, capabilities, codebases, and jobs).
+## The agent list
+
+Each entry links to the agent's [detail page](/agents/agent-detail) and shows:
+
+| Field | What it tells you |
+| --- | --- |
+| Name and hostname | The identity the agent enrolled with |
+| Status | **Online** while the WebSocket is connected, **Offline** once it drops |
+| Version | The `control-agent` build currently running |
+| Platform | Operating system version and CPU architecture |
+| Last seen | The most recent heartbeat, or **Never** |
+| Resource usage | Memory and disk, refreshed on each heartbeat |
+
+The list is driven by an `agentChanged` subscription, so status, version, and resource usage update in place without a reload. **Refresh** refetches the whole list by hand.
+
+<Tip>
+  Command quick actions scoped to an agent home appear inline on each entry. See [Commands](/commands/commands) for how to define them.
+</Tip>
+
+## Enrolling a Mac
+
+<Steps>
+  <Step title="Install control-agent on the Mac" icon="download">
+    Install the `control-agent` binary on the machine you want to manage. See [Quickstart](/quickstart) for installation options.
+  </Step>
+  <Step title="Generate an enrollment token" icon="key">
+    **Enroll agent** creates a one-time token. It is valid for 15 minutes by default, and the expiry is shown beside the command.
+  </Step>
+  <Step title="Pick the server address" icon="globe">
+    The command defaults to the origin you are browsing from. Choose another detected local origin, or select **Custom server address** and type the URL the Mac should reach — useful when the agent connects through a tunnel or a different hostname than your browser does.
+  </Step>
+  <Step title="Add Cloudflare Access headers if needed" icon="shield">
+    When the control plane sits behind Cloudflare Access, add header key and value pairs. They are appended to this command only, and the agent saves them in its owner-only local configuration.
+  </Step>
+  <Step title="Copy and run the command" icon="terminal">
+    **Copy command** puts the full `control-agent enroll` invocation on your clipboard. Run it on the target Mac.
+
+    ```bash
+    control-agent enroll --server 'https://your-control-plane' --enrollment-token enroll_...
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+  The token appears only inside the generated command. If it expires before you use it, generate a new one — tokens cannot be reissued.
+</Warning>
+
+## What an enrolled agent does
+
+Once connected, an agent runs four recurring loops. Each has a configurable interval on the [agent detail page](/agents/agent-detail).
+
+<Columns cols={2}>
+  <Card title="Codebase scan" icon="magnifying-glass">
+    Inspects registered repositories and reports branch, sync, availability, and worktree state.
+  </Card>
+  <Card title="Job reconciliation" icon="arrows-rotate">
+    Asks the control plane for queued, running, or cancelled jobs so work recovers after missed events or a restart.
+  </Card>
+  <Card title="Git fetch" icon="code-branch">
+    Runs `git fetch origin` for registered codebases that have not fetched recently.
+  </Card>
+  <Card title="Heartbeat" icon="chart-line">
+    Reports liveness, agent inventory, and current memory and disk usage.
+  </Card>
+</Columns>
 
 ## Notes
 
-- Each enrollment token expires at the time shown on the command.
-- Columns show **Version**, **Platform**, and **Last seen** for each agent.
-- In development, the first run auto-enrolls a `-dev` agent for the current host.
+- In development, the first run auto-enrolls a `-dev` agent for the current host so you have something to work against immediately.
+- An agent that goes offline keeps its stored inventory and job history; its detail page renders read-only until it reconnects.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Agent details" icon="laptop" href="/agents/agent-detail">
+    Hardware, capabilities, codebases, cadence, and directory settings for one Mac.
+  </Card>
+  <Card title="Job details" icon="scroll" href="/agents/job-detail">
+    Live output and status for a single durable job.
+  </Card>
+</Columns>

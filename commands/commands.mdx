@@ -8,16 +8,71 @@ description: "Create reusable shell commands and inspect their durable runs."
   <img className="hidden dark:block" src="/images/dark/commands.png" alt="Commands page in dark theme" />
 </Frame>
 
-The **Commands** page at `/commands` lets you save reusable shell commands and review their durable run history.
+The **Commands** page at `/commands` is where you save shell commands you run often and review every execution of them. It has two tabs: **Runs**, the durable history, and **Definitions**, the saved commands themselves.
 
-## Using the page
+A command run is durable. The script executes as an agent job, output is retained, restarts are handled by policy, and the run keeps an immutable snapshot of exactly what was executed — so history stays accurate even after you edit the definition.
 
-- Switch between the **Runs** and **Definitions** tabs.
-- **New command** saves a reusable definition; **Run custom** executes a one-off script without saving it.
-- Choose where a command runs — an agent home or a repository worktree.
-- Manage runs: **Archive**, **Restore**, **Delete**, **Rerun**, or **Terminate**.
+<Warning>
+  Commands run with the full permissions of the selected agent account. Anyone who can reach the control plane can run them on the Macs you have enrolled.
+</Warning>
+
+## Definitions tab
+
+Each saved command shows its name, description, target scope, and a **Quick action** marker when it is configured to appear as a button elsewhere.
+
+- **New command** opens the [command editor](/commands/command-new).
+- **Run** launches it. If the target scope is broad — any agent home, any worktree — you are asked to pick the concrete agent or worktree first.
+- **Edit** opens the [edit page](/commands/command-edit).
+- **Archive** removes it from the active view while keeping its run history.
+
+## Runs tab
+
+A table of every run with **Run** number, **Command**, **Status**, **Agent**, **Worktree**, **Started**, and **Finished**.
+
+| Status | Meaning |
+| --- | --- |
+| Queued | Accepted, waiting for the agent |
+| Running | Executing |
+| Restarting | Exited and waiting on the restart policy |
+| Cancelling | Termination requested |
+| Succeeded | Exited cleanly |
+| Failed | Exited non-zero, or restarts were exhausted |
+| Cancelled | Terminated by hand |
+| Timed out | Exceeded its job timeout |
+
+Each run also records its **origin** — **Manual**, **Quick action**, **Workflow**, or **Rerun** — so you can tell who or what started it.
+
+### Managing runs
+
+- Filter by **Active**, **Archived**, or **All**, and search across commands.
+- **Edit** turns on selection; select individual runs, everything from a day, or **Select all completed runs**.
+- With a selection, **Archive**, **Restore**, or **Delete** in bulk.
+- Per run, **Rerun** starts a fresh run from the same snapshot, and **Terminate** stops an active one.
+
+<Warning>
+  Deleting runs permanently removes them along with all retained terminal output. Only completed runs can be selected for deletion.
+</Warning>
+
+## Running a one-off command
+
+**Run custom** executes a script without saving a definition. Choose where it runs, paste the script, and go. The run is still durable and still retained in immutable history — it just has no reusable definition behind it.
+
+## Quick actions
+
+A saved command can be surfaced as a button on the pages of the things it targets: agent-home commands appear on the [Agents](/agents/agents) page and agent detail, and worktree commands appear on worktree pages. Configure the icon and button style when you create or edit the command.
 
 ## Notes
 
-- Commands run with the full permissions of the selected agent account and are retained in immutable run history.
-- Interactive input and PTY applications are not supported.
+- Scripts run through the agent user's non-interactive login shell. Interactive input and PTY applications are not supported — a script that waits for a prompt will hang until it times out.
+- Older agents may not advertise the saved-command capability. The UI offers **Upgrade agent** rather than letting you launch against a target that cannot run it.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="New command" icon="plus" href="/commands/command-new">
+    Name, script, target scope, restart policy, notifications, and quick action.
+  </Card>
+  <Card title="Command run" icon="terminal" href="/commands/command-run">
+    Live terminal output, attempts, timing, and the immutable snapshot.
+  </Card>
+</Columns>

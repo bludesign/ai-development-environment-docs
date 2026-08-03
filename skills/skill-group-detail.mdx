@@ -8,13 +8,57 @@ description: "Manage a skill group's membership, repository assignments, and dep
   <img className="hidden dark:block" src="/images/dark/skill-group-detail.png" alt="Skill group details page in dark theme" />
 </Frame>
 
-The skill group details page at `/skills/groups/{id}` manages a single group's skills, repositories, and deployment.
+The skill group details page at `/skills/groups/{id}` sets the two halves of a group: which skills are in it, and which repositories use it. Saving the group is what changes the *intended* state; a sync is what makes disk match.
 
-## Using the page
+## Editing a group
 
-- Manage **Skills in this group** and the **Repositories using this group**.
-- **Sync group** to reconcile assigned repositories, then **Save group** or **Delete** it.
+<Steps>
+  <Step title="Name the group" icon="pencil">
+    Up to 80 characters. The name is how the group is identified everywhere else, including the inline group picker during a sync.
+  </Step>
+  <Step title="Choose skills" icon="sparkles">
+    **Skills in this group** lists every database skill with a checkbox and a searchable filter over names and descriptions. Ticking a skill here is equivalent to ticking this group in the [skill editor](/skills/skill-detail).
+  </Step>
+  <Step title="Choose repositories" icon="folder-git-2">
+    **Repositories using this group** lists every registered repository with its display origin, again with a search filter. Every checkout and worktree of a selected repository becomes a deployment target.
+  </Step>
+  <Step title="Save" icon="save">
+    **Save group** persists membership and assignment together and reloads the page from the saved state.
+  </Step>
+</Steps>
+
+## Deploying
+
+**Sync group** prepares a reconciliation scoped to this group and opens the resulting [sync run](/skills/skill-sync-run), where you review the proposed changes before anything is written. A group sync touches only the repositories this group is assigned to, which makes it the safer choice while iterating on one project's skills.
+
+<Note>
+  With **Auto-sync project skill groups** enabled in **Settings** on the [Skills](/skills/skills) page, assignments reconcile into registered checkouts and worktrees automatically and a manual sync is only needed when you want to see the plan first.
+</Note>
+
+## Deleting
+
+<Warning>
+  **Delete** removes the group and, during synchronization, removes the deployed copies of its skills that no longer belong to another group assigned to the same repository. Skills themselves are not deleted — only the group and the deployments it alone justified.
+</Warning>
 
 ## Notes
 
-- Deleting a group removes copies that are no longer required by another group.
+- A skill can belong to several groups. Its copy survives in a repository as long as at least one assigned group still contains it.
+- Removing a repository from the group has the same effect as deleting the group for that repository: the skills stop being justified there and are cleaned up on the next sync.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Skill groups" icon="folder-tree" href="/skills/skill-groups">
+    The list this page opens from.
+  </Card>
+  <Card title="Skill editor" icon="file-pen" href="/skills/skill-detail">
+    The other side of group membership.
+  </Card>
+  <Card title="Skill synchronization" icon="refresh-cw" href="/skills/skill-sync-run">
+    Review and apply what a group sync proposes.
+  </Card>
+  <Card title="Repository details" icon="folder-git-2" href="/codebases/repository-detail">
+    The repositories a group targets.
+  </Card>
+</Columns>

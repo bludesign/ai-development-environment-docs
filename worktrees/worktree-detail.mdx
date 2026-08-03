@@ -8,15 +8,73 @@ description: "Inspect a worktree's overview, working tree, changes, and coverage
   <img className="hidden dark:block" src="/images/dark/worktree-detail.png" alt="Worktree details page in dark theme" />
 </Frame>
 
-The worktree details page at `/worktrees/{id}` shows a single worktree's status, commits, changes, and coverage reports.
+The worktree details page at `/worktrees/{id}` is the deep view of one checkout: where it lives, how it stands against origin and its base branch, what has changed, and what the tests covered.
 
-## Using the page
+## Overview
 
-- Review the **Overview** (repository, origin and base status, HEAD commit) and the **Working tree**.
-- Inspect **Branch changes** and diffs, with side-by-side or overlap views and image transparency comparison.
-- Open **Code coverage** reports generated for the worktree.
+| Field | Notes |
+| --- | --- |
+| Repository and origin | The logical repository and its remote |
+| Agent | The Mac hosting this worktree |
+| Folder | The path on that Mac, shown relative to the agent's base repository directory |
+| HEAD commit | The commit currently checked out |
+| Upstream | The tracking branch |
+| Origin status | Ahead, behind, diverged, in sync, unpublished, or detached |
+| Base freshness | How far the branch is behind its base branch |
+| Last checked / Last fetched | When the agent last scanned and last fetched |
 
-## Notes
+A **Linked** badge distinguishes a linked worktree from the repository's primary checkout.
 
-- Live inspection of commits and changes requires the agent to be online and up to date.
-- Diffs are truncated at a display limit for very large changes.
+## Actions and management
+
+The same action set as the [Worktrees](/worktrees/worktrees) page — sync, rebase, push, reset, stash, staging, branch change, Auto Sync, Auto Merge, move, and delete — is available here, alongside the worktree's tags and highlight color.
+
+## Working tree
+
+The current state of the checkout, with changes grouped as **Conflicted**, **Staged**, **Unstaged**, and **Untracked**. A clean worktree says so.
+
+## Branch changes
+
+Commits and file changes that differ from the base branch, with a diff viewer.
+
+<Tabs>
+  <Tab title="Text diffs">
+    Read a diff **Side by side** or as an **Overlap**. Files with no textual changes and binary files are labeled rather than rendered.
+  </Tab>
+  <Tab title="Image diffs">
+    Changed images are compared **Before** and **After**, with an **Image transparency** slider for blending one over the other. A side with no image says so.
+  </Tab>
+</Tabs>
+
+<Note>
+  Diffs are capped at a 2 MiB display limit. Beyond that the diff is truncated, and very large change sets may omit some files entirely — the page tells you when that happens.
+</Note>
+
+## Code coverage
+
+Coverage reports generated for this worktree, each listed with its **Build**, **Status** (Pending, Ready, or Failed), **Overall coverage**, **Changed coverage**, and generation time. **View report** opens the full report.
+
+Changed coverage is the useful number in review: it measures the executable lines this branch touched, rather than the whole project.
+
+## When live inspection is unavailable
+
+Saved metadata always renders. Commits and changes need a live agent, and the page states exactly why they are missing:
+
+| Condition | Message |
+| --- | --- |
+| Agent offline | Metadata stays available, but commits and changes cannot be inspected |
+| Worktree unavailable | The checkout is not in a state that can be inspected |
+| Operation in progress | Commits and changes refresh once the active operation finishes |
+| Agent too old | Update the agent to inspect commits and changes |
+| Inspection failed | The agent reported an error |
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Worktrees" icon="code-fork" href="/worktrees/worktrees">
+    Every worktree across every agent, with creation, moves, and automation.
+  </Card>
+  <Card title="Build coverage report" icon="chart-bar" href="/builds/build-coverage">
+    The full coverage report a build generates.
+  </Card>
+</Columns>

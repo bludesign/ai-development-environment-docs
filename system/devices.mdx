@@ -8,26 +8,75 @@ description: "Enroll iPhones and iPads, review connection history, and register 
   <img className="hidden dark:block" src="/images/dark/devices.png" alt="Devices page in dark theme" />
 </Frame>
 
-The **Devices** page at `/devices` enrolls iPhones and iPads and manages their Apple registration.
+The **Devices** page at `/devices` is the register of iPhones and iPads that are allowed to run your development builds. Getting a device onto that register normally means asking someone to find their UDID in Xcode or Finder and paste it into a chat — error-prone, and unpleasant to ask of a tester outside your team.
+
+Instead, this page issues a one-time signed enrollment profile. The tester installs it, iOS returns the identifier directly to the server, and the device appears here with its product and iOS version already filled in. Registering it with Apple afterwards is a single button.
 
 ## Using the page
 
-- **Add device** to start enrollment, then filter and sort the device list.
-- **Export Apple TSV** for bulk device registration.
-- Open a device to register it with Apple, reject it, or delete it.
+- **Add device** starts the [enrollment flow](/system/device-enroll) and produces a profile to install on the target iPhone or iPad.
+- **Export Apple TSV** downloads every non-rejected device as a `Device ID / Device Name / Device Platform` file, the format Apple's bulk device upload expects.
+- Filter by status and sort by newest enrollment, device name, or last seen.
+- Select a row to open its [detail page](/system/device-detail), where registration, rejection, and deletion live.
+
+| Column | What it shows |
+| --- | --- |
+| **Device** | The label given at enrollment |
+| **Status** | Local lifecycle status (see below) |
+| **Product** | The Apple model identifier reported by iOS |
+| **Last IP** | The most recent address observed during enrollment |
+| **Enrolled** | When enrollment completed |
+| **Apple registration** | Whether and when the device was registered with Apple |
+| **Last seen** | The most recent enrollment activity for this device |
+
+### Statuses
+
+| Status | Meaning |
+| --- | --- |
+| **Pending** | Enrolled locally, not registered with Apple |
+| **Registering** | An Apple registration call is in flight |
+| **Registered** | Present in the Apple Developer account, with its resource ID stored |
+| **Registration failed** | The Apple call failed; the reason is on the detail page and **Retry registration** is available |
+| **Rejected** | Deliberately refused. It stays in local history and cannot be registered |
+
+<Note>
+  A registration stuck in **Registering** — because the server restarted mid-call, for example — is recovered automatically after five minutes and moved to **Registration failed** so you can retry it.
+</Note>
 
 ## Apple registration
 
-Registering with Apple is optional. In [Settings](/system/settings), provide an issuer ID, key ID, and ES256 PKCS#8 `.p8` key that has Certificates, Identifiers & Profiles access. Saving verifies the credentials against `GET /v1/devices?limit=1`.
+Registering with Apple is optional. Enrollment alone gives you an accurate inventory and a UDID to hand to whoever manages the Developer account; registration automates that last step.
 
-Registration first reconciles the UDID with Apple, then calls the Devices API only when needed.
+<Steps>
+  <Step title="Create an App Store Connect API key" icon="key">
+    In App Store Connect, under **Users and Access → Integrations**, create a Team API key with **Certificates, Identifiers & Profiles** access. Copy the Issuer ID and Key ID, and download the `.p8` file — Apple offers it exactly once.
+  </Step>
+  <Step title="Save it in Settings" icon="settings">
+    Enter the issuer ID, key ID, and ES256 PKCS#8 `.p8` key in [Settings](/system/settings). Saving verifies the credentials against `GET /v1/devices?limit=1` before storing them, so a bad key fails immediately rather than at the first registration.
+  </Step>
+  <Step title="Register the device" icon="badge-check">
+    On the device's detail page, **Register with Apple** first looks the UDID up in the account and reuses the existing resource if it is already there. Only a genuinely new device costs a create call against your annual device limit.
+  </Step>
+</Steps>
 
-<Note>
-  Registration does not regenerate a provisioning profile or rebuild an IPA. After adding a device, create a new provisioning profile and export a new IPA from [Builds](/builds/builds).
-</Note>
+<Warning>
+  Registration does not regenerate a provisioning profile or rebuild an IPA. An app already installed on the device will not suddenly launch. After adding a device, create a new profile that includes it on [Provisioning Profiles](/system/provisioning-profiles), then export a new IPA from [Builds](/builds/builds).
+</Warning>
 
 ## Notes
 
-- Enrollment requires a public HTTPS address; see the enrollment flow on the [Enroll device](/system/device-enroll) page.
-- The enrollment profile requests only UDID, product, and iOS version, plus the observed IP.
-- Deleting a local device also deletes its enrollment and IP history, but does not remove the device from Apple's annual registration list.
+- Enrollment requires a publicly reachable HTTPS address, because Apple's profile service posts the device response to this server. See [Enroll device](/system/device-enroll) for the full flow.
+- The enrollment profile requests only UDID, product, and iOS version, plus the IP address observed during the exchange.
+- Deleting a device locally removes its record, enrollment attempts, and IP history. It does **not** remove the device from Apple's annual registration list — Apple only permits that during the yearly membership renewal window.
+- Rejecting a device is the reversible option: it stays in history and can never be registered by accident. Delete and re-enroll if you change your mind.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Enroll device" icon="smartphone-charging" href="/system/device-enroll">
+    The signed-profile flow that collects a device identifier.
+  </Card>
+  <Card title="Provisioning Profiles" icon="file-badge" href="/system/provisioning-profiles">
+    Where a newly registered device has to be added before builds reach it.
+  </Card>
+</Columns>

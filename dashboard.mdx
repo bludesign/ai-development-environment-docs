@@ -8,17 +8,121 @@ description: "Live work, decisions, failures, and builds waiting to run."
   <img className="hidden dark:block" src="/images/dark/dashboard.png" alt="Action Center in dark theme" />
 </Frame>
 
-The **Action Center** is the home screen at `/`. It surfaces live work, pending decisions, failures, and builds that are ready to run, so you can act on everything that needs attention from one place.
+The **Action Center** is the home screen at `/`. It is a single queue built from four different resource types — AI Plans, AI Sessions, iOS builds, and workflow runs — so anything that is running, stuck, failed, or waiting on you shows up in one list instead of five separate pages.
+
+Nothing is added by hand. The control plane derives the list from the current state of each resource, so an item disappears on its own as soon as the underlying work moves on.
+
+## What appears here
+
+An item is a resource plus the reason it earned a place in the queue.
+
+<Columns cols={2}>
+  <Card title="Plan" icon="clipboard-list" href="/ai/plans">
+    A read-only codebase survey. Appears while it is **In progress** or **Paused**, and after it **fails**.
+  </Card>
+  <Card title="Session" icon="comments" href="/ai/sessions">
+    An AI run that edits a worktree. Same rule as Plans — in progress, paused, or failed.
+  </Card>
+  <Card title="Build" icon="hammer" href="/builds/builds">
+    An iOS build that is queued, preparing, running, or failed — plus successful builds that have never been run on a device.
+  </Card>
+  <Card title="Workflow" icon="diagram-project" href="/workflows/workflows">
+    A workflow run that is queued, running, pausing, paused, waiting, blocked, or failed.
+  </Card>
+</Columns>
+
+Archived Plans, Sessions, and workflow runs are excluded entirely.
+
+## Why an item appears
+
+Every item carries one **reason** badge. The reason also sets the item's position — the list is sorted by reason first, then by most recently updated.
+
+| Reason | Badge | Meaning |
+| --- | --- | --- |
+| Answer needed | Amber | A pending question batch is waiting on your input. |
+| Blocked | Neutral | A workflow run is blocked, or a Plan or Session landed in a failed phase. |
+| Failed | Red | The resource finished in a failed state and has not been acknowledged. |
+| Ready to run | Blue | A successful build produced a runnable app that has never been deployed. |
+| Active | Green | Work is in progress and needs nothing from you. |
+
+The first four are grouped under **Needs attention**. Only **Active** items land in the **Active** section.
+
+<AccordionGroup>
+  <Accordion title="How “Blocked” is decided" icon="circle-exclamation">
+    For a workflow run, **Blocked** simply means the run's status is `BLOCKED`.
+
+    For a Plan or Session, the status is still in progress but its **phase** ended in a failure — any phase whose name ends in `_FAILED`, plus the special `IMPORTED_ACTIVE_COLLISION` phase, which means an imported run collided with one that was already active.
+  </Accordion>
+  <Accordion title="How “Ready to run” is decided" icon="circle-play">
+    A build is offered as ready to run only when every one of these holds:
+
+    - It is the most recent build for its worktree, configuration, and destination combination.
+    - Its status is **Succeeded**.
+    - Its worktree is still present on disk and marked available.
+    - It produced a runnable app artifact.
+    - It has no deployment records — nobody has installed or run it yet.
+
+    Run it straight from the card. The controls default to the destination the build was made for.
+  </Accordion>
+  <Accordion title="How a failure is tracked" icon="fingerprint">
+    Each failed item gets a **failure fingerprint** built from its kind, id, generation, and the time it finished. Acknowledging stores that fingerprint and hides the item.
+
+    Because the finish time is part of the fingerprint, a later failure of the same resource produces a new fingerprint and reappears. Acknowledging never suppresses a future failure.
+  </Accordion>
+</AccordionGroup>
 
 ## Using the page
 
-- **Review what needs attention** — Items are grouped into **Needs attention** (questions, blocked or failed runs, unrun builds) and **Active** (work in progress).
-- **Answer a question** — When a Plan, Session, or Workflow asks for input, pick a suggested answer or enter a **Custom answer** and **Submit answer**.
-- **Acknowledge** an item once you have handled it to clear it from the list.
-- **Refresh** to pull the latest state, or **Load more** to page through older items.
+<Steps>
+  <Step title="Scan the counters" icon="hashtag">
+    Three badges under the title show the total item count, how many need attention, and how many are active. They reflect the whole queue, not just the page you have loaded.
+  </Step>
+  <Step title="Work the Needs attention section" icon="triangle-exclamation">
+    Items are already ordered by urgency — questions first, then blocked, failed, and ready-to-run. Each card links to the full Plan, Session, build, or run.
+  </Step>
+  <Step title="Answer any questions inline" icon="circle-question">
+    Pick from the offered options, or type a **Custom answer** when the question allows one, then **Submit answer**. See below for the details.
+  </Step>
+  <Step title="Acknowledge failures you have handled" icon="check-double">
+    **Acknowledge** clears a failed item from the queue without touching the underlying resource.
+  </Step>
+  <Step title="Page through the rest" icon="angles-down">
+    The list loads 50 items at a time. **Load more** appends the next page.
+  </Step>
+</Steps>
 
-## Notes
+### Answering a question
 
-- Item kinds include Plan, Session, Build, and Workflow.
-- A compact **Mini Action Center** is also available in the app shell.
-- Nothing appears here until active work or new decisions exist.
+Question batches come from Plans and Sessions directly, and from workflow runs by way of the step attempt that raised them — the card labels the source as **Question from …**.
+
+- **Single choice** questions render as radio options. Picking an option clears any custom text you typed, and typing custom text clears the selection.
+- **Multiple choice** questions render as checkboxes, and a custom answer is appended alongside whatever you checked.
+- **Custom answer** is only offered when the question permits it.
+- **Submit answer** stays disabled until every question in the batch has either a selection or non-empty custom text.
+
+<Note>
+  Answers are submitted for the whole batch at once. If a batch asks three questions, all three must be answered before you can submit.
+</Note>
+
+## Mini Action Center
+
+The app shell carries a compact copy of the same queue in the sidebar, showing the total count and a condensed row per item — title, reason badge, the first pending question, any error, and the linked worktree. It shares state with the full page, so answering or acknowledging in one place updates the other immediately.
+
+## Live updates
+
+The queue subscribes to an `actionCenterChanged` subscription and refetches whenever the control plane signals a change. It also refetches on every reconnect, so a dropped WebSocket cannot leave stale items on screen. **Refresh** forces the same reload by hand.
+
+<Tip>
+  When a Plan, Session, build, or workflow run is tied to a worktree, the card shows the worktree's folder and branch and inherits its highlight color as a left border stripe — useful for telling parallel work on the same repository apart at a glance.
+</Tip>
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Notifications" icon="bell" href="/notifications">
+    Route the same events to the sidebar, browser alerts, or Web Push.
+  </Card>
+  <Card title="Workflow run" icon="diagram-project" href="/workflows/workflow-run">
+    Open a blocked or waiting run to repair its session data or replay a step.
+  </Card>
+</Columns>

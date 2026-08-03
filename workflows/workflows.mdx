@@ -8,16 +8,76 @@ description: "Design, publish, and monitor durable development automations."
   <img className="hidden dark:block" src="/images/dark/workflows.png" alt="Workflows page in dark theme" />
 </Frame>
 
-The **Workflows** page at `/workflows` is where you design, publish, and monitor durable development automations and review their runs.
+The **Workflows** page at `/workflows` is the index for durable development automations. It has two tabs: **Workflows**, the definitions you have authored, and **All runs**, every execution across every workflow.
 
-## Using the page
+A workflow is a typed graph — one trigger, then steps connected by handles — that the control plane executes durably. A run survives a control plane restart, an agent restart, and a dropped connection, picking up from the last completed step rather than starting over.
 
-- Switch between the **Workflows** and **All runs** tabs.
-- **New workflow** opens the editor; **Import** loads a definition file as a draft.
-- Per workflow, use **Run**, **Edit**, **Duplicate**, **Enable**/**Disable**, **Archive**, and **Export**.
-- Filter by **Active**, **All**, or **Archived**, and search across workflows and runs.
+## Workflows tab
 
-## Notes
+Each workflow shows its name, description, enabled state, version count, and run count, plus a **Quick actions** marker when it is wired to appear as a button elsewhere in the app.
 
-- A workflow appears as a quick action only when it is published, enabled, and has a resource trigger matching the action type.
-- Runs can be selected in bulk to delete their step history.
+| Action | Effect |
+| --- | --- |
+| **Run** | Starts a run of the published version |
+| **Edit** | Opens the [workflow editor](/workflows/workflow-edit) |
+| **Duplicate** | Copies the definition into a new draft workflow |
+| **Enable** / **Pause workflow** | Controls whether triggers can start runs |
+| **Archive** | Hides the workflow from the active view without deleting it |
+| **Export** | Downloads the definition as a file |
+
+**New workflow** opens the editor on a blank canvas. **Import** loads an exported definition file back in as a draft — the round trip is how you move a workflow between control planes.
+
+<Note>
+  Enabled and published are different things. A workflow must be **published** to have an immutable version to run, and **enabled** for its triggers to fire. Pausing leaves the published version intact and simply stops new runs.
+</Note>
+
+## All runs tab
+
+A table of every run with its number, workflow, status, trigger, generation, and start time.
+
+<AccordionGroup>
+  <Accordion title="Run statuses" icon="chart-line">
+    | Status | Meaning |
+    | --- | --- |
+    | Queued | Accepted, not yet started |
+    | Running | Executing steps |
+    | Waiting | Held on a delay, a wait-until, or an external condition |
+    | Blocked | Cannot proceed — usually missing or invalid session data |
+    | Pausing / Paused | Pause requested, then honored |
+    | Succeeded | Reached a terminal step with no failure |
+    | Failed | A step failed under a **Fail workflow** policy |
+    | Cancelled | Stopped by hand |
+  </Accordion>
+  <Accordion title="Generations" icon="code-branch">
+    Replaying a run does not rewrite history. It opens a new **generation** that appends fresh step attempts alongside the originals, so the generation column tells you which pass of the run you are looking at.
+  </Accordion>
+</AccordionGroup>
+
+### Managing runs
+
+- **Edit** turns on selection. Select individual runs, everything from a day, or **Select all**.
+- With a selection, **Archive** (or **Restore**, when viewing archived) and **Delete** apply in bulk.
+- The **Archive filter** switches between **Active**, **Archived**, and **All**.
+
+<Warning>
+  Deleting a run removes its full step history permanently. Archive instead when you only want it out of the way.
+</Warning>
+
+## Search and refresh
+
+The search box filters across both workflows and runs. **Refresh** refetches the current tab.
+
+## Quick actions
+
+A workflow can surface as a button on the pages of the resources it operates on — a worktree, a pull request, a GitHub Actions job. The action shows up only when the workflow is **published**, **enabled**, and carries a resource trigger whose action type matches. Configure this on the [workflow details page](/workflows/workflow-detail).
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="New workflow" icon="plus" href="/workflows/workflow-new">
+    Start authoring from a blank canvas.
+  </Card>
+  <Card title="Workflow run" icon="play" href="/workflows/workflow-run">
+    Watch a live run, answer questions, repair data, or replay a step.
+  </Card>
+</Columns>

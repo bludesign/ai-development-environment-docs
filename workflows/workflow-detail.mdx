@@ -8,16 +8,92 @@ description: "Review a workflow's published version, graph, runs, and quick acti
   <img className="hidden dark:block" src="/images/dark/workflow-detail.png" alt="Workflow details page in dark theme" />
 </Frame>
 
-The workflow details page at `/workflows/{id}` shows a single workflow: its published version, graph, recent runs, and version history.
+The workflow details page at `/workflows/{id}` is the read-only view of one workflow: what is published, what the graph looks like, how it behaves under load, where it shows up as a button, and what it has run recently.
 
-## Using the page
+## Header
 
-- Review the **published version**, the **workflow graph**, and **recent runs**.
-- Open **Version history** to inspect or export prior immutable versions.
-- Configure **Quick actions** — where the workflow appears as a button — and its **Repository availability**.
-- Start a run with **Run**, or open a linked resource.
+The name, description, and an **Enabled** or **Disabled** badge, with the top-level actions:
 
-## Notes
+| Action | Effect |
+| --- | --- |
+| **Run** | Starts a run of the published version |
+| **Edit** | Opens the [workflow editor](/workflows/workflow-edit) |
+| **Export** | Downloads the current definition as a file |
+| **Enable** / **Pause workflow** | Controls whether triggers can start runs |
+| **Refresh** | Refetches the page |
 
-- A workflow must be published before it can run.
-- Quick actions appear only when the workflow is published, enabled, and matched to the current resource.
+## Summary cards
+
+<Columns cols={2}>
+  <Card title="Published version" icon="tag">
+    The version number currently in force. Runs always execute a published version, never the working draft.
+  </Card>
+  <Card title="Runs" icon="list">
+    How many runs this workflow has produced.
+  </Card>
+  <Card title="Overlap policy" icon="layer-group">
+    What happens when a trigger fires while a run is already in flight — **Queue** every event, run **Concurrent**, or keep only the **Latest** pending event.
+  </Card>
+  <Card title="Maximum concurrent runs" icon="gauge">
+    The ceiling on simultaneously executing runs for this workflow.
+  </Card>
+</Columns>
+
+## Workflow graph
+
+A read-only rendering of the published graph, using the same node styling as the editor. Steps are drawn with their category icon, so a Jira step reads the same here as it does on the canvas.
+
+Whether the graph honors the positions you authored or auto-arranges for the available width is controlled by the **Viewer layout** setting in the editor.
+
+## Quick actions
+
+This is where you decide whether the workflow appears as a button on other pages, and where.
+
+<Steps>
+  <Step title="Choose an action type" icon="arrow-pointer">
+    | Type | Where the button appears |
+    | --- | --- |
+    | **Standard** | Alongside the normal worktree actions |
+    | **Merge conflict** | Only while a worktree rebase is stopped on conflicts |
+    | **GitHub Actions** | In matching GitHub pipeline and job menus |
+    | **None** | Nowhere — the workflow is run from its own page only |
+  </Step>
+  <Step title="Style the button" icon="palette">
+    Pick a **Button icon** and a **Button style** — Default, Outline, Secondary, or Destructive.
+  </Step>
+  <Step title="Scope it to repositories" icon="folder-tree">
+    Leave every repository unchecked to allow all of them, or select specific repositories to build an allowlist. You need at least one codebase registered before this list has anything in it.
+  </Step>
+  <Step title="Save" icon="floppy-disk">
+    **Save quick actions** applies the configuration.
+  </Step>
+</Steps>
+
+<Note>
+  A quick action only renders when the workflow is published, enabled, and has a resource trigger matching the selected action type. All four conditions have to hold — the page states this inline as a reminder.
+</Note>
+
+## Recent runs
+
+The latest runs with their number, status, trigger, and start time. Each links to the [workflow run page](/workflows/workflow-run). Runs that have not started yet show as **Queued**.
+
+## Version history
+
+Every published version, listed with its version number, **content hash**, and publish time. The content hash identifies the exact definition bytes, which makes it easy to confirm two control planes are running the same workflow.
+
+**Export version** downloads any prior version, so you can inspect or restore an older definition.
+
+<Tip>
+  Published versions are immutable. Editing a workflow changes its draft; the running behavior does not change until you publish again.
+</Tip>
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Workflow editor" icon="pencil" href="/workflows/workflow-edit">
+    Change the graph, step configuration, and workflow settings.
+  </Card>
+  <Card title="Workflows" icon="diagram-project" href="/workflows/workflows">
+    The index of all definitions and all runs.
+  </Card>
+</Columns>

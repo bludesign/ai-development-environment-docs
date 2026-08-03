@@ -8,15 +8,158 @@ description: "Browse saved Jira projects, boards, and JQL queries by status."
   <img className="hidden dark:block" src="/images/dark/jira-tickets.png" alt="Jira Tickets page in dark theme" />
 </Frame>
 
-The **Jira Tickets** page at `/jira/tickets` browses saved Jira projects and their sources — JQL queries and board URLs — grouped by status.
+The **Jira Tickets** page at `/jira/tickets` is the ticket queue. Each managed project gets a tab, each project has one or more named **sources** — a JQL query or a Jira board — and every source renders as either a status-grouped table or a board of columns. Clicking a ticket opens it beside the list, where you can reassign it, transition it, comment on it, or turn it into a worktree branch without leaving the page.
 
-## Using the page
+This is the page to work from when you want to pick up the next ticket: it is the only place in the product that goes from a Jira issue to a checked-out branch on an agent in one dialog.
 
-- Browse tickets by **project** and **source** in a board or table layout.
-- **Manage** projects and sources, display settings, and branch naming for each project.
-- **Create worktree** from a ticket, either as a new worktree or by switching an existing one to the ticket branch.
+## Projects and sources
+
+A project comes from Jira — you can only add projects the API token can see. A source is a saved query inside that project.
+
+| Source type | What you enter | How it loads |
+| --- | --- | --- |
+| **JQL** | Any JQL expression | Paged search, 100 issues per request |
+| **Board URL** | A Jira board URL from the same site | Scrum boards load the issues in every active sprint; other boards load the board's issues |
+
+Both are validated before they are saved. JQL is run against Jira with a one-result search, so a syntax error is rejected at save time rather than showing up as an empty board. A board URL is parsed for its board ID and the board is fetched to confirm it exists.
+
+A Scrum board's **column configuration** also sets the status order, so the columns here match the columns in Jira. A Scrum board with no active sprint loads nothing and says so.
+
+<Note>
+  The project tab, the source tab, and the open ticket are all in the URL as `?project=`, `?source=`, and `?issue=`. A link to a specific ticket in a specific source is shareable and survives a reload.
+</Note>
+
+## Reading the list
+
+**Board layout** and **Table layout** switch between the two views. Both group by status and both use the same data.
+
+| Layout | What you get |
+| --- | --- |
+| **Table** | One collapsible card per status, with columns for **Ticket**, **Issue type**, **Priority**, **Assignee**, and **Updated** |
+| **Board** | One column per status, each ticket a card with its key, priority, issue type, and assignee |
+
+Priority is colour-coded from Highest through Lowest. Collapsing a status in the table view hides its rows but keeps the count visible.
+
+**Refresh** re-reads the current source from Jira, bypassing the [cache](/jira/jira-cache). Everything else on the page is served from the cache first.
+
+### Banners
+
+| Banner | What it means |
+| --- | --- |
+| Jira could not be reached | The live read failed and expired cached data is being shown instead |
+| More than 1,000 tickets | The source hit the ceiling; refine the JQL or the board to see the rest |
+| A warning from Jira | Jira's own message, such as a Scrum board with no active sprint |
+
+## Opening a ticket
+
+Clicking a ticket opens a drawer with the full issue: status, issue type, and priority badges, the assignee and status controls, the description, classification, related issues, attachments, and comments.
+
+| Control | What it does |
+| --- | --- |
+| **Assignee** | Searches Jira's assignable users for this issue and reassigns it |
+| **Status** | Lists the transitions Jira currently allows and applies the one you pick |
+| **Create worktree** | Opens the worktree dialog described below |
+| **Open full details** | Opens the [ticket details page](/jira/jira-ticket-detail) |
+| **Open in Jira** | Opens the issue in Jira in a new tab |
+
+A transition that Jira requires a screen for is listed but disabled and labelled **Requires Jira** — those have to be done in Jira itself. Comments can be written in Markdown or Jira Wiki markup, with a preview before you post.
+
+## Creating a worktree from a ticket
+
+**Create worktree** turns a ticket into a branch on one of your agents. The dialog has two modes.
+
+<Steps>
+  <Step title="Choose new or existing" icon="git-branch">
+    **New worktree** creates a worktree on an agent and codebase you pick. **Existing worktree** creates the ticket branch in a worktree that already exists and switches it over.
+  </Step>
+  <Step title="Pick a destination" icon="server">
+    Only online agents that support branch operations and have an available codebase are offered. A codebase or worktree with a job already running is left out, and an existing worktree has to be available.
+  </Step>
+  <Step title="Confirm the branch" icon="pen">
+    The branch name is generated from the project's branch naming function, with the ticket key fixed. You can still edit it and choose the base branch.
+  </Step>
+  <Step title="Create" icon="check">
+    The dialog waits for the worktree job to finish and reports the result. Switching an existing worktree keeps the dialog open so you can see the confirmation.
+  </Step>
+</Steps>
+
+<Tip>
+  If Git refuses to switch because the worktree has local changes, the dialog offers **Stash and retry** — it stashes tracked and untracked changes, then runs the same request again.
+</Tip>
+
+## Managing projects and sources
+
+**Manage** opens everything that is configured per project.
+
+<AccordionGroup>
+  <Accordion title="Adding and removing projects" icon="folder-kanban">
+    The selector lists the Jira projects your token can see that are not already managed. Removing a project removes its saved sources and its related cache entries; nothing changes in Jira.
+  </Accordion>
+  <Accordion title="Adding and editing sources" icon="filter">
+    A source needs a name of 1 to 100 characters, a type, and a value. Editing a source and saving revalidates it. Deleting one also deletes the cache entries it produced.
+  </Accordion>
+  <Accordion title="Display settings" icon="eye">
+    **Tickets to show** filters every source in the project:
+
+    | Option | Shows |
+    | --- | --- |
+    | **All tickets** | Everything the source returns |
+    | **Unassigned or assigned to me** | Unassigned tickets plus your own |
+    | **My in-progress tickets** | Your tickets whose status category is in progress |
+
+    **Hide completed tickets** removes the project statuses you mark as completed, and drops those columns from the board entirely.
+
+    **Auto Merge done status** is the status linked tickets are moved to after Auto Merge merges the pull request on the [worktree](/worktrees/worktrees). Leave it unset to skip that step.
+  </Accordion>
+  <Accordion title="Branch naming" icon="code">
+    Each project has a JavaScript function that names branches created from its tickets. It receives `ticketKey`, `type`, and `title`, and must return a valid Git branch name.
+
+    When the name it returns is already taken, it is called again with `alreadyTaken` set to the previous candidate, and has to return something different — that is how the `-2`, `-3` suffixes are produced.
+
+    ```js Default branch naming function
+    function ({ ticketKey, type, title, alreadyTaken }) {
+      const prefix = String(type).trim().toLowerCase() === "bug" ? "bugfix" : "feature";
+      const slug = String(title)
+        .normalize("NFKD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      const base = `${prefix}/${ticketKey}${slug ? `-${slug}` : ""}`;
+      if (!alreadyTaken) return base;
+      const suffix = Number(String(alreadyTaken).slice(base.length + 1));
+      return `${base}-${Number.isInteger(suffix) && suffix >= 2 ? suffix + 1 : 2}`;
+    }
+    ```
+
+    Saving validates the function against sample story and bug tickets, so a function that throws, times out, returns a non-string, or returns an invalid branch name is rejected before it can break a worktree.
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  The function runs in a sandbox with no network, filesystem, or module access — 8 MB of memory, a 250 ms budget per call, and 1 second to generate the full candidate list. It is limited to 10,000 characters.
+</Warning>
+
+## Requirements
+
+- A Jira Cloud site URL, account email, and API token in [Settings](/system/settings). Without them the page has nothing to list.
+- Creating a worktree needs an online agent with an available codebase, and the ticket's project has to be managed here.
 
 ## Notes
 
-- Requires Jira to be configured in Settings.
-- A source with more than 1,000 tickets must be refined to see the remaining results.
+- A source stops at 1,000 tickets. The banner tells you when that ceiling was hit.
+- Reads are served from the [Jira cache](/jira/jira-cache) until the TTL expires. **Refresh** forces a live read of the whole source.
+- With the [Jira webhook](/jira/webhooks) configured, the board reloads on its own when a ticket on it — or any ticket in the selected project — changes in Jira.
+- A ticket that appears in a source it was not in on the previous load records a **Jira source new ticket** observation for [workflows](/workflows/workflows).
+- Assignments, transitions, and comments are written straight to Jira and re-read immediately, so the list reflects Jira rather than a local copy.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Jira ticket details" icon="ticket" href="/jira/jira-ticket-detail">
+    Full editing, activity, description history, and every Jira field.
+  </Card>
+  <Card title="Jira Cache" icon="database" href="/jira/jira-cache">
+    TTL, API usage, latency, and what is cached right now.
+  </Card>
+</Columns>

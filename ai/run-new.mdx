@@ -8,15 +8,84 @@ description: "Start a managed Plan or Session in a selected worktree."
   <img className="hidden dark:block" src="/images/dark/run-new.png" alt="New run page in dark theme" />
 </Frame>
 
-The new run page at `/runs/new` starts a managed Plan or Session against a worktree.
+The new run page at `/runs/new` is the single form for starting AI work: pick a mode, a worktree, a model, and the tools the run may use, write the prompt, then start it or save it as a draft. It opens preset from wherever you came from — `?kind=plan` or `?kind=session` from the two list pages, and `?draft={id}` when you reopen a saved [draft](/ai/drafts).
 
-## Using the page
+## Filling in the form
 
-- Choose a **worktree**, a **model** and effort, and whether to start a **Plan** or a **Session**.
-- Enter the **prompt**, attach files, and select **MCP tool presets** to grant least-privilege built-in tools.
-- **Start** the run, or **Save draft** to run it later.
+<Steps>
+  <Step title="Choose the mode" icon="git-fork">
+    **Plan** surveys the codebase and proposes work without changing it. **Session** implements, with write access and an exclusive lease on the worktree. You can switch modes at any point before starting.
+  </Step>
+  <Step title="Select a worktree" icon="git-branch">
+    The picker lists every worktree across every enrolled Mac, labelled *repository · branch · agent*. Search matches the folder, ticket key, and ticket title as well as the visible label, so you can find a worktree by whatever you happen to remember about it. A worktree on an offline agent, or one that is not currently available, is listed but not selectable. The chosen worktree's full path is shown underneath.
+  </Step>
+  <Step title="Attach a Jira ticket" icon="ticket">
+    Selecting a worktree that already has a ticket fills the field in for you. Typing a valid key — `AIDE-123` — loads a preview card with the ticket's status, type, priority, and summary so you can confirm you have the right one before starting.
+  </Step>
+  <Step title="Write the prompt" icon="message-square">
+    A resizable Markdown field. This becomes the run's initial prompt and is what the list pages show in the prompt column.
+  </Step>
+  <Step title="Add attachments" icon="paperclip">
+    Files are uploaded as you add them and travel with the prompt. Up to 25 MB per file and 100 MB in total.
+  </Step>
+  <Step title="Pick a tool, model, and effort" icon="cpu">
+    The catalog is fetched for the selected worktree, so it reflects what that agent can actually run. See below.
+  </Step>
+  <Step title="Grant MCP tool presets" icon="wrench">
+    Nothing is selected by default. Each preset you tick grants the run a named set of built-in tools, and only those.
+  </Step>
+  <Step title="Start or save" icon="play">
+    **Start** creates the run and takes you straight to its detail page. **Save draft** stores the whole configuration under [Drafts](/ai/drafts) instead.
+  </Step>
+</Steps>
+
+## Choosing the model
+
+The picker is grouped by tool — Codex, Claude, OpenCode — and a tool that serves more than one catalog gets a heading per group, because the difference between them is usually a billing one. Alongside each model sits its effort scale.
+
+<Note>
+  Effort is not a shared scale: Codex ranks six levels, Claude five, OpenCode two. The effort icon draws the model's whole ramp and lights the part you have reached, so **high** reads correctly as mid-scale on one tool and near the top on another. **Auto** hands the choice to the provider and is drawn as a plain chip rather than a position on the scale.
+</Note>
+
+Models you use get remembered as **Recent**, and you can pin any tool-model-effort combination as a **Preset** for one-click reuse. A preset is the whole triple — *Opus / high* and *Opus / max* are different choices, so effort is part of its identity.
+
+**Web search** enables the provider's own web-search tool, and is available only where the selected tool supports it. Switching tools resets the model, effort, and web-search choice to that tool's defaults.
+
+## What makes Start available
+
+**Save draft** needs only a worktree, a prompt, a tool, and a model. **Start** is stricter, and stays disabled until all of the following hold:
+
+| Requirement | Why |
+| --- | --- |
+| A worktree is selected and its agent is online | The run executes on that Mac |
+| The prompt is not empty | It is the run's initial input |
+| The selected tool reports itself available | The catalog says the tool is installed and usable |
+| The chosen model exists in that tool's catalog | Switching tools clears the model for this reason |
+| The agent advertises `runs.provider.<tool>` | The Mac must be capable of running that specific tool |
+
+<Warning>
+  Choosing **Session** shows the reminder that Sessions run without approval prompts and with unrestricted access while holding an exclusive worktree lease. Starting a Session against a worktree another Session already leases is refused, naming the run that owns it.
+</Warning>
 
 ## Notes
 
-- No MCP tool presets are selected by default — grant only the tools the run needs.
-- Attachments are limited to 25 MB per file and 100 MB total.
+- Starting a run from a draft consumes the draft — it is removed once the run is created.
+- Attachments uploaded here are held against the draft or the run's first input; they appear on the prompt card of the detail page as downloadable files.
+- The control plane checks free disk space on the worktree before a run may start.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Drafts" icon="file-pen" href="/ai/drafts">
+    Configurations saved here, ready to start later.
+  </Card>
+  <Card title="Plans" icon="clipboard-list" href="/ai/plans">
+    Where read-only runs land once started.
+  </Card>
+  <Card title="Sessions" icon="terminal" href="/ai/sessions">
+    Where implementation runs land once started.
+  </Card>
+  <Card title="Tools" icon="wrench" href="/system/tools">
+    The MCP tool presets this page grants from.
+  </Card>
+</Columns>

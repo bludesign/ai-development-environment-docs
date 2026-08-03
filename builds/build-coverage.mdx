@@ -8,13 +8,49 @@ description: "Review overall and changed code coverage for a build."
   <img className="hidden dark:block" src="/images/dark/build-coverage.png" alt="Build coverage report in dark theme" />
 </Frame>
 
-The build coverage page at `/builds/{id}/coverage` shows the code coverage report generated for a build.
+The build coverage page at `/builds/{id}/coverage` shows the code coverage report generated for one build.
 
-## Using the page
+<Note>
+  A build has no coverage page until you generate the report. Open the [build details](/builds/build-detail) page and choose **Generate coverage report** first — until then this page tells you the report was not found.
+</Note>
 
-- Review **Overall coverage** and **Changed coverage**, plus covered, executable, and uncovered line counts.
-- Search and sort **coverage of changed files** and all coverage files by target, file, or path.
+## Headline numbers
 
-## Notes
+| Metric | What it measures |
+| --- | --- |
+| **Overall coverage** | Coverage across the whole project |
+| **Changed coverage** | Coverage restricted to the lines this branch changed |
+| **Covered lines** | Executable lines the tests exercised |
+| **Executable lines** | Lines that could be covered |
+| **Uncovered lines** | Executable lines the tests never reached |
 
-- Generate the coverage report from the [Build details](/builds/build-detail) page first.
+<Tip>
+  **Changed coverage** is the number worth reviewing on a pull request. Overall coverage moves slowly and mostly reflects the age of the codebase; changed coverage tells you whether the work in front of you is tested.
+</Tip>
+
+## Coverage of changed files
+
+Files this branch touched, with their coverage and a **Change** marker describing how the file was modified. Search by changed file or path.
+
+This table is empty when the branch has no changed source files — which is the expected state for a build made straight off the base branch.
+
+## All coverage files
+
+Every file in the report, grouped by target. Search across targets, files, and paths, sort by any column, and **Expand all** or **Collapse all** to move through targets quickly.
+
+| Column | Notes |
+| --- | --- |
+| **Target** | The build target the file belongs to |
+| **File** | File name |
+| **Coverage** | Percentage of executable lines covered |
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Build details" icon="file-lines" href="/builds/build-detail">
+    Where the coverage report is generated, alongside logs, artifacts, and test results.
+  </Card>
+  <Card title="Worktree details" icon="code-branch" href="/worktrees/worktree-detail">
+    Worktree coverage reports, which measure the lines changed in a branch and its working tree.
+  </Card>
+</Columns>

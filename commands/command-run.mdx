@@ -8,14 +8,77 @@ description: "Watch a command's terminal output, attempts, and immutable snapsho
   <img className="hidden dark:block" src="/images/dark/command-run.png" alt="Command run page in dark theme" />
 </Frame>
 
-The command run page at `/commands/runs/{id}` shows a single run's live terminal output and history.
+The command run page at `/commands/runs/{id}` shows one execution end to end: where it ran, what it printed, how many attempts it took, and exactly what script was executed.
 
-## Using the page
+## Header
 
-- Watch **Terminal output** live — follow output, search, or view the raw log.
-- Review **Attempts**, **Timing**, and the immutable **command snapshot**.
-- **Rerun** the command or **Terminate** an active run.
+The run number and status badge, with **Rerun** and — while the run is active — **Terminate**.
 
-## Notes
+**Rerun** starts a new run from *this run's snapshot*, and links the two together as predecessor and successor so you can walk a chain of retries.
 
-- Restart attempts that run for at least one minute reset the burst counter before their next exit is evaluated.
+## Overview
+
+| Field | Notes |
+| --- | --- |
+| Status | Queued, Running, Restarting, Cancelling, Succeeded, Failed, Cancelled, or Timed out |
+| Origin | Manual, Quick action, Workflow, or Rerun |
+| Agent | Name and hostname of the Mac it ran on |
+| Worktree | Folder and branch, for worktree-scoped commands |
+| Exit code and signal | How the last attempt ended |
+| Error | The failure message, when there is one |
+| Next restart | When a restarting run will try again |
+
+## Terminal output
+
+Output streams in live and is retained with the run.
+
+| Control | Effect |
+| --- | --- |
+| **Follow output** | Keeps the view pinned to the newest line |
+| **Search terminal** | Finds text, with previous and next match navigation |
+| **Fit terminal** | Refits the terminal to the available width |
+| **View raw output** | Opens the unstyled log |
+
+When a run restarts, output is divided by **Attempt** markers so you can see where each attempt began and what exit code ended it.
+
+## Attempts
+
+Every attempt with its number, status, exit code, signal, error, and start and finish times. A run with a restart policy accumulates one row per attempt; a run that never restarts has exactly one.
+
+## Timing
+
+Queued, started, and finished timestamps, plus total duration.
+
+## Immutable command snapshot
+
+The name, description, script, target kind, restart policy, restart limit, and notification setting captured when the run started, with **Copy** for the script.
+
+<Note>
+  This snapshot is why history stays trustworthy. Editing or deleting the command definition later does not change what this page reports — it shows what actually ran.
+</Note>
+
+## Restart behavior
+
+<AccordionGroup>
+  <Accordion title="When a restart happens" icon="repeat">
+    Under **On failure**, a restart follows any attempt that exited non-zero or was killed by a signal. Under **Always**, every exit restarts. A manual **Terminate** never restarts, whatever the policy says.
+
+    Restarts are scheduled a second after the previous attempt exits, and the run sits in **Restarting** in the meantime.
+  </Accordion>
+  <Accordion title="How the limit is counted" icon="hashtag">
+    The failed restart limit caps a *burst* of quick failures. An attempt that ran for at least one minute resets the counter to zero before its exit is evaluated, so a long-lived process that dies after hours starts again with a full budget. A script that fails instantly, repeatedly, exhausts the limit and the run is marked **Failed**.
+
+    With no limit set, restarts are unlimited.
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Commands" icon="terminal" href="/commands/commands">
+    All runs and definitions, with bulk archive and delete.
+  </Card>
+  <Card title="Job details" icon="scroll" href="/agents/job-detail">
+    The underlying durable agent job each attempt executes as.
+  </Card>
+</Columns>

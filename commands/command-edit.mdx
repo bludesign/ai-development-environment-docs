@@ -8,14 +8,55 @@ description: "Update a saved command's script, target, restart policy, and quick
   <img className="hidden dark:block" src="/images/dark/command-edit.png" alt="Edit command editor in dark theme" />
 </Frame>
 
-The edit command page at `/commands/{id}/edit` updates an existing command definition using the same editor as [New command](/commands/command-new).
+The edit command page at `/commands/{id}/edit` updates an existing definition. It is the same editor as [New command](/commands/command-new), pre-filled with the saved values.
 
-## Using the page
+## What you can change
 
-- Change the **Name**, **Description**, or **Shell script**.
-- Update the **Target scope**, **Restart policy**, and failed restart limit.
-- Adjust completion **Notifications** and **quick action** settings.
+<Columns cols={2}>
+  <Card title="Command" icon="file-code">
+    **Name**, **Description**, and the **Shell script**.
+  </Card>
+  <Card title="Target scope" icon="crosshairs">
+    Any agent home, a specific agent home, any worktree, or a worktree in a repository.
+  </Card>
+  <Card title="Restart policy" icon="repeat">
+    Never, on failure, or always, plus the failed restart limit.
+  </Card>
+  <Card title="Notifications and quick action" icon="bell">
+    Completion notifications, and whether the command appears as a button with its icon and style.
+  </Card>
+</Columns>
 
-## Notes
+## How edits interact with history
 
-- Changes apply to future runs; existing run history keeps its immutable command snapshot.
+Each run stores an immutable **snapshot** of the name, description, script, target kind, restart policy, restart limit, and notification setting that were in force when it started. Editing the definition never rewrites those snapshots.
+
+| Change | Effect |
+| --- | --- |
+| Script or name | Applies to the next run; existing runs keep their snapshot |
+| Target scope | Applies to the next launch; runs already placed on an agent stay there |
+| Restart policy or limit | Applies to the next run — a run already in flight keeps the policy it started with |
+| Quick action settings | Applies immediately to the button |
+
+<Note>
+  Because **Rerun** replays a run's snapshot rather than the current definition, rerunning an old run executes the old script. Launch from the **Definitions** tab when you want the latest version.
+</Note>
+
+<Warning>
+  Narrowing the target scope does not stop runs that are already executing on a target the new scope excludes. Terminate those runs if the change was meant to be immediate.
+</Warning>
+
+## Archiving instead of editing
+
+If a command is obsolete, archive it from the [Commands](/commands/commands) page rather than repurposing it. Archiving keeps its run history intact and readable, whereas rewriting the script leaves history pointing at a name that no longer describes what ran.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="New command" icon="plus" href="/commands/command-new">
+    Field-by-field reference for every setting in this editor.
+  </Card>
+  <Card title="Command run" icon="terminal" href="/commands/command-run">
+    Where the immutable snapshot for a given run is displayed.
+  </Card>
+</Columns>

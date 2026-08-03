@@ -8,15 +8,118 @@ description: "Inspect, sync, import, and remove Apple signing assets across buil
   <img className="hidden dark:block" src="/images/dark/provisioning-profiles.png" alt="Provisioning Profiles page in dark theme" />
 </Frame>
 
-The **Provisioning Profiles** page at `/provisioning-profiles` manages Apple signing assets across build agents and the Apple Developer portal.
+The **Provisioning Profiles** page at `/provisioning-profiles` answers the question that breaks iOS builds more than any other: *which of my Macs can actually sign this app?*
 
-## Using the page
+It inventories the provisioning profiles and code-signing identities installed on every build agent, groups them so you see one row per profile rather than one row per machine, and lets you install, copy, and remove them across agents. A separate tab reaches into the Apple Developer portal for the same assets at the source.
 
-- **Refresh inventory** across signing-capable agents.
-- **Install a provisioning profile** (`.mobileprovision`) or **import a signing identity** (`.p12`) onto selected agents.
-- Manage **Apple portal** profiles and certificates, **create portal profile**, **sync to missing**, and delete expired profiles.
+## Target agents
+
+Every action on this page runs against the agents selected in **Target agents** at the top. The selection is deliberate — installing a signing identity on a machine that does not need it widens your exposure for no benefit.
+
+Agents whose control agent predates signing support stay visible but are marked **Unsupported** and cannot be selected. Update the agent to bring it back into the fleet.
+
+## Refreshing the inventory
+
+**Refresh inventory** dispatches a scan job to each signing-capable agent, which reads the profiles from disk and the identities from the login keychain and reports them back. Progress is per agent — *Refreshing inventory: N of M agents finished* — with each agent showing **Queued**, **Scanning**, **Complete**, **Failed**, **Cancelled**, or **Timed out**.
+
+<Note>
+  The inventory is a cached snapshot, not a live read. Anything changed directly on a Mac — a profile Xcode downloaded, a certificate someone deleted — is invisible until the next refresh.
+</Note>
+
+## Local profiles
+
+Profiles are grouped across agents by UUID **and** content hash. Two agents holding byte-identical profiles produce one row; if one agent's copy has drifted, it splits into two rows, which is exactly the signal you want.
+
+| Column | What it shows |
+| --- | --- |
+| **Name** | The profile name, linking to its [detail page](/system/provisioning-profile-detail) |
+| **Bundle ID** | The application identifier it provisions |
+| **Type** | Development, ad-hoc, App Store, or enterprise |
+| **Team** | Team name and identifier |
+| **Devices** | How many device UDIDs the profile embeds |
+| **Expires** | Expiry date, with an **Expired** badge once it has passed |
+| **Installed agents** | Which Macs currently hold it |
+
+Available actions:
+
+| Action | What happens |
+| --- | --- |
+| **Install a provisioning profile** | Upload one `.mobileprovision` and install it on every selected agent |
+| **Sync to missing** | Reads the profile from an agent that has it and installs it on the selected agents that do not |
+| **Download profile** | Fetches the profile bytes back from an agent to your browser |
+| **Delete** | Removes the profile from every listed agent |
+| **Delete expired** | Removes every expired profile from the selected agents in one pass |
+
+<Tip>
+  **Sync to missing** is the fix for "it builds on my Mac but not on the build agent". It is a two-step operation: the source agent reads the profile, and only then are install jobs dispatched to the targets. If the source read fails, no target is touched and the whole operation is marked failed.
+</Tip>
+
+Xcode-managed profiles can be deleted here, but Xcode will download them again on the next build that needs them.
+
+## Local identities
+
+The **Local identities** tab lists code-signing certificates grouped by fingerprint across agents.
+
+| Column | What it shows |
+| --- | --- |
+| **Name** | Certificate common name |
+| **Type** | The certificate type, such as Apple Development or Apple Distribution |
+| **Team** | The owning team identifier |
+| **Fingerprints** | The SHA-1 and SHA-256 fingerprints that profiles reference |
+| **Private key** | **Available** or **Missing** — a certificate without its private key cannot sign |
+| **Expires** | Expiry date, with an **Expired** badge once it has passed |
+
+### Importing an identity
+
+**Import a signing identity** sends an encrypted `.p12` and its passphrase to the selected agents, which import it into the login keychain for `codesign`.
+
+<Steps>
+  <Step title="Select online, supported agents" icon="server">
+    Unlike profile installs, identity import requires every target agent to be online and to advertise import support. The action fails up front and names the agents that do not qualify rather than half-completing.
+  </Step>
+  <Step title="Choose the .p12 and enter its passphrase" icon="key">
+    The file must be non-empty and no larger than 20 MiB.
+  </Step>
+  <Step title="The secret moves by one-time claim" icon="shield">
+    Each agent gets its own target-bound, single-use transfer for the archive and passphrase. If job creation fails, the transfer is revoked immediately rather than left claimable.
+  </Step>
+</Steps>
+
+**Delete identity** removes the certificate *and its private key* from the login keychain of each listed agent. It only targets agents that actually hold the private key, and fails if none of the selected agents do.
+
+<Warning>
+  A private key that exists only on one agent is gone for good once deleted here — the portal holds the certificate, never the key. Export a `.p12` backup before removing the last copy.
+</Warning>
+
+## Apple portal
+
+The **Apple portal** tab talks to the Apple Developer account directly, using the App Store Connect credentials configured in [Settings](/system/settings). It lists **Portal profiles** and **Portal certificates** alongside the bundle IDs and registered devices Apple knows about.
+
+**Create portal profile** builds a profile from resources that already exist in the account: a name, a profile type, an existing bundle ID, an existing certificate, and the applicable registered devices. No private key is ever generated.
+
+<Warning>
+  Portal deletions and certificate revocations take effect in the Apple Developer account immediately and can break signing for every developer and CI machine on the team, not just your agents. Each one requires a separate confirmation.
+</Warning>
+
+## Recent operations
+
+Every install, sync, delete, and import is recorded as an operation with one item per agent, each carrying its own status, error, and finish time. This is the durable audit surface for the page.
+
+The underlying agent jobs are deliberately short-lived: because their payloads and results carry profile bytes and `.p12` material, they are deleted once the operation record has captured the outcome.
 
 ## Notes
 
-- Portal changes immediately affect the Apple Developer account and can break signing on other machines.
-- Profiles are grouped across agents by UUID and content hash.
+- Profile bytes and `.p12` passphrases are treated as transfer material, never as stored records — the operation log keeps the outcome, not the secret.
+- Deleting a profile from agents does not touch the Apple Developer portal, and deleting one from the portal does not remove copies already installed on agents.
+- Adding a device to Apple does not update an existing profile. Create a new profile that includes it and sync it out.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Devices" icon="smartphone" href="/system/devices">
+    The devices a development profile has to include.
+  </Card>
+  <Card title="Builds" icon="hammer" href="/builds/builds">
+    Where these profiles and identities are actually consumed.
+  </Card>
+</Columns>

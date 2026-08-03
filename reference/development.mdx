@@ -1,15 +1,32 @@
 ---
 title: "Local development"
-description: "Run the control plane and a development agent from source, and regenerate the project's screenshots."
+description: "Run the control plane and a development agent from source, understand the repository layout and command set, and regenerate the project's screenshots."
 ---
 
-Working on the app itself means running the Next.js control plane and a watch-mode control agent side by side. Install Node.js 24.16 or newer in the Node 24 release line, then install dependencies:
+Working on the app itself means running two processes: the Next.js control plane, and a watch-mode control agent that enrolls itself against it. The agent is what makes a source checkout useful — without one, the dashboard has no Mac to scan codebases, create worktrees, or run builds on.
+
+This page covers running from source. To install a release instead, see the [Quickstart](/quickstart).
+
+## Prerequisites
+
+| Requirement | Notes |
+| --- | --- |
+| Node.js 24.16 or newer, in the Node 24 line | Enforced by the `engines` field in both `package.json` files. CI pins 24.18.0 |
+| macOS | Needed for the control agent, iOS builds, signing, and Keychain credential storage. The control plane alone also runs on Linux |
+| Xcode and its command line tools | Only if you plan to run iOS builds or signing operations |
+| Git | The agent shells out to it for every codebase, worktree, and fetch operation |
+
+Install dependencies with a clean, lockfile-exact install:
 
 ```bash
 npm ci
 ```
 
-Copy `.env.example` to `.env` to configure `DATABASE_URL`.
+Then copy the example environment file. The only variable a source checkout needs is `DATABASE_URL`; everything else in the file is optional and commented out.
+
+```bash
+cp .env.example .env
+```
 
 ## One-command environment
 
@@ -23,9 +40,17 @@ Next.js runs on `http://127.0.0.1:3000` and the development GraphQL WebSocket ru
 ~/.config/control-agent-dev/config.json
 ```
 
+That path is deliberately distinct from the `~/.config/control-agent/config.json` a released agent uses, so a development agent and a service agent can coexist on the same Mac as two separate enrollments.
+
 Next.js keeps hot reload, and agent source changes restart only the development agent. Open `http://127.0.0.1:3000/en/agents` to inspect it.
 
-The common port overrides are:
+<Note>
+  Automatic development enrollment refuses non-loopback server addresses. It is a convenience for `127.0.0.1`, not a way to skip the enrollment-token flow against a real server.
+</Note>
+
+### Port overrides
+
+Every port has an environment override, which matters when the defaults are already taken:
 
 ```bash
 PORT=3010 \
@@ -34,13 +59,52 @@ NEXT_PUBLIC_AGENT_WS_URL=ws://127.0.0.1:3093/graphql \
 npm run dev:all
 ```
 
-For agent-only development, `CONTROL_AGENT_DEV_SERVER`, `CONTROL_AGENT_DEV_WEBSOCKET_SERVER`, and `CONTROL_AGENT_DEV_CONFIG` override the local endpoints and the dedicated credential path.
+| Variable | Controls | Default under `dev:all` |
+| --- | --- | --- |
+| `PORT` | The Next.js HTTP listener | `3000` |
+| `AGENT_WS_HOSTNAME` | The interface the agent WebSocket binds to | `127.0.0.1` |
+| `AGENT_WS_PORT` | The agent GraphQL WebSocket port | `3092` |
+| `NEXT_PUBLIC_AGENT_WS_URL` | The WebSocket URL compiled into the browser bundle | `ws://127.0.0.1:3092/graphql` |
+| `ALLOWED_DEV_ORIGINS` | Extra origins the Next.js dev server accepts | Localhost, the machine hostname, and LAN IPs |
 
-<Note>
-  Automatic development enrollment refuses non-loopback server addresses.
-</Note>
+Change `AGENT_WS_PORT` and `NEXT_PUBLIC_AGENT_WS_URL` together. The first moves the listener; the second tells the browser where to find it. Leaving them out of sync produces a dashboard that loads but never receives live updates.
+
+For agent-only development, `CONTROL_AGENT_DEV_SERVER`, `CONTROL_AGENT_DEV_WEBSOCKET_SERVER`, and `CONTROL_AGENT_DEV_CONFIG` override the local endpoints and the dedicated credential path — useful for pointing a watch-mode agent at a server you started separately.
+
+## Repository layout
+
+```text
+ai-development-environment/
+├── src/
+│   ├── app/           Next.js App Router: localized pages under [locale], REST handlers under api/
+│   ├── components/    React components, one directory per dashboard area
+│   ├── services/      Server-side domain services — the layer resolvers and route handlers call
+│   ├── graphql/       Schema assembly and dependency-injected resolver factories
+│   ├── data/          Prisma client construction and SQLite pragmas
+│   ├── lib/           Framework-agnostic helpers (origin resolution, tokens, HTTP ranges)
+│   ├── i18n/          next-intl routing and request configuration
+│   ├── generated/     Prisma client, bundled SDL, resolver types — never edited by hand
+│   └── instrumentation-node.ts   Starts the agent GraphQL WebSocket server with the app
+├── schemas/           GraphQL SDL, one file per domain
+├── prisma/            schema.prisma and versioned migrations
+├── packages/
+│   ├── agent-contract/   Types and job kinds shared by the server and the agent
+│   └── control-agent/    The TypeScript control agent that runs on each Mac
+├── messages/          Locale files: en, de, es, fr
+├── scripts/           Build, seeding, packaging, and maintenance scripts
+├── playwright/        Screenshot and walkthrough capture suite
+└── test/              Vitest mocks and shared test setup
+```
+
+Everything in `src/generated/` is produced by `npm run generate`. It is regenerated on every build, so edits there are lost.
+
+<Tip>
+  Services are the seam worth learning first. GraphQL resolvers, REST route handlers, and MCP tools are three thin adapters over the same `src/services/` layer, which is why a capability added once shows up in all three.
+</Tip>
 
 ## Commands
+
+### Running the app
 
 | Command | What it does |
 | --- | --- |
@@ -49,17 +113,78 @@ For agent-only development, `CONTROL_AGENT_DEV_SERVER`, `CONTROL_AGENT_DEV_WEBSO
 | `npm run agent:dev` | Starts only the watch-mode development agent, waiting for the local server. |
 | `npm run build` | Creates a deployable standalone build. |
 | `npm run start` | Starts the standalone production server. |
-| `npm run generate` | Regenerates the Prisma client, bundled GraphQL SDL, and resolver types. |
+
+`npm run dev` regenerates the client and applies pending migrations before starting Next.js, so a fresh checkout needs no separate setup step.
+
+### Code generation
+
+| Command | What it does |
+| --- | --- |
+| `npm run generate` | Runs all three generators below. |
+| `npm run generate:prisma` | Regenerates the Prisma client into `src/generated/prisma`. |
+| `npm run generate:schema` | Bundles `schemas/**/*.graphql` into a TypeScript module. |
+| `npm run generate:graphql` | Generates resolver types from the SDL. |
+
+The SDL is bundled rather than read from disk at runtime because the Homebrew service runs the Next.js `standalone` output, which does not carry the `schemas/` directory. `codegen.ts` is SDL-first: resolver types are generated from the schema, not from client documents.
+
+### Checks and tests
+
+| Command | What it does |
+| --- | --- |
+| `npm run test` | Vitest in watch mode. |
+| `npm run test:run` | Vitest once. |
+| `npm run agent:test:run` | The control agent's own Vitest suite. |
+| `npm run type-check` | Regenerates, runs `next typegen`, then type-checks the app and the agent. |
+| `npm run lint` / `npm run lint:fix` | ESLint. |
+| `npm run format` / `npm run format:check` | Prettier. |
+| `npm run check-translations` | Verifies that locale files have matching keys, contain no strings copied unchanged across every language, and match the unit-test mock. |
 | `npm run full-check` | Formats and fixes the project before checking it. |
 | `npm run full-check:ci` | Runs the non-mutating CI checks. |
-| `npm run check-translations` | Verifies that locale files have matching keys, contain no strings copied unchanged across every language, and match the unit-test mock. |
+
+Tests live beside the code they cover as `*.test.ts` and `*.test.tsx`. The suite runs under jsdom with a fixed `America/New_York` timezone — date formatting tests assert that a zoneless render differs from the UTC one, which is vacuously true on a UTC machine. `packages/control-agent/**` and `playwright/**` are excluded from the app's Vitest run and have their own runners.
+
+### Database
+
+| Command | What it does |
+| --- | --- |
 | `npm run db:migrate` | Creates and applies a development migration. |
 | `npm run db:deploy` | Applies committed migrations. |
 | `npm run db:studio` | Opens Prisma Studio. |
+| `npm run db:vacuum` | Reclaims free pages — see [Database](/reference/database). |
+
+### Dependencies and packaging
+
+| Command | What it does |
+| --- | --- |
+| `npm run upgrade:check` | Lists available dependency updates, skipping releases newer than 48 hours. |
+| `npm run upgrade` | Applies them and reinstalls. |
+| `npm run schema:copy` | Copies the composed GraphQL schema into the docs project. |
+| `npm run schema:publish` | Publishes the schema to Apollo GraphOS using `APOLLO_KEY`. |
+| `npm run clean` | Removes `.next`, coverage, generated sources, and the development database. |
 
 The production server accepts the standard Next.js `HOSTNAME` and `PORT` environment variables plus `DATABASE_URL`.
 
-The generic TypeScript control agent lives in `packages/control-agent`.
+## The control agent
+
+The generic TypeScript control agent lives in `packages/control-agent`, and the types it shares with the server live in `packages/agent-contract`. Both are npm workspaces of the root package, so `npm ci` at the root installs them and the `agent:*` scripts proxy into them.
+
+The agent is a client, not a server: it dials the control plane's GraphQL WebSocket outbound and executes jobs it is handed. Nothing on a managed Mac listens for inbound connections. It bundles the Claude Agent SDK, the Codex SDK, and the OpenCode SDK, which is how a Session actually runs a model on the target machine.
+
+<Warning>
+  Changing `packages/agent-contract` changes a wire contract. A server and an agent built from different revisions can disagree about job payloads, so rebuild and restart both after touching it.
+</Warning>
+
+## Continuous integration
+
+`.github/workflows/pull-request.yml` runs three jobs against every pull request to `main`:
+
+| Job | What it proves |
+| --- | --- |
+| **build-and-test** | Generate, translations, format, lint, type-check, test, and build all pass for the app. |
+| **build-and-test-agent** | The same gate for the control agent workspace. |
+| **credential-linux-standalone** | The standalone build starts with database credentials, reports the unsupported-Keychain case cleanly, and the npm server package stages without bundling a native binary. |
+
+`npm run full-check:ci` reproduces the first job locally. Run it before opening a pull request — it is the same sequence in the same order.
 
 ## Screenshots
 
@@ -73,6 +198,8 @@ npm run screenshots:copy         # publish the desktop captures to the docs proj
 npm run mock:reset               # rebuild and reseed prisma/mock.db on its own
 ```
 
+The four capture projects are `desktop-light`, `desktop-dark`, `mobile-light`, and `mobile-dark`. Desktop shoots at 1920x1080 and mobile at the iPhone 13 viewport, both at a device scale factor of 2 so text and icons stay crisp when the PNGs are scaled down.
+
 `npm run screenshots:copy` prompts for the docs project directory, defaulting to `../ai-development-environment-docs`, and copies `screenshots/desktop-light/` into its `images/light/` and `screenshots/desktop-dark/` into its `images/dark/` — the two directories these pages swap between by theme. Pass the directory to skip the prompt:
 
 ```bash
@@ -81,13 +208,19 @@ npm run screenshots:copy -- ../elsewhere
 
 The mobile captures stay local.
 
-Nothing reaches the network: `scripts/mock-api-server.ts` stubs the GitHub and Jira APIs, and the capture server points at it with the `GITHUB_API_BASE_URL` and `GITHUB_GRAPHQL_URL` overrides.
+Nothing reaches the network: `scripts/mock-api-server.ts` stubs the GitHub and Jira APIs, and the capture server points at it with the `GITHUB_API_BASE_URL` and `GITHUB_GRAPHQL_URL` overrides. Pages backed by those integrations have no local tables, so without the stub they would render their "connect your account" empty state instead of data.
 
 Routes are listed in `playwright/routes.ts`, keyed to the deterministic IDs the seed writes, so detail pages always resolve to a populated record. A route fails if it returns HTTP 4xx/5xx or raises an uncaught page error; the screenshot is still written first so failures stay diagnosable.
+
+The capture server runs on port `4321` with the mock API on `4322`, binds its own agent WebSocket port `39091` so it never collides with a dev server on `3091`, and sets a placeholder `PUBLIC_BASE_URL` so the device-enrollment form renders rather than disabling itself.
 
 <Warning>
   The seeder refuses to write to any database not named `mock.db`. Override it with `MOCK_SEED_ALLOW_ANY_DATABASE=1` only if you mean it.
 </Warning>
+
+<Note>
+  The mock database's credentials are encrypted with a fixed key that the capture server passes back in as `CREDENTIAL_ENCRYPTION_KEY`. If those two ever diverge, the app rewrites every credential row on first use and the `VACUUM` that follows locks the database mid-capture.
+</Note>
 
 ### Walkthrough screencasts
 
@@ -96,3 +229,20 @@ Routes are listed in `playwright/routes.ts`, keyed to the deterministic IDs the 
 There is no cursor in the recording. Each click is marked by a dot that pops, holds, and fades, drawn by an init script in `walkthrough.ts` — Playwright's own video overlay can draw one, but only bundled with a cursor sprite and an action label, and the option controlling how long it lingers delays every action, so a pointer move costs as much as a click. Marking clicks from inside the page also covers the taps on the mobile projects.
 
 The desktop projects record at their full 1920x1080, the mobile ones at their viewport's 390x664, because Playwright only ever scales a recorded frame down into the size it is asked for. The mobile screencasts are captured but not published — Mintlify has no responsive-asset story to use them with.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="APIs" icon="plug" href="/reference/api">
+    The GraphQL endpoint, REST routes, and the MCP endpoint this server exposes.
+  </Card>
+  <Card title="Database" icon="database" href="/reference/database">
+    Prisma configuration, migrations, and reclaiming space.
+  </Card>
+  <Card title="Hosting and networking" icon="globe" href="/reference/hosting">
+    Public HTTPS, reverse proxies, and Cloudflare Access paths.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Installing a release and enrolling an agent.
+  </Card>
+</Columns>

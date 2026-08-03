@@ -8,14 +8,113 @@ description: "Review webhook deliveries received from GitHub and how each event 
   <img className="hidden dark:block" src="/images/dark/webhooks.png" alt="GitHub Webhooks page in dark theme" />
 </Frame>
 
-The **GitHub Webhooks** page at `/webhooks` reviews webhook deliveries received from GitHub and how each event was processed.
+The **GitHub Webhooks** page at `/webhooks` reviews the deliveries GitHub sent to this deployment and what each one did.
+
+The webhook is optional but changes how the product behaves. Without it, GitHub state is only as fresh as the last poll or page load. With it, workflow results arrive as they finish, pipeline badges update live, and GitHub events can start workflows on their own.
 
 ## Using the page
 
-- Review each delivery's **Received** time, **Event**, **Repository**, and **Outcome** (received, processed, ignored, or error).
-- **Clear history** and page through past deliveries.
+Deliveries are listed newest first, grouped by day, 50 per page.
+
+| Column | What it shows |
+| --- | --- |
+| **Received** | When the delivery arrived |
+| **Event** | The `X-GitHub-Event` value, with the payload's `action` as a badge |
+| **Repository** | `owner/name`, plus the workflow run ID for `workflow_run` deliveries |
+| **Outcome** | Received, Processed, Ignored, or Error |
+| **Details** | The error if there was one, the GitHub delivery ID, and when processing finished |
+
+**Clear history** empties the list; new deliveries keep arriving afterwards.
+
+### Outcomes
+
+| Outcome | Meaning |
+| --- | --- |
+| **Received** | Recorded, still being processed |
+| **Processed** | The delivery updated something — a workflow run, a pipeline snapshot, or a workflow trigger |
+| **Ignored** | Valid and verified, but nothing here needed it |
+| **Error** | Processing failed; the reason is in **Details** |
+
+A delivery is ignored when its `installation.id` does not match the configured GitHub App, when the repository is not registered here, or when the event is one nothing subscribes to. None of these are failures — they are the normal result of an App that is installed more widely than this deployment's codebases.
+
+## Setting up the webhook
+
+The **GitHub App pipeline retries** card in [Settings](/system/settings) configures the App that signs these deliveries. The same App also enables workflow and job retries.
+
+<Steps>
+  <Step title="Register a GitHub App" icon="github">
+    Create a uniquely named App from **New GitHub App**. Use this deployment's address as the Homepage URL and leave the callback URL empty.
+  </Step>
+  <Step title="Grant permissions" icon="key">
+    Set **Repository permissions → Actions** to *Read and write*. For live pipeline updates, also grant **Checks** and **Commit statuses** read access.
+  </Step>
+  <Step title="Enable webhooks" icon="bolt">
+    Enable webhooks, subscribe to **Workflow run**, and use the webhook URL shown on the card. Saving generates the signing secret and configures the URL through GitHub for you.
+  </Step>
+  <Step title="Install and collect credentials" icon="download">
+    Create the App, generate a private key, and install it on only the repositories this deployment should control. The installation ID is the final number in the App's **Configure** page URL.
+  </Step>
+  <Step title="Save and verify" icon="check">
+    Paste the App ID, the installation ID, and the downloaded PEM, then **Save and verify**. The card then reports the connected App and account, the Actions permission, the repository selection, and the time and outcome of the most recent delivery.
+  </Step>
+</Steps>
+
+<Note>
+  The private key is sent only to the server and is never returned to the browser. Rotating it means pasting a replacement PEM and verifying again; leaving the field blank keeps the stored key.
+</Note>
+
+<Warning>
+  The webhook is unavailable until this deployment has a public HTTPS origin. Personal-token polling keeps working in the meantime. If GitHub reports that webhooks are not enabled on the App, enable them there, select **Workflow run**, and save again. Behind a proxy or tunnel, override the **Webhook URL** with the address GitHub can actually reach.
+</Warning>
+
+### Enhanced pipeline webhooks
+
+**Enhanced pipeline webhooks** subscribes to more than completed runs, so check, job, and commit-status changes stream in as GitHub reports them.
+
+| Event | Actions observed |
+| --- | --- |
+| `workflow_run` | requested, in progress, completed |
+| `workflow_job` | queued, in progress, completed |
+| `check_run` | created, rerequested, completed |
+| `check_suite` | requested, rerequested, in progress, completed |
+| `status` | every commit status update |
+
+These deliveries drive the live pipeline badges, job lists, and step statuses on [Pull Requests](/github/pull-requests), [pull request details](/github/pull-request-detail), and the worktree pages. Enable the matching permissions and events in GitHub, approve the installation change, then save and verify here.
+
+## Workflow triggers
+
+Deliveries also start workflows. When a verified delivery matches one of these, the corresponding trigger fires with the pull request, branch, ticket key, and worktree already resolved:
+
+| Event and action | Fires |
+| --- | --- |
+| `pull_request` opened, reopened, ready for review | Pull request state |
+| `pull_request` synchronize | Pull request synchronized |
+| `pull_request` closed | Pull request closed |
+| `pull_request` labeled | Pull request label |
+| `pull_request_review` submitted, approved | Review approved |
+| `pull_request_review` submitted, changes requested | Review changes requested |
+| `pull_request_review_comment` created | Review comment |
+| `check_run` or `check_suite` with a failing conclusion | Check failed |
+| `push` to the repository's default branch | Push to default branch |
+| `issue_comment` created | Issue comment command |
+
+The branch on the delivery is matched against the repository's Jira branch regex and against the worktrees registered here, so a triggered workflow starts with its ticket and worktree context rather than just a payload.
 
 ## Notes
 
-- This page appears only when a GitHub App webhook is configured in Settings.
-- Deliveries arrive at the signature-verified endpoint `/api/public/github/webhook`.
+- This page appears only when a GitHub App webhook is configured. Removing the App hides it.
+- Deliveries arrive at `/api/public/github/webhook` and are rejected unless signed with the stored secret: a missing or invalid `X-Hub-Signature-256` is answered `401`, an unconfigured webhook `503`, and a payload over 1 MB `413`.
+- GitHub identifies each delivery with `X-GitHub-Delivery`, which stays the same across retries. Retrying a delivery that already finished does no work; retrying one that failed processes it again.
+- A verified `workflow_run` completion switches Actions notifications from polling to webhook mode — see [Polling](/system/polling).
+- Deliveries older than 30 days are pruned automatically, along with the workflow run observations recorded alongside them.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="GitHub Actions" icon="play" href="/github/actions">
+    Workflow runs, retries, and Auto Retry rules.
+  </Card>
+  <Card title="Jira Webhooks" icon="jira" href="/jira/webhooks">
+    The same delivery log for Jira events.
+  </Card>
+</Columns>

@@ -8,16 +8,133 @@ description: "Manage primary and linked Git worktrees across every enrolled agen
   <img className="hidden dark:block" src="/images/dark/worktrees.png" alt="Worktrees page in dark theme" />
 </Frame>
 
-The **Worktrees** page at `/worktrees` manages primary and linked Git worktrees across every enrolled agent, with rich Git and automation actions.
+The **Worktrees** page at `/worktrees` is the busiest page in the product. It shows every primary and linked Git worktree across every enrolled Mac, and gives each one a full set of Git operations, automation toggles, and links to the pull request, build, and AI work attached to it.
 
-## Using the page
+## Finding a worktree
 
-- **Create worktree** from a new branch, an existing branch, or a Jira ticket on a chosen agent and repository.
-- Use per-worktree actions: **Open in VS Code**, **Sync**, **Rebase**, **Push**/**Publish**, **Reset**, **Stash**, **Move to agent**, and **Delete**.
-- Enable **Auto Sync** (rebase when the target branch changes) or **Auto Merge** (merge once required checks pass).
-- Search and filter, switch between card and table layouts, and manage worktree **tags**.
+- **Search** across branches, agents, repositories, tickets, and codebases.
+- **Filter by agent** and **filter by repository**.
+- Switch between **Card layout** and **Table layout**.
+- **Refresh** re-reads status; **Fetch now** runs `git fetch origin` for eligible codebases.
 
-## Notes
+Each worktree shows its branch, path, base branch, agent, repository, upstream status, base freshness, commit count, and — where they exist — its pull request, latest build, review decision, and comment count.
 
-- Missing worktrees are retained for seven days and restored on rediscovery.
-- Moving a worktree pushes its branch and checks it out on the destination agent.
+<Tip>
+  **Manage tags** creates reusable global tags with badge colors, and **Highlight** assigns a worktree a color that follows it everywhere — the Action Center, notifications, and run pages all pick it up. With several branches in flight this is the fastest way to tell them apart.
+</Tip>
+
+### Status at a glance
+
+| Indicator | Values |
+| --- | --- |
+| Upstream status | Ahead, behind, diverged, in sync, unpublished, detached |
+| Base freshness | Current with an ahead count, or a count of commits behind base |
+| Working tree | Dirty or clean |
+| Review decision | Approved, changes requested, review required, or no decision |
+
+## Creating a worktree
+
+<Steps>
+  <Step title="Choose the repository checkout" icon="folder-tree">
+    Pick the agent checkout that will own the worktree. Only online, compatible checkouts are offered.
+  </Step>
+  <Step title="Choose the branch source" icon="code-branch">
+    - **New branch** — name a branch and pick a base.
+    - **Existing branch** — choose a local branch, an origin branch, or one that exists in both.
+    - **From ticket** — enter a Jira ticket key and let the branch name be derived from it, using the repository's Jira branch regex.
+  </Step>
+  <Step title="Pick a base branch" icon="code-merge">
+    Select a base, or inherit the remote default.
+  </Step>
+  <Step title="Create" icon="check">
+    The agent creates the worktree and reports it back.
+  </Step>
+</Steps>
+
+## Per-worktree actions
+
+<AccordionGroup>
+  <Accordion title="Git operations" icon="code-branch">
+    | Action | Effect |
+    | --- | --- |
+    | **Sync** | Bring the branch up to date with its base |
+    | **Rebase** | Rebase onto the base branch |
+    | **Push** / **Publish** | Push, or publish an unpublished branch |
+    | **Force push** | Push with force-with-lease |
+    | **Reset** | Discard local state back to a known point |
+    | **Stash all** | Stash tracked and untracked changes |
+    | **Stage all** / **Unstage all** | Bulk staging |
+    | **Change branch** | Switch this worktree to a different branch |
+
+    When Git cannot switch because of local changes, the action offers **Stash and retry**: it stashes tracked and untracked changes, retries, and leaves the stash for you to restore by hand.
+  </Accordion>
+  <Accordion title="Rebase conflicts" icon="triangle-exclamation">
+    A rebase that stops on conflicts leaves the worktree in **Rebase paused**. Resolve them by running a merge-conflict quick-action workflow, or **Cancel rebase** to restore the branch to its pre-rebase state.
+  </Accordion>
+  <Accordion title="Opening in an editor" icon="code">
+    **Open in VS Code** and **Open in VS Code Insiders** launch the worktree folder on its agent.
+  </Accordion>
+  <Accordion title="Navigation" icon="arrow-up-right-from-square">
+    **Open details** opens the [worktree details page](/worktrees/worktree-detail). **View codebase**, **View repository**, and **Open in GitHub** jump to the related resource, and **Refresh pull request** re-reads the PR state.
+  </Accordion>
+</AccordionGroup>
+
+## Auto Sync
+
+**Auto Sync** keeps a branch current without you asking: whenever its target branch changes, the worktree is rebased and pushed with force-with-lease.
+
+It can also handle conflicts for you — enable **Run a quick-action workflow to resolve merge conflicts automatically** and select a merge-conflict workflow, optionally with a specific trigger choice. Auto Sync can be paused, resumed, and cancelled.
+
+## Auto Merge
+
+**Auto Merge** hands the merge to GitHub: the pull request merges as soon as its required checks, reviews, and branch rules are satisfied. Two optional follow-ups:
+
+- **Delete this worktree after the pull request merges**.
+- **Move the linked Jira ticket to the project's configured done status**.
+
+Like Auto Sync, it can be paused, resumed, and cancelled, and reports **Auto Merge complete** when it lands.
+
+## Moving a worktree to another agent
+
+Moving pushes the branch from the source agent and checks it out on the destination.
+
+<Steps>
+  <Step title="Pick a destination" icon="laptop">
+    Choose the destination agent and checkout, then either create a new worktree there or target an existing one. A destination with uncommitted changes is flagged — Git will carry them onto the incoming branch where it can.
+  </Step>
+  <Step title="Decide about the source" icon="trash">
+    **Delete old worktree after moving** cleans up the source. Primary worktrees cannot be deleted, so the option is unavailable for them.
+  </Step>
+  <Step title="Watch it run" icon="chart-line">
+    The move reports its stage: pushing the source branch, checking out the destination, waiting for a stash decision, removing the old worktree, then complete.
+  </Step>
+</Steps>
+
+If destination changes block the branch switch, choose **Stash and continue** — the destination's tracked and untracked changes are stashed, the move continues, and the stash is left for manual restoration. **Cancel move** stops it; the source branch stays pushed and the source worktree is kept.
+
+<Note>
+  A move is refused up front when the source agent is offline or too old, another operation is active for the repository, HEAD is detached, the source is dirty, the branch is behind or diverged from origin, or no compatible destination exists. The page names the specific reason.
+</Note>
+
+## Deleting a worktree
+
+**Delete worktree** permanently removes the folder and its local branch, optionally deleting `origin/<branch>` too. The repository default branch is protected from remote deletion.
+
+<Warning>
+  All staged, unstaged, and untracked changes in the worktree are permanently lost. There is no stash-first option on delete.
+</Warning>
+
+## Hidden worktrees
+
+A worktree that disappears from disk is not deleted immediately — it moves to **Hidden** and is retained for seven days. If the agent rediscovers it in that window, its saved metadata, tags, and highlight come back. **Purge** and **Purge all** remove hidden entries early.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Worktree details" icon="code-branch" href="/worktrees/worktree-detail">
+    Overview, working tree, branch changes, diffs, and coverage.
+  </Card>
+  <Card title="Codebases" icon="folder-tree" href="/codebases/codebases">
+    The repositories and checkouts worktrees are created from.
+  </Card>
+</Columns>

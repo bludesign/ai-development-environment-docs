@@ -8,14 +8,66 @@ description: "Model prices used to estimate what Plans and Sessions cost."
   <img className="hidden dark:block" src="/images/dark/costs.png" alt="Costs page in dark theme" />
 </Frame>
 
-The **Costs** page at `/costs` manages the model price catalog used to estimate the cost of Plans and Sessions.
+The **Costs** page at `/costs` manages the model price catalog. Every [Plan](/ai/plan-detail) and [Session](/ai/session-detail) reports a **Model cost catalog** figure alongside whatever the provider itself reported, and this catalog is where that figure comes from — one consistent set of prices applied to every run's token counts, regardless of which AI tool produced them.
 
-## Using the page
+<Note>
+  Two cost numbers appear on a run for a reason. The provider's is what will show up on a bill. The catalog's prices every run the same way, so runs are comparable across tools — and the gap between the two is itself informative.
+</Note>
 
-- Set a custom **Model cost URL**, or **Use default** to use the built-in catalog.
-- **Fetch latest** prices on demand.
-- Search the **Model prices** table for per-million-token input, output, and cache prices and context windows.
+## The price catalog
+
+The default source is LiteLLM's published `model_prices_and_context_window.json`, which is the one catalog covering every tool this app drives.
+
+| Control | What it does |
+| --- | --- |
+| **Model cost URL** | Point at your own catalog in the same JSON shape. Leave it empty to use the default |
+| **Save** | Stores the URL and re-fetches from it |
+| **Use default** | Clears the field, which is what restores the built-in source |
+| **Fetch latest** | Refreshes now rather than waiting for the daily cycle |
+
+Underneath, the card reports when prices were last fetched, how many models the catalog holds, and whether the source is the **Default source** or a **Custom source**. A **Refresh due** badge means the catalog is missing or more than a day old.
+
+<Note>
+  Prices refresh automatically once a day, and a page load that finds the catalog stale triggers a refresh on read. A fetch that fails is reported inline with the underlying error, and the previous prices stay in place rather than being cleared.
+</Note>
+
+## Model prices
+
+The table lists every priced model in the catalog. Prices are shown per million tokens, formatted to keep both cheap and expensive models readable — four decimal places under a dollar, two above it.
+
+| Column | Contents |
+| --- | --- |
+| **Model** | The catalog's model identifier |
+| **Provider** | The provider the catalog attributes it to |
+| **Input / MTok** | Price per million input tokens |
+| **Output / MTok** | Price per million output tokens |
+| **Cache read / MTok** | Price per million cached-read tokens |
+| **Cache write / MTok** | Price per million cache-write tokens |
+| **Context** | Maximum input tokens |
+
+Every column sorts. Names open ascending; prices and context windows open descending, since someone sorting by those is usually looking for an extreme. Search filters the table server-side, and rows load 100 at a time as you scroll, with a **Showing *n* of *N*** count underneath.
+
+A dash means the catalog publishes no value for that field — some entries price input and output but say nothing about caching.
 
 ## Notes
 
-- Prices refresh automatically once a day; a failed fetch is reported inline.
+- A catalog entry with neither an input nor an output price is dropped rather than stored as a row that could never price anything.
+- Changing the source URL re-prices future estimates only; figures already recorded on past runs are not rewritten.
+- The catalog is shared across the whole control plane — it is not per agent, per repository, or per run.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Usage" icon="chart-column" href="/ai/usage">
+    Token spend collected from every enrolled Mac.
+  </Card>
+  <Card title="Session details" icon="terminal" href="/ai/session-detail">
+    Where the catalog cost appears alongside the provider's.
+  </Card>
+  <Card title="Plans" icon="clipboard-list" href="/ai/plans">
+    Estimated cost per run in the list.
+  </Card>
+  <Card title="Settings" icon="settings" href="/system/settings">
+    Other control-plane-wide configuration.
+  </Card>
+</Columns>

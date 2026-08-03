@@ -8,19 +8,164 @@ description: "Drag steps onto the canvas, connect typed handles, then validate a
   <img className="hidden dark:block" src="/images/dark/workflow-edit.png" alt="Workflow editor in dark theme" />
 </Frame>
 
-The workflow editor at `/workflows/{id}/edit` is a visual canvas for building durable automations from typed steps.
+The workflow editor at `/workflows/{id}/edit` is a visual canvas for building durable automations. You place one trigger and a set of typed steps, connect their handles, configure each one, validate the graph, and publish an immutable version.
 
-## Using the page
+## Anatomy of a workflow
 
-- Drag steps from the **palette** onto the canvas and connect their typed handles.
-- Configure each step — retry strategy, failure policy, conditions, choices, and model settings.
-- **Validate** to surface diagnostics, **Save draft**, then **Publish** an immutable version.
-- Adjust **Workflow settings**: name, description, overlap policy, maximum concurrent runs, successful-completion notifications, and connector or viewer layout.
-- Turn off **Notify when this workflow completes successfully** to suppress successful-run completion notifications for this workflow. Failure and attention notifications remain enabled.
+<Columns cols={2}>
+  <Card title="Trigger" icon="play">
+    Exactly one, and it starts the run. Triggers cover manual starts, schedules, GitHub and Jira events, build results, worktree state changes, AI run lifecycle events, agent and disk thresholds, and more.
+  </Card>
+  <Card title="Steps" icon="code-fork">
+    The work. Over a hundred typed kinds spanning Jira, GitHub, worktrees, codebases, builds, AI runs, skills, commands, notifications, signing, devices, control flow, and MCP calls.
+  </Card>
+  <Card title="Connections" icon="diagram-project">
+    Typed handles between nodes. Most steps expose `success` and `failure`; control-flow steps name their own branches.
+  </Card>
+  <Card title="Session data" icon="database">
+    A JSON document threaded through the run. Steps read values from it by path and write their results back into it.
+  </Card>
+</Columns>
 
-## Notes
+### Handles
 
-- Publishing creates an immutable version — save the workflow before publishing it.
-- A trigger is required, and the graph must be acyclic and fully connected.
-- Steps that change external state warn you to configure an idempotency strategy and avoid blind retries.
-- MCP clients can set `completionNotificationsEnabled` with `create_workflow` or `update_workflow_settings`.
+The outgoing handles a node offers depend on its kind:
+
+| Kind | Handles |
+| --- | --- |
+| Most steps and triggers | `success`, `failure` |
+| **If** | `true`, `false` |
+| **For each** | `body`, `empty` |
+| **Try** | `success`, `catch` |
+| Choice triggers | One handle per choice you define |
+
+<Note>
+  An edge leaving a handle the node does not offer never becomes active, so the validator flags it rather than letting the run silently stall.
+</Note>
+
+## The canvas
+
+The left panel toggles between the **palette** and the **outline**. The palette groups steps and triggers by category — Agents, AI runs, Builds, Codebases, Control flow, Extensibility, GitHub, GitHub Actions, Human loop, Jira, Manual, Plans and sessions, Schedule, Skills, Workflows, and Worktrees — and searches across label, kind, category, and description. Drag an entry onto the canvas to add it.
+
+Canvas controls:
+
+| Control | Effect |
+| --- | --- |
+| **Lock to fit** / **Unlock view** | Keeps the whole graph in frame as you edit, or frees panning and zoom |
+| **Show session data** / **Hide session data** | Overlays what each step reads from and writes to session data |
+| **Lock steps in place** / **Unlock steps** | Prevents accidental node dragging while you work on configuration |
+| **Preview basic layout** | Shows how the graph will render in read-only views under the Basic viewer layout |
+
+Right-clicking a node offers **Duplicate step** and **Delete node**; connections offer **Delete connection**.
+
+## Configuring a step
+
+Selecting a node opens its inspector.
+
+<AccordionGroup>
+  <Accordion title="Configuration" icon="sliders">
+    Each step kind has a typed configuration schema rendered as a form. Fields without a form control are editable under **Advanced (raw JSON)**, and the whole configuration can be pasted in at once with **Configuration (JSON)** → **Apply configuration**.
+
+    Every value field can be switched between two sources with **Switch value source**:
+
+    - **Use a fixed value** — a literal you type now.
+    - **Bind to session data** — a session path such as `ticket.key`, read when the run executes.
+
+    Text fields also accept `{token}` interpolation to splice session data into a string at execution time.
+  </Accordion>
+  <Accordion title="Session data contract" icon="database">
+    The inspector states what the step needs and what it produces:
+
+    - **Additional required paths** — session paths this step needs before it can run.
+    - **Additional provided paths** — paths it guarantees to write.
+    - **Adds to session data** / **Seeds session data** — the concrete keys it contributes.
+
+    The validator uses these to prove that every step's inputs are satisfied by something upstream.
+  </Accordion>
+  <Accordion title="Retries and failure" icon="repeat">
+    - **Maximum attempts** — how many times the step may run.
+    - **Retry strategy** — **Fixed delay** or **Exponential backoff**.
+    - **Retry delay** — the base delay in seconds.
+    - **Failure policy** — **Fail workflow** stops the run; **Continue** routes out of the `failure` handle and keeps going.
+  </Accordion>
+  <Accordion title="Conditions" icon="code-branch">
+    An **If** step builds its condition from comparisons, matched with **All of these are true** or **Any of these is true**. Each comparison takes a session value, an operator, and a compared value.
+
+    Operators: equals, does not equal, contains, does not contain, matches regex, does not match regex, is greater than, is at least, is less than, is at most, is set, is not set.
+
+    Numbers and `true`/`false` are compared as typed values; quote a value to compare it as text. The `true` handle runs when the condition matches, `false` otherwise. Conditions with nested groups the builder cannot draw fall back to JSON editing.
+  </Accordion>
+  <Accordion title="Human choices" icon="user-check">
+    A **Human choice** step defines the buttons shown while the run waits for an answer, each with a **Button label** and an optional **Description**.
+
+    A choice *trigger* works the same way but at the entry point: each choice gets an **Output key**, becomes a menu item under the run button, and routes the run out of its own handle — so one workflow can offer several entry paths without a step in front of them. Output keys must be unique.
+  </Accordion>
+  <Accordion title="Model settings" icon="robot">
+    Steps that invoke a model expose **Provider**, **Model**, and **Effort**.
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  Steps that change external state are marked **Mutates** and carry an explicit warning: configure an idempotency strategy, and do not blindly retry a result you are unsure about. A retried Jira transition or PR merge is a real second attempt at a real side effect.
+</Warning>
+
+## Workflow settings
+
+| Setting | What it controls |
+| --- | --- |
+| **Name** and **Description** | How the workflow is identified across the app |
+| **Overlap policy** | **Queue every event**, **Run concurrently**, or **Keep latest pending event** |
+| **Maximum concurrent runs** | The ceiling on simultaneous executions |
+| **Notify when this workflow completes successfully** | Turn off to suppress success notifications for this workflow only |
+| **Step connectors** | Handles drawn **On the sides** or **On top and bottom** |
+| **Viewer layout** | **Regular** uses your authored positions in read-only views; **Basic** auto-arranges them for the available width, leaving your positions untouched |
+
+<Note>
+  Turning off completion notifications suppresses successful-run notifications only. Failure and attention notifications still fire. MCP clients can set the same flag as `completionNotificationsEnabled` on `create_workflow` or `update_workflow_settings`.
+</Note>
+
+## Validate, save, publish
+
+<Steps>
+  <Step title="Validate" icon="circle-check">
+    Runs the full checker and lists **Validation diagnostics** against the offending nodes and edges.
+  </Step>
+  <Step title="Save draft" icon="floppy-disk">
+    Persists your work in progress. The draft has no effect on running behavior.
+  </Step>
+  <Step title="Publish" icon="upload">
+    Creates a new immutable version and makes it the one that runs. Save before publishing — the editor will tell you if you have not.
+  </Step>
+</Steps>
+
+### Common diagnostics
+
+| Diagnostic | What it means |
+| --- | --- |
+| Trigger required | The graph has no trigger |
+| Disconnected trigger / Trigger has an input | The trigger must start the graph and take no incoming edge |
+| Step required | The trigger leads nowhere |
+| Cycle in the graph | The graph must be acyclic |
+| Unreachable step | A step no path reaches |
+| Join step required | Parallel branches must reconverge through an explicit join |
+| Parallel write conflict | Two branches write the same session path |
+| Unsatisfied requirement | A step's required session path is not provided upstream |
+| Invalid session binding / Unresolved reference | A binding points at a path that does not exist |
+| Secret in plain text | A credential was typed as a literal instead of referenced |
+| Duplicate step id / Duplicate connection id | Identifier collision |
+| Connection endpoint missing | An edge points at a node that is gone |
+| Subworkflow version required | A subworkflow step must pin a version |
+| Resource kind required | A resource trigger must name the resource kind it accepts |
+| Command allowlist required / Command pattern must be anchored | An issue-command trigger needs a safe, anchored allowlist |
+| Trigger choices required / Unknown trigger choice | A choice trigger needs choices, and every edge must leave a defined one |
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="New workflow" icon="plus" href="/workflows/workflow-new">
+    The same editor, opened on a blank canvas.
+  </Card>
+  <Card title="Workflow details" icon="file-lines" href="/workflows/workflow-detail">
+    Published version, quick actions, and version history.
+  </Card>
+</Columns>

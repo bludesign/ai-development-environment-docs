@@ -8,16 +8,82 @@ description: "Manage settings shared by every registered checkout of a repositor
   <img className="hidden dark:block" src="/images/dark/repository-detail.png" alt="Repository details page in dark theme" />
 </Frame>
 
-The repository details page at `/codebases/repositories/{id}` manages settings that belong to the logical repository and apply across every agent checkout and worktree.
+The repository details page at `/codebases/repositories/{id}` manages settings that belong to the *logical* repository rather than to any one checkout. Everything here applies across every agent checkout and every worktree that shares the origin.
 
-## Using the page
+The page has four tabs.
 
-- Edit shared **Repository details**, and assign **Skill groups** synchronized into every checkout.
-- Configure **Quick actions** and **Auto Retry** rules (GitHub-hosted repositories only).
-- Add an **iOS App project** and reusable build configurations, and allow build scripts.
-- Toggle **Keep base branch up to date** to fast-forward the base branch after a successful fetch.
+<Tabs>
+  <Tab title="Repository details">
+    | Setting | Notes |
+    | --- | --- |
+    | **Repository name** | The shared name used everywhere this repository appears |
+    | **Repository description** | Optional context |
+    | **Jira branch regex override** | Extracts a ticket key from a branch name for this repository. Leave empty to inherit the default from [Codebases settings](/codebases/codebases). The first capture group is used when present, otherwise the whole match. |
+    | **Keep base branch up to date** | After a successful fetch, fast-forward the base branch when there are no staged changes. Applies on every agent. |
+    | **Skill groups** | The project skill groups synchronized into every checkout and worktree of this repository. |
 
-## Notes
+    <Tip>
+      Skill groups are how a repository gets a consistent set of agent skills on every machine. Define them under [Skills](/skills/skill-groups), then assign them here once instead of per checkout.
+    </Tip>
+  </Tab>
+  <Tab title="iOS App">
+    Enables reusable Xcode build configurations for every checkout and worktree of this repository.
 
-- These settings are repository-wide, not per-checkout.
-- Auto Retry is available only for repositories hosted on GitHub.
+    <Steps>
+      <Step title="Add the iOS App project" icon="mobile">
+        **Add iOS App project** registers the repository as having an Xcode project.
+      </Step>
+      <Step title="Create build configurations" icon="sliders">
+        A configuration selects a repository-relative Xcode source and saves its scheme, configuration, action, and optional advanced settings. Configurations are repository-wide and available from every worktree.
+      </Step>
+      <Step title="Allow build scripts" icon="file-code">
+        Reusable pre-build and post-build hooks are authored on the [Builds](/builds/builds) page. Come back here to allow specific scripts for this repository — a script cannot run against a repository that has not allowed it.
+      </Step>
+    </Steps>
+
+    <Note>
+      Project definitions and allowed scripts are shared by the repository, but source discovery, validation, and parse status are computed from the agent checkout you have selected. A configuration can be valid on one Mac and unavailable on another if the checkout differs.
+    </Note>
+  </Tab>
+  <Tab title="Auto Retry">
+    Durable rules that automatically rerun GitHub Actions workflows or jobs.
+
+    | Setting | Options |
+    | --- | --- |
+    | **Applies to** | Current runs, future runs, or both |
+    | **Pipelines and jobs** | Specific workflows and jobs, or all workflows including ones added later |
+    | **Retry mode** | Retry failures, or retry successful runs by count |
+    | **When a failure occurs** | Retry failed jobs only, or retry all jobs |
+    | **Retry limit** | 1 to 100, or unlimited |
+
+    Saved rules show their progress as automatic retries across runs, and can be paused, resumed, edited, or deleted. Rule statuses are **Active**, **Paused**, **Completed**, **Exhausted**, and **Error**.
+
+    <Warning>
+      Auto Retry is available only for repositories hosted on GitHub, and requires a personal access token plus a verified GitHub App with Actions write access. See [Credentials](/system/credentials).
+    </Warning>
+  </Tab>
+  <Tab title="Quick actions">
+    The workflows this repository inherits as quick actions, each showing its action type — **Standard**, **Merge conflict**, or **GitHub Actions** — and its scope, either **All repositories** or limited to a specific count.
+
+    Configured workflows stay listed while paused, marked **Paused**. The action itself only appears when the workflow is published, enabled, and matched to the current resource.
+
+    <Note>
+      This tab is a read-out of what applies here. To change a workflow's action type or repository scope, open the workflow on its own [details page](/workflows/workflow-detail).
+    </Note>
+  </Tab>
+</Tabs>
+
+## Why these settings are repository-wide
+
+A repository is usually checked out on more than one Mac, and each checkout can carry several worktrees. Putting build configurations, skill groups, and retry rules on the repository means a new checkout inherits them the moment it is registered — there is nothing to copy per machine, and no way for two Macs to drift apart.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Codebase details" icon="code-branch" href="/codebases/codebase-detail">
+    Branch and stash management for a single checkout.
+  </Card>
+  <Card title="Builds" icon="hammer" href="/builds/builds">
+    Build history and the reusable build scripts you allow here.
+  </Card>
+</Columns>
