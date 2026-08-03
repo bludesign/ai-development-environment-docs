@@ -40,7 +40,7 @@ Search matches across drafts, and the archive selector switches between **Active
 
 - Starting a run from a draft consumes it: the draft is removed once the run is created, so it will not linger as a stale copy of work already underway.
 - Attachments belong to the draft until it is started, at which point they transfer to the run's first input.
-- A draft holds a reference to a worktree, not a lease on it. If that worktree is gone or busy by the time you start, the [new run](/ai/run-new) page tells you before anything is created.
+- A draft only references a worktree. If that worktree is gone when you start, the [new run](/ai/run-new) page reports the problem. If its run lane is busy, the new run is created in **Queued** state instead.
 
 ## Related pages
 

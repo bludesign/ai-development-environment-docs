@@ -1388,6 +1388,21 @@ type Query {
     after: ID
   ): WorkflowRunPage!
 
+  """
+  Returns the durable queue for one worktree or the queued entries associated with one workflow.
+  """
+  worktreeRunQueue(
+    """
+    Worktree whose combined workflow, plan, and session queue should be returned.
+    """
+    worktreeId: ID
+
+    """
+    Workflow whose queued workflow runs and AI-run steps should be returned.
+    """
+    workflowId: ID
+  ): [WorktreeRunQueueEntry!]!
+
   """Returns a workflow run, or null when it cannot be found."""
   workflowRun(
     """Identifier of the resource to return or affect."""
@@ -2733,6 +2748,11 @@ type Mutation {
 
     """Identifiers of the MCP presets. Defaults to `[]`."""
     mcpPresetIds: [ID!] = []
+
+    """
+    Maximum sessions admitted on the worktree. Zero means unlimited; omitted defaults to one.
+    """
+    worktreeConcurrencyLimit: Int
   ): AgentRun!
 
   """Creates a run follow up and returns an agent run."""
@@ -11699,6 +11719,11 @@ type AgentRun {
   """MCP tool names associated with this agent run."""
   mcpToolNames: [String!]!
 
+  """
+  Maximum same-kind runs admitted on this worktree. Zero means unlimited.
+  """
+  worktreeConcurrencyLimit: Int!
+
   """The initial prompt associated with this agent run."""
   initialPrompt: String!
 
@@ -12661,6 +12686,9 @@ enum RunKind {
 
 """Lifecycle statuses for run."""
 enum RunStatus {
+  """Represents the queued status for run."""
+  QUEUED
+
   """Represents the in progress status for run."""
   IN_PROGRESS
 
@@ -13382,6 +13410,11 @@ input RunConfigurationInput {
 
   """The context mode to use for the request."""
   contextMode: String
+
+  """
+  Maximum same-kind runs admitted on the worktree. Zero means unlimited; omitted uses the run-kind default.
+  """
+  worktreeConcurrencyLimit: Int
 }
 
 """Values used to save a run draft."""
@@ -15241,6 +15274,9 @@ type Workflow {
   """Whether successful workflow runs create completion notifications."""
   completionNotificationsEnabled: Boolean!
 
+  """Whether each top-level run reserves its worktree for this workflow."""
+  exclusiveWorktree: Boolean!
+
   """The quick action kind associated with this workflow."""
   quickActionKind: WorkflowQuickActionKind!
 
@@ -15579,6 +15615,9 @@ type WorkflowRun {
   """The phase associated with this workflow run."""
   phase: String!
 
+  """Whether this run was configured to reserve its worktree exclusively."""
+  exclusiveWorktree: Boolean!
+
   """The generation associated with this workflow run."""
   generation: Int!
 
@@ -15592,6 +15631,11 @@ type WorkflowRun {
   The worktree associated with this workflow run. May be null when unavailable or not applicable.
   """
   worktree: WorkflowRunWorktreeRef
+
+  """
+  Effective admission queue while this run is queued, including work ahead of it. Empty after admission.
+  """
+  queue: [WorktreeRunQueueEntry!]!
 
   """
   The blocked reason associated with this workflow run. May be null when unavailable or not applicable.
@@ -15899,6 +15943,53 @@ type WorkflowRunPage {
   totalCount: Int!
 }
 
+"""
+A queued workflow, plan, or session in its effective worktree admission order.
+"""
+type WorktreeRunQueueEntry {
+  """One-based position within this worktree's displayed admission order."""
+  position: Int!
+
+  """Stable identifier of the queued run."""
+  id: ID!
+
+  """Whether the entry is a workflow, plan, or session."""
+  kind: String!
+
+  """Display number within the entry's run kind."""
+  displayNumber: Int!
+
+  """Workflow name or initial AI prompt associated with the entry."""
+  name: String!
+
+  """Current status of the queued run."""
+  status: String!
+
+  """Current phase of the queued run."""
+  phase: String!
+
+  """Identifier of the worktree, when one is available."""
+  worktreeId: ID
+
+  """Worktree associated with this queue entry."""
+  worktree: WorkflowRunWorktreeRef
+
+  """Identifier of the workflow definition associated with the entry."""
+  workflowId: ID
+
+  """Identifier of the workflow run that owns or launched the entry."""
+  workflowRunId: ID
+
+  """ISO 8601 timestamp used to order the entry."""
+  queuedAt: String!
+
+  """Whether this workflow entry will reserve the worktree when admitted."""
+  exclusiveWorktree: Boolean!
+
+  """The plan or session's worktree concurrency limit."""
+  worktreeConcurrencyLimit: Int
+}
+
 """Represents a workflow replay external effect in the GraphQL API."""
 type WorkflowReplayExternalEffect {
   """Category of this workflow replay external effect."""
@@ -15979,6 +16070,11 @@ input CreateWorkflowInput {
 
   """Whether successful workflow runs create completion notifications."""
   completionNotificationsEnabled: Boolean = true
+
+  """
+  Queue other workflows, plans, and sessions while this workflow owns a worktree.
+  """
+  exclusiveWorktree: Boolean = false
 }
 
 """Values used to save a workflow draft."""
@@ -15997,6 +16093,11 @@ input SaveWorkflowDraftInput {
 
   """Whether successful workflow runs create completion notifications."""
   completionNotificationsEnabled: Boolean
+
+  """
+  Queue other workflows, plans, and sessions while this workflow owns a worktree.
+  """
+  exclusiveWorktree: Boolean
 }
 
 """Values used to trigger a workflow."""

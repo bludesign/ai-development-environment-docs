@@ -18,10 +18,10 @@ An item is a resource plus the reason it earned a place in the queue.
 
 <Columns cols={2}>
   <Card title="Plan" icon="clipboard-list" href="/ai/plans">
-    A read-only codebase survey. Appears while it is **In progress** or **Paused**, and after it **fails**.
+    A read-only codebase survey. Appears while it is **Queued**, **In progress**, or **Paused**, and after it **fails**.
   </Card>
   <Card title="Session" icon="comments" href="/ai/sessions">
-    An AI run that edits a worktree. Same rule as Plans — in progress, paused, or failed.
+    An AI run that edits a worktree. Same rule as Plans — queued, in progress, paused, or failed.
   </Card>
   <Card title="Build" icon="hammer" href="/builds/builds">
     An iOS build that is queued, preparing, running, or failed — plus successful builds that have never been run on a device.
@@ -43,7 +43,7 @@ Every item carries one **reason** badge. The reason also sets the item's positio
 | Blocked | Neutral | A workflow run is blocked, or a Plan or Session landed in a failed phase. |
 | Failed | Red | The resource finished in a failed state and has not been acknowledged. |
 | Ready to run | Blue | A successful build produced a runnable app that has never been deployed. |
-| Active | Green | Work is in progress and needs nothing from you. |
+| Active | Green | Work is queued or in progress and needs nothing from you. |
 
 The first four are grouped under **Needs attention**. Only **Active** items land in the **Active** section.
 

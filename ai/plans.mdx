@@ -16,12 +16,12 @@ The **Plans** page at `/plans` lists read-only AI Plans. A Plan runs an AI tool 
 
 ## The run list
 
-Rows are grouped by the day the run was created, with anything still active pulled into a leading **Active** group so in-flight work stays at the top.
+Rows are grouped by the day the run was created, with queued and active work pulled into a leading **Active** group so unfinished runs stay at the top.
 
 | Column | What it shows |
 | --- | --- |
 | ID | `#1234`, the Plan's display number. Links to the [detail page](/ai/plan-detail) |
-| Status | **In progress**, **Paused**, **Completed**, **Cancelled**, or **Failed**, plus a phase badge when the phase differs from the status |
+| Status | **Queued**, **In progress**, **Paused**, **Completed**, **Cancelled**, or **Failed**, plus a phase badge when the phase differs from the status |
 | Repository / branch | Links to the worktree while it still exists; plain text once it is gone |
 | Ticket | The Jira issue key. Opens the ticket drawer in place rather than leaving the page |
 | Prompt | The initial prompt, clamped to two lines |
@@ -77,7 +77,8 @@ The list loads 200 runs at a time and pulls in the next page as you scroll, with
 ## Notes
 
 - Plans are read-only by intent, not by sandbox. If a Plan does change the worktree, the detail page flags it and shows the resulting patch.
-- Plans do not take an exclusive worktree lease, so several Plans can survey the same worktree at once. Sessions do.
+- Plans use a FIFO lane separate from Sessions. The default worktree concurrency limit is `0`, which allows any number of Plans to survey the same worktree. Workflow steps and API clients can set a finite limit from `1` through `32`.
+- A Plan can still wait with the phase **Waiting for worktree** when its lane reaches a finite limit or an exclusive workflow is ahead of it.
 - The `Plan` column that Sessions carry — the Plan a Session was played from — is absent here, since a Plan has no source Plan of its own.
 
 ## Related pages

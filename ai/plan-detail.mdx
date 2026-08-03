@@ -26,7 +26,7 @@ Which actions appear depends on the run's state and on what the AI tool supports
 | **Delete** | Only when the tool supports deleting its own native history |
 
 <Note>
-  Status is the coarse state — In progress, Paused, Completed, Cancelled, Failed. Phase is the fine-grained one, shown separately whenever it differs: *Queued*, *Waiting for answer*, *Cancel requested*, *Preparing revision*, *Superseded by follow-up*, *Start failed*, and so on. A phase ending in "failed" is where to look when a run stops without an obvious reason.
+  Status is the coarse state — Queued, In progress, Paused, Completed, Cancelled, Failed. Phase is the fine-grained one, shown separately whenever it differs: *Waiting for worktree*, *Waiting for answer*, *Cancel requested*, *Preparing revision*, *Superseded by follow-up*, *Start failed*, and so on. A phase ending in "failed" is where to look when a run stops without an obvious reason.
 </Note>
 
 ## Page sections
@@ -105,7 +105,7 @@ Choosing a *different* tool for a resumed follow-up asks how to carry the contex
 - **Final summary only** — just the run's output.
 
 <Warning>
-  Starting a resumed follow-up from a **paused Session** cancels the parent and transfers its worktree lease to the child. The page confirms before doing it.
+  Starting a resumed follow-up from a **paused Session** cancels the parent and transfers its worktree admission slot to the child. The page confirms before doing it.
 </Warning>
 
 ## Exporting

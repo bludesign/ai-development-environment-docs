@@ -37,6 +37,9 @@ The name, description, and an **Enabled** or **Disabled** badge, with the top-le
   <Card title="Maximum concurrent runs" icon="gauge">
     The ceiling on simultaneously executing runs for this workflow.
   </Card>
+  <Card title="Reserve the worktree for this workflow" icon="lock">
+    **Enabled** means a top-level run waits for earlier work, then reserves its worktree until it finishes. **Disabled** leaves worktree admission to the individual Plan and Session lanes.
+  </Card>
 </Columns>
 
 ## Workflow graph
@@ -71,6 +74,16 @@ This is where you decide whether the workflow appears as a button on other pages
 
 <Note>
   A quick action only renders when the workflow is published, enabled, and has a resource trigger matching the selected action type. All four conditions have to hold — the page states this inline as a reminder.
+</Note>
+
+## Queue
+
+The **Queue** card collects queued workflow runs and queued AI runs launched by this workflow. Each row shows its effective position, run and phase, worktree, and queued time. An **Exclusive** badge marks a workflow run that will reserve its worktree.
+
+Positions are relative to all queued work on each worktree, even though this card only includes entries associated with the current workflow. Open the linked worktree to see the complete combined queue.
+
+<Note>
+  The card lists queued work, not runs that are already active. Plan and Session lanes can advance independently until an exclusive workflow reaches the front of the combined admission order.
 </Note>
 
 ## Recent runs

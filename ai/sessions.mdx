@@ -8,29 +8,31 @@ description: "Managed provider Sessions that run against a worktree."
   <img className="hidden dark:block" src="/images/dark/sessions.png" alt="Sessions page in dark theme" />
 </Frame>
 
-The **Sessions** page at `/sessions` lists implementation runs. A Session drives an AI tool against one worktree with write access, no approval prompts, and an exclusive lease on that worktree for as long as it runs. It is the half of the pairing that changes code — the surveying half is a [Plan](/ai/plans).
+The **Sessions** page at `/sessions` lists implementation runs. A Session drives an AI tool against one worktree with write access and no approval prompts. Managed Sessions join that worktree's durable FIFO Session lane before they start. It is the half of the pairing that changes code — the surveying half is a [Plan](/ai/plans).
 
 <Warning>
-  Sessions run without approval prompts and with unrestricted access while holding an exclusive worktree lease. Point one at a worktree you are willing to have rewritten, not at your main checkout.
+  Sessions run without approval prompts and with unrestricted access. Point one at a worktree you are willing to have rewritten, not at your main checkout. Raising or removing the concurrency limit allows multiple Sessions to write to it at once.
 </Warning>
 
-## The worktree lease
+## The worktree queue
 
-Creating a Session takes a lease on its worktree, and a second Session against the same worktree is refused with the number of the one that already owns it. Plans take no lease, so surveying work can carry on alongside.
+An active managed Session no longer causes a second otherwise eligible Session to be refused. The new Session starts immediately when its lane has capacity or remains **Queued** with the phase **Waiting for worktree**.
 
-The lease is released when the Session reaches a terminal status, and it can be handed over rather than dropped:
+- Sessions default to one active run per worktree.
+- Workflow steps and GraphQL clients can set a limit from `1` through `32`, or `0` for unlimited concurrency.
+- Plans use a separate lane, so they can survey while a Session runs unless an exclusive workflow reserves the whole worktree.
+- A paused Session keeps its admission slot. A terminal Session releases it and promotes the next queued entry.
 
-- Starting a resumed follow-up from a **paused** Session cancels the parent and atomically transfers the lease to the child, so there is no window in which neither owns the worktree.
-- Answering a question on a Session that has lost its lease re-takes it.
+Starting a resumed follow-up from a **paused** Session cancels the parent and atomically transfers its admission slot to the child. This keeps newer queued Sessions from starting between the two.
 
 ## The run list
 
-Rows are grouped by creation day, with active runs pulled into a leading **Active** group.
+Rows are grouped by creation day, with queued and active runs pulled into a leading **Active** group.
 
 | Column | What it shows |
 | --- | --- |
 | ID | `#1234`, the Session's display number |
-| Status | **In progress**, **Paused**, **Completed**, **Cancelled**, or **Failed**, plus a phase badge when the phase differs |
+| Status | **Queued**, **In progress**, **Paused**, **Completed**, **Cancelled**, or **Failed**, plus a phase badge when the phase differs |
 | Repository / branch | Links to the worktree while it exists |
 | Ticket | Jira issue key, opening the ticket drawer in place |
 | Plan | The source Plan this Session was played from, if any |
@@ -67,7 +69,7 @@ Filter choices persist in a cookie scoped to Sessions, separately from the Plans
 ## Notes
 
 - A Session started by playing a Plan carries that Plan's proposal as its context and stamps the Plan as run — a Plan can be played only once.
-- Cancelling a Session releases its lease; the worktree is left in whatever state the run reached, and the Git checkpoints on the detail page show what changed.
+- Cancelling a Session releases its admission slot; the worktree is left in whatever state the run reached, and the Git checkpoints on the detail page show what changed.
 
 ## Related pages
 
@@ -82,6 +84,6 @@ Filter choices persist in a cookie scoped to Sessions, separately from the Plans
     Read-only surveys that propose the work a Session carries out.
   </Card>
   <Card title="Worktrees" icon="git-branch" href="/worktrees/worktrees">
-    The checkouts Sessions lease and modify.
+    The checkouts Sessions queue against and modify.
   </Card>
 </Columns>

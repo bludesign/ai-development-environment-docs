@@ -14,7 +14,7 @@ A workflow is a typed graph — one trigger, then steps connected by handles —
 
 ## Workflows tab
 
-Each workflow shows its name, description, enabled state, version count, and run count, plus a **Quick actions** marker when it is wired to appear as a button elsewhere in the app.
+Each workflow shows its name, description, enabled state, version count, and run count. It also shows **Quick actions** when it appears as a button elsewhere in the app and **Reserve the worktree for this workflow** when its runs use exclusive worktree admission.
 
 | Action | Effect |
 | --- | --- |
@@ -39,7 +39,7 @@ A table of every run with its number, workflow, status, trigger, generation, and
   <Accordion title="Run statuses" icon="chart-line">
     | Status | Meaning |
     | --- | --- |
-    | Queued | Accepted, not yet started |
+    | Queued | Accepted, but waiting for workflow capacity or worktree admission |
     | Running | Executing steps |
     | Waiting | Held on a delay, a wait-until, or an external condition |
     | Blocked | Cannot proceed — usually missing or invalid session data |
