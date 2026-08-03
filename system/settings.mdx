@@ -16,7 +16,21 @@ The **Settings** page at `/settings` configures the development tools, Apple ser
 - **Apple services** — Configure the iOS enrollment profile signer, App Store Connect Devices API, and APNs push credentials.
 - **Integrations** — Connect **Jira**, **GitHub** (personal access token and a GitHub App for pipeline retries), and the **Actions Cache Server**.
 
+## Jira webhook
+
+Once Jira credentials are saved, a **Jira webhook** card appears. The webhook is optional: it pushes Jira changes into workflow triggers and live ticket updates instead of waiting for something to fetch a ticket.
+
+- **Register in Jira** creates the webhook for you using the API token you already saved. Set **Webhook URL** to an address Jira can reach, and optionally a **JQL filter** that scopes which projects send deliveries.
+- Registering again after editing the URL or the filter updates the same webhook in place rather than creating a second one.
+- **Generate secret** is the fallback when the token's account is not a Jira admin: it mints a signing secret and shows it once, for you to paste into **Settings → System → WebHooks** in Jira along with the URL.
+- **Rotate secret** replaces the secret, in Jira too when the webhook is registered.
+- **Disable webhook** deletes the secret and, for a registered webhook, removes it from Jira.
+
+The card shows the time and outcome of the most recent delivery and links to [Jira Webhooks](/jira/webhooks) for the full log.
+
 ## Notes
 
 - Credentials entered here are stored server-side and never returned to the browser.
 - Saving GitHub, Jira, and cache-server credentials verifies the connection before it is used.
+- Registering the webhook needs the **Administer Jira** global permission on the account that owns the API token. Without it, Jira answers `403` and the card falls back to the manual steps.
+- The Jira webhook secret is cleared when you remove Jira credentials or change the Jira site.

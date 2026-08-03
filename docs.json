@@ -150,6 +150,7 @@
             "pages": [
               "jira/jira-tickets",
               "jira/jira-ticket-detail",
+              "jira/webhooks",
               "jira/jira-cache",
               "jira/jira-cache-ticket"
             ]

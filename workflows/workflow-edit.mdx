@@ -15,10 +15,12 @@ The workflow editor at `/workflows/{id}/edit` is a visual canvas for building du
 - Drag steps from the **palette** onto the canvas and connect their typed handles.
 - Configure each step — retry strategy, failure policy, conditions, choices, and model settings.
 - **Validate** to surface diagnostics, **Save draft**, then **Publish** an immutable version.
-- Adjust **Workflow settings**: name, description, overlap policy, maximum concurrent runs, and connector or viewer layout.
+- Adjust **Workflow settings**: name, description, overlap policy, maximum concurrent runs, successful-completion notifications, and connector or viewer layout.
+- Turn off **Notify when this workflow completes successfully** to suppress successful-run completion notifications for this workflow. Failure and attention notifications remain enabled.
 
 ## Notes
 
 - Publishing creates an immutable version — save the workflow before publishing it.
 - A trigger is required, and the graph must be acyclic and fully connected.
 - Steps that change external state warn you to configure an idempotency strategy and avoid blind retries.
+- MCP clients can set `completionNotificationsEnabled` with `create_workflow` or `update_workflow_settings`.
