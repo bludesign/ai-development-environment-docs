@@ -3,7 +3,7 @@ title: "Database"
 description: "How the SQLite database is configured, migrated, backed up, and reclaimed."
 ---
 
-Everything the control plane knows lives in one SQLite file: agents and their jobs, codebases and worktrees, builds and their logs, AI runs, workflows, telemetry, the GitHub and Jira caches, and — depending on the credential backend — your stored secrets. There is no separate cache, queue, or object store to operate.
+The control plane keeps its operational state in one SQLite file: agents and their jobs, codebases and worktrees, builds and their logs, AI runs, workflows, telemetry, the GitHub and Jira caches, credential metadata, and — when the database credential backend is active — credential payloads and their connection settings. Vault and Keychain keep those payloads outside SQLite. There is no separate application cache, queue, or object store to operate.
 
 Data access uses [Prisma 7](https://www.prisma.io/) with the `prisma-client` generator — a TypeScript query compiler, with no native query-engine binary — and the better-sqlite3 driver adapter. That combination is what lets the generated client bundle cleanly into the Next.js `standalone` output the Homebrew service runs.
 
@@ -104,10 +104,10 @@ sqlite3 /path/to/production.db ".backup '/path/to/backup.db'"
 ```
 
 <Warning>
-  The database file holds the profile signer's private key, device UDIDs, IP history, any App Store Connect `.p8` key, and — with the `database` credential backend — every stored credential. Treat backups as sensitive as the original.
+  The database file holds device UDIDs, IP history, integration metadata, and operational history. With the `database` credential backend, it also holds every credential-backed setting, including private keys and certificate bundles. Treat backups as sensitive as the original.
 </Warning>
 
-A backup is only restorable together with `CREDENTIAL_ENCRYPTION_KEY`. Encrypted credential rows cannot be read without it, and key rotation is not currently supported, so store the key separately from the backups but do not lose it. See [credential storage](/quickstart#set-up-credential-storage).
+When the database backend contains encrypted credential rows, a backup is only fully usable with its `CREDENTIAL_ENCRYPTION_KEY`. Those rows cannot be read without the key, and key rotation is not currently supported. Store the key separately from the backups, but do not lose it. See [credential storage](/quickstart#set-up-credential-storage).
 
 ## Growth and cleanup
 

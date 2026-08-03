@@ -43,7 +43,7 @@ The [Worktrees](/worktrees/worktrees) page in that tour is a good example of how
 - The **control plane** is a Next.js app with a GraphQL API and a SQLite database that you run on your own machine or server.
 - Each managed Mac runs a **control agent** that makes outbound HTTP and GraphQL WebSocket connections to the control plane. Managed Macs never expose a listening port.
 - Agent identity and job history are durable, so jobs, builds, and Sessions survive restarts while subscriptions deliver live output.
-- Long-lived Jira, GitHub, signing, and APNs secrets go through a server-only [credential service](/system/credentials) backed by the database, HashiCorp Vault, or the macOS Keychain.
+- Long-lived Jira, GitHub, signing, and APNs credentials and their connection settings go through a server-only [credential service](/system/credentials) backed by the database, HashiCorp Vault, or the macOS Keychain.
 
 <Card title="Quickstart" icon="rocket" href="/quickstart" horizontal>
   Install the control plane, enroll your first agent, and open the dashboard.

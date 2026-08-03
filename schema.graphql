@@ -7444,6 +7444,9 @@ enum CredentialStoreWarningCode {
   """Represents the credential store unavailable option."""
   CREDENTIAL_STORE_UNAVAILABLE
 
+  """Represents the credential store read only option."""
+  CREDENTIAL_STORE_READ_ONLY
+
   """Represents the vault configuration invalid option."""
   VAULT_CONFIGURATION_INVALID
 
@@ -7452,6 +7455,12 @@ enum CredentialStoreWarningCode {
 
   """Represents the vault tls verification disabled option."""
   VAULT_TLS_VERIFICATION_DISABLED
+
+  """Represents the vault read only ignored option."""
+  VAULT_READ_ONLY_IGNORED
+
+  """Represents the vault adoption failed option."""
+  VAULT_ADOPTION_FAILED
 
   """Represents the keychain unsupported platform option."""
   KEYCHAIN_UNSUPPORTED_PLATFORM
@@ -7499,6 +7508,16 @@ type CredentialStoreStatus {
 
   """Number of mismatchs."""
   mismatchCount: Int!
+
+  """
+  Whether this install can only read credentials. Only Vault storage can report true.
+  """
+  readOnly: Boolean!
+
+  """
+  Number of credentials adopted from the external backend during initialization.
+  """
+  adoptedCount: Int!
 
   """Warnings associated with this credential store status."""
   warnings: [CredentialStoreWarning!]!
