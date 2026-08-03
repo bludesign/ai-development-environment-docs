@@ -11,12 +11,12 @@ Give the app that origin either by running behind a reverse proxy that sends cor
 
 The server binds two ports, not one.
 
-| Listener | Variable | Homebrew and npm default | Source default |
+| Listener | Variable | Homebrew, npm, and Docker default | Source default |
 | --- | --- | --- | --- |
 | HTTP (dashboard, GraphQL, REST, MCP) | `PORT`, `HOSTNAME` | `3090` | `3000` |
 | Agent GraphQL WebSocket | `AGENT_WS_PORT`, `AGENT_WS_HOSTNAME` | `3091` | `3092` under `npm run dev:all` |
 
-The WebSocket listener carries GraphQL subscriptions: agent job traffic, live build and run output, and the dashboard's own streaming updates. Control agents dial it outbound, so managed Macs never expose a listening port of their own.
+The WebSocket listener carries GraphQL subscriptions: agent job traffic, live build and run output, and the dashboard's own streaming updates. Control agents dial it outbound, so managed machines and agent containers never expose a listening port of their own.
 
 The app also rewrites `/graphql` on the HTTP origin to the WebSocket listener, and the browser defaults to `wss://<page host>/graphql` when `NEXT_PUBLIC_AGENT_WS_URL` is unset. That is what makes a single-origin deployment possible.
 
@@ -165,5 +165,8 @@ Each candidate is parsed and validated as an IP address — bracketed IPv6, an a
   </Card>
   <Card title="Quickstart" icon="rocket" href="/quickstart">
     Installing, enrolling an agent, and credential storage.
+  </Card>
+  <Card title="Docker" icon="box" href="/reference/docker">
+    Production images, Compose deployment, volumes, and container-agent enrollment.
   </Card>
 </Columns>

@@ -3,19 +3,21 @@ title: "Quickstart"
 description: "Install the control plane, enroll an agent, and open the dashboard."
 ---
 
-There are three ways to install AI Development Environment. Pick one, then enroll a control agent so the dashboard has a Mac to work with.
+There are four ways to install AI Development Environment. Pick one, then enroll a control agent so the dashboard has a machine to work with.
 
 | Method | Best for | Default port | Default credential storage |
 | --- | --- | --- | --- |
 | [Homebrew](#option-1-homebrew-macos) | macOS, run as a background service | `3090` | macOS Keychain |
 | [npm](#option-2-npm) | Any platform, prebuilt standalone build | `3090` | Database |
-| [From source](#option-3-from-source) | Developing the app itself | `3000` | Database |
+| [Docker](#option-3-docker) | Containerized control plane and Linux agent | `3090` | Database |
+| [From source](#option-4-from-source) | Developing the app itself | `3000` | Database |
 
 ## Prerequisites
 
-- macOS for the control agent, iOS builds, signing, and Keychain credential storage. The control plane itself also runs on Linux.
+- macOS for iOS builds, signing, Xcode build data, and Keychain credential storage. The Linux container agent supports portable development jobs.
 - Node.js 24.16 or newer in the Node 24 line, for the npm and source installs.
 - Homebrew, for the Homebrew install.
+- Docker, for the container install.
 - Xcode and its command line tools, if you plan to run iOS builds.
 
 ## Option 1: Homebrew (macOS)
@@ -66,7 +68,32 @@ There are three ways to install AI Development Environment. Pick one, then enrol
 
 The npm packages track the repository's `vX.Y.Z` release tags — the `publish-npm` job in `.github/workflows/release.yml` publishes both via npm trusted publishing on every release. They accept the same server and credential variables as the Homebrew service, but default to database credential storage on every platform.
 
-## Option 3: From source
+## Option 3: Docker
+
+The production release publishes separate control-plane and Linux-agent images to GitHub Container Registry:
+
+```text
+ghcr.io/bludesign/ai-development-environment:latest
+ghcr.io/bludesign/ai-development-environment-control-agent:latest
+```
+
+Start the control plane with persistent database storage:
+
+```bash
+docker run --detach \
+  --name ai-development-environment \
+  --restart unless-stopped \
+  --publish 3090:3090 \
+  --publish 3091:3091 \
+  --volume ai-development-environment-data:/data \
+  ghcr.io/bludesign/ai-development-environment:latest
+```
+
+The server applies pending migrations, listens on both container ports, and stores SQLite state beneath `/data`. The agent is a separate image and opens no listening port.
+
+See [Docker](/reference/docker) for the complete Docker Compose deployment, one-time agent enrollment, persistent AI-provider credentials, and repository or external-disk mounts.
+
+## Option 4: From source
 
 <Steps>
   <Step title="Clone and install dependencies">
@@ -104,7 +131,7 @@ See [Local development](/reference/development) for the full command list, port 
 
 ## Enroll a control agent
 
-The dashboard needs at least one enrolled Mac before it can create worktrees, run commands, or start builds. The agent connects outbound only — managed Macs never expose a listening port.
+The dashboard needs at least one enrolled agent before it can create worktrees, run commands, or start builds. Every agent connects outbound only and never exposes a listening port.
 
 <Steps>
   <Step title="Install the agent">
@@ -112,12 +139,12 @@ The dashboard needs at least one enrolled Mac before it can create worktrees, ru
     brew install control-agent
     ```
 
-    The npm install in Option 2 already includes `@ai-development-environment/control-agent`, and `npm run dev:all` runs its own development agent, so you can skip this step in those cases.
+    The npm install in Option 2 already includes `@ai-development-environment/control-agent`, and `npm run dev:all` runs its own development agent, so you can skip this step in those cases. Docker users should follow the [container enrollment flow](/reference/docker#docker-compose).
   </Step>
   <Step title="Create a one-time enrollment token">
     Open the [Agents](/agents/agents) page and create an enrollment command. It builds a shell-safe command for you.
   </Step>
-  <Step title="Run the enrollment on the target Mac">
+  <Step title="Run the enrollment on the target machine">
     ```bash
     control-agent enroll --server http://127.0.0.1:3090 --enrollment-token <one-time-token>
     ```

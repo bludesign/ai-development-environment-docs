@@ -17,7 +17,7 @@ The new run page at `/runs/new` is the single form for starting AI work: pick a 
     **Plan** surveys the codebase and proposes work without changing it. **Session** implements with write access. You can switch modes at any point before starting.
   </Step>
   <Step title="Select a worktree" icon="git-branch">
-    The picker lists every worktree across every enrolled Mac, labelled *repository · branch · agent*. Search matches the folder, ticket key, and ticket title as well as the visible label, so you can find a worktree by whatever you happen to remember about it. A worktree on an offline agent, or one that is not currently available, is listed but not selectable. The chosen worktree's full path is shown underneath.
+    The picker lists every worktree across every enrolled machine, labelled *repository · branch · agent*. Search matches the folder, ticket key, and ticket title as well as the visible label, so you can find a worktree by whatever you happen to remember about it. A worktree on an offline agent, or one that is not currently available, is listed but not selectable. The chosen worktree's full path is shown underneath.
   </Step>
   <Step title="Attach a Jira ticket" icon="ticket">
     Selecting a worktree that already has a ticket fills the field in for you. Typing a valid key — `AIDE-123` — loads a preview card with the ticket's status, type, priority, and summary so you can confirm you have the right one before starting.
@@ -57,7 +57,7 @@ Models you use get remembered as **Recent**, and you can pin any tool-model-effo
 
 | Requirement | Why |
 | --- | --- |
-| A worktree is selected and its agent is online | The run executes on that Mac |
+| A worktree is selected and its agent is online | The run executes on that machine |
 | The prompt is not empty | It is the run's initial input |
 | The selected tool reports itself available | The catalog says the tool is installed and usable |
 | The chosen model exists in that tool's catalog | Switching tools clears the model for this reason |

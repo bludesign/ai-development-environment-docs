@@ -17,7 +17,7 @@ The **Queries**, **Mutations**, and **Types** sections in this tab are generated
 
 An Apollo Server (Federation subgraph) is mounted at `/api/graphql` through a Next.js route handler. Outside production — or when `APOLLO_SANDBOX=true` — introspection and the Apollo sandbox are enabled, so opening `/api/graphql` in a browser lets you explore the schema interactively.
 
-Control agents on managed Macs connect outbound to the WebSocket port and never expose a listening port of their own. See [Development](/reference/development) for the environment variables that move those ports.
+Control agents on managed machines connect outbound to the WebSocket port and never expose a listening port of their own. See [Development](/reference/development) for the environment variables that move those ports.
 
 <Warning>
   `/api/graphql` must stay authenticated. Do not add it to a Cloudflare Access bypass — see [Hosting](/reference/hosting).
