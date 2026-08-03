@@ -9,6 +9,8 @@ An Apollo Server (Federation subgraph) is mounted at `/api/graphql` through a Ne
 
 The SDL lives in `schemas/**/*.graphql` and is bundled into the app by `scripts/prebuild-schema.ts`. Resolvers are dependency-injected factories under `src/graphql/resolvers/`.
 
+Every query, mutation, and type is documented in the [GraphQL API](/graphql/overview) tab, generated from that schema.
+
 A placeholder `health` query verifies database connectivity. It returns `"ok"` when the database is reachable, and `"degraded"` otherwise:
 
 ```graphql
