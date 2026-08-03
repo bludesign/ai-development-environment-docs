@@ -25,6 +25,30 @@ Each saved command shows its name, description, target scope, and a **Quick acti
 - **Edit** opens the [edit page](/commands/command-edit).
 - **Archive** removes it from the active view while keeping its run history.
 
+### Managing definitions
+
+**Edit** turns on selection on this tab. Clicking anywhere on a card selects it, and the checkbox in each card header does the same.
+
+- **Select all** picks up every command matching the current search.
+- **Export** downloads one `<name>.command.json` file per selected command.
+- **Delete** permanently removes the selected commands.
+
+<Warning>
+  Deleting a command is permanent. A command that has run history cannot be deleted at all — archive it instead, which keeps the history intact. Deleting a mixed selection removes what it can and reports what stopped it.
+</Warning>
+
+## Import and export
+
+A command travels between control planes as a JSON file. **Export** writes it; **Import** reads it back.
+
+**Import** accepts several files at once. Importing a single file opens it straight in the [command editor](/commands/command-edit); importing several stays on the **Definitions** tab, where the new cards are the result. Each file is handled on its own, so one unreadable file names itself in the error banner rather than costing you the rest of the batch.
+
+<Note>
+  Agent and repository identifiers are specific to one install, so a scoped command travels by target *name*. If the importing control plane has no agent or repository by that name, the target widens — **This agent's home** becomes **Any agent home**, and **This repository's worktree** becomes **Any worktree** — and the quick action is switched off, since running the script anywhere is a decision for whoever imported it.
+</Note>
+
+An exported file carries the command's name, description, script, target, restart policy, quick action settings, and notification setting. A hand-written file containing just those fields imports as well, without the export envelope.
+
 ## Runs tab
 
 A table of every run with **Run** number, **Command**, **Status**, **Agent**, **Worktree**, **Started**, and **Finished**.

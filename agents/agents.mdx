@@ -61,6 +61,64 @@ The list is driven by an `agentChanged` subscription, so status, version, and re
   The token appears only inside the generated command. If it expires before you use it, generate a new one — tokens cannot be reissued.
 </Warning>
 
+## Local and remote addresses
+
+One control plane is often reachable at two addresses — a LAN address at the desk, a public or VPN address elsewhere. An agent can hold both. It prefers the local address and moves to the remote one when the local address stops answering *and* the remote one is confirmed to answer for this agent.
+
+```bash
+control-agent enroll --server http://192.168.1.10:3090 --remote-server https://control.example.com --enrollment-token <one-time-token>
+```
+
+Change the addresses on an already-enrolled agent, or print the current ones by passing no flags:
+
+```bash
+control-agent endpoints
+```
+
+| Flag | Effect |
+| --- | --- |
+| `--server` | The local address |
+| `--websocket-server` | The local WebSocket address |
+| `--remote-server` | The address to fall back to |
+| `--remote-websocket-server` | The remote WebSocket address |
+| `--clear-remote` | Drops the remote address |
+
+Each WebSocket address is derived from its server URL unless you set it explicitly. Changing a server address re-derives its WebSocket address, since one stored against the old server no longer points anywhere useful — so when the WebSocket is served from somewhere other than `/graphql` on the same host and port, pass both together:
+
+```bash
+control-agent endpoints --server http://192.168.1.20:3090 --websocket-server ws://192.168.1.20:3092/graphql
+```
+
+### How failover decides
+
+<Steps>
+  <Step title="Heartbeats detect the loss" icon="chart-line">
+    Three consecutive failed heartbeats mark the active address as not working. That rides out a control plane restart but still fails over within about a minute when a laptop leaves the network.
+  </Step>
+  <Step title="The other address is probed" icon="satellite-dish">
+    The agent asks the other address who it is. A reachable address is not enough — the stored credential has to resolve to this same agent, so a different control plane answering at the same address cannot silently take the machine over.
+  </Step>
+  <Step title="The session moves, or stays put" icon="arrows-rotate">
+    A confirmed alternate wins and the session reconnects there. If nothing else answers, the control plane is simply down: the agent keeps its session and the jobs running under it and retries, rather than cancelling live work for nowhere better to go.
+  </Step>
+</Steps>
+
+## Agent commands
+
+| Command | What it does |
+| --- | --- |
+| `control-agent enroll` | Pairs the machine using a one-time token |
+| `control-agent run` | Runs the agent |
+| `control-agent status` | Prints the agent's registration as the control plane sees it |
+| `control-agent endpoints` | Prints or changes the configured addresses |
+| `control-agent enrollment` | Reports whether this machine is enrolled and whether each address answers for it |
+| `control-agent doctor` | Diagnoses a failing connection; passes when any configured address answers |
+| `control-agent unenroll` | Removes the local credential |
+
+<Note>
+  `unenroll` only clears `~/.config/control-agent/config.json`. The control plane still lists the agent until you delete it from its [detail page](/agents/agent-detail).
+</Note>
+
 ## What an enrolled agent does
 
 Once connected, an agent runs four recurring loops. Each has a configurable interval on the [agent detail page](/agents/agent-detail).

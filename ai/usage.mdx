@@ -72,7 +72,8 @@ The page distinguishes several kinds of "nothing here", so the fix is never a gu
 ## Notes
 
 - Nothing is cached between visits: every load is a fresh collection, so the figures always match what is on disk right now.
-- `ccusage` must be installed and on the agent's `PATH`. A machine that cannot run it reports a failure rather than silently contributing zero.
+- `ccusage` must be installed on the agent. A machine that cannot run it reports a failure rather than silently contributing zero.
+- The agent does not rely on `PATH` alone. A service started by `brew services` inherits a bare `PATH` that hides Homebrew, npm, and bun installs, so the agent also searches `~/.local/bin`, `~/.bun/bin`, `~/.npm-global/bin`, the directory holding its own `node` binary, and `/opt/homebrew/bin` and `/usr/local/bin` on macOS. Set `CONTROL_AGENT_CCUSAGE_EXECUTABLE` to a full path to pin an install the search misses.
 
 ## Related pages
 

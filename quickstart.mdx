@@ -156,13 +156,15 @@ The dashboard needs at least one enrolled agent before it can create worktrees, 
     ```
 
     If your control plane sits behind Cloudflare Access, add each service-token header with a repeatable `--header "Name: value"` argument. The agent keeps those headers only in its owner-readable `0600` config and redacts them from `status`.
+
+    A machine that reaches the control plane at two addresses — a LAN address at the desk, a public one elsewhere — can hold both. Add `--remote-server https://control.example.com` and the agent prefers the local address, falling back to the remote one when the local address stops answering. See [Local and remote addresses](/agents/agents#local-and-remote-addresses).
   </Step>
   <Step title="Verify">
     ```bash
     control-agent status
     ```
 
-    `control-agent doctor` diagnoses a failing connection. The credential and stable agent ID live at `~/.config/control-agent/config.json`.
+    `control-agent enrollment` reports whether this machine is enrolled and whether each configured address answers for it, and `control-agent doctor` diagnoses a failing connection. The credential and stable agent ID live at `~/.config/control-agent/config.json`.
   </Step>
 </Steps>
 
