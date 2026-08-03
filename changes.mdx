@@ -1,0 +1,91 @@
+---
+title: "Changes"
+description: "Review every change in a worktree, with coverage overlaid on the code."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/changes.png" alt="Changes page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/changes.png" alt="Changes page in dark theme" />
+</Frame>
+
+The **Changes** page at `/changes` is a full-window diff reviewer. Pick a worktree, choose what to compare, walk the file tree, and read the diff with a build's code coverage painted onto the lines.
+
+It is the same view a pull request gives you, but against the checkout on your Mac — before the branch is pushed.
+
+## Choosing what to review
+
+<Steps>
+  <Step title="Pick a worktree" icon="code-branch">
+    The selector lists every worktree across every enrolled agent, searchable by branch, repository, and path. The page opens on the first one rather than an empty state.
+  </Step>
+  <Step title="Pick a scope" icon="layer-group">
+    **Staged**, **Unstaged**, and **Untracked** read the working tree. **Branch** compares against the base branch. **Commits** adds a commit list and diffs one commit at a time.
+  </Step>
+  <Step title="Pick a coverage report (optional)" icon="chart-bar">
+    Overlays a build's coverage on the diff. The picker only appears when the worktree has at least one ready report; pending and failed reports have no line data to show.
+  </Step>
+</Steps>
+
+**Refresh** re-inspects the worktree, which is what you want after committing or staging something while the page is open.
+
+When the selected worktree is linked to a pull request, the page also shows its number and title below the diff.
+
+<Note>
+  Commits and diffs come from the Mac that owns the checkout, so the agent has to be online. The page reports the reason when a diff cannot be read.
+</Note>
+
+## The file list
+
+Files are grouped into a folder tree, with single-child folders collapsed onto one row the way an editor tree does it. Each row carries the file name, its change type, and `+`/`−` line counts.
+
+| Control | What it does |
+| --- | --- |
+| **Filter by path or module** | Narrows the tree to matching files |
+| **Sort** | Name, Module, Coverage, Additions, Deletions, or Change type |
+| Direction toggle | Reverses the sort |
+
+<Tip>
+  Sorting by **Coverage** replaces the change counts with a coverage ring per file, turning the sidebar into a worklist you can order from lower to higher coverage or reverse for the strongest-covered files. Files the report did not measure show an em dash.
+</Tip>
+
+Very large change sets are truncated, and the list says so rather than pretending it is complete.
+
+## Reading a diff
+
+<Tabs>
+  <Tab title="Text diffs">
+    Switch between **Unified view** and **Side-by-side view**, and use **Toggle line wrapping** for long lines. Hunks keep their `@@` headers, so you can see where in the file each change sits.
+  </Tab>
+  <Tab title="Image diffs">
+    Changed images open **Side by side**. Switch to **Overlap** and adjust **Image transparency** to blend the revisions, or choose **Difference** to render a pixel-level mask. The difference view includes a sensitivity slider and red, green, or red-on-faded-white mask colors. It reports the percentage of changed pixels, and a side with no image says so.
+  </Tab>
+</Tabs>
+
+Files with no textual changes, binary files, and diffs past the 2 MiB display limit are labeled rather than rendered.
+
+A parsed text diff above 5,000 rows pauses before mounting. Choose **Render it anyway** when you still need the complete file.
+
+## The coverage overlay
+
+With a report selected, a thin strip runs down the edge of the diff: green where the tests executed the line, red where they never reached it, and blank for anything the report says nothing about — comments, declarations, deleted lines, and files it never measured. The selected file's overall coverage shows next to its path, and each file in the tree carries its own percentage.
+
+Coverage is measured at a particular revision. When the worktree has moved on since the report was generated, the page says **Measured at a different revision** and dims the overlay instead of hiding it — line numbers may have shifted, but a stale reading still beats none.
+
+<Tip>
+  Coverage reports come from builds. Generate one from a [build's details page](/builds/build-detail), or [import an LCOV or Istanbul report](/builds/build-coverage#importing-coverage-from-other-test-runners). Then use **View changes with coverage** on the coverage report to land here with that report already selected.
+</Tip>
+
+## Sharing a view
+
+The URL tracks the worktree, scope, selected file, commit, coverage report, view mode, and wrap setting. Copying the address bar hands someone the exact diff you are looking at.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Worktree details" icon="code-branch" href="/worktrees/worktree-detail">
+    One checkout's status, actions, working tree, and coverage history.
+  </Card>
+  <Card title="Build coverage report" icon="chart-bar" href="/builds/build-coverage">
+    The full report behind the overlay, file by file and target by target.
+  </Card>
+</Columns>

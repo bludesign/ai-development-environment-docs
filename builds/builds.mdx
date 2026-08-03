@@ -1,6 +1,6 @@
 ---
 title: "Builds"
-description: "Configure, run, inspect, deploy, and export iOS builds across codebases and worktrees."
+description: "Configure, run, inspect, deploy, and export iOS builds, and track imported coverage reports."
 ---
 
 <Frame>
@@ -8,7 +8,7 @@ description: "Configure, run, inspect, deploy, and export iOS builds across code
   <img className="hidden dark:block" src="/images/dark/builds.png" alt="Builds page in dark theme" />
 </Frame>
 
-The **Builds** page at `/builds` holds iOS build history and the reusable JavaScript hooks that run around each build. It has two tabs: **History** and **Build Scripts**.
+The **Builds** page at `/builds` holds build and imported-coverage history, plus the reusable JavaScript hooks that run around each iOS build. It has two tabs: **History** and **Build Scripts**.
 
 Builds themselves are started from a worktree, not from this page — see [Worktrees](/worktrees/worktrees).
 
@@ -29,6 +29,8 @@ Builds themselves are started from a worktree, not from this page — see [Workt
 ## History
 
 Every build record, newest first, with its status, destination, duration, and artifact count.
+
+An LCOV or Istanbul [coverage import](/builds/build-coverage#importing-coverage-from-other-test-runners) appears here as a `HOST` destination. That record ran no simulator or device build; it exists to hold the worktree snapshot, import status, logs, and coverage report.
 
 | Status | Meaning |
 | --- | --- |
@@ -69,6 +71,8 @@ Reusable pre-build and post-build hooks that run around every build that selects
 ## Worktree coverage
 
 **Run Worktree Coverage** runs tests with coverage and measures the executable lines changed in the current branch and working tree — a coverage number scoped to the change rather than the whole project. Reports appear on the [worktree details](/worktrees/worktree-detail) page.
+
+For a non-Xcode test suite, a workflow or MCP client can instead [import an LCOV or Istanbul report](/builds/build-coverage#importing-coverage-from-other-test-runners). Imported reports appear in the same worktree coverage list and on the [Changes](/changes) page.
 
 ## Notes
 

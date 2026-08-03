@@ -49,12 +49,16 @@ Which actions appear depends on the run's state and on what the AI tool supports
     The live transcript, in a scrolling pane that stays pinned to the newest event unless you scroll up. Events stream in over a subscription; searching re-queries the server rather than filtering what is already loaded, and history is paged 500 events at a time.
 
     Related events are grouped into one expandable node — a tool call with its result, a streamed message with its parts — and expanding a row shows the parsed detail with the raw payload behind a toggle.
+
+    Codex rows distinguish **Commentary** from **Final Answer**, summarize completed commands and file changes, and collapse repeated token updates and identical diff snapshots.
   </Accordion>
   <Accordion title="Plan" icon="clipboard-list">
     The final output, shown once the run reaches a terminal status. On a Plan this is the proposal itself and the card is titled **Plan**; on a Session the same card is titled **Summary**. Markdown rendering, raw toggle, and copy, as with the prompt.
   </Accordion>
   <Accordion title="Changes" icon="file-diff">
     Git checkpoints captured during the run — **Start**, **Question**, **Answer rollback**, **Before answer revision**, **Continue**, and **Final** — each with its HEAD SHA, branch, and either a full patch or a diff summary. The most recent patch is also surfaced at the top of the card.
+
+    Patches list one collapsible row per file, with its change type and added and removed line counts; expand a row for the diff itself.
 
     A Plan that changed its worktree is flagged here with **This read-only Plan unexpectedly changed the selected worktree**.
   </Accordion>

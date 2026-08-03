@@ -39,10 +39,10 @@ Commits and file changes that differ from the base branch, with a diff viewer.
 
 <Tabs>
   <Tab title="Text diffs">
-    Read a diff **Side by side** or as an **Overlap**. Files with no textual changes and binary files are labeled rather than rendered.
+    Read each file as a unified diff with aligned line-number columns and expandable large-diff protection. Files with no textual changes and binary files are labeled rather than rendered.
   </Tab>
   <Tab title="Image diffs">
-    Changed images are compared **Before** and **After**, with an **Image transparency** slider for blending one over the other. A side with no image says so.
+    Compare revisions **Side by side**, blend them with **Overlap** and the **Image transparency** slider, or choose **Difference** for a pixel-level mask. The difference view lets you tune sensitivity, choose a red, green, or red-on-faded-white mask, and reports the percentage of changed pixels. A side with no image says so.
   </Tab>
 </Tabs>
 
@@ -50,9 +50,13 @@ Commits and file changes that differ from the base branch, with a diff viewer.
   Diffs are capped at a 2 MiB display limit. Beyond that the diff is truncated, and very large change sets may omit some files entirely — the page tells you when that happens.
 </Note>
 
+<Tip>
+  For a longer review, the [Changes](/changes) page gives the same diffs a full window, a searchable file tree, side-by-side mode, and a coverage overlay.
+</Tip>
+
 ## Code coverage
 
-Coverage reports generated for this worktree, each listed with its **Build**, **Status** (Pending, Ready, or Failed), **Overall coverage**, **Changed coverage**, and generation time. **View report** opens the full report.
+Coverage reports generated or imported for this worktree, each listed with its **Build**, **Status** (Pending, Ready, or Failed), **Overall coverage**, **Changed coverage**, and generation time. **View report** opens the full report.
 
 Changed coverage is the useful number in review: it measures the executable lines this branch touched, rather than the whole project.
 
@@ -70,11 +74,14 @@ Saved metadata always renders. Commits and changes need a live agent, and the pa
 
 ## Related pages
 
-<Columns cols={2}>
+<Columns cols={3}>
   <Card title="Worktrees" icon="code-fork" href="/worktrees/worktrees">
     Every worktree across every agent, with creation, moves, and automation.
   </Card>
+  <Card title="Changes" icon="code-compare" href="/changes">
+    A dedicated diff reviewer for this worktree, with coverage on the code.
+  </Card>
   <Card title="Build coverage report" icon="chart-bar" href="/builds/build-coverage">
-    The full coverage report a build generates.
+    The full coverage report a build generates or imports.
   </Card>
 </Columns>

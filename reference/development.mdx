@@ -133,6 +133,7 @@ The SDL is bundled rather than read from disk at runtime because the Homebrew se
 | --- | --- |
 | `npm run test` | Vitest in watch mode. |
 | `npm run test:run` | Vitest once. |
+| `npm run test:coverage` | Vitest once with V8 coverage reports in `coverage/`. |
 | `npm run agent:test:run` | The control agent's own Vitest suite. |
 | `npm run type-check` | Regenerates, runs `next typegen`, then type-checks the app and the agent. |
 | `npm run lint` / `npm run lint:fix` | ESLint. |
@@ -142,6 +143,8 @@ The SDL is bundled rather than read from disk at runtime because the Homebrew se
 | `npm run full-check:ci` | Runs the non-mutating CI checks. |
 
 Tests live beside the code they cover as `*.test.ts` and `*.test.tsx`. The suite runs under jsdom with a fixed `America/New_York` timezone — date formatting tests assert that a zoneless render differs from the UTC one, which is vacuously true on a UTC machine. `packages/control-agent/**` and `playwright/**` are excluded from the app's Vitest run and have their own runners.
+
+`npm run test:coverage` uses the V8 provider and includes untested application, script, and agent-contract source files in the totals. It writes a terminal summary, an HTML report, `lcov.info`, `coverage-final.json`, and `coverage-summary.json` under `coverage/`; reports are still written when tests fail. The **test-coverage** VS Code task runs the same command.
 
 ### Database
 

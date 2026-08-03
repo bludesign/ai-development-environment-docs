@@ -4563,6 +4563,11 @@ enum BuildDestinationType {
 
   """Represents the physical device option."""
   PHYSICAL_DEVICE
+
+  """
+  Represents the agent host itself, for records that ran no device build — an imported coverage report.
+  """
+  HOST
 }
 
 """Lifecycle statuses for build."""
@@ -4975,6 +4980,16 @@ type BuildChangedCoverageFile {
   The changed line coverage associated with this build changed coverage file. May be null when unavailable or not applicable.
   """
   changedLineCoverage: Float
+
+  """
+  Executable line numbers the test run executed, across the whole file rather than only its changed lines. Empty for reports generated before per-line coverage was recorded.
+  """
+  coveredLineNumbers: [Int!]!
+
+  """
+  Executable line numbers the test run never executed, across the whole file rather than only its changed lines. Empty for reports generated before per-line coverage was recorded.
+  """
+  uncoveredLineNumbers: [Int!]!
 }
 
 """Represents a build report in the GraphQL API."""
@@ -16328,6 +16343,11 @@ type Worktree {
   Git commit SHA associated with this worktree. May be null when unavailable or not applicable.
   """
   headSha: String
+
+  """
+  Hash of the complete worktree code state, including local changes. May be null when unavailable or not applicable.
+  """
+  codeStateHash: String
 
   """
   The upstream associated with this worktree. May be null when unavailable or not applicable.

@@ -35,12 +35,16 @@ A failed run surfaces its error at the top of the page. So does a phase like *St
     The transcript streams over a subscription into a scrolling pane that stays pinned to the newest event unless you scroll away from the bottom. History pages in 500 events at a time, and the search box re-queries the server rather than filtering what has already loaded.
 
     Related events collapse into a single expandable node — a tool call together with its result, a streamed message with its parts. Expanding a row shows the parsed detail, with the untouched payload available behind a raw toggle and a copy button.
+
+    Codex rows distinguish **Commentary** from **Final Answer**, summarize completed commands and file changes, and collapse repeated token updates and identical diff snapshots.
   </Accordion>
   <Accordion title="Usage and estimated cost" icon="coins">
     Tiles for **Reported by provider**, **Model cost catalog**, input, output, cache read, cache write, and reasoning tokens, and the tool-call count. A per-model table breaks the same numbers down, and where an answer revision has retired earlier work a second table separates **Active attempts** from **Superseded** usage. Individual tool calls expand to their input, output, and error JSON.
   </Accordion>
   <Accordion title="Changes" icon="file-diff">
     Every Git checkpoint the run captured — **Start**, **Question**, **Answer rollback**, **Before answer revision**, **Continue**, **Final** — with HEAD SHA, branch, and a full patch or diff summary. The most recent patch is repeated at the top of the card, which is usually the quickest read of what the Session actually did.
+
+    Patches list one collapsible row per file, with its change type and added and removed line counts; expand a row for the diff itself.
   </Accordion>
   <Accordion title="Summary" icon="file-text">
     The run's final output, shown once it reaches a terminal status. On a Plan the same card holds the proposal and is titled **Plan**.
