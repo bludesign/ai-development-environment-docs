@@ -8,11 +8,13 @@ description: "Review overall and changed code coverage for a build."
   <img className="hidden dark:block" src="/images/dark/build-coverage.png" alt="Build coverage report in dark theme" />
 </Frame>
 
-The build coverage page at `/builds/{id}/coverage` shows the code coverage report generated for one build.
+The build coverage page at `/builds/{id}/coverage` shows the code coverage report generated or imported for one build record.
 
 <Note>
-  A build has no coverage page until you generate the report. Open the [build details](/builds/build-detail) page and choose **Generate coverage report** first — until then this page tells you the report was not found.
+  An Xcode build has no coverage page until you generate the report. Open the [build details](/builds/build-detail) page and choose **Generate coverage report** first — until then this page tells you the report was not found. An imported report gets its own build record and opens here as soon as the import succeeds.
 </Note>
+
+**View changes with coverage** opens the [Changes](/changes) page on the worktree this build measured, with this report already selected — the numbers below become a green-and-red strip against the actual diff.
 
 ## Headline numbers
 
@@ -44,11 +46,38 @@ Every file in the report, grouped by target. Search across targets, files, and p
 | **File** | File name |
 | **Coverage** | Percentage of executable lines covered |
 
+## Importing coverage from other test runners
+
+You can import line coverage without running an Xcode build. The control agent accepts LCOV files such as `coverage/lcov.info` and Istanbul JSON such as `coverage/coverage-final.json`.
+
+In a workflow, run the test suite with a **Terminal run** step, then add **Import coverage report** from the **Builds** group. Configure these fields:
+
+| Field | What to enter |
+| --- | --- |
+| **Worktree** | The checkout where the test command wrote the report |
+| **Coverage file** | A path inside that worktree; `coverage/lcov.info` is the default |
+| **Coverage format** | **AUTO** to detect the file, or explicitly **LCOV** or **ISTANBUL** |
+
+The import waits for the agent and creates a `HOST` build record because no simulator or device build ran. It writes `build.id` and `build.coverageSummary` to workflow session data. Add **Read code coverage** afterward when later steps need the per-file and changed-file lists.
+
+The built-in `import_coverage_report` MCP tool provides the same operation with `worktreeId`, `reportPath`, `format`, and a caller-supplied `requestId`. You can run it from the [Tools](/system/tools) page or an MCP client.
+
+<Note>
+  The coverage file must stay inside the worktree, must describe at least one file, and cannot exceed 64 MiB. Import requires an online agent that supports coverage imports.
+</Note>
+
+<Note>
+  Changed-line coverage is measured against the worktree's base branch. If the branch or its remote reference cannot be resolved, the import still keeps whole-file coverage, but the changed-file breakdown and line overlay are unavailable.
+</Note>
+
 ## Related pages
 
-<Columns cols={2}>
+<Columns cols={3}>
   <Card title="Build details" icon="file-lines" href="/builds/build-detail">
-    Where the coverage report is generated, alongside logs, artifacts, and test results.
+    Where an Xcode coverage report is generated, alongside logs, artifacts, and test results.
+  </Card>
+  <Card title="Changes" icon="code-compare" href="/changes">
+    The same report, overlaid line by line on the branch's diff.
   </Card>
   <Card title="Worktree details" icon="code-branch" href="/worktrees/worktree-detail">
     Worktree coverage reports, which measure the lines changed in a branch and its working tree.
