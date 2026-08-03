@@ -1,6 +1,6 @@
 ---
 title: "Agent details"
-description: "Inspect one enrolled Mac's hardware, capabilities, codebases, and jobs."
+description: "Inspect one enrolled machine's hardware, capabilities, codebases, and jobs."
 ---
 
 <Frame>
@@ -8,7 +8,7 @@ description: "Inspect one enrolled Mac's hardware, capabilities, codebases, and 
   <img className="hidden dark:block" src="/images/dark/agent-detail.png" alt="Agent details page in dark theme" />
 </Frame>
 
-The agent details page at `/agents/{id}` is the full control surface for one enrolled Mac: what it is, what it can do, what it is hosting, how often it checks in, and where it puts things on disk.
+The agent details page at `/agents/{id}` is the full control surface for one enrolled machine or container: what it is, what it can do, what it is hosting, how often it checks in, and where it puts things on disk.
 
 ## General information
 
@@ -18,7 +18,7 @@ Hardware and resource figures come from the agent's heartbeat, so they are as fr
 | --- | --- |
 | Version | The running `control-agent` build |
 | CPU model | Reported by the agent, or **Unavailable** |
-| Operating system | macOS version string |
+| Operating system | Reported macOS, Linux, or Windows kernel version |
 | Architecture | For example `arm64` |
 | IP address | The address the agent reported at connection time |
 | Last seen | Time of the most recent heartbeat, or **Never** |
@@ -27,7 +27,9 @@ Hardware and resource figures come from the agent's heartbeat, so they are as fr
 
 ## Capabilities
 
-An agent advertises the set of job kinds it knows how to execute. Because capabilities are declared by the agent itself, an older `control-agent` build simply advertises fewer of them — which is how the UI decides whether a feature is available on that Mac.
+An agent advertises the set of job kinds it knows how to execute. Because capabilities are declared by the agent itself, an older `control-agent` build simply advertises fewer of them — which is how the UI decides whether a feature is available on that machine.
+
+The Linux container agent advertises portable codebase, worktree, command, workflow, coverage, skill, and AI-run capabilities. Xcode build data, iOS builds, and signing assets remain available only from a macOS agent.
 
 <Steps>
   <Step title="Find a capability" icon="magnifying-glass">
@@ -101,14 +103,14 @@ Four intervals control how often this agent performs recurring work. Codebase sc
 **Delete agent** permanently removes the agent along with all of its jobs and codebase registrations. It is confirmed by name and cannot be undone.
 
 <Warning>
-  Deleting an agent does not touch anything on the Mac itself — repositories, worktrees, and build output stay on disk. To manage that machine again you have to enroll it afresh.
+  Deleting an agent does not touch anything on the machine itself — repositories, worktrees, and build output stay on disk. To manage that machine again you have to enroll it afresh.
 </Warning>
 
 ## Related pages
 
 <Columns cols={2}>
   <Card title="Agents" icon="laptop" href="/agents/agents">
-    The list of enrolled Macs and the enrollment flow.
+    The list of enrolled machines and the enrollment flow.
   </Card>
   <Card title="Codebases" icon="folder-tree" href="/codebases/codebases">
     Repositories and checkouts registered across every agent.

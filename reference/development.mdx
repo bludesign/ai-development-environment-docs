@@ -89,7 +89,7 @@ ai-development-environment/
 ├── prisma/            schema.prisma and versioned migrations
 ├── packages/
 │   ├── agent-contract/   Types and job kinds shared by the server and the agent
-│   └── control-agent/    The TypeScript control agent that runs on each Mac
+│   └── control-agent/    The TypeScript control agent that runs on each machine
 ├── messages/          Locale files: en, de, es, fr
 ├── scripts/           Build, seeding, packaging, and maintenance scripts
 ├── playwright/        Screenshot and walkthrough capture suite
@@ -171,7 +171,7 @@ The production server accepts the standard Next.js `HOSTNAME` and `PORT` environ
 
 The generic TypeScript control agent lives in `packages/control-agent`, and the types it shares with the server live in `packages/agent-contract`. Both are npm workspaces of the root package, so `npm ci` at the root installs them and the `agent:*` scripts proxy into them.
 
-The agent is a client, not a server: it dials the control plane's GraphQL WebSocket outbound and executes jobs it is handed. Nothing on a managed Mac listens for inbound connections. It bundles the Claude Agent SDK, the Codex SDK, and the OpenCode SDK, which is how a Session actually runs a model on the target machine.
+The agent is a client, not a server: it dials the control plane's GraphQL WebSocket outbound and executes jobs it is handed. Nothing on a managed machine listens for inbound connections. It bundles the Claude Agent SDK, the Codex SDK, and the OpenCode SDK, which is how a Session actually runs a model on the target machine.
 
 <Warning>
   Changing `packages/agent-contract` changes a wire contract. A server and an agent built from different revisions can disagree about job payloads, so rebuild and restart both after touching it.

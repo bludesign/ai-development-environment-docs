@@ -14,7 +14,7 @@ Almost everything on the dashboard that appears to update on its own is driven b
 
 ## Using the page
 
-The page has two cards. **Server operations** are loops running inside the server process. **Agent operations** are loops running on each enrolled Mac — one row per agent per operation, with the agent name linking to its [agent detail](/agents/agent-detail) page.
+The page has two cards. **Server operations** are loops running inside the server process. **Agent operations** are loops running on each enrolled machine — one row per agent per operation, with the agent name linking to its [agent detail](/agents/agent-detail) page.
 
 | Column | What it shows |
 | --- | --- |
@@ -85,7 +85,7 @@ Each enrolled agent contributes five rows. Their cadences come from the per-agen
 
 <Steps>
   <Step title="Check the runtime" icon="server">
-    A failing server operation affects everyone. A failing agent operation affects only that Mac — and if every row for one agent is stale, the problem is the connection, not the operations.
+    A failing server operation affects everyone. A failing agent operation affects only that machine — and if every row for one agent is stale, the problem is the connection, not the operations.
   </Step>
   <Step title="Read the error under the status" icon="triangle-alert">
     Errors are recorded verbatim from the failed pass. Git fetch is the exception: it summarizes as *N repositories have fetch errors*, and the per-repository reason lives on the [codebase detail](/codebases/codebase-detail) page.

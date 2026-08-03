@@ -1,6 +1,6 @@
 # AI Development Environment — Documentation
 
-The [Mintlify](https://mintlify.com) documentation site for [AI Development Environment](https://github.com/bludesign/ai-development-environment), a self-hosted control plane for AI-assisted development across your Macs.
+The [Mintlify](https://mintlify.com) documentation site for [AI Development Environment](https://github.com/bludesign/ai-development-environment), a self-hosted control plane for AI-assisted development across your machines.
 
 ## Structure
 

@@ -1,6 +1,6 @@
 ---
 title: "Usage"
-description: "Review token usage and cost across every enrolled Mac."
+description: "Review token usage and cost across every enrolled machine."
 ---
 
 <Frame>
@@ -8,7 +8,7 @@ description: "Review token usage and cost across every enrolled Mac."
   <img className="hidden dark:block" src="/images/dark/usage.png" alt="Usage page in dark theme" />
 </Frame>
 
-The **Usage** page at `/usage` answers "what have my AI tools actually cost?" across every Mac you manage. It does not read a stored table — each visit fans a collection job out to your online agents, runs `ccusage --json` on each of them, and aggregates the reports into one view broken down by day, model, and Mac.
+The **Usage** page at `/usage` answers "what have my AI tools actually cost?" across every machine you manage. It does not read a stored table — each visit fans a collection job out to your online agents, runs `ccusage --json` on each of them, and aggregates the reports into one view broken down by day, model, and agent.
 
 <Note>
   This page reports what the AI tools themselves recorded on disk, covering all local usage including work you did outside this control plane. The per-run figures on a [Plan](/ai/plan-detail) or [Session](/ai/session-detail) come from the run's own token counts instead — the two answer different questions.
@@ -21,17 +21,17 @@ The **Usage** page at `/usage` answers "what have my AI tools actually cost?" ac
     Opening the page starts a collection against every enrolled agent. Agents that are offline, or whose `control-agent` build does not advertise the ccusage capability, are excluded from the eligible set and named in the status banner.
   </Step>
   <Step title="Each agent runs ccusage" icon="terminal">
-    A job runs `ccusage --json` locally, with a 120-second timeout and a 16 MB cap on output. Results stream back as each Mac finishes.
+    A job runs `ccusage --json` locally, with a 120-second timeout and a 16 MB cap on output. Results stream back as each agent finishes.
   </Step>
   <Step title="Reports are merged" icon="layers">
-    Daily entries from every Mac are merged by date, then by model, then by agent. The whole collection has a 150-second deadline; whatever has reported by then is what you see.
+    Daily entries from every agent are merged by date, then by model, then by agent. The whole collection has a 150-second deadline; whatever has reported by then is what you see.
   </Step>
   <Step title="The page updates live" icon="refresh-cw">
     Progress arrives over a subscription and is reconciled every two seconds until the collection completes. **Refresh usage** discards the result and starts a fresh collection.
   </Step>
 </Steps>
 
-The status banner above the results always shows ***n* of *N* compatible agents reported**, and lists offline Macs, Macs needing a `control-agent` update, and any that failed with their error text.
+The status banner above the results always shows ***n* of *N* compatible agents reported**, and lists offline agents, agents needing a `control-agent` update, and any that failed with their error text.
 
 ## Reading the results
 
@@ -39,10 +39,10 @@ The status banner above the results always shows ***n* of *N* compatible agents 
 | --- | --- |
 | **Daily cost by model** | Stacked USD per day across the selected range. Selecting a model in the legend charts it alone; selecting it again restores every model |
 | Summary tiles | Total cost, total tokens, input, output, cache creation, and cache read for the current filters |
-| Usage table | One row per day, expandable to models, expandable again to the Macs that used each model |
+| Usage table | One row per day, expandable to models, expandable again to the agents that used each model |
 | Grand total | The table footer, covering the selected range |
 
-Each agent row inside the table also names the sources ccusage attributed that usage to, so you can see which tool on that Mac spent the tokens.
+Each agent row inside the table also names the sources ccusage attributed that usage to, so you can see which tool on that machine spent the tokens.
 
 <Note>
   A day can carry an **Unattributed tokens** row. That is usage ccusage recorded without a model attached — it counts toward totals but cannot be charted against a specific model.
@@ -51,7 +51,7 @@ Each agent row inside the table also names the sources ccusage attributed that u
 ## Filters
 
 - **Range** — **All data**, **7 days**, or **30 days**.
-- **Agent** — appears once more than one Mac has reported, and narrows every chart, tile, and table row to that Mac.
+- **Agent** — appears once more than one agent has reported, and narrows every chart, tile, and table row to that agent.
 - **Model** — set by selecting a model in the chart legend. The summary tiles say so explicitly when they cover one model rather than the whole range.
 
 Selecting a model and then narrowing the range past the point where that model appears drops the model filter rather than showing a row of zeros.
@@ -62,9 +62,9 @@ The page distinguishes several kinds of "nothing here", so the fix is never a gu
 
 | Message | What to do |
 | --- | --- |
-| **No agents enrolled** | Enroll a Mac from the [Agents](/agents/agents) page |
-| **No agents online** | Connect an enrolled Mac and refresh |
-| **No compatible agents online** | Update `control-agent` on an online Mac to pick up the ccusage capability |
+| **No agents enrolled** | Enroll a machine from the [Agents](/agents/agents) page |
+| **No agents online** | Connect an enrolled agent and refresh |
+| **No compatible agents online** | Update `control-agent` on an online machine to pick up the ccusage capability |
 | **Usage collection failed** | No agent returned a valid report — check the per-agent errors in the banner |
 | **No usage found** | Agents reported successfully but ccusage has no daily usage recorded |
 | **No usage in this range** | Widen the range to reach older usage |
@@ -72,7 +72,7 @@ The page distinguishes several kinds of "nothing here", so the fix is never a gu
 ## Notes
 
 - Nothing is cached between visits: every load is a fresh collection, so the figures always match what is on disk right now.
-- `ccusage` must be installed and on the agent's `PATH`. A Mac that cannot run it reports a failure rather than silently contributing zero.
+- `ccusage` must be installed and on the agent's `PATH`. A machine that cannot run it reports a failure rather than silently contributing zero.
 
 ## Related pages
 
@@ -81,7 +81,7 @@ The page distinguishes several kinds of "nothing here", so the fix is never a gu
     The model price catalog used to estimate run costs.
   </Card>
   <Card title="Agents" icon="laptop" href="/agents/agents">
-    The Macs collection fans out to.
+    The agents each collection fans out to.
   </Card>
   <Card title="Sessions" icon="terminal" href="/ai/sessions">
     Per-run token counts and cost.

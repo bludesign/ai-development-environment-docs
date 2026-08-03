@@ -1,6 +1,6 @@
 ---
 title: "Agents"
-description: "Manage enrolled Macs and durable jobs from one control plane."
+description: "Manage enrolled machines and durable jobs from one control plane."
 ---
 
 <Frame>
@@ -8,10 +8,10 @@ description: "Manage enrolled Macs and durable jobs from one control plane."
   <img className="hidden dark:block" src="/images/dark/agents.png" alt="Agents page in dark theme" />
 </Frame>
 
-The **Agents** page at `/agents` lists every enrolled Mac and is where you pair new ones. Each Mac runs the `control-agent` binary, which opens outbound HTTP and GraphQL WebSocket connections to the control plane.
+The **Agents** page at `/agents` lists every enrolled machine and is where you pair new ones. Each machine or container runs the `control-agent` binary, which opens outbound HTTP and GraphQL WebSocket connections to the control plane.
 
 <Note>
-  Managed Macs never open a listening port. Every connection is initiated by the agent, so a Mac behind NAT or a firewall works with no inbound rules.
+  Managed machines never open a listening port. Every connection is initiated by the agent, so a host behind NAT or a firewall works with no inbound rules.
 </Note>
 
 ## The agent list
@@ -33,23 +33,23 @@ The list is driven by an `agentChanged` subscription, so status, version, and re
   Command quick actions scoped to an agent home appear inline on each entry. See [Commands](/commands/commands) for how to define them.
 </Tip>
 
-## Enrolling a Mac
+## Enrolling a machine
 
 <Steps>
-  <Step title="Install control-agent on the Mac" icon="download">
-    Install the `control-agent` binary on the machine you want to manage. See [Quickstart](/quickstart) for installation options.
+  <Step title="Install control-agent" icon="download">
+    Install the `control-agent` binary on the machine you want to manage, or use the Linux agent image. See [Quickstart](/quickstart) and [Docker](/reference/docker) for installation options.
   </Step>
   <Step title="Generate an enrollment token" icon="key">
     **Enroll agent** creates a one-time token. It is valid for 15 minutes by default, and the expiry is shown beside the command.
   </Step>
   <Step title="Pick the server address" icon="globe">
-    The command defaults to the origin you are browsing from. Choose another detected local origin, or select **Custom server address** and type the URL the Mac should reach — useful when the agent connects through a tunnel or a different hostname than your browser does.
+    The command defaults to the origin you are browsing from. Choose another detected local origin, or select **Custom server address** and type the URL the agent should reach — useful when it connects through a tunnel, a Compose service name, or a different hostname than your browser does.
   </Step>
   <Step title="Add Cloudflare Access headers if needed" icon="shield">
     When the control plane sits behind Cloudflare Access, add header key and value pairs. They are appended to this command only, and the agent saves them in its owner-only local configuration.
   </Step>
   <Step title="Copy and run the command" icon="terminal">
-    **Copy command** puts the full `control-agent enroll` invocation on your clipboard. Run it on the target Mac.
+    **Copy command** puts the full `control-agent enroll` invocation on your clipboard. Run it on the target machine or adapt it for `docker compose run`.
 
     ```bash
     control-agent enroll --server 'https://your-control-plane' --enrollment-token enroll_...
@@ -84,6 +84,7 @@ Once connected, an agent runs four recurring loops. Each has a configurable inte
 
 - In development, the first run auto-enrolls a `-dev` agent for the current host so you have something to work against immediately.
 - An agent that goes offline keeps its stored inventory and job history; its detail page renders read-only until it reconnects.
+- Linux agents do not advertise the macOS-only Xcode build-data, iOS-build, or signing-asset capabilities.
 
 ## Related pages
 

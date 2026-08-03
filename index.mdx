@@ -1,9 +1,9 @@
 ---
 title: "Introduction"
-description: "A self-hosted control plane for AI-assisted development across your Macs."
+description: "A self-hosted control plane for AI-assisted development across your machines."
 ---
 
-AI Development Environment is a self-hosted dashboard that coordinates AI-assisted development across every Mac you enroll. It keeps Git worktrees, AI Plans and Sessions, builds, shell commands, and durable workflows in one control plane, so long-running work survives restarts and stays inspectable.
+AI Development Environment is a self-hosted dashboard that coordinates AI-assisted development across every machine you enroll. It keeps Git worktrees, AI Plans and Sessions, builds, shell commands, and durable workflows in one control plane, so long-running work survives restarts and stays inspectable.
 
 <Frame caption="A pass through the Action Center, Worktrees, a worktree's detail page, and Sessions.">
   <video className="block dark:hidden w-full" src="/images/light/walkthrough.webm" poster="/images/light/worktrees.png" autoPlay loop muted playsInline />
@@ -41,7 +41,7 @@ The [Worktrees](/worktrees/worktrees) page in that tour is a good example of how
 ## How it fits together
 
 - The **control plane** is a Next.js app with a GraphQL API and a SQLite database that you run on your own machine or server.
-- Each managed Mac runs a **control agent** that makes outbound HTTP and GraphQL WebSocket connections to the control plane. Managed Macs never expose a listening port.
+- Each managed machine runs a **control agent** that makes outbound HTTP and GraphQL WebSocket connections to the control plane. Managed machines and agent containers never expose a listening port.
 - Agent identity and job history are durable, so jobs, builds, and Sessions survive restarts while subscriptions deliver live output.
 - Long-lived Jira, GitHub, signing, and APNs credentials and their connection settings go through a server-only [credential service](/system/credentials) backed by the database, HashiCorp Vault, or the macOS Keychain.
 

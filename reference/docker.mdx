@@ -1,0 +1,140 @@
+---
+title: "Docker"
+description: "Run the control plane and its Linux control agent from production GHCR images."
+---
+
+Release tags publish two multi-architecture images for `linux/amd64` and `linux/arm64`:
+
+| Image | Purpose |
+| --- | --- |
+| `ghcr.io/bludesign/ai-development-environment` | Next.js control plane |
+| `ghcr.io/bludesign/ai-development-environment-control-agent` | Linux control agent |
+
+Use `latest` for the newest semantic-version release or a version tag such as `0.0.73` to pin a deployment. Public packages can be pulled without signing in.
+
+## Docker Compose
+
+Create `compose.yaml`:
+
+```yaml
+services:
+  server:
+    image: ghcr.io/bludesign/ai-development-environment:latest
+    restart: unless-stopped
+    environment:
+      HOSTNAME: 0.0.0.0
+      PORT: 3090
+      AGENT_WS_HOSTNAME: 0.0.0.0
+      AGENT_WS_PORT: 3091
+      DATABASE_URL: file:/data/production.db
+    ports:
+      - "3090:3090"
+      - "3091:3091"
+    volumes:
+      - server-data:/data
+
+  agent:
+    image: ghcr.io/bludesign/ai-development-environment-control-agent:latest
+    restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_healthy
+    volumes:
+      - agent-data:/data
+      - agent-home:/home/node
+      - ./repositories:/workspace/repositories
+
+volumes:
+  server-data:
+  agent-data:
+  agent-home:
+```
+
+The server stores its SQLite database in `server-data`. The agent stores its enrollment in `agent-data` and AI-provider credentials in `agent-home`. The agent opens outbound connections only and does not publish a port.
+
+<Steps>
+  <Step title="Pull and start the server">
+    ```bash
+    docker compose pull
+    docker compose up -d server
+    ```
+
+    Open `http://localhost:3090`, go to **Agents**, and create a one-time enrollment token.
+  </Step>
+  <Step title="Enroll the container agent">
+    ```bash
+    docker compose run --rm agent \
+      enroll \
+      --server http://server:3090 \
+      --websocket-server ws://server:3091/graphql \
+      --enrollment-token <one-time-token>
+    ```
+
+    Enrollment writes `/data/config.json` into the persistent `agent-data` volume.
+  </Step>
+  <Step title="Start the agent">
+    ```bash
+    docker compose up -d agent
+    ```
+
+    Follow its connection with `docker compose logs -f agent`.
+  </Step>
+</Steps>
+
+## Give the agent repository storage
+
+Every repository the agent manages must be mounted into its container. The Compose example mounts local `./repositories` at `/workspace/repositories`; register codebases with their container paths beneath `/workspace/repositories`.
+
+To use an external macOS disk mounted at `/Volumes/Development`, replace or add this agent volume:
+
+```yaml
+services:
+  agent:
+    volumes:
+      - /Volumes/Development:/Volumes/Development
+```
+
+Recreate the agent after changing its mounts:
+
+```bash
+docker compose up -d --force-recreate agent
+docker compose exec agent ls -la /Volumes/Development
+```
+
+Docker Desktop or OrbStack may require you to allow access to the external path in its file-sharing settings. On Linux, use the equivalent mounted path, such as `/mnt/development:/mnt/development`.
+
+<Note>
+  The agent currently reports capacity for its container root filesystem. A bind-mounted disk is available to jobs and repositories, but its capacity is not included in the agent's disk-usage field.
+</Note>
+
+## Runtime capabilities
+
+The Linux agent image runs as the non-root `node` user and includes Git, SSH, Codex, OpenCode, and the Claude Agent SDK. It can manage codebases, worktrees, commands, workflows, coverage, skills, and AI runs.
+
+Xcode build data, iOS builds, and signing-asset jobs are macOS-only. Install the control agent through Homebrew or npm on a Mac that needs those capabilities.
+
+## Operate and update
+
+```bash
+docker compose ps
+docker compose logs -f server
+docker compose logs -f agent
+docker compose pull
+docker compose up -d
+```
+
+Both images carry OCI source, version, revision, and description metadata. Each release also publishes an SBOM and provenance attestation. Manifest tools may show extra `unknown/unknown` descriptors beside `linux/amd64` and `linux/arm64`; those descriptors are attestations, not runnable image variants.
+
+If a package is private, authenticate before pulling:
+
+```bash
+gh auth token | docker login ghcr.io \
+  --username <github-username> \
+  --password-stdin
+```
+
+## Server configuration
+
+The image supports the same environment variables as the npm server, including `PORT`, `HOSTNAME`, `AGENT_WS_HOSTNAME`, `AGENT_WS_PORT`, `DATABASE_URL`, credential-storage settings, and Vault settings. It applies pending Prisma migrations before starting.
+
+See [Hosting and networking](/reference/hosting) before exposing the control plane beyond localhost.
