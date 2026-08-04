@@ -1,0 +1,61 @@
+---
+title: "App details"
+description: "Manage repositories, worktrees, AI runs, and builds for one app."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/app-detail.png" alt="App details page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/app-detail.png" alt="App details page in dark theme" />
+</Frame>
+
+An app hub at `/apps/[appId]` brings every resource backed by the app's assigned repositories into one place. The selected view is stored in the `view` query parameter, so you can bookmark or share a direct link such as `/apps/[appId]?view=worktrees`.
+
+## Views
+
+| View | What you can do |
+| --- | --- |
+| **Overview** | Review resource totals and assigned repositories. Open any scoped view from its summary card. |
+| **Repositories** | Inspect assigned repositories and their checkouts. Open a repository or codebase for repository-level and checkout-level operations. |
+| **Worktrees** | Search, create, inspect, and manage worktrees from the assigned repositories. Hidden worktrees remain scoped to the app. |
+| **Plans** | Search and manage Plans that use an app worktree. Start a new Plan with only eligible app worktrees offered. |
+| **Sessions** | Search and manage Sessions that use an app worktree. Start a new Session without leaving the app context. |
+| **Builds** | Review app build history and start a build from an app worktree. Build scripts remain repository-level configuration. |
+
+The scoped views keep their normal actions. Opening a resource takes you to its full detail page when the action needs more space.
+
+## Edit repository assignments
+
+Click **Edit** to change the name, description, or assigned repositories. You must keep at least one repository assigned.
+
+Removing an assignment only changes the grouping. It does not delete the repository, its checkouts, worktrees, Plans, Sessions, or builds. If you later add the repository again, its existing resources reappear in the app.
+
+<Tip>
+  Removing the final checkout of a repository also preserves the logical repository while any app still uses it. This lets the app retain its assignment until you add another checkout or explicitly unassign the repository.
+</Tip>
+
+## Delete an app
+
+Click **Delete**, then confirm the warning. Deleting an app removes the app and its repository assignments only. Every repository and development resource remains available from its global page and from any other app that includes it.
+
+## Notes
+
+- App scope follows repository ownership. A worktree, Plan, Session, or build appears when its underlying codebase belongs to an assigned repository.
+- A resource backed by a shared repository can appear in more than one app.
+- App deletion is non-destructive and cannot delete files on an agent.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Apps" icon="layer-group" href="/apps/apps">
+    Create apps and review their current resource totals.
+  </Card>
+  <Card title="Repository details" icon="code-fork" href="/codebases/repository-detail">
+    Manage settings that apply to every checkout of a repository.
+  </Card>
+  <Card title="Worktrees" icon="code-branch" href="/worktrees/worktrees">
+    Open the global worktree inventory across all apps and repositories.
+  </Card>
+  <Card title="Builds" icon="hammer" href="/builds/builds">
+    Open global build history and repository build scripts.
+  </Card>
+</Columns>

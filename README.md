@@ -9,7 +9,7 @@ The [Mintlify](https://mintlify.com) documentation site for [AI Development Envi
 | `docs.json` | Site config: theme, colors, navigation, navbar, footer |
 | `index.mdx`, `quickstart.mdx` | Getting started |
 | `dashboard.mdx`, `notifications.mdx` | Top-level dashboard pages |
-| `agents/`, `workflows/`, `commands/`, `codebases/`, `worktrees/`, `builds/` | Dashboard areas |
+| `apps/`, `agents/`, `workflows/`, `commands/`, `codebases/`, `worktrees/`, `builds/` | Dashboard areas |
 | `ai/`, `skills/` | Plans, Sessions, drafts, usage, costs, and skill packages |
 | `debugging/`, `github/`, `jira/`, `system/` | Debugging tools and integrations |
 | `reference/` | Local development, APIs, database, and hosting |

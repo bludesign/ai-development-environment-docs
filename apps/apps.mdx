@@ -1,0 +1,59 @@
+---
+title: "Apps"
+description: "Group repositories into apps and open a scoped development hub for each one."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/apps.png" alt="Apps page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/apps.png" alt="Apps page in dark theme" />
+</Frame>
+
+The **Apps** page at `/apps` groups repositories into the products they support. An app can contain one repository or several. The same repository can belong to more than one app.
+
+Apps do not replace repositories. A repository still owns its checkouts and repository-level settings. An app gives you a central, filtered view of the development resources that use its assigned repositories.
+
+## Using the page
+
+Each card shows the app description, assigned repositories, and current totals for worktrees, Plans, and Sessions. Click **Open app** to open the app hub.
+
+### Create an app
+
+<Steps>
+  <Step title="Open the editor">
+    Click **Create app**.
+  </Step>
+  <Step title="Describe the app">
+    Enter a unique name. Names are case-insensitively unique. Add an optional description to explain the product or service boundary.
+  </Step>
+  <Step title="Assign repositories">
+    Select at least one repository. You can assign a repository that is already used by another app.
+  </Step>
+  <Step title="Save the app">
+    Click **Create app**. The app appears immediately and stays synchronized through live updates.
+  </Step>
+</Steps>
+
+<Note>
+  You create logical repositories from the [Codebases](/codebases/codebases) workflow. The **Create app** button stays disabled until at least one repository exists.
+</Note>
+
+## Shared repositories
+
+A shared repository contributes its resources to every app that includes it. For example, a web repository used by both a customer portal and a mobile product appears in both hubs. Removing it from one app does not remove it from the other app.
+
+## Notes
+
+- App assignments are many-to-many. An app can contain many repositories, and a repository can belong to many apps.
+- Counts exclude hidden worktrees and archived Plans or Sessions where the corresponding global view excludes them.
+- Creating an app does not move, clone, or modify files on an agent.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="App details" icon="layer-group" href="/apps/app-detail">
+    Open an app's scoped resources and actions.
+  </Card>
+  <Card title="Codebases" icon="folder-tree" href="/codebases/codebases">
+    Register checkouts and manage the logical repositories you assign to apps.
+  </Card>
+</Columns>

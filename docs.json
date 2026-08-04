@@ -29,6 +29,13 @@
             "pages": [
               "dashboard",
               {
+                "group": "Apps",
+                "pages": [
+                  "apps/apps",
+                  "apps/app-detail"
+                ]
+              },
+              {
                 "group": "Agents",
                 "pages": [
                   "agents/agents",
