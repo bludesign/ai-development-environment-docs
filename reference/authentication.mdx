@@ -7,7 +7,7 @@ AI Development Environment uses Better Auth for user accounts, browser and mobil
 
 ## Required production settings
 
-Set a stable secret and the origins this server is reached at before starting a production server:
+Set a stable secret before starting a production server. Naming the origins the server is reached at is optional but recommended:
 
 ```bash
 APP_SECRET="$(openssl rand -base64 32)"
@@ -17,7 +17,9 @@ AUTH_MODE="password"
 
 Generate `APP_SECRET` once and back it up. It must be base64 or hex encoding of exactly 32 random bytes; a passphrase is rejected, because the same root also encrypts stored credentials. Changing it signs every user out, and stored credentials become unreadable unless the old value is supplied as `APP_SECRET_PREVIOUS` — see [Environment variables](/reference/environment-variables#rotating-app-secret).
 
-`APP_ORIGINS` lists every origin users and the identity provider use to reach the server, comma-separated. It is what the CSRF check and the post-login redirect check are validated against, so an origin missing from it is rejected with `Invalid origin`. Localhost is trusted automatically outside production, so only production installs must set it.
+`APP_ORIGINS` lists every origin users and the identity provider use to reach the server, comma-separated. It is what the CSRF check and the post-login redirect check are validated against, so an origin missing from it is rejected with `Invalid origin`.
+
+Leaving it unset is supported: the server then trusts whatever host each request arrived on, sign-in works on any hostname, and cross-site requests are still rejected. What you give up is control over the absolute URLs the server generates — the OAuth `redirect_uri` among them — which a forged `Host` header can otherwise steer. Set it in production whenever you know the hostname. See [Environment variables](/reference/environment-variables).
 
 When external systems reach this server at a different address than the dashboard — the iOS enrollment flow, over-the-air installs, the GitHub App webhook — set `PUBLIC_BASE_URL` to that public origin as well. It is trusted automatically without being repeated in `APP_ORIGINS`.
 

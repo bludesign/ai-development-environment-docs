@@ -5,12 +5,12 @@ description: "Every environment variable the control plane and the local agent r
 
 The server reads its configuration from the environment. A source checkout loads `.env`; the Homebrew service reads `$(brew --prefix)/etc/ai-development-environment.env`; the container image takes `--env` flags or an env file. `.env.example` in the repository mirrors this page.
 
-Only two variables are required, and only one of those in development.
+`APP_SECRET` is the only required variable. Everything else has a working default.
 
-| Variable      | Required                    |
-| ------------- | --------------------------- |
-| `APP_SECRET`  | Always, including locally   |
-| `APP_ORIGINS` | In production only          |
+| Variable      | Required                  |
+| ------------- | ------------------------- |
+| `APP_SECRET`  | Always, including locally |
+| Everything else | No                      |
 
 ## Core
 
@@ -31,7 +31,11 @@ Only two variables are required, and only one of those in development.
 
   Entries may be a bare host (`app.example.com`), a host and port (`10.0.0.5:3000`), or a full origin (`https://app.example.com`). An entry without a port matches any port; an entry with one is exact.
 
-  Required in production. Outside production, `localhost`, `127.0.0.1`, and `[::1]` are always trusted in addition to whatever you list, so a source checkout usually needs nothing here.
+  Optional. Outside production, `localhost`, `127.0.0.1`, and `[::1]` are always trusted in addition to whatever you list, so a source checkout usually needs nothing here.
+
+  In production, leaving both this and `PUBLIC_BASE_URL` unset puts the server in **inferred mode**: it trusts whatever host each request arrived on. Sign-in works on any hostname without configuration, and a cross-site request is still rejected — a browser sets `Host` to the real destination, so an attacker's page cannot make its own origin look trusted.
+
+  What inferred mode gives up is control over the absolute URLs this server *generates*. A direct request carrying a forged `Host` — no victim or cookie involved — can steer the OAuth `redirect_uri`, iOS enrollment and install links, and the GitHub webhook URL at a host of the caller's choosing. Setting either variable pins them. The server logs a warning at startup when it enters this mode.
 
   A leading `*.` wildcard (`*.example.com`) is accepted **outside production only**. A wildcard trusts every host under it for both CSRF and post-login redirects, so it is rejected outright when `NODE_ENV=production`.
 </ParamField>
@@ -40,6 +44,8 @@ Only two variables are required, and only one of those in development.
   The origin external systems use to reach this server, when that differs from where the dashboard is served. Used to build iOS enrollment and over-the-air install URLs and to register the GitHub App webhook. It is automatically trusted as though listed in `APP_ORIGINS`.
 
   These integrations require publicly trusted HTTPS and are offered only when this resolves to a public `https` origin.
+
+  Setting this is enough on its own to leave inferred mode, so a deployment that only cares about pinning generated URLs does not also need `APP_ORIGINS`.
 </ParamField>
 
 <ParamField path="TRUST_PROXY_HEADERS" type="boolean" default="false">
