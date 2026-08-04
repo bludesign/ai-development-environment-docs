@@ -1,0 +1,170 @@
+---
+title: "Environment variables"
+description: "Every environment variable the control plane and the local agent read, what each one controls, and which are required."
+---
+
+The server reads its configuration from the environment. A source checkout loads `.env`; the Homebrew service reads `$(brew --prefix)/etc/ai-development-environment.env`; the container image takes `--env` flags or an env file. `.env.example` in the repository mirrors this page.
+
+Only two variables are required, and only one of those in development.
+
+| Variable      | Required                    |
+| ------------- | --------------------------- |
+| `APP_SECRET`  | Always, including locally   |
+| `APP_ORIGINS` | In production only          |
+
+## Core
+
+<ParamField path="APP_SECRET" type="string" required>
+  The root secret. Must be base64 or hex encoding of **exactly 32 random bytes** — a passphrase is rejected. Generate one with `openssl rand -base64 32`.
+
+  Session signing, credential encryption, and install-link signing are each derived from it with a separate HKDF label, so a leak of one derived key tells an attacker nothing about the others. Back it up: without it, stored credentials cannot be read.
+
+  The Homebrew service generates one into its environment file on first start if you have not set one.
+</ParamField>
+
+<ParamField path="APP_SECRET_PREVIOUS" type="string">
+  The value(s) being replaced during a rotation, comma-separated. Stored credentials sealed under a listed root are re-encrypted at startup. Remove it once the server has started cleanly. See [rotating APP_SECRET](#rotating-app-secret).
+</ParamField>
+
+<ParamField path="APP_ORIGINS" type="string">
+  Comma-separated list of origins this server may be reached at. Drives Better Auth's CSRF and post-login redirect allowlist and the Next.js dev-server allowlist.
+
+  Entries may be a bare host (`app.example.com`), a host and port (`10.0.0.5:3000`), or a full origin (`https://app.example.com`). An entry without a port matches any port; an entry with one is exact.
+
+  Required in production. Outside production, `localhost`, `127.0.0.1`, and `[::1]` are always trusted in addition to whatever you list, so a source checkout usually needs nothing here.
+
+  A leading `*.` wildcard (`*.example.com`) is accepted **outside production only**. A wildcard trusts every host under it for both CSRF and post-login redirects, so it is rejected outright when `NODE_ENV=production`.
+</ParamField>
+
+<ParamField path="PUBLIC_BASE_URL" type="string">
+  The origin external systems use to reach this server, when that differs from where the dashboard is served. Used to build iOS enrollment and over-the-air install URLs and to register the GitHub App webhook. It is automatically trusted as though listed in `APP_ORIGINS`.
+
+  These integrations require publicly trusted HTTPS and are offered only when this resolves to a public `https` origin.
+</ParamField>
+
+<ParamField path="TRUST_PROXY_HEADERS" type="boolean" default="false">
+  Whether `x-forwarded-host` and `x-forwarded-proto` may be believed. Enable only when a reverse proxy in front of this server sets them and strips client-supplied copies. `APP_ORIGINS` still constrains the resulting value.
+</ParamField>
+
+<ParamField path="DATABASE_URL" type="string" default="file:./prisma/dev.db">
+  SQLite connection string. Only `file:` URLs are accepted. Read by both the runtime client and the Prisma CLI.
+</ParamField>
+
+<ParamField path="HOSTNAME" type="string" default="127.0.0.1">
+  Interface the HTTP server binds to. Standard Next.js variable.
+</ParamField>
+
+<ParamField path="PORT" type="number" default="3000">
+  HTTP port. The Homebrew service defaults to `3090` instead. Also supplies the port in the development origin defaults.
+</ParamField>
+
+## Authentication
+
+<ParamField path="AUTH_MODE" type="string" default="password">
+  `password`, `oidc`, or `both`. The server enforces the mode on its routes; hiding a form in the browser does not enable a disabled method.
+</ParamField>
+
+The remaining variables apply only when `AUTH_MODE` is `oidc` or `both`. Supply either a discovery URL **or** all three explicit endpoint URLs — not both. Issuer validation and PKCE are always enabled. See [Authentication](/reference/authentication) for the full workflow.
+
+| Variable                        | Purpose                                                              |
+| ------------------------------- | -------------------------------------------------------------------- |
+| `AUTH_OAUTH_PROVIDER_ID`        | Provider slug; also the last path segment of the callback URL        |
+| `AUTH_OAUTH_PROVIDER_NAME`      | Label shown on the sign-in button                                    |
+| `AUTH_OAUTH_CLIENT_ID`          | Client identifier issued by the provider                             |
+| `AUTH_OAUTH_CLIENT_SECRET`      | Client secret issued by the provider                                 |
+| `AUTH_OAUTH_SCOPES`             | Comma-separated scopes, for example `openid,profile,email`           |
+| `AUTH_OAUTH_DISCOVERY_URL`      | OpenID configuration document                                        |
+| `AUTH_OAUTH_ISSUER`             | Expected issuer; required with explicit endpoints                    |
+| `AUTH_OAUTH_AUTHORIZATION_URL`  | Explicit authorization endpoint                                      |
+| `AUTH_OAUTH_TOKEN_URL`          | Explicit token endpoint                                              |
+| `AUTH_OAUTH_USER_INFO_URL`      | Explicit user-info endpoint                                          |
+
+## Credential storage
+
+<ParamField path="CREDENTIAL_STORAGE_TYPE" type="string" default="database">
+  `database`, `vault`, or `keychain`. Homebrew installs default to `keychain`; npm, Linux, and container installs default to `database`.
+
+  Database storage is always encrypted with a key derived from `APP_SECRET`. There is no plaintext mode and no separate encryption key to configure. Vault and Keychain storage never use the derived key.
+</ParamField>
+
+Vault settings apply only when `CREDENTIAL_STORAGE_TYPE=vault`. See [credential storage](/system/credentials).
+
+| Variable                        | Purpose                                                                                       |
+| ------------------------------- | --------------------------------------------------------------------------------------------- |
+| `VAULT_ADDR`                    | Vault address. Required for Vault storage; `http://` is permitted with a warning              |
+| `VAULT_TOKEN`                   | Vault token, when not using another auth workflow                                             |
+| `VAULT_NAMESPACE`               | Vault Enterprise namespace                                                                    |
+| `CREDENTIAL_VAULT_MOUNT`        | KV v2 mount. Defaults to `secret`                                                             |
+| `CREDENTIAL_VAULT_PATH_PREFIX`  | Path prefix. Defaults to `ai-development-environment/credentials`                             |
+| `CREDENTIAL_VAULT_HEADERS`      | Extra request headers as a JSON object                                                        |
+| `CREDENTIAL_VAULT_READ_ONLY`    | Declares this install must never write to Vault. Ignored with a warning by other backends     |
+| `VAULT_CACERT`                  | CA bundle path, readable by the server process                                                |
+| `VAULT_TLS_SERVER_NAME`         | Overrides SNI                                                                                 |
+| `VAULT_SKIP_VERIFY`             | Accepts untrusted certificates. Emergency use only; permits traffic interception              |
+
+## Agents and live updates
+
+| Variable                   | Purpose                                                       | Default                       |
+| -------------------------- | ------------------------------------------------------------- | ----------------------------- |
+| `AGENT_WS_HOSTNAME`        | Interface the agent GraphQL WebSocket binds to                | `127.0.0.1`                   |
+| `AGENT_WS_PORT`            | Agent GraphQL WebSocket port                                  | `3091`                        |
+| `NEXT_PUBLIC_AGENT_WS_URL` | WebSocket URL compiled into the browser bundle                | Derived from the port above   |
+
+Change `AGENT_WS_PORT` and `NEXT_PUBLIC_AGENT_WS_URL` together. The first moves the listener; the second tells the browser where to find it. Out of sync, the dashboard loads but never receives live updates.
+
+## Builds and artifacts
+
+Install manifests mint expiring links signed with a key derived from `APP_SECRET`, so they survive a restart. Rotating `APP_SECRET` invalidates outstanding links, which expire in six hours regardless.
+
+| Variable                   | Purpose                                                                            | Default                     |
+| -------------------------- | ---------------------------------------------------------------------------------- | --------------------------- |
+| `ARTIFACT_CACHE_DIRECTORY` | Where artifacts fetched from an agent are cached locally                           | System temporary directory  |
+| `ARTIFACT_CACHE_MAX_BYTES` | Cache ceiling                                                                      | 5 GiB                       |
+| `RUN_DATA_DIRECTORY`       | Where run attachments are stored                                                   | Under the system data path  |
+
+## GraphQL tooling
+
+| Variable          | Purpose                                                                          |
+| ----------------- | -------------------------------------------------------------------------------- |
+| `APOLLO_SANDBOX`  | Set to `true` to enable the Apollo sandbox and introspection in production-like runs |
+| `APOLLO_KEY`      | Apollo GraphOS key used by `npm run schema:publish`                              |
+
+## Development only
+
+None of these are read by a production install.
+
+| Variable                              | Purpose                                                                  |
+| ------------------------------------- | ------------------------------------------------------------------------ |
+| `CONTROL_AGENT_DEV_SERVER`            | HTTP endpoint a watch-mode agent points at                               |
+| `CONTROL_AGENT_DEV_WEBSOCKET_SERVER`  | WebSocket endpoint a watch-mode agent points at                          |
+| `CONTROL_AGENT_DEV_CONFIG`            | Path to the dedicated development agent config                           |
+| `CONTROL_AGENT_DEV_ENROLLMENT_TOKEN`  | One-time enrollment token for a watch-mode agent                         |
+| `CONTROL_AGENT_CONFIG`                | Agent config path, read by the agent itself                              |
+| `SCREENSHOT_DIST_DIR`                 | Isolated build output directory for the screenshot capture run           |
+| `SIDEBAR_USAGE_COLLECTION_DISABLED`   | Skips sidebar usage collection during captures                           |
+| `ADE_IOS_DEVICE_SUPPORT_DIRECTORY`    | Overrides where the agent looks for iOS device support files             |
+
+## Rotating APP_SECRET
+
+Rotation signs every user out and invalidates outstanding install links. Stored credentials are preserved as long as the old value is supplied:
+
+```bash
+APP_SECRET="<the new value>"
+APP_SECRET_PREVIOUS="<the old value>"
+```
+
+On the next start, every credential sealed under the old root is re-encrypted under the new one, then `APP_SECRET_PREVIOUS` can be removed. The step is idempotent, so an interrupted start simply resumes.
+
+Without `APP_SECRET_PREVIOUS`, a changed `APP_SECRET` refuses to start rather than silently losing access to stored credentials. `APP_SECRET_PREVIOUS` accepts several values, comma-separated, so a rotation can roll across replicas.
+
+## Retired variables
+
+These were replaced and are no longer read. A value left in an environment file is ignored.
+
+| Removed                     | Replacement                                                             |
+| --------------------------- | ----------------------------------------------------------------------- |
+| `BETTER_AUTH_SECRET`        | `APP_SECRET`                                                            |
+| `BETTER_AUTH_URL`           | `APP_ORIGINS`, plus `PUBLIC_BASE_URL` for links handed to other systems |
+| `ALLOWED_DEV_ORIGINS`       | `APP_ORIGINS`                                                           |
+| `CREDENTIAL_ENCRYPTION_KEY` | Derived from `APP_SECRET`                                               |
+| `OTA_TOKEN_SECRET`          | Derived from `APP_SECRET`                                               |

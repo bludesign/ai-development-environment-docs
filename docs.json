@@ -167,6 +167,7 @@
             "icon": "book",
             "pages": [
               "reference/authentication",
+              "reference/environment-variables",
               "reference/docker",
               "reference/development",
               "reference/api",

@@ -27,8 +27,8 @@ services:
       AGENT_WS_HOSTNAME: 0.0.0.0
       AGENT_WS_PORT: 3091
       DATABASE_URL: file:/data/production.db
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET}
-      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3090}
+      APP_SECRET: ${APP_SECRET:?set APP_SECRET}
+      APP_ORIGINS: ${APP_ORIGINS:-localhost:3090}
       AUTH_MODE: ${AUTH_MODE:-password}
     ports:
       - "3090:3090"
@@ -58,12 +58,13 @@ The server stores its SQLite database in `server-data`. The agent stores its enr
 Create a `.env` file beside `compose.yaml` before starting:
 
 ```bash
-BETTER_AUTH_SECRET="$(openssl rand -base64 32)"
-printf 'BETTER_AUTH_SECRET=%s\n' "$BETTER_AUTH_SECRET" > .env
-printf 'BETTER_AUTH_URL=http://localhost:3090\n' >> .env
+printf 'APP_SECRET=%s\n' "$(openssl rand -base64 32)" > .env
+printf 'APP_ORIGINS=localhost:3090\n' >> .env
 ```
 
-Keep `.env` out of source control and back it up securely. Use the public HTTPS origin for `BETTER_AUTH_URL` behind a reverse proxy. Add the provider variables from [Authentication](/reference/authentication#configure-oauthoidc) when using `AUTH_MODE=oidc` or `both`.
+Keep `.env` out of source control and back it up securely. `APP_SECRET` also encrypts stored credentials, so losing it costs more than a round of re-authentication — see [Environment variables](/reference/environment-variables).
+
+Behind a reverse proxy, set `APP_ORIGINS` to the public hostname users reach, and set `TRUST_PROXY_HEADERS=true` only if that proxy sets `x-forwarded-host` and strips client-supplied copies. Add the provider variables from [Authentication](/reference/authentication#configure-oauthoidc) when using `AUTH_MODE=oidc` or `both`.
 
 <Steps>
   <Step title="Pull and start the server">

@@ -20,7 +20,7 @@ The WebSocket listener carries GraphQL subscriptions: agent job traffic, live bu
 
 The app also rewrites `/graphql` on the HTTP origin to the WebSocket listener, and the browser defaults to `wss://<page host>/graphql` when `NEXT_PUBLIC_AGENT_WS_URL` is unset. That is what makes a single-origin deployment possible.
 
-The production server accepts the standard Next.js `HOSTNAME` and `PORT` environment variables plus `DATABASE_URL`. Set `BETTER_AUTH_URL` to the same public origin users and the OIDC provider use.
+The production server accepts the standard Next.js `HOSTNAME` and `PORT` environment variables plus `DATABASE_URL`. Set `APP_ORIGINS` to the public origin users and the OIDC provider use — it is required in production, and a request arriving on an origin missing from it is rejected. See [Environment variables](/reference/environment-variables).
 
 ## How the public origin is resolved
 
@@ -138,11 +138,10 @@ Install manifests mint expiring links: the artifact ID and an expiry are signed 
 
 | Variable                   | Effect                                                                                                                  |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `OTA_TOKEN_SECRET`         | Signs those links. When unset, a random per-process value is used, which invalidates outstanding links on every restart |
 | `ARTIFACT_CACHE_DIRECTORY` | Where artifacts fetched from an agent are cached locally. Defaults to the system temporary directory                    |
 | `ARTIFACT_CACHE_MAX_BYTES` | Cache ceiling. Defaults to 5 GiB                                                                                        |
 
-Set `OTA_TOKEN_SECRET` on any long-running install. Without it, a restart mid-install breaks the install.
+The signing key is derived from `APP_SECRET`, so outstanding links survive a restart. Rotating `APP_SECRET` invalidates them; they expire in six hours regardless.
 
 Artifact responses are sent with `cache-control: private, no-store` and support HTTP range requests, which is how a resumed or interrupted iOS download recovers.
 
@@ -169,10 +168,10 @@ Each candidate is parsed and validated as an IP address — bracketed IPv6, an a
 </Warning>
 
 - Use only the documented Better Auth and integration [public-route allowlist](#cloudflare-access-paths).
-- Set and back up a stable `BETTER_AUTH_SECRET`, and make `BETTER_AUTH_URL` match the public origin.
+- Set and back up a stable `APP_SECRET`. It signs sessions, encrypts stored credentials, and signs install links.
+- List every hostname this server is reached at in `APP_ORIGINS`, and use exact hosts — wildcards are rejected in production because they widen both the CSRF check and the post-login redirect allowlist.
 - Create an `aide_` [API key](/system/api-keys) for every GraphQL or MCP client. Never bypass those endpoints.
-- Set `CREDENTIAL_ENCRYPTION_KEY` when using the database credential backend, and back it up.
-- Set `OTA_TOKEN_SECRET` so install links survive a restart.
+- Enable `TRUST_PROXY_HEADERS` only when a proxy in front of this server sets the forwarded headers and strips client-supplied copies.
 - Leave `APOLLO_SANDBOX` unset in production; it enables schema introspection and the Apollo sandbox.
 - Remember that the database file is as sensitive as the secrets in it — see [Database](/reference/database#backups).
 

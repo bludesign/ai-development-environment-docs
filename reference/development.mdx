@@ -22,7 +22,9 @@ Install dependencies with a clean, lockfile-exact install:
 npm ci
 ```
 
-Then copy the example environment file. Development has a fixed local-only Better Auth fallback, but set your own stable `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL=http://127.0.0.1:3000` when you need sessions to survive configuration changes. `DATABASE_URL` remains the only database setting a source checkout needs.
+Then copy the example environment file and set `APP_SECRET` to the output of `openssl rand -base64 32`. It is required in development too — there is no built-in fallback — and it must decode to exactly 32 bytes. `DATABASE_URL` remains the only database setting a source checkout needs.
+
+Localhost, `127.0.0.1`, and `[::1]` are trusted automatically outside production, so `APP_ORIGINS` is only needed when you reach the dev server by another hostname, such as a tunnel or a machine name on your LAN.
 
 ```bash
 cp .env.example .env
@@ -75,7 +77,7 @@ npm run dev:all
 | `AGENT_WS_HOSTNAME`        | The interface the agent WebSocket binds to         | `127.0.0.1`                                  |
 | `AGENT_WS_PORT`            | The agent GraphQL WebSocket port                   | `3092`                                       |
 | `NEXT_PUBLIC_AGENT_WS_URL` | The WebSocket URL compiled into the browser bundle | `ws://127.0.0.1:3092/graphql`                |
-| `ALLOWED_DEV_ORIGINS`      | Extra origins the Next.js dev server accepts       | Localhost, the machine hostname, and LAN IPs |
+| `APP_ORIGINS`              | Extra origins the dev server and auth layer accept | Localhost, `127.0.0.1`, and `[::1]`          |
 
 Change `AGENT_WS_PORT` and `NEXT_PUBLIC_AGENT_WS_URL` together. The first moves the listener; the second tells the browser where to find it. Leaving them out of sync produces a dashboard that loads but never receives live updates.
 
@@ -177,7 +179,7 @@ Tests live beside the code they cover as `*.test.ts` and `*.test.tsx`. The suite
 | `npm run schema:publish` | Publishes the schema to Apollo GraphOS using `APOLLO_KEY`.                  |
 | `npm run clean`          | Removes `.next`, coverage, generated sources, and the development database. |
 
-The production server accepts the standard Next.js `HOSTNAME` and `PORT` environment variables plus `DATABASE_URL`. It also requires `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL`; see [Authentication](/reference/authentication) for password and OIDC mode variables.
+The production server accepts the standard Next.js `HOSTNAME` and `PORT` environment variables plus `DATABASE_URL`. It also requires `APP_SECRET` and `APP_ORIGINS`; see [Environment variables](/reference/environment-variables) for the full list and [Authentication](/reference/authentication) for the password and OIDC mode variables.
 
 ## The control agent
 
@@ -237,10 +239,10 @@ The capture server runs on port `4321` with the mock API on `4322`, binds its ow
 </Warning>
 
 <Note>
-  The mock database's credentials are encrypted with a fixed key that the
-  capture server passes back in as `CREDENTIAL_ENCRYPTION_KEY`. If those two
-  ever diverge, the app rewrites every credential row on first use and the
-  `VACUUM` that follows locks the database mid-capture.
+  The mock database's credentials are encrypted with a key derived from a fixed
+  `APP_SECRET` that the capture server passes back in. If those two ever
+  diverge, the app rewrites every credential row on first use and the `VACUUM`
+  that follows locks the database mid-capture.
 </Note>
 
 ### Walkthrough screencasts

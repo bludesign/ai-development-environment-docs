@@ -47,13 +47,19 @@ The examples below use password authentication. See [Authentication](/reference/
     $(brew --prefix)/etc/ai-development-environment.env
     ```
 
-    Add `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL=http://127.0.0.1:3090`, and `AUTH_MODE=password` to that file. Then start the service:
+    The service generates `APP_SECRET` into that file on first start and defaults `APP_ORIGINS` to `localhost:3090,127.0.0.1:3090`, so nothing else is required. Add `AUTH_MODE=password` to the file if you want the mode written down explicitly. Then start the service:
 
     ```bash
     brew services start ai-development-environment
     ```
 
     Restart with `brew services restart ai-development-environment` after editing it.
+
+    <Warning>
+      Back up the generated `APP_SECRET`. It signs sessions and encrypts stored credentials; replacing it without listing the old value in `APP_SECRET_PREVIOUS` makes stored credentials unreadable.
+    </Warning>
+
+    To reach this install by any other hostname, add it to `APP_ORIGINS` in the same file.
 
   </Step>
 </Steps>
@@ -76,8 +82,8 @@ The examples below use password authentication. See [Authentication](/reference/
   </Step>
   <Step title="Start the server">
     ```bash
-    BETTER_AUTH_SECRET="replace-with-your-generated-secret" \
-    BETTER_AUTH_URL="http://127.0.0.1:3090" \
+    APP_SECRET="$(openssl rand -base64 32)" \
+    APP_ORIGINS="localhost:3090,127.0.0.1:3090" \
     ai-development-environment
     ```
 
@@ -105,8 +111,8 @@ docker run --detach \
   --restart unless-stopped \
   --publish 3090:3090 \
   --publish 3091:3091 \
-  --env BETTER_AUTH_SECRET="replace-with-your-generated-secret" \
-  --env BETTER_AUTH_URL="http://localhost:3090" \
+  --env APP_SECRET="replace-with-openssl-rand-base64-32" \
+  --env APP_ORIGINS="localhost:3090" \
   --volume ai-development-environment-data:/data \
   ghcr.io/bludesign/ai-development-environment:latest
 ```
@@ -126,7 +132,7 @@ See [Docker](/reference/docker) for the complete Docker Compose deployment, one-
     ```
   </Step>
   <Step title="Configure the database">
-    Copy the example environment file and adjust `DATABASE_URL` if you want the SQLite file somewhere other than `prisma/dev.db`. Only `file:` URLs are accepted. Set `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL=http://127.0.0.1:3000`, and `AUTH_MODE=password` too.
+    Copy the example environment file and adjust `DATABASE_URL` if you want the SQLite file somewhere other than `prisma/dev.db`. Only `file:` URLs are accepted. Set `APP_SECRET` to the output of `openssl rand -base64 32`; it is required in development too. Localhost is trusted automatically, so `APP_ORIGINS` is only needed if you reach the dev server by another hostname.
 
     ```bash
     cp .env.example .env
@@ -215,16 +221,10 @@ Long-lived Jira, GitHub, cache-server, MCP, iOS signing, App Store Connect, and 
 
 <Tabs>
   <Tab title="Database">
-    The default for npm, Linux, Docker, and source installs. Without an encryption key, new payloads are stored as plaintext and the dashboard shows a warning. Generate a key, set it, and restart:
-
-    ```bash
-    openssl rand -base64 32
-    ```
-
-    Set the result as `CREDENTIAL_ENCRYPTION_KEY`. It must decode to exactly 32 bytes. Adding a valid key encrypts every existing plaintext credential atomically with AES-256-GCM.
+    The default for npm, Linux, Docker, and source installs. Payloads are always encrypted with AES-256-GCM, using a key derived from `APP_SECRET`. There is nothing to configure and no plaintext mode.
 
     <Warning>
-      Back up the key and keep it. A missing, invalid, or changed key blocks credential reads and writes while encrypted rows exist, and key rotation is not supported yet.
+      Back up `APP_SECRET`. Stored credentials cannot be read without it. To replace it, set the old value as `APP_SECRET_PREVIOUS` so credentials are re-encrypted on the next start — see [Environment variables](/reference/environment-variables#rotating-app-secret).
     </Warning>
 
   </Tab>

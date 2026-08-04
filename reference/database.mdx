@@ -117,7 +117,7 @@ sqlite3 /path/to/production.db ".backup '/path/to/backup.db'"
   sensitive as the original.
 </Warning>
 
-When the database backend contains encrypted credential rows, a backup is only fully usable with its `CREDENTIAL_ENCRYPTION_KEY`. Those rows cannot be read without the key, and key rotation is not currently supported. Store the key separately from the backups, but do not lose it. See [credential storage](/quickstart#set-up-credential-storage).
+When the database backend holds credential rows, a backup is only usable alongside the `APP_SECRET` those rows were encrypted under. Store it separately from the backups, but do not lose it — a restore paired with a different `APP_SECRET` needs the original supplied as `APP_SECRET_PREVIOUS` to be readable. See [credential storage](/system/credentials) and [Environment variables](/reference/environment-variables#rotating-app-secret).
 
 ## Growth and cleanup
 

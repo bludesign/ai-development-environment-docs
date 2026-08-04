@@ -7,15 +7,19 @@ AI Development Environment uses Better Auth for user accounts, browser and mobil
 
 ## Required production settings
 
-Set a stable secret and the public origin before starting a production server:
+Set a stable secret and the origins this server is reached at before starting a production server:
 
 ```bash
-BETTER_AUTH_SECRET="replace-with-at-least-32-random-characters"
-BETTER_AUTH_URL="https://control.example.com"
+APP_SECRET="$(openssl rand -base64 32)"
+APP_ORIGINS="control.example.com"
 AUTH_MODE="password"
 ```
 
-Generate the secret once and back it up. Changing `BETTER_AUTH_SECRET` invalidates active sessions and one-time mobile authentication tokens. `BETTER_AUTH_URL` must be the origin users and the identity provider use to reach the server.
+Generate `APP_SECRET` once and back it up. It must be base64 or hex encoding of exactly 32 random bytes; a passphrase is rejected, because the same root also encrypts stored credentials. Changing it signs every user out, and stored credentials become unreadable unless the old value is supplied as `APP_SECRET_PREVIOUS` — see [Environment variables](/reference/environment-variables#rotating-app-secret).
+
+`APP_ORIGINS` lists every origin users and the identity provider use to reach the server, comma-separated. It is what the CSRF check and the post-login redirect check are validated against, so an origin missing from it is rejected with `Invalid origin`. Localhost is trusted automatically outside production, so only production installs must set it.
+
+When external systems reach this server at a different address than the dashboard — the iOS enrollment flow, over-the-air installs, the GitHub App webhook — set `PUBLIC_BASE_URL` to that public origin as well. It is trusted automatically without being repeated in `APP_ORIGINS`.
 
 `AUTH_MODE` accepts:
 
