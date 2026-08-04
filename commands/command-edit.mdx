@@ -1,6 +1,6 @@
 ---
 title: "Edit command"
-description: "Update a saved command's script, target, restart policy, and quick action."
+description: "Update a saved command's script, target, concurrency, restart policy, and quick action."
 ---
 
 <Frame>
@@ -19,6 +19,9 @@ The edit command page at `/commands/{id}/edit` updates an existing definition. I
   <Card title="Target scope" icon="crosshairs">
     Any agent home, a specific agent home, any worktree, or a worktree in a repository.
   </Card>
+  <Card title="Concurrency" icon="layer-group">
+    Requires exclusive, non-exclusive, or excluded from command concurrency.
+  </Card>
   <Card title="Restart policy" icon="repeat">
     Never, on failure, or always, plus the failed restart limit.
   </Card>
@@ -29,12 +32,13 @@ The edit command page at `/commands/{id}/edit` updates an existing definition. I
 
 ## How edits interact with history
 
-Each run stores an immutable **snapshot** of the name, description, script, target kind, restart policy, restart limit, and notification setting that were in force when it started. Editing the definition never rewrites those snapshots.
+Each run stores an immutable **snapshot** of the name, description, script, target kind, concurrency mode, restart policy, restart limit, and notification setting that were in force when it started. Editing the definition never rewrites those snapshots.
 
 | Change | Effect |
 | --- | --- |
 | Script or name | Applies to the next run; existing runs keep their snapshot |
 | Target scope | Applies to the next launch; runs already placed on an agent stay there |
+| Concurrency | Applies to the next run; a queued or active run keeps the mode it started with |
 | Restart policy or limit | Applies to the next run — a run already in flight keeps the policy it started with |
 | Quick action settings | Applies immediately to the button |
 

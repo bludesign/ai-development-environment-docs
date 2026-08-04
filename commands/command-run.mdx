@@ -41,6 +41,26 @@ Output streams in live and is retained with the run.
 
 When a run restarts, output is divided by **Attempt** markers so you can see where each attempt began and what exit code ended it.
 
+## Why a queued run has not started
+
+While a run waits, the page shows **Waiting to start** with the current reason. It refreshes the explanation as the agent and competing runs change.
+
+| Reason | Meaning |
+| --- | --- |
+| Waiting for agent | The job was handed to the agent but has not been picked up |
+| Agent offline | The selected agent must reconnect before the run can start |
+| Waiting for predecessor | A **Restart** or **Rerun** successor waits for the run it replaces to finish |
+| Restart delay | The next attempt is waiting for the restart delay |
+| Target busy | One or more active runs hold the target |
+| Queued behind | A blocking run is ahead of this run in the target's queue |
+| Ready | Nothing blocks the run; it starts on the next dispatch |
+
+The **Queue** table shows every command run competing for the target. Target holders appear first, followed by waiting runs in queue order. Each row includes the run number, name, status, concurrency mode, and queued time. Badges identify **This run**, **Holds the target**, and the exact runs that are **Blocking** it. Select another run number to open it.
+
+<Note>
+  Excluded runs do not participate in this command queue. A queued worktree command may also be waiting for an active Git or worktree operation on its codebase.
+</Note>
+
 ## Attempts
 
 Every attempt with its number, status, exit code, signal, error, and start and finish times. A run with a restart policy accumulates one row per attempt; a run that never restarts has exactly one.
@@ -51,7 +71,7 @@ Queued, started, and finished timestamps, plus total duration.
 
 ## Immutable command snapshot
 
-The name, description, script, target kind, restart policy, restart limit, and notification setting captured when the run started, with **Copy** for the script.
+The name, description, script, target kind, concurrency mode, restart policy, restart limit, and notification setting captured when the run started, with **Copy** for the script.
 
 <Note>
   This snapshot is why history stays trustworthy. Editing or deleting the command definition later does not change what this page reports — it shows what actually ran.

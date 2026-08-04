@@ -1,6 +1,6 @@
 ---
 title: "New command"
-description: "Save a reusable shell command with a target, restart policy, and notifications."
+description: "Save a reusable shell command with a target, concurrency mode, restart policy, and notifications."
 ---
 
 <Frame>
@@ -38,6 +38,22 @@ The target decides which agents and worktrees the command may run in, and whethe
 <Tip>
   Prefer the narrowest scope that still fits. A **Specific agent home** command cannot be launched against the wrong machine by accident, and a repository-scoped worktree command cannot wander into an unrelated checkout.
 </Tip>
+
+## Concurrency
+
+Concurrency decides whether command runs may share the same target. A target is one worktree for worktree commands or one agent home for agent-home commands.
+
+| Mode | Behavior |
+| --- | --- |
+| **Requires exclusive** | Runs alone. It waits for every participating run holding or queued ahead for the target, and later participating runs wait for it. |
+| **Non-exclusive** | Shares the target with other non-exclusive runs. It waits for an exclusive holder or an exclusive run queued ahead of it. |
+| **Excluded** | Ignores the command queue. It never waits for another command run and never makes one wait. |
+
+The default is **Non-exclusive**. Queue order prevents an exclusive run from being starved by a steady stream of new non-exclusive work.
+
+<Note>
+  A worktree command can still wait while Git or worktree work holds its codebase. It retries when the codebase becomes available instead of failing with a busy-codebase error.
+</Note>
 
 ## Restart policy
 
