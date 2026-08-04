@@ -5,12 +5,12 @@ description: "Install the control plane, enroll an agent, and open the dashboard
 
 There are four ways to install AI Development Environment. Pick one, then enroll a control agent so the dashboard has a machine to work with.
 
-| Method | Best for | Default port | Default credential storage |
-| --- | --- | --- | --- |
-| [Homebrew](#option-1-homebrew-macos) | macOS, run as a background service | `3090` | macOS Keychain |
-| [npm](#option-2-npm) | Any platform, prebuilt standalone build | `3090` | Database |
-| [Docker](#option-3-docker) | Containerized control plane and Linux agent | `3090` | Database |
-| [From source](#option-4-from-source) | Developing the app itself | `3000` | Database |
+| Method                               | Best for                                    | Default port | Default credential storage |
+| ------------------------------------ | ------------------------------------------- | ------------ | -------------------------- |
+| [Homebrew](#option-1-homebrew-macos) | macOS, run as a background service          | `3090`       | macOS Keychain             |
+| [npm](#option-2-npm)                 | Any platform, prebuilt standalone build     | `3090`       | Database                   |
+| [Docker](#option-3-docker)           | Containerized control plane and Linux agent | `3090`       | Database                   |
+| [From source](#option-4-from-source) | Developing the app itself                   | `3000`       | Database                   |
 
 ## Prerequisites
 
@@ -20,17 +20,25 @@ There are four ways to install AI Development Environment. Pick one, then enroll
 - Docker, for the container install.
 - Xcode and its command line tools, if you plan to run iOS builds.
 
+Every production install needs one stable Better Auth secret and the origin you use to open it. Generate the secret once, store it outside source control, and keep it across upgrades:
+
+```bash
+openssl rand -base64 32
+```
+
+The examples below use password authentication. See [Authentication](/reference/authentication) to use OAuth/OIDC instead or alongside it.
+
 ## Option 1: Homebrew (macOS)
 
 <Steps>
-  <Step title="Install and start the service">
+  <Step title="Install the service">
     ```bash
     brew tap bludesign/ai-development-environment
     brew install ai-development-environment
-    brew services start ai-development-environment
     ```
 
     The service applies pending database migrations on start and listens on `http://127.0.0.1:3090`, with agent GraphQL WebSockets on `ws://127.0.0.1:3091/graphql`. The formula is maintained in [`bludesign/homebrew-ai-development-environment`](https://github.com/bludesign/homebrew-ai-development-environment).
+
   </Step>
   <Step title="Know where things live">
     The SQLite database is stored under Homebrew's `var/ai-development-environment/`, logs are in `$(brew --prefix)/var/log/`, and every setting — including the credential and Vault variables — lives in the owner-only file:
@@ -39,12 +47,20 @@ There are four ways to install AI Development Environment. Pick one, then enroll
     $(brew --prefix)/etc/ai-development-environment.env
     ```
 
+    Add `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL=http://127.0.0.1:3090`, and `AUTH_MODE=password` to that file. Then start the service:
+
+    ```bash
+    brew services start ai-development-environment
+    ```
+
     Restart with `brew services restart ai-development-environment` after editing it.
+
   </Step>
 </Steps>
 
 <Warning>
-  Run Homebrew services without `sudo`. A root service uses a different or unavailable Keychain and can trigger authorization problems.
+  Run Homebrew services without `sudo`. A root service uses a different or
+  unavailable Keychain and can trigger authorization problems.
 </Warning>
 
 ## Option 2: npm
@@ -56,13 +72,17 @@ There are four ways to install AI Development Environment. Pick one, then enroll
     ```
 
     [`@ai-development-environment/server`](https://www.npmjs.com/package/@ai-development-environment/server) is a prebuilt standalone build; [`@ai-development-environment/control-agent`](https://www.npmjs.com/package/@ai-development-environment/control-agent) is the agent.
+
   </Step>
   <Step title="Start the server">
     ```bash
+    BETTER_AUTH_SECRET="replace-with-your-generated-secret" \
+    BETTER_AUTH_URL="http://127.0.0.1:3090" \
     ai-development-environment
     ```
 
     The command applies pending migrations, then serves `http://127.0.0.1:3090` with agent GraphQL WebSockets on `ws://127.0.0.1:3091/graphql`. Its SQLite database is stored at `~/.ai-development-environment/production.db`.
+
   </Step>
 </Steps>
 
@@ -85,6 +105,8 @@ docker run --detach \
   --restart unless-stopped \
   --publish 3090:3090 \
   --publish 3091:3091 \
+  --env BETTER_AUTH_SECRET="replace-with-your-generated-secret" \
+  --env BETTER_AUTH_URL="http://localhost:3090" \
   --volume ai-development-environment-data:/data \
   ghcr.io/bludesign/ai-development-environment:latest
 ```
@@ -104,18 +126,28 @@ See [Docker](/reference/docker) for the complete Docker Compose deployment, one-
     ```
   </Step>
   <Step title="Configure the database">
-    Copy the example environment file and adjust `DATABASE_URL` if you want the SQLite file somewhere other than `prisma/dev.db`. Only `file:` URLs are accepted.
+    Copy the example environment file and adjust `DATABASE_URL` if you want the SQLite file somewhere other than `prisma/dev.db`. Only `file:` URLs are accepted. Set `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL=http://127.0.0.1:3000`, and `AUTH_MODE=password` too.
 
     ```bash
     cp .env.example .env
     ```
+
   </Step>
   <Step title="Start the development environment">
     ```bash
     npm run dev:all
     ```
 
-    This starts Next.js on `http://127.0.0.1:3000` plus a watch-mode local agent on WebSocket port `3092`, leaving ports `3090` and `3091` free for an installed Homebrew service. The agent waits for Next.js, then enrolls `<hostname>-dev` automatically on its first run and reuses that identity from `~/.config/control-agent-dev/config.json` afterwards.
+    This starts Next.js on `http://127.0.0.1:3000` plus a watch-mode local agent on WebSocket port `3092`, leaving ports `3090` and `3091` free for an installed Homebrew service. The agent reuses its identity from `~/.config/control-agent-dev/config.json`.
+
+    On the first run, start `npm run dev` alone, create your user, and create an enrollment token on **Agents**. Stop the server, then enroll the development agent:
+
+    ```bash
+    CONTROL_AGENT_DEV_ENROLLMENT_TOKEN="enroll_one-time-token" npm run dev:all
+    ```
+
+    The token is used only for the first enrollment. Later `npm run dev:all` runs reuse the saved `agent_` credential.
+
   </Step>
 </Steps>
 
@@ -129,6 +161,12 @@ Other useful commands:
 
 See [Local development](/reference/development) for the full command list, port overrides, and the screenshot pipeline.
 
+## Create the first user
+
+Open the server in a browser. An empty installation sends you to the setup registration page. Create the first account; the server atomically closes self-registration after the account succeeds.
+
+Every signed-in user has full application and user-management access. Open [Users](/system/users) later to create accounts or reopen registration. Open [API keys](/system/api-keys) to create `aide_` credentials for GraphQL and MCP clients.
+
 ## Enroll a control agent
 
 The dashboard needs at least one enrolled agent before it can create worktrees, run commands, or start builds. Every agent connects outbound only and never exposes a listening port.
@@ -140,6 +178,7 @@ The dashboard needs at least one enrolled agent before it can create worktrees, 
     ```
 
     The npm install in Option 2 already includes `@ai-development-environment/control-agent`, and `npm run dev:all` runs its own development agent, so you can skip this step in those cases. Docker users should follow the [container enrollment flow](/reference/docker#docker-compose).
+
   </Step>
   <Step title="Create a one-time enrollment token">
     Open the [Agents](/agents/agents) page and create an enrollment command. It builds a shell-safe command for you.
@@ -158,6 +197,7 @@ The dashboard needs at least one enrolled agent before it can create worktrees, 
     If your control plane sits behind Cloudflare Access, add each service-token header with a repeatable `--header "Name: value"` argument. The agent keeps those headers only in its owner-readable `0600` config and redacts them from `status`.
 
     A machine that reaches the control plane at two addresses — a LAN address at the desk, a public one elsewhere — can hold both. Add `--remote-server https://control.example.com` and the agent prefers the local address, falling back to the remote one when the local address stops answering. See [Local and remote addresses](/agents/agents#local-and-remote-addresses).
+
   </Step>
   <Step title="Verify">
     ```bash
@@ -165,6 +205,7 @@ The dashboard needs at least one enrolled agent before it can create worktrees, 
     ```
 
     `control-agent enrollment` reports whether this machine is enrolled and whether each configured address answers for it, and `control-agent doctor` diagnoses a failing connection. The credential and stable agent ID live at `~/.config/control-agent/config.json`.
+
   </Step>
 </Steps>
 
@@ -185,6 +226,7 @@ Long-lived Jira, GitHub, cache-server, MCP, iOS signing, App Store Connect, and 
     <Warning>
       Back up the key and keep it. A missing, invalid, or changed key blocks credential reads and writes while encrypted rows exist, and key rotation is not supported yet.
     </Warning>
+
   </Tab>
   <Tab title="Keychain">
     The default for Homebrew installs, and macOS only. It uses the native login Keychain service `com.bludesign.ai-development-environment.credentials`.
@@ -194,6 +236,7 @@ Long-lived Jira, GitHub, cache-server, MCP, iOS signing, App Store Connect, and 
     ```
 
     Selecting it on Linux or in a container leaves the app running but reports an unsupported-backend error, and credential-dependent operations fail.
+
   </Tab>
   <Tab title="Vault">
     Uses HashiCorp Vault KV v2. `VAULT_ADDR` is required; `VAULT_TOKEN`, `VAULT_NAMESPACE`, `CREDENTIAL_VAULT_MOUNT` (default `secret`), `CREDENTIAL_VAULT_PATH_PREFIX` (default `ai-development-environment/credentials`), and `CREDENTIAL_VAULT_HEADERS` are optional.
@@ -233,23 +276,30 @@ Long-lived Jira, GitHub, cache-server, MCP, iOS signing, App Store Connect, and 
     ```
 
     The flag applies only to Vault. Database and Keychain backends ignore it and show a warning. A Vault token that denies a write produces the same read-only error even when the flag is unset.
+
   </Tab>
 </Tabs>
 
 Changing `CREDENTIAL_STORAGE_TYPE` does not migrate anything. Items belonging to the previous backend are reported as mismatched and must be re-entered through their own settings forms.
 
 <Warning>
-  The upgrade that moves connection settings into the credential backend intentionally does not copy their old database values. After upgrading from an earlier release, re-enter the Jira site, account, and webhook settings; GitHub App identifiers and webhook URL; cache-server URL and headers; App Store Connect identifiers; and APNs token and certificate details. Existing secret payloads remain in their current credential backend.
+  The upgrade that moves connection settings into the credential backend
+  intentionally does not copy their old database values. After upgrading from an
+  earlier release, re-enter the Jira site, account, and webhook settings; GitHub
+  App identifiers and webhook URL; cache-server URL and headers; App Store
+  Connect identifiers; and APNs token and certificate details. Existing secret
+  payloads remain in their current credential backend.
 </Warning>
 
 ## Optional: public HTTPS
 
 iOS device enrollment, over-the-air installs, and the GitHub webhook need a publicly trusted HTTPS origin. Set `PUBLIC_BASE_URL` to that origin, or run behind a reverse proxy that sends correct `X-Forwarded-Proto` and `X-Forwarded-Host` headers.
 
-Behind Cloudflare Access, add one more-specific Access application for `/api/public/*` with a **Bypass / Everyone** policy — configure the path without a query string. That namespace holds only intentionally unauthenticated endpoints. Keep `/en/devices*`, `/api/ios/enrollment/start`, `/api/ios/devices/export.tsv`, and `/api/graphql` authenticated.
+Behind Cloudflare Access, bypass only the application's documented auth and integration routes: localized sign-in/register pages, `/api/auth/*`, `/api/public/*`, `/api/openapi.json`, the two telemetry ingestion routes, and `/api/ios/apns-devices`. Keep `/api/graphql`, `/api/mcp`, Tools REST, first-party push registration, enrollment start/export, and dashboard routes behind Better Auth. Configure Access paths without query strings.
 
 <Warning>
-  Exposing this server publicly exposes every route, not just build artifacts. Do not put an unprotected origin on an untrusted network.
+  Exposing this server publicly exposes every route, not just build artifacts.
+  Keep the origin private and use the exact reverse-proxy allowlist.
 </Warning>
 
 [Hosting and networking](/reference/hosting) has the full path list, WAF guidance, and how client IPs are trusted.
@@ -258,10 +308,16 @@ Behind Cloudflare Access, add one more-specific Access application for `/api/pub
 
 <Columns cols={2}>
   <Card title="Action Center" icon="gauge" href="/dashboard">
-    The home screen: live work, pending decisions, failures, and builds ready to run.
+    The home screen: live work, pending decisions, failures, and builds ready to
+    run.
   </Card>
-  <Card title="Create a worktree" icon="code-branch" href="/worktrees/worktrees">
-    Branch from Git or a Jira ticket on any enrolled agent, then enable Auto Sync.
+  <Card
+    title="Create a worktree"
+    icon="code-branch"
+    href="/worktrees/worktrees"
+  >
+    Branch from Git or a Jira ticket on any enrolled agent, then enable Auto
+    Sync.
   </Card>
   <Card title="Start a Plan" icon="robot" href="/ai/plans">
     Survey a codebase read-only, then promote the Plan to a Session.

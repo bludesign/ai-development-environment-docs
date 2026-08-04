@@ -1,0 +1,115 @@
+---
+title: "Authentication"
+description: "Configure password or OIDC sign-in, bootstrap the first user, and understand which routes accept each credential."
+---
+
+AI Development Environment uses Better Auth for user accounts, browser and mobile sessions, OAuth/OIDC identities, and API keys. Every signed-in user has the same access. Agent credentials keep their narrower run and enrollment permissions.
+
+## Required production settings
+
+Set a stable secret and the public origin before starting a production server:
+
+```bash
+BETTER_AUTH_SECRET="replace-with-at-least-32-random-characters"
+BETTER_AUTH_URL="https://control.example.com"
+AUTH_MODE="password"
+```
+
+Generate the secret once and back it up. Changing `BETTER_AUTH_SECRET` invalidates active sessions and one-time mobile authentication tokens. `BETTER_AUTH_URL` must be the origin users and the identity provider use to reach the server.
+
+`AUTH_MODE` accepts:
+
+| Value      | Password | OAuth/OIDC |
+| ---------- | -------- | ---------- |
+| `password` | Enabled  | Disabled   |
+| `oidc`     | Disabled | Enabled    |
+| `both`     | Enabled  | Enabled    |
+
+The default is `password`. The server enforces the mode on its routes. Hiding a form in the browser does not enable a disabled sign-in method. Password accounts do not require email confirmation.
+
+## Create the first account
+
+On an empty database, open `/register`. The first successful account creation closes self-registration automatically. A short-lived database lease makes this atomic when two people submit the setup form at the same time.
+
+After setup, any signed-in user can open [Users](/system/users) to create accounts or turn self-registration back on. A manually enabled setting stays enabled until a user turns it off.
+
+<Note>
+  Existing OIDC identities can sign in while registration is disabled. A new
+  OIDC identity is a registration and follows the same toggle as password
+  signup.
+</Note>
+
+## Configure OAuth/OIDC
+
+Set the provider metadata when `AUTH_MODE` is `oidc` or `both`:
+
+```bash
+AUTH_OAUTH_PROVIDER_ID="company"
+AUTH_OAUTH_PROVIDER_NAME="Company SSO"
+AUTH_OAUTH_CLIENT_ID="client-id"
+AUTH_OAUTH_CLIENT_SECRET="client-secret"
+AUTH_OAUTH_SCOPES="openid,profile,email"
+AUTH_OAUTH_DISCOVERY_URL="https://identity.example.com/.well-known/openid-configuration"
+AUTH_OAUTH_ISSUER="https://identity.example.com"
+```
+
+Register this redirect URL with the provider:
+
+```text
+https://control.example.com/api/auth/oauth2/callback/company
+```
+
+You can replace `AUTH_OAUTH_DISCOVERY_URL` with all three explicit endpoints:
+
+```bash
+AUTH_OAUTH_AUTHORIZATION_URL="https://identity.example.com/oauth2/authorize"
+AUTH_OAUTH_TOKEN_URL="https://identity.example.com/oauth2/token"
+AUTH_OAUTH_USER_INFO_URL="https://identity.example.com/oauth2/userinfo"
+```
+
+The server stops at startup when the provider settings are incomplete or inconsistent. PKCE and issuer validation are enabled. The provider must return an email address.
+
+The server does not link a new OIDC identity to a password account solely because their email addresses match. It rejects the ambiguous signup instead. This avoids assigning an external identity to an existing account without a dedicated linking flow.
+
+## Credential behavior
+
+| Surface                          | Browser/mobile session | `X-API-Key`  | `agent_` token        | Anonymous                                  |
+| -------------------------------- | ---------------------- | ------------ | --------------------- | ------------------------------------------ |
+| Dashboard and control-plane REST | Full                   | No           | Agent routes only     | No                                         |
+| GraphQL HTTP and WebSocket       | Full                   | Full         | Agent operations only | Only `enrollAgent` with an `enroll_` token |
+| MCP unscoped or preset           | Full                   | Full         | No                    | No                                         |
+| Run-scoped MCP                   | No                     | No           | Matching run only     | No                                         |
+| Integration endpoints            | Not required           | Not required | Not required          | Yes                                        |
+
+Browser sessions use the Better Auth cookie. Native clients send the Better Auth session in `Authorization: Bearer <session-token>`. Existing agents use that same header with their `agent_` token. API keys use only `X-API-Key` and begin with `aide_`.
+
+Invalid or conflicting credentials fail with `401`. The server never falls back to anonymous access after receiving a bad credential.
+
+## Public routes
+
+Only these application routes should bypass a reverse proxy's sign-in layer:
+
+- Localized `/sign-in` and `/register` pages, plus `/api/auth/*` callbacks and mobile completion routes
+- `/api/public/*`, whose webhook signatures and short-lived artifact tokens remain enforced
+- `/api/openapi.json`
+- `/api/telemetry/analytics-events` and `/api/telemetry/console-logs`
+- Third-party app registration at `/api/ios/apns-devices`
+
+Keep `/api/graphql`, `/api/mcp`, first-party `/api/ios/notification-devices`, enrollment start and export routes, Tools REST, and every other control-plane route protected. GraphQL performs its own credential checks before parsing or resolving operations, so aliases, batches, introspection, and mixed operations cannot bypass the enrollment exception.
+
+## iOS sessions
+
+The iOS app fetches `/api/auth/config` for the selected server before it initializes the dashboard. It stores a bearer session in Keychain, scoped to that server origin. Password sign-in stays native. OIDC opens an `ASWebAuthenticationSession` and returns through the `aide-auth` URL scheme before redeeming a short-lived, single-use token.
+
+Signing out invalidates the server session, removes the Keychain item, clears Apollo's cache, closes subscriptions, and defers first-party push registration until the next sign-in.
+
+## Upgrade from the MCP environment token
+
+`TOOLS_API_TOKEN` is no longer supported. Unscoped and preset MCP endpoints no longer permit anonymous access or an environment-token fallback.
+
+1. Sign in and open [API keys](/system/api-keys).
+2. Create a key and copy it from the one-time result.
+3. Remove `TOOLS_API_TOKEN` from the server environment.
+4. Replace `Authorization: Bearer <old-token>` in MCP clients with `X-API-Key: aide_...`.
+
+Run-scoped MCP calls continue to use an enrolled agent's `Authorization: Bearer agent_...` credential.
