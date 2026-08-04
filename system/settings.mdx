@@ -65,6 +65,10 @@ Both APNs authentication mechanisms are supported, and they can coexist.
 
 **Token authentication (.p8)** is the recommended path for apps, Live Activities, and VoIP. Provide the **Team ID** from your Apple Developer membership details, the **Key ID**, and the `.p8` from a key created with APNs enabled. Dropping a new `.p8` rotates the key.
 
+<Note>
+  The token key does double duty. Besides the [push notification console](/debugging/push-notifications), it is what lets the control plane deliver its own alerts to the iOS app over the [native notification channel](/notifications#native-notifications). Until it is saved, that channel reports itself as unconfigured.
+</Note>
+
 **Certificate authentication (.p12)** is required for MDM wake-ups. Multiple topic-bound certificates are supported, each with:
 
 | Field | Notes |

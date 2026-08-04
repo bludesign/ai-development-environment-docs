@@ -111,6 +111,20 @@ The export endpoint caps its request body at 256 KiB and returns `PAYLOAD_TOO_LA
 
 The body carries `clientRegistrationId`, `token`, `tokenEncoding` (`HEX` or `BASE64`), `topic`, `environment` (`SANDBOX` or `PRODUCTION`), `supportedPushTypes`, and `displayName`. A new registration returns `201`, refreshing an existing one returns `200`. The body is capped at 32 KiB and each source IP is limited to 120 requests per minute, after which it gets `429`. See [Push notifications](/debugging/push-notifications).
 
+### Notification device registration
+
+| Endpoint | Purpose |
+| --- | --- |
+| `POST /api/ios/notification-devices` | Register or refresh the device token the control plane's own iOS app receives notifications on |
+
+The body carries `clientRegistrationId`, `token`, `tokenEncoding`, `topic`, `environment`, and `displayName`, plus the optional `deviceModel`, `osVersion`, `appVersion`, `appBuild`, and `locale`. Unknown fields are rejected rather than ignored. The response returns the device `id`, whether it was `created`, its `status`, and `lastRegisteredAt` — `201` for a new registration, `200` for a refresh.
+
+The same 32 KiB body cap and 120-requests-per-minute-per-IP limit apply, counted separately from the push console's budget. Registered devices are managed on [Notifications](/notifications#registered-devices).
+
+<Note>
+  This endpoint is deliberately narrower than `/api/ios/apns-devices`. It serves one first-party app, so it has no push-type catalog and no certificate authentication.
+</Note>
+
 ### OpenAPI contract
 
 | Endpoint | Returns |

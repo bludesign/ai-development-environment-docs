@@ -60,6 +60,7 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
   <Accordion title="Git operations" icon="code-branch">
     | Action | Effect |
     | --- | --- |
+    | **Pull** | Fast-forward the branch onto its upstream |
     | **Sync** | Bring the branch up to date with its base |
     | **Rebase** | Rebase onto the base branch |
     | **Push** / **Publish** | Push, or publish an unpublished branch |
@@ -67,15 +68,28 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
     | **Reset** | Discard local state back to a known point |
     | **Stash all** | Stash tracked and untracked changes |
     | **Stage all** / **Unstage all** | Bulk staging |
+    | **Commit** | Stage changes and create a commit — see [Committing changes](#committing-changes) |
     | **Change branch** | Switch this worktree to a different branch |
 
+    **Pull** fetches the branch's remote and fast-forwards onto it, and is offered only while the branch is behind its upstream. A branch that has diverged cannot fast-forward: **Sync** or **Rebase** are the ways through.
+
+    **Force push**, **Reset**, **Stash all**, and **Stage all** / **Unstage all** live behind **More** at the end of the action row. **Force push** and **Reset** ask for a second click to confirm before they run.
+
     When Git cannot switch because of local changes, the action offers **Stash and retry**: it stashes tracked and untracked changes, retries, and leaves the stash for you to restore by hand.
+  </Accordion>
+  <Accordion title="Starting a run" icon="play">
+    **New session** and **New plan** open the [new run page](/ai/run-new) with this worktree already selected, and its Jira ticket filled in when it has one.
   </Accordion>
   <Accordion title="Rebase conflicts" icon="triangle-exclamation">
     A rebase that stops on conflicts leaves the worktree in **Rebase paused**. Resolve them by running a merge-conflict quick-action workflow, or **Cancel rebase** to restore the branch to its pre-rebase state.
   </Accordion>
   <Accordion title="Opening in an editor" icon="code">
-    **Open in VS Code** and **Open in VS Code Insiders** launch the worktree folder on its agent.
+    **Open in VS Code** and **Open in VS Code Insiders** launch the worktree folder on its agent. They sit in the **Customize worktree** menu, alongside the worktree's tags and highlight color.
+  </Accordion>
+  <Accordion title="Builds" icon="hammer">
+    **Start Build** picks one saved configuration and a destination. The selected configuration names its source path, scheme, build configuration, and the agent the build will run on — the one that owns the codebase — so you can tell where the work is going before you start it.
+
+    The **Latest build** badge is a menu: **View build** opens the [build details](/builds/build-detail), and **Rebuild** starts a fresh build from the same configuration. A successful build that produced a runnable app also gets its run controls on the same row.
   </Accordion>
   <Accordion title="Navigation" icon="arrow-up-right-from-square">
     Select the card surface or **Open details** in the table to open the [worktree details page](/worktrees/worktree-detail). **View codebase**, **View repository**, and **Open in GitHub** jump to the related resource, and **Refresh pull request** re-reads the PR state.
@@ -86,6 +100,35 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
     An active command adds a spinner menu beside its button. Open it to **Terminate**, **Restart**, or **View** each active run. The command button remains available, so you can start another run; its concurrency setting decides whether it starts or queues.
   </Accordion>
 </AccordionGroup>
+
+## Committing changes
+
+**Commit** stages work and records it as a Git commit on the agent that owns the checkout, without opening a terminal.
+
+<Steps>
+  <Step title="Write a message" icon="pen">
+    The commit message is required. The dialog opens with the worktree's current changes already read from the agent.
+  </Step>
+  <Step title="Decide about signing" icon="signature">
+    **Signed commit** starts pre-set to whatever `commit.gpgsign` resolves to in that worktree's effective Git configuration, so the default matches what committing by hand would do. Clear it to commit unsigned, or set it to sign a commit that would not otherwise be signed.
+  </Step>
+  <Step title="Choose what goes in" icon="list-check">
+    **Stage all** is on by default and stages every tracked and untracked change. Turn it off to get a checklist of the current changes, pre-selected to whatever is already staged, and pick an exact set.
+  </Step>
+  <Step title="Commit" icon="check">
+    The agent stages, commits, and reports the new commit back. The page reloads the worktree when the job finishes.
+  </Step>
+</Steps>
+
+<Warning>
+  A partial commit rebuilds the index from your selection. Anything you had staged but did not tick is left uncommitted and unstaged rather than being carried along.
+</Warning>
+
+The action is unavailable when the worktree has no staged or unstaged changes, has another operation running, is paused mid-rebase, or lives on an agent too old to support it. A commit that ends up with nothing staged fails with **No staged changes to commit** rather than creating an empty commit.
+
+<Tip>
+  The same operation is available to automation: the **Commit worktree changes** workflow step and the `commit_worktree` MCP tool take the same message, signing, stage-all, and path options. Omitting the signing option there follows the worktree's Git configuration.
+</Tip>
 
 ## Auto Sync
 

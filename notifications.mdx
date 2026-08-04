@@ -8,19 +8,20 @@ description: "Review notification history and choose how each event reaches you.
   <img className="hidden dark:block" src="/images/dark/notifications.png" alt="Notifications page in dark theme" />
 </Frame>
 
-The **Notifications** page at `/notifications` has two jobs: it is the permanent record of every notification the control plane has raised, and it is where you decide which of three delivery channels each event type uses.
+The **Notifications** page at `/notifications` has two jobs: it is the permanent record of every notification the control plane has raised, and it is where you decide which of four delivery channels each event type uses.
 
 The page has two tabs — **History** and **Settings**.
 
 ## Delivery channels
 
-Every notification type can be routed to three independent channels. They are evaluated when the notification is created and the decision is stored on the record itself, so changing a preference affects future notifications rather than rewriting past ones.
+Every notification type can be routed to four independent channels. They are evaluated when the notification is created and the decision is stored on the record itself, so changing a preference affects future notifications rather than rewriting past ones.
 
 | Channel | Where it shows | Requirements |
 | --- | --- | --- |
 | **Sidebar** | The notification panel inside the app shell | None — always available |
 | **Browser** | A native OS notification from the open tab | Notification permission granted, tab loaded |
 | **Web Push** | An OS notification delivered even when the app is closed | A registered push subscription per browser |
+| **Native** | An APNs alert on the iOS app for this control plane | APNs token credentials saved, and at least one registered device |
 
 <Warning>
   Channels are independent, not a fallback chain. Turning on both **Browser** and **Web Push** for the same type means you get two alerts for one event.
@@ -28,7 +29,7 @@ Every notification type can be routed to three independent channels. They are ev
 
 ## Notification types
 
-Types are grouped into five categories on the **Settings** tab. Every type defaults to **Sidebar** and **Browser** on, and **Web Push** off — except **Plan or session cancelled**, which defaults to Sidebar only.
+Types are grouped into five categories on the **Settings** tab. Every type defaults to **Sidebar**, **Browser**, and **Native** on, and **Web Push** off — except **Plan or session cancelled**, which defaults to Sidebar only.
 
 <AccordionGroup>
   <Accordion title="Builds" icon="hammer">
@@ -98,7 +99,7 @@ Types are grouped into five categories on the **Settings** tab. Every type defau
 
 ### Notification types
 
-A grid of every type with a **Sidebar**, **Browser**, and **Web Push** toggle in each row. Each toggle saves on change.
+A grid of every type with a **Sidebar**, **Browser**, **Web Push**, and **Native** toggle in each row. Each toggle saves on change.
 
 ### Browser delivery
 
@@ -124,9 +125,40 @@ Every subscription is listed with a detected browser name, the push service host
   Web Push requires a supported browser and a secure HTTPS context. On iPhone or iPad you must install the app first from **Share → Add to Home Screen**; Safari will not allow a subscription from a normal tab.
 </Warning>
 
+### Native notifications
+
+The **Native notifications** card reports whether this control plane can deliver over Apple Push Notification service, and how many devices are registered to receive it.
+
+The card has no subscribe button of its own, unlike **Browser** and **Web Push**. A device opts itself in from the iOS app's own notification settings and posts its APNs token to the control plane, so the card reports what the server can see. The per-type **Native** toggles in the grid above still decide which events go out.
+
+| What the card says | What to do |
+| --- | --- |
+| Add the APNs provider key in Settings | **Configure** takes you there — save the Team ID, Key ID, and `.p8` under [Settings](/system/settings#push-notifications) |
+| Register a device from the iOS app | Turn on notifications in the iOS app for this control plane |
+| Registered devices receive notifications | Nothing — the channel is live, and the card shows the device count |
+
+<Note>
+  Native delivery uses the same APNs token credential as the [push notification console](/debugging/push-notifications). Configuring it once covers both.
+</Note>
+
+### Registered devices
+
+Every device that has registered is listed with its name, model and OS version, app version and build, APNs environment, and last registration time. A device that has never reported a model shows its abbreviated token instead, which is enough to tell two phones apart.
+
+| Action | Effect |
+| --- | --- |
+| **Test** | Sends a real alert to that one device and reports the APNs rejection reason if it does not land |
+| **Remove** | Deletes the registration. The device can register again from the app |
+
+A device whose token APNs rejects as dead — `BadDeviceToken`, `DeviceTokenNotForTopic`, `Unregistered`, or a `410` — is marked **Inactive** and skipped on later sends. Every other failure is treated as transient, so the device keeps its place and gets retried. The most recent rejection reason shows on the row either way.
+
+<Note>
+  Alerts are sent to every active device at once, expire after an hour, and carry a deep link so tapping one opens the resource that raised it. Notifications that share a dedupe key collapse into a single alert on the device.
+</Note>
+
 ## Live updates
 
-The page subscribes to notification changes and applies them in place — creations, dismissals, deletions, sidebar clears, history clears, and preference updates all arrive without a reload.
+The page subscribes to notification changes and applies them in place — creations, dismissals, deletions, sidebar clears, history clears, preference updates, and device registrations or removals all arrive without a reload.
 
 ## Related pages
 
@@ -135,6 +167,6 @@ The page subscribes to notification changes and applies them in place — creati
     The queue of work that is live, blocked, failed, or waiting on an answer.
   </Card>
   <Card title="Push notifications" icon="mobile" href="/debugging/push-notifications">
-    Compose and send Apple push notifications to enrolled iOS devices — a separate system from Web Push.
+    Compose and send Apple push notifications to devices belonging to apps you build here — a separate system from this page's native channel.
   </Card>
 </Columns>

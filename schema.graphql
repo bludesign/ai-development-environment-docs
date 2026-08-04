@@ -1015,6 +1015,12 @@ type Query {
   """Returns web push subscriptions."""
   webPushSubscriptions: [WebPushSubscription!]!
 
+  """Returns the native APNs delivery state."""
+  notificationApnsState: NotificationApnsState!
+
+  """Returns the iOS devices registered for native notification delivery."""
+  notificationDevices: [NotificationDevice!]!
+
   """Returns polling operations."""
   pollingOperations: [PollingOperation!]!
 
@@ -2629,6 +2635,33 @@ type Mutation {
   ): Boolean!
 
   """
+  Renames a notification device and returns the updated notification device.
+  """
+  renameNotificationDevice(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+
+    """The display name to use for the request."""
+    displayName: String!
+  ): NotificationDevice!
+
+  """
+  Deletes a notification device and reports whether the operation succeeded.
+  """
+  deleteNotificationDevice(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): Boolean!
+
+  """
+  Tests a notification device and reports whether the operation succeeded.
+  """
+  testNotificationDevice(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): Boolean!
+
+  """
   Renames an APNs registration and returns the updated APNs registration.
   """
   renameApnsRegistration(
@@ -3503,6 +3536,12 @@ type Mutation {
   runWorktreeOperation(
     """Values for the requested operation."""
     input: RunWorktreeOperationInput!
+  ): AgentJob!
+
+  """Stages and commits selected worktree changes and returns an agent job."""
+  commitWorktree(
+    """Values for the requested commit."""
+    input: CommitWorktreeInput!
   ): AgentJob!
 
   """Creates a worktree and returns an agent job."""
@@ -12151,6 +12190,9 @@ type AppNotification {
   """
   webPushRequested: Boolean!
 
+  """Whether native APNs delivery was requested for this app notification."""
+  apnsRequested: Boolean!
+
   """
   ISO 8601 timestamp when this app notification sidebar dismissed. May be null when unavailable or not applicable.
   """
@@ -12207,6 +12249,11 @@ type NotificationPreference {
   webPushEnabled: Boolean!
 
   """
+  Whether native APNs delivery is enabled for this notification preference.
+  """
+  apnsEnabled: Boolean!
+
+  """
   ISO 8601 timestamp when this notification preference was last updated. May be null when unavailable or not applicable.
   """
   updatedAt: String
@@ -12224,6 +12271,92 @@ type WebPushState {
 
   """Number of subscriptions."""
   subscriptionCount: Int!
+}
+
+"""Represents the native APNs delivery state in the GraphQL API."""
+type NotificationApnsState {
+  """
+  Whether this control plane holds the APNs provider credentials needed to deliver.
+  """
+  configured: Boolean!
+
+  """Number of active registered devices."""
+  deviceCount: Int!
+}
+
+"""
+An iOS device registered to receive this control plane's notifications over APNs.
+"""
+type NotificationDevice {
+  """Stable identifier for this notification device."""
+  id: ID!
+
+  """The client registration identifier this device reports."""
+  clientRegistrationId: String!
+
+  """Abbreviated APNs device token, enough to tell two devices apart."""
+  tokenMasked: String!
+
+  """The APNs topic, which is the app's bundle identifier."""
+  topic: String!
+
+  """The APNs environment associated with this notification device."""
+  environment: String!
+
+  """Human-readable name for this notification device."""
+  displayName: String!
+
+  """
+  The device model associated with this notification device. May be null when unavailable or not applicable.
+  """
+  deviceModel: String
+
+  """
+  The operating system version associated with this notification device. May be null when unavailable or not applicable.
+  """
+  osVersion: String
+
+  """
+  The app version associated with this notification device. May be null when unavailable or not applicable.
+  """
+  appVersion: String
+
+  """
+  The app build associated with this notification device. May be null when unavailable or not applicable.
+  """
+  appBuild: String
+
+  """
+  The locale associated with this notification device. May be null when unavailable or not applicable.
+  """
+  locale: String
+
+  """The delivery status associated with this notification device."""
+  status: String!
+
+  """
+  Reason APNs last rejected a delivery. May be null when unavailable or not applicable.
+  """
+  lastFailureReason: String
+
+  """
+  ISO 8601 timestamp when APNs last rejected a delivery. May be null when unavailable or not applicable.
+  """
+  lastFailureAt: String
+
+  """ISO 8601 timestamp when this notification device last registered."""
+  lastRegisteredAt: String!
+
+  """
+  ISO 8601 timestamp when this notification device last received a delivery. May be null when unavailable or not applicable.
+  """
+  lastDeliveredAt: String
+
+  """ISO 8601 timestamp when this notification device was created."""
+  createdAt: String!
+
+  """ISO 8601 timestamp when this notification device was last updated."""
+  updatedAt: String!
 }
 
 """Represents a web push subscription in the GraphQL API."""
@@ -12278,6 +12411,9 @@ enum NotificationChangeKind {
 
   """Represents the preferences updated option."""
   PREFERENCES_UPDATED
+
+  """Represents the devices changed option."""
+  DEVICES_CHANGED
 }
 
 """Represents a notification change in the GraphQL API."""
@@ -12309,6 +12445,11 @@ input SaveNotificationPreferenceInput {
 
   """Whether web push enabled applies to the request."""
   webPushEnabled: Boolean!
+
+  """
+  Whether native APNs delivery applies to the request. Omit it to leave the channel unchanged.
+  """
+  apnsEnabled: Boolean
 }
 
 """Input values for notification time range."""
@@ -15382,6 +15523,19 @@ enum WorkflowOverlapPolicy {
   COALESCE_LATEST
 }
 
+"""The set of runs an overlap policy is measured against."""
+enum WorkflowOverlapScope {
+  """
+  The policy counts runs on the same worktree, so worktrees never wait on each other.
+  """
+  WORKTREE
+
+  """
+  The policy counts every run of the workflow, whichever worktree it belongs to.
+  """
+  GLOBAL
+}
+
 """Lifecycle statuses for workflow run."""
 enum WorkflowRunStatus {
   """Represents the queued status for workflow run."""
@@ -15459,6 +15613,9 @@ type Workflow {
 
   """The overlap policy associated with this workflow."""
   overlapPolicy: WorkflowOverlapPolicy!
+
+  """The set of runs the overlap policy is measured against."""
+  overlapScope: WorkflowOverlapScope!
 
   """The max concurrent runs associated with this workflow."""
   maxConcurrentRuns: Int!
@@ -15823,6 +15980,11 @@ type WorkflowRun {
   The worktree associated with this workflow run. May be null when unavailable or not applicable.
   """
   worktree: WorkflowRunWorktreeRef
+
+  """
+  The agent this workflow run executed on. May be null when the run did not target an agent or the agent is no longer available.
+  """
+  agent: Agent
 
   """
   Effective admission queue while this run is queued, including work ahead of it. Empty after admission.
@@ -16257,6 +16419,9 @@ input CreateWorkflowInput {
   """The overlap policy to use for the request."""
   overlapPolicy: WorkflowOverlapPolicy = QUEUE
 
+  """The set of runs the overlap policy is measured against."""
+  overlapScope: WorkflowOverlapScope = WORKTREE
+
   """The max concurrent runs to use for the request."""
   maxConcurrentRuns: Int = 1
 
@@ -16279,6 +16444,9 @@ input SaveWorkflowDraftInput {
 
   """The overlap policy to use for the request."""
   overlapPolicy: WorkflowOverlapPolicy
+
+  """The set of runs the overlap policy is measured against."""
+  overlapScope: WorkflowOverlapScope
 
   """The max concurrent runs to use for the request."""
   maxConcurrentRuns: Int
@@ -16370,6 +16538,9 @@ enum WorktreeOperation {
 
   """Represents the cancel rebase option."""
   CANCEL_REBASE
+
+  """Represents the pull option."""
+  PULL
 
   """Represents the push option."""
   PUSH
@@ -17082,6 +17253,9 @@ type WorktreeDetail {
   Whether the branch changes truncated condition is true for this worktree detail.
   """
   branchChangesTruncated: Boolean!
+
+  """Whether effective Git configuration enables commit signing by default."""
+  commitSigningEnabled: Boolean!
 }
 
 """Represents a worktree overview change in the GraphQL API."""
@@ -17356,6 +17530,27 @@ input RunWorktreeOperationInput {
   operation: WorktreeOperation!
 
   """Identifier of the request to use."""
+  requestId: ID!
+}
+
+"""Values used to commit worktree changes."""
+input CommitWorktreeInput {
+  """Identifier of the worktree to commit."""
+  worktreeId: ID!
+
+  """Commit message to record."""
+  message: String!
+
+  """Whether to sign the commit. Null follows effective Git configuration."""
+  signed: Boolean
+
+  """Whether all current changes should be staged before committing."""
+  stageAll: Boolean! = true
+
+  """Exact changed paths to commit when stageAll is false."""
+  paths: [String!]! = []
+
+  """Identifier used to make the request idempotent."""
   requestId: ID!
 }
 

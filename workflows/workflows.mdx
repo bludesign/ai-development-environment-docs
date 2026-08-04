@@ -14,7 +14,7 @@ A workflow is a typed graph — one trigger, then steps connected by handles —
 
 ## Workflows tab
 
-Each workflow shows its name, description, enabled state, version count, and run count. It also shows **Quick actions** when it appears as a button elsewhere in the app and **Reserve the worktree for this workflow** when its runs use exclusive worktree admission.
+Each workflow shows its name, description, enabled state, version count, and run count. A badge pairs its overlap policy with the [scope](/workflows/workflow-edit#overlap-scope) that policy is measured in — *Queue · Per worktree*, for instance. It also shows **Quick actions** when the workflow appears as a button elsewhere in the app and **Reserves worktree** when its runs use exclusive worktree admission.
 
 | Action | Effect |
 | --- | --- |
@@ -51,7 +51,7 @@ Clicking anywhere on a card opens that workflow. The name, the menu, and the lin
 
 ## All runs tab
 
-A table of every run with its number, workflow, status, trigger, generation, and start time.
+A table of every run with its number, workflow, status, trigger, agent, worktree, and start time. The agent and worktree cells link straight to those pages; a run that targeted neither shows an em dash.
 
 <AccordionGroup>
   <Accordion title="Run statuses" icon="chart-line">
@@ -67,7 +67,7 @@ A table of every run with its number, workflow, status, trigger, generation, and
     | Cancelled | Stopped by hand |
   </Accordion>
   <Accordion title="Generations" icon="code-branch">
-    Replaying a run does not rewrite history. It opens a new **generation** that appends fresh step attempts alongside the originals, so the generation column tells you which pass of the run you are looking at.
+    Replaying a run does not rewrite history. It opens a new **generation** that appends fresh step attempts alongside the originals. The generation is not a column here — open the [run](/workflows/workflow-run) to see which pass produced a result.
   </Accordion>
 </AccordionGroup>
 
@@ -83,7 +83,7 @@ A table of every run with its number, workflow, status, trigger, generation, and
 
 ## Search and refresh
 
-The search box filters across both workflows and runs. **Refresh** refetches the current tab.
+The search box filters across both workflows and runs. On **All runs** it covers the run number, workflow name, status, trigger, and the run's worktree branch, folder, and agent name. **Refresh** refetches the current tab.
 
 ## Quick actions
 
