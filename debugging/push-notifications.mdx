@@ -10,7 +10,7 @@ description: "Compose, validate, target, queue, and inspect Apple push notificat
 
 The **Push Notifications** page at `/push-notifications` sends real Apple Push Notification service (APNs) payloads to your own devices and keeps every send on record. It covers all eleven APNs push types, validates the payload and headers before anything leaves the control plane, and reports what APNs said about each individual recipient — status, reason, `apns-id`, attempts, and round-trip time.
 
-This is device push, not the browser alerts the dashboard raises for itself. For those, see [Notifications](/notifications).
+This console is for the apps *you* build here. The alerts the dashboard raises about its own work go out over a separate channel with its own device list — see [Notifications](/notifications). The two share the APNs token credential and nothing else.
 
 ## Before you can send
 
@@ -20,6 +20,8 @@ This is device push, not the browser alerts the dashboard raises for itself. For
   </Step>
   <Step title="Register devices" icon="mobile">
     Your app posts its APNs token to `POST /api/ios/apns-devices` with the topic, environment, display name, and the push types it supports. Registrations show up as recipients here and on [Devices](/system/devices).
+
+    Devices registered by the control plane's own iOS app use a different endpoint and are not recipients here. They are listed on [Notifications](/notifications#registered-devices).
   </Step>
   <Step title="Match the topic" icon="at">
     Recipients are matched by exact topic. The **APNs topic** you type in the editor must equal the topic the device registered with — including the suffix a specialized push type requires.

@@ -93,6 +93,8 @@ query WorktreeQueue($worktreeId: ID!) {
 
 Set `CreateWorkflowInput.exclusiveWorktree` or `SaveWorkflowDraftInput.exclusiveWorktree` to make each top-level run reserve its resolved worktree. The default is `false`. A queued `WorkflowRun` also exposes its effective `queue`; that field becomes empty after admission.
 
+`overlapScope` on the same two inputs picks the set of runs `overlapPolicy` is measured against: `WORKTREE`, the default, keeps a queue per worktree so worktrees never wait on each other, and `GLOBAL` counts every run of the workflow. Runs with no worktree share one queue under `WORKTREE`.
+
 ## Subscriptions
 
 The schema also defines subscriptions, which power the dashboard's live output — job and build logs, run events, Action Center changes, and status updates. Mintlify generates pages for `Query` and `Mutation` fields only, so subscriptions do not appear in the sidebar. Their payloads do: each one resolves to a documented type, such as [`BuildLogChunk`](/graphql-reference/types/BuildLogChunk) below. For the full subscription list, use [Apollo Studio](https://studio.apollographql.com/public/ai-development-environment/variant/current) or the Apollo sandbox at `/api/graphql`.

@@ -8,7 +8,7 @@ description: "Start a managed Plan or Session in a selected worktree."
   <img className="hidden dark:block" src="/images/dark/run-new.png" alt="New run page in dark theme" />
 </Frame>
 
-The new run page at `/runs/new` is the single form for starting AI work: pick a mode, a worktree, a model, and the tools the run may use, write the prompt, then start it or save it as a draft. It opens preset from wherever you came from — `?kind=plan` or `?kind=session` from the two list pages, and `?draft={id}` when you reopen a saved [draft](/ai/drafts).
+The new run page at `/runs/new` is the single form for starting AI work: pick a mode, a worktree, a model, and the tools the run may use, write the prompt, then start it or save it as a draft. It opens preset from wherever you came from — `?kind=plan` or `?kind=session` from the two list pages, `?worktree={id}` from a worktree's **New session** and **New plan** buttons, and `?draft={id}` when you reopen a saved [draft](/ai/drafts).
 
 ## Filling in the form
 
@@ -17,7 +17,7 @@ The new run page at `/runs/new` is the single form for starting AI work: pick a 
     **Plan** surveys the codebase and proposes work without changing it. **Session** implements with write access. You can switch modes at any point before starting.
   </Step>
   <Step title="Select a worktree" icon="git-branch">
-    The picker lists every worktree across every enrolled machine, labelled *repository · branch · agent*. Search matches the folder, ticket key, and ticket title as well as the visible label, so you can find a worktree by whatever you happen to remember about it. A worktree on an offline agent, or one that is not currently available, is listed but not selectable. The chosen worktree's full path is shown underneath.
+    The picker lists every worktree across every enrolled machine, labelled *repository · branch · agent*. Search matches the folder, ticket key, and ticket title as well as the visible label, so you can find a worktree by whatever you happen to remember about it. A worktree on an offline agent, or one that is not currently available, is listed but not selectable. The chosen worktree's full path is shown underneath. On a phone the picker opens as a full-screen search dialog, which stays in view when the keyboard opens.
   </Step>
   <Step title="Attach a Jira ticket" icon="ticket">
     Selecting a worktree that already has a ticket fills the field in for you. Typing a valid key — `AIDE-123` — loads a preview card with the ticket's status, type, priority, and summary so you can confirm you have the right one before starting.

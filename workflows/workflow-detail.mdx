@@ -32,13 +32,10 @@ The name, description, and an **Enabled** or **Disabled** badge, with the top-le
     How many runs this workflow has produced.
   </Card>
   <Card title="Overlap policy" icon="layer-group">
-    What happens when a trigger fires while a run is already in flight — **Queue** every event, run **Concurrent**, or keep only the **Latest** pending event.
+    What happens when a trigger fires while a run is already in flight — **Queue** every event, run **Concurrent**, or keep only the **Latest** pending event — and the [scope](/workflows/workflow-edit#overlap-scope) it is measured in, **Per worktree** or **Every worktree**. A concurrent workflow also shows its maximum. The card spells out what the combination means in a sentence.
   </Card>
-  <Card title="Maximum concurrent runs" icon="gauge">
-    The ceiling on simultaneously executing runs for this workflow.
-  </Card>
-  <Card title="Reserve the worktree for this workflow" icon="lock">
-    **Enabled** means a top-level run waits for earlier work, then reserves its worktree until it finishes. **Disabled** leaves worktree admission to the individual Plan and Session lanes.
+  <Card title="Worktree reservation" icon="lock">
+    **Enabled** means a top-level run waits for earlier work, then reserves its worktree until it finishes, holding back other workflows, Plans, and Sessions. **Disabled** leaves worktree admission to the individual Plan and Session lanes.
   </Card>
 </Columns>
 

@@ -121,18 +121,38 @@ The import creates a host-only build record, so the result appears on the [Build
 
 ## Workflow settings
 
-| Setting | What it controls |
+**Workflow settings** is grouped into three sections, and each field explains itself underneath.
+
+| Section | Setting | What it controls |
+| --- | --- | --- |
+| **Details** | **Name** and **Description** | How the workflow is identified across the app |
+| **Running** | **Overlap policy** | **Queue every event**, **Run concurrently**, or **Keep latest pending event** |
+| **Running** | **Maximum concurrent runs** | The ceiling on simultaneous executions. Shown only for **Run concurrently** |
+| **Running** | **Overlap scope** | Whether the policy is counted **Per worktree** or across **Every worktree** |
+| **Running** | **Reserve the worktree for this workflow** | Wait for earlier work, then keep other workflows, Plans, and Sessions off the worktree until this run finishes |
+| **Running** | **Notify when this workflow completes successfully** | Turn off to suppress success notifications for this workflow only |
+| **Canvas** | **Viewer layout** | **Regular** uses your authored positions in read-only views; **Basic** auto-arranges them for the available width, leaving your positions untouched |
+| **Canvas** | **Step connectors** | Handles drawn **On the sides** or **On top and bottom** |
+
+### Overlap scope
+
+The overlap policy decides what happens when a trigger fires while a run is in flight. **Overlap scope** decides which runs it is measured against.
+
+| Scope | Effect |
 | --- | --- |
-| **Name** and **Description** | How the workflow is identified across the app |
-| **Overlap policy** | **Queue every event**, **Run concurrently**, or **Keep latest pending event** |
-| **Maximum concurrent runs** | The ceiling on simultaneous executions |
-| **Reserve the worktree for this workflow** | Wait for earlier work, then keep other workflows, Plans, and Sessions off the worktree until this run finishes |
-| **Notify when this workflow completes successfully** | Turn off to suppress success notifications for this workflow only |
-| **Step connectors** | Handles drawn **On the sides** or **On top and bottom** |
-| **Viewer layout** | **Regular** uses your authored positions in read-only views; **Basic** auto-arranges them for the available width, leaving your positions untouched |
+| **Per worktree** | Each worktree gets its own queue, so a run on one worktree never waits for a run on another. Runs that belong to no worktree share a queue of their own |
+| **Every worktree** | Every run of the workflow is counted together, so its runs wait for each other whichever worktree they belong to |
+
+The default is **Per worktree**, which is what you want for a workflow that is triggered per branch — ten worktrees can each run it at once without lining up behind each other. Choose **Every worktree** when the workflow touches something shared, such as a release or a deployment, and only one pass should be under way at a time.
 
 <Note>
-  Worktree reservation is off by default and only applies when a top-level run resolves a worktree. The run waits behind earlier work, then holds the worktree until it succeeds, fails, or is cancelled. Plans and Sessions started by that workflow can still run inside the reservation.
+  Scope applies to **Keep latest pending event** as well: a trigger only replaces a pending run that is inside the same scope.
+</Note>
+
+A workflow exported before this setting existed imports with the scope its old behavior implied — **Per worktree** if it reserved the worktree, **Every worktree** if it did not.
+
+<Note>
+  Worktree reservation is off by default and only applies when a top-level run resolves a worktree. It is a different thing from the overlap policy, which only counts this workflow's own runs: a reservation also holds back *other* workflows, Plans, and Sessions. The run waits behind earlier work, then holds the worktree until it succeeds, fails, or is cancelled. Plans and Sessions started by that workflow can still run inside the reservation.
 </Note>
 
 ### Worktree admission for AI run steps
@@ -147,7 +167,7 @@ The import creates a host-only build record, so the result appears on the [Build
 These limits control AI runs on one worktree. They are independent of **Maximum concurrent runs**, which controls top-level executions of the workflow itself.
 
 <Note>
-  Turning off completion notifications suppresses successful-run notifications only. Failure and attention notifications still fire. MCP clients can set the same flag as `completionNotificationsEnabled` on `create_workflow` or `update_workflow_settings`.
+  Turning off completion notifications suppresses successful-run notifications only. Failure and attention notifications still fire. MCP clients can set the same flag as `completionNotificationsEnabled` on `create_workflow` or `update_workflow_settings`, and pick the queue scope with `overlapScope` — `WORKTREE` or `GLOBAL` — on either tool.
 </Note>
 
 ## Validate, save, publish
