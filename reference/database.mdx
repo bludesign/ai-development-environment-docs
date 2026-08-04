@@ -3,7 +3,7 @@ title: "Database"
 description: "How the SQLite database is configured, migrated, backed up, and reclaimed."
 ---
 
-The control plane keeps its operational state in one SQLite file: agents and their jobs, codebases and worktrees, builds and their logs, AI runs, workflows, telemetry, the GitHub and Jira caches, credential metadata, and — when the database credential backend is active — credential payloads and their connection settings. Vault and Keychain keep those payloads outside SQLite. There is no separate application cache, queue, or object store to operate.
+The control plane keeps its operational state in one SQLite file: apps and their repository assignments, agents and their jobs, codebases and worktrees, builds and their logs, AI runs, workflows, telemetry, the GitHub and Jira caches, credential metadata, and — when the database credential backend is active — credential payloads and their connection settings. Vault and Keychain keep those payloads outside SQLite. There is no separate application cache, queue, or object store to operate.
 
 Data access uses [Prisma 7](https://www.prisma.io/) with the `prisma-client` generator — a TypeScript query compiler, with no native query-engine binary — and the better-sqlite3 driver adapter. That combination is what lets the generated client bundle cleanly into the Next.js `standalone` output the Homebrew service runs.
 
@@ -47,6 +47,7 @@ WAL mode means the database is three files, not one: `production.db`, `productio
 
 | Domain | Representative models |
 | --- | --- |
+| Apps | `App`, `AppRepository` |
 | Agents and jobs | `Agent`, `AgentJob`, `AgentJobLog`, `AgentEnrollmentToken`, `AgentAuditEvent` |
 | Codebases and worktrees | `CodebaseRepository`, `Codebase`, `Worktree`, `WorktreeAutoSync`, `WorktreeAutoMerge`, `WorktreeMove` |
 | AI runs | `AgentRun`, `RunAttempt`, `RunEvent`, `RunToolCall`, `RunQuestion`, `RunCheckpoint`, `RunModelUsage`, `RunDraft` |

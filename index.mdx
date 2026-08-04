@@ -3,7 +3,7 @@ title: "Introduction"
 description: "A self-hosted control plane for AI-assisted development across your machines."
 ---
 
-AI Development Environment is a self-hosted dashboard that coordinates AI-assisted development across every machine you enroll. It keeps Git worktrees, AI Plans and Sessions, builds, shell commands, and durable workflows in one control plane, so long-running work survives restarts and stays inspectable.
+AI Development Environment is a self-hosted dashboard that coordinates AI-assisted development across every machine you enroll. It groups repositories into apps and keeps their Git worktrees, AI Plans and Sessions, builds, shell commands, and durable workflows in one control plane, so long-running work survives restarts and stays inspectable.
 
 <Frame caption="A pass through the Action Center, Worktrees, a worktree's detail page, and Sessions.">
   <video className="block dark:hidden w-full" src="/images/light/walkthrough.webm" poster="/images/light/worktrees.png" autoPlay loop muted playsInline />
@@ -15,6 +15,9 @@ The [Worktrees](/worktrees/worktrees) page in that tour is a good example of how
 ## What you can do
 
 <Columns cols={2}>
+  <Card title="Manage each app in one place" icon="layer-group" href="/apps/apps">
+    Group one or more repositories into an app. Open its hub to work with only that app's repositories, worktrees, Plans, Sessions, and builds.
+  </Card>
   <Card title="Run AI Plans and Sessions" icon="robot" href="/ai/plans">
     Survey a codebase read-only with a Plan, then start a Session from it against a worktree. Steer live transcripts, answer questions, and review the resulting changes and cost.
   </Card>

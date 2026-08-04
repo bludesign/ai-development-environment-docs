@@ -307,6 +307,15 @@ type Query {
     afterSequence: Int = -1
   ): [AgentJobLog!]!
 
+  """Returns all apps."""
+  apps: [App!]!
+
+  """Returns an app, or null when it cannot be found."""
+  app(
+    """Identifier of the app."""
+    id: ID!
+  ): App
+
   """Returns a derived data collection, or null when it cannot be found."""
   derivedDataCollection(
     """Identifier of the resource to return or affect."""
@@ -363,6 +372,11 @@ type Query {
     Identifier of the worktree. Omit it to leave this dimension unfiltered.
     """
     worktreeId: ID
+
+    """
+    Identifier of an app whose assigned repositories should scope the results.
+    """
+    appId: ID
   ): BuildPage!
 
   """Returns a build, or null when it cannot be found."""
@@ -1073,6 +1087,11 @@ type Query {
     """
     origin: RunOrigin
 
+    """
+    Identifier of an app whose assigned repositories should scope the results.
+    """
+    appId: ID
+
     """Maximum number of records to return. Defaults to `100`."""
     first: Int = 100
 
@@ -1494,10 +1513,20 @@ type Query {
   ): [WorkflowJobSecret!]!
 
   """Returns a worktree overview."""
-  worktreeOverview: WorktreeOverview!
+  worktreeOverview(
+    """
+    Identifier of an app whose assigned repositories should scope the results.
+    """
+    appId: ID
+  ): WorktreeOverview!
 
   """Returns worktrees."""
-  hiddenWorktrees: [Worktree!]!
+  hiddenWorktrees(
+    """
+    Identifier of an app whose assigned repositories should scope the results.
+    """
+    appId: ID
+  ): [Worktree!]!
 
   """Returns worktree settings."""
   worktreeSettings: WorktreeSettings!
@@ -1669,6 +1698,24 @@ type Mutation {
     """Values for the requested operation."""
     input: AcknowledgeActionCenterItemInput!
   ): Boolean!
+
+  """Creates an app."""
+  createApp(
+    """Values for the requested operation."""
+    input: CreateAppInput!
+  ): App!
+
+  """Updates an app."""
+  updateApp(
+    """Values for the requested operation."""
+    input: UpdateAppInput!
+  ): App!
+
+  """Deletes an app without deleting its repositories or resources."""
+  deleteApp(
+    """Identifier of the app."""
+    id: ID!
+  ): AppChange!
 
   """Refreshes derived data and returns a derived data collection."""
   refreshDerivedData(
@@ -3710,6 +3757,9 @@ type Subscription {
   """Emits a change signal whenever action center changes."""
   actionCenterChanged: Boolean!
 
+  """Emits after the app collection changes."""
+  appsChanged: AppChange!
+
   """
   Emits a derived data collection whenever derived data collection changes.
   """
@@ -4316,6 +4366,86 @@ input AgentJobLogInput {
 
   """The created at to use for the request."""
   createdAt: String!
+}
+
+"""A product grouping that owns one or more repositories."""
+type App {
+  """Stable identifier for this app."""
+  id: ID!
+
+  """Display name for this app."""
+  name: String!
+
+  """Optional longer description for this app."""
+  description: String!
+
+  """Repositories assigned to this app."""
+  repositories: [CodebaseRepository!]!
+
+  """Resource totals scoped to this app."""
+  counts: AppCounts!
+
+  """ISO 8601 timestamp when this app was created."""
+  createdAt: String!
+
+  """ISO 8601 timestamp when this app was last updated."""
+  updatedAt: String!
+}
+
+"""Resource totals for an app."""
+type AppCounts {
+  """Number of assigned repositories."""
+  repositories: Int!
+
+  """Number of repository checkouts."""
+  codebases: Int!
+
+  """Number of visible worktrees."""
+  worktrees: Int!
+
+  """Number of active plans."""
+  plans: Int!
+
+  """Number of active sessions."""
+  sessions: Int!
+
+  """Number of builds."""
+  builds: Int!
+}
+
+"""Values used to create an app."""
+input CreateAppInput {
+  """Display name for the app."""
+  name: String!
+
+  """Optional longer description for the app."""
+  description: String
+
+  """Identifiers of repositories assigned to the app."""
+  repositoryIds: [ID!]!
+}
+
+"""Values used to update an app."""
+input UpdateAppInput {
+  """Identifier of the app to update."""
+  id: ID!
+
+  """Display name for the app."""
+  name: String!
+
+  """Optional longer description for the app."""
+  description: String
+
+  """Identifiers of repositories assigned to the app."""
+  repositoryIds: [ID!]!
+}
+
+"""Represents an app change."""
+type AppChange {
+  """
+  Identifier of the app that changed, or null when the collection changed.
+  """
+  id: ID
 }
 
 """Lifecycle statuses for build data collection."""
