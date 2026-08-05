@@ -3,7 +3,7 @@ title: "Database"
 description: "How the SQLite database is configured, migrated, backed up, and reclaimed."
 ---
 
-The control plane keeps its operational state in one SQLite file: apps and their repository assignments, agents and their jobs, codebases and worktrees, builds and their logs, AI runs, workflows, telemetry, the GitHub and Jira caches, credential metadata, and — when the database credential backend is active — credential payloads and their connection settings. Vault and Keychain keep those payloads outside SQLite. There is no separate application cache, queue, or object store to operate.
+The control plane keeps its operational state in one SQLite file: Better Auth users and sessions, API-key hashes, apps and their repository assignments, agents and their jobs, codebases and worktrees, builds and their logs, AI runs, workflows, telemetry, the GitHub and Jira caches, credential metadata, and — when the database credential backend is active — credential payloads and their connection settings. Vault and Keychain keep those payloads outside SQLite. There is no separate application cache, queue, or object store to operate.
 
 Data access uses [Prisma 7](https://www.prisma.io/) with the `prisma-client` generator — a TypeScript query compiler, with no native query-engine binary — and the better-sqlite3 driver adapter. That combination is what lets the generated client bundle cleanly into the Next.js `standalone` output the Homebrew service runs.
 
@@ -13,11 +13,11 @@ The database defaults to a SQLite file at `prisma/dev.db`. Set `DATABASE_URL` to
 
 Each install type picks its own default:
 
-| Install | Database file |
-| --- | --- |
-| Homebrew | Under Homebrew's `var/ai-development-environment/` |
-| npm | `~/.ai-development-environment/production.db` |
-| From source | `prisma/dev.db` |
+| Install     | Database file                                      |
+| ----------- | -------------------------------------------------- |
+| Homebrew    | Under Homebrew's `var/ai-development-environment/` |
+| npm         | `~/.ai-development-environment/production.db`      |
+| From source | `prisma/dev.db`                                    |
 
 Relative `file:` URLs resolve against the process working directory, so prefer an absolute path anywhere the app might be started from more than one place:
 
@@ -26,18 +26,20 @@ DATABASE_URL="file:/Users/me/.ai-development-environment/production.db"
 ```
 
 <Note>
-  SQLite is the only supported engine. `src/data/prisma-client.ts` rejects every non-`file:` scheme before it ever constructs an adapter, so pointing `DATABASE_URL` at Postgres fails fast instead of half-working.
+  SQLite is the only supported engine. `src/data/prisma-client.ts` rejects every
+  non-`file:` scheme before it ever constructs an adapter, so pointing
+  `DATABASE_URL` at Postgres fails fast instead of half-working.
 </Note>
 
 ## Connection settings
 
 The application applies its SQLite settings on the first database operation rather than at module load, so `next build` never creates or mutates the configured runtime database.
 
-| Setting | Value | Why |
-| --- | --- | --- |
-| `journal_mode` | `WAL` | Readers do not block the writer, which matters because the dashboard streams while agents write |
-| `synchronous` | `NORMAL` | The usual WAL trade-off: durable across application crashes, with far fewer fsyncs |
-| Busy timeout | 5000 ms | Applied by better-sqlite3's `timeout` option, not a pragma. Change it on the adapter |
+| Setting        | Value    | Why                                                                                             |
+| -------------- | -------- | ----------------------------------------------------------------------------------------------- |
+| `journal_mode` | `WAL`    | Readers do not block the writer, which matters because the dashboard streams while agents write |
+| `synchronous`  | `NORMAL` | The usual WAL trade-off: durable across application crashes, with far fewer fsyncs              |
+| Busy timeout   | 5000 ms  | Applied by better-sqlite3's `timeout` option, not a pragma. Change it on the adapter            |
 
 WAL mode means the database is three files, not one: `production.db`, `production.db-wal`, and `production.db-shm`. That matters for backups and for anything that copies the file.
 
@@ -45,21 +47,22 @@ WAL mode means the database is three files, not one: `production.db`, `productio
 
 `prisma/schema.prisma` defines roughly 150 models. They fall into a few families:
 
-| Domain | Representative models |
-| --- | --- |
-| Apps | `App`, `AppRepository` |
-| Agents and jobs | `Agent`, `AgentJob`, `AgentJobLog`, `AgentEnrollmentToken`, `AgentAuditEvent` |
-| Codebases and worktrees | `CodebaseRepository`, `Codebase`, `Worktree`, `WorktreeAutoSync`, `WorktreeAutoMerge`, `WorktreeMove` |
-| AI runs | `AgentRun`, `RunAttempt`, `RunEvent`, `RunToolCall`, `RunQuestion`, `RunCheckpoint`, `RunModelUsage`, `RunDraft` |
-| Workflows and commands | `Workflow`, `WorkflowVersion`, `WorkflowTrigger`, `WorkflowRun`, `CommandDefinition`, `CommandRun` |
-| Builds | `Build`, `BuildConfiguration`, `BuildArtifact`, `BuildReport`, `BuildLogChunk`, `BuildDeployment`, `BuildExport` |
-| Telemetry | `TelemetryEntry`, `TelemetrySettings`, `TelemetrySavedFilter`, `TelemetryColumnPreset` |
-| iOS and signing | `IosDevice`, `IosDeviceEnrollment`, `IosDeviceIpObservation`, `SigningProfileAsset`, `SigningCertificateAsset` |
-| Push notifications | `ApnsRegistration`, `PushNotificationBatch`, `PushNotificationDelivery`, `ApnsCertificateCredential` |
-| GitHub | `GitHubSettings`, `GitHubGraphqlCacheEntry`, `GitHubWebhookDelivery`, `GitHubAutoRetryRule`, `GitHubApiCallLog` |
-| Jira | `JiraSettings`, `JiraProject`, `JiraCacheEntry`, `JiraCachedTicket`, `JiraWebhookDelivery` |
-| Skills | `Skill`, `SkillGroup`, `SkillSyncRun`, `SkillDeployment`, `SkillInstallation` |
-| Tools and credentials | `ExternalMcpServer`, `McpToolPreset`, `ToolCallAudit`, `Credential` |
+| Domain                  | Representative models                                                                                            |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Authentication          | `User`, `Session`, `Account`, `Verification`, `ApiKey`, `AuthSettings`                                           |
+| Apps                    | `App`, `AppRepository`                                                                                           |
+| Agents and jobs         | `Agent`, `AgentJob`, `AgentJobLog`, `AgentEnrollmentToken`, `AgentAuditEvent`                                    |
+| Codebases and worktrees | `CodebaseRepository`, `Codebase`, `Worktree`, `WorktreeAutoSync`, `WorktreeAutoMerge`, `WorktreeMove`            |
+| AI runs                 | `AgentRun`, `RunAttempt`, `RunEvent`, `RunToolCall`, `RunQuestion`, `RunCheckpoint`, `RunModelUsage`, `RunDraft` |
+| Workflows and commands  | `Workflow`, `WorkflowVersion`, `WorkflowTrigger`, `WorkflowRun`, `CommandDefinition`, `CommandRun`               |
+| Builds                  | `Build`, `BuildConfiguration`, `BuildArtifact`, `BuildReport`, `BuildLogChunk`, `BuildDeployment`, `BuildExport` |
+| Telemetry               | `TelemetryEntry`, `TelemetrySettings`, `TelemetrySavedFilter`, `TelemetryColumnPreset`                           |
+| iOS and signing         | `IosDevice`, `IosDeviceEnrollment`, `IosDeviceIpObservation`, `SigningProfileAsset`, `SigningCertificateAsset`   |
+| Push notifications      | `ApnsRegistration`, `PushNotificationBatch`, `PushNotificationDelivery`, `ApnsCertificateCredential`             |
+| GitHub                  | `GitHubSettings`, `GitHubGraphqlCacheEntry`, `GitHubWebhookDelivery`, `GitHubAutoRetryRule`, `GitHubApiCallLog`  |
+| Jira                    | `JiraSettings`, `JiraProject`, `JiraCacheEntry`, `JiraCachedTicket`, `JiraWebhookDelivery`                       |
+| Skills                  | `Skill`, `SkillGroup`, `SkillSyncRun`, `SkillDeployment`, `SkillInstallation`                                    |
+| Tools and credentials   | `ExternalMcpServer`, `McpToolPreset`, `ToolCallAudit`, `Credential`                                              |
 
 There are no Prisma enums — SQLite has no native enum type — so status and kind columns are strings constrained in application code.
 
@@ -79,6 +82,7 @@ From source, use `npm run db:migrate` to create and apply a development migratio
     ```
 
     Prisma writes the SQL into a new timestamped directory and applies it to your development database.
+
   </Step>
   <Step title="Regenerate the client">
     ```bash
@@ -86,6 +90,7 @@ From source, use `npm run db:migrate` to create and apply a development migratio
     ```
 
     `npm run db:migrate` already regenerates the Prisma client, but running the full generator also refreshes the bundled SDL and resolver types if you changed the GraphQL schema alongside it.
+
   </Step>
   <Step title="Commit the migration directory">
     The generated SQL is part of the change. Migrations that only exist on your machine will not apply on anyone else's.
@@ -105,23 +110,27 @@ sqlite3 /path/to/production.db ".backup '/path/to/backup.db'"
 ```
 
 <Warning>
-  The database file holds device UDIDs, IP history, integration metadata, and operational history. With the `database` credential backend, it also holds every credential-backed setting, including private keys and certificate bundles. Treat backups as sensitive as the original.
+  The database file holds user identities, active sessions, API-key hashes,
+  device UDIDs, IP history, integration metadata, and operational history. With
+  the `database` credential backend, it also holds every credential-backed
+  setting, including private keys and certificate bundles. Treat backups as
+  sensitive as the original.
 </Warning>
 
-When the database backend contains encrypted credential rows, a backup is only fully usable with its `CREDENTIAL_ENCRYPTION_KEY`. Those rows cannot be read without the key, and key rotation is not currently supported. Store the key separately from the backups, but do not lose it. See [credential storage](/quickstart#set-up-credential-storage).
+When the database backend holds credential rows, a backup is only usable alongside the `APP_SECRET` those rows were encrypted under. Store it separately from the backups, but do not lose it — a restore paired with a different `APP_SECRET` needs the original supplied as `APP_SECRET_PREVIOUS` to be readable. See [credential storage](/system/credentials) and [Environment variables](/reference/environment-variables#rotating-app-secret).
 
 ## Growth and cleanup
 
 Nothing is pruned automatically. The tables that grow fastest are the ones fed by streaming or polling:
 
-| Table | Fed by |
-| --- | --- |
-| `BuildLogChunk` | Raw build output, one row per chunk |
-| `TelemetryEntry` | Console logs and analytics events posted by apps under test |
-| `RunEvent` | Every event emitted by an AI run |
-| `GitHubGraphqlCacheEntry`, `JiraCacheEntry` | Integration response caching |
-| `AgentJobLog`, `GitHubApiCallLog`, `JiraApiCallLog` | Per-job and per-call diagnostics |
-| `ToolCallAudit` | Every MCP and Tools-page invocation |
+| Table                                               | Fed by                                                      |
+| --------------------------------------------------- | ----------------------------------------------------------- |
+| `BuildLogChunk`                                     | Raw build output, one row per chunk                         |
+| `TelemetryEntry`                                    | Console logs and analytics events posted by apps under test |
+| `RunEvent`                                          | Every event emitted by an AI run                            |
+| `GitHubGraphqlCacheEntry`, `JiraCacheEntry`         | Integration response caching                                |
+| `AgentJobLog`, `GitHubApiCallLog`, `JiraApiCallLog` | Per-job and per-call diagnostics                            |
+| `ToolCallAudit`                                     | Every MCP and Tools-page invocation                         |
 
 Each of those has a clearing action in the dashboard: [GitHub cache](/github/github-cache), [Jira cache](/jira/jira-cache), [Build data](/system/build-data), and **Clear audit** on the [Tools](/system/tools) page. Deleting rows shrinks the working set but not the file — see below.
 
@@ -142,11 +151,14 @@ Deleted SQLite pages are reused automatically but do not reduce the database fil
     ```
 
     The command uses `DATABASE_URL` when set, and otherwise vacuums `prisma/dev.db`. It prints the before and after sizes in megabytes.
+
   </Step>
 </Steps>
 
 <Note>
-  Vacuuming rewrites the whole database. On a multi-gigabyte file that takes a while and holds an exclusive lock throughout, so run it during a maintenance window rather than while agents are working.
+  Vacuuming rewrites the whole database. On a multi-gigabyte file that takes a
+  while and holds an exclusive lock throughout, so run it during a maintenance
+  window rather than while agents are working.
 </Note>
 
 ## Related pages

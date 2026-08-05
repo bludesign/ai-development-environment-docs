@@ -17,11 +17,7 @@
           {
             "group": "Getting Started",
             "icon": "rocket",
-            "pages": [
-              "index",
-              "quickstart",
-              "screenshots"
-            ]
+            "pages": ["index", "quickstart", "screenshots"]
           },
           {
             "group": "Dashboard",
@@ -30,10 +26,7 @@
               "dashboard",
               {
                 "group": "Apps",
-                "pages": [
-                  "apps/apps",
-                  "apps/app-detail"
-                ]
+                "pages": ["apps/apps", "apps/app-detail"]
               },
               {
                 "group": "Agents",
@@ -72,10 +65,7 @@
               },
               {
                 "group": "Worktrees",
-                "pages": [
-                  "worktrees/worktrees",
-                  "worktrees/worktree-detail"
-                ]
+                "pages": ["worktrees/worktrees", "worktrees/worktree-detail"]
               },
               "changes",
               {
@@ -95,24 +85,15 @@
             "pages": [
               {
                 "group": "Plans",
-                "pages": [
-                  "ai/plans",
-                  "ai/plan-detail"
-                ]
+                "pages": ["ai/plans", "ai/plan-detail"]
               },
               {
                 "group": "Sessions",
-                "pages": [
-                  "ai/sessions",
-                  "ai/session-detail"
-                ]
+                "pages": ["ai/sessions", "ai/session-detail"]
               },
               {
                 "group": "Drafts & runs",
-                "pages": [
-                  "ai/drafts",
-                  "ai/run-new"
-                ]
+                "pages": ["ai/drafts", "ai/run-new"]
               },
               "ai/usage",
               "ai/costs",
@@ -167,6 +148,8 @@
             "group": "System",
             "icon": "gear",
             "pages": [
+              "system/users",
+              "system/api-keys",
               "system/polling",
               "system/build-data",
               "system/provisioning-profiles",
@@ -183,6 +166,8 @@
             "group": "Reference",
             "icon": "book",
             "pages": [
+              "reference/authentication",
+              "reference/environment-variables",
               "reference/docker",
               "reference/development",
               "reference/api",
@@ -202,9 +187,7 @@
           {
             "group": "Overview",
             "icon": "diagram-project",
-            "pages": [
-              "graphql/overview"
-            ]
+            "pages": ["graphql/overview"]
           }
         ]
       }

@@ -5,10 +5,10 @@ description: "Run the control plane and its Linux control agent from production 
 
 Release tags publish two multi-architecture images for `linux/amd64` and `linux/arm64`:
 
-| Image | Purpose |
-| --- | --- |
-| `ghcr.io/bludesign/ai-development-environment` | Next.js control plane |
-| `ghcr.io/bludesign/ai-development-environment-control-agent` | Linux control agent |
+| Image                                                        | Purpose               |
+| ------------------------------------------------------------ | --------------------- |
+| `ghcr.io/bludesign/ai-development-environment`               | Next.js control plane |
+| `ghcr.io/bludesign/ai-development-environment-control-agent` | Linux control agent   |
 
 Use `latest` for the newest semantic-version release or a version tag such as `0.0.73` to pin a deployment. Public packages can be pulled without signing in.
 
@@ -27,6 +27,9 @@ services:
       AGENT_WS_HOSTNAME: 0.0.0.0
       AGENT_WS_PORT: 3091
       DATABASE_URL: file:/data/production.db
+      APP_SECRET: ${APP_SECRET:?set APP_SECRET}
+      APP_ORIGINS: ${APP_ORIGINS:-localhost:3090}
+      AUTH_MODE: ${AUTH_MODE:-password}
     ports:
       - "3090:3090"
       - "3091:3091"
@@ -52,6 +55,17 @@ volumes:
 
 The server stores its SQLite database in `server-data`. The agent stores its enrollment in `agent-data` and AI-provider credentials in `agent-home`. The agent opens outbound connections only and does not publish a port.
 
+Create a `.env` file beside `compose.yaml` before starting:
+
+```bash
+printf 'APP_SECRET=%s\n' "$(openssl rand -base64 32)" > .env
+printf 'APP_ORIGINS=localhost:3090\n' >> .env
+```
+
+Keep `.env` out of source control and back it up securely. `APP_SECRET` also encrypts stored credentials, so losing it costs more than a round of re-authentication — see [Environment variables](/reference/environment-variables).
+
+Behind a reverse proxy, set `APP_ORIGINS` to the public hostname users reach, and set `TRUST_PROXY_HEADERS=true` only if that proxy sets `x-forwarded-host` and strips client-supplied copies. Add the provider variables from [Authentication](/reference/authentication#configure-oauthoidc) when using `AUTH_MODE=oidc` or `both`.
+
 <Steps>
   <Step title="Pull and start the server">
     ```bash
@@ -59,7 +73,8 @@ The server stores its SQLite database in `server-data`. The agent stores its enr
     docker compose up -d server
     ```
 
-    Open `http://localhost:3090`, go to **Agents**, and create a one-time enrollment token.
+    Open `http://localhost:3090` and create the first user. Registration closes after that account succeeds. Then go to **Agents** and create a one-time enrollment token.
+
   </Step>
   <Step title="Enroll the container agent">
     ```bash
@@ -71,6 +86,7 @@ The server stores its SQLite database in `server-data`. The agent stores its enr
     ```
 
     Enrollment writes `/data/config.json` into the persistent `agent-data` volume.
+
   </Step>
   <Step title="Start the agent">
     ```bash
@@ -78,6 +94,7 @@ The server stores its SQLite database in `server-data`. The agent stores its enr
     ```
 
     Follow its connection with `docker compose logs -f agent`.
+
   </Step>
 </Steps>
 
@@ -104,7 +121,9 @@ docker compose exec agent ls -la /Volumes/Development
 Docker Desktop or OrbStack may require you to allow access to the external path in its file-sharing settings. On Linux, use the equivalent mounted path, such as `/mnt/development:/mnt/development`.
 
 <Note>
-  The agent currently reports capacity for its container root filesystem. A bind-mounted disk is available to jobs and repositories, but its capacity is not included in the agent's disk-usage field.
+  The agent currently reports capacity for its container root filesystem. A
+  bind-mounted disk is available to jobs and repositories, but its capacity is
+  not included in the agent's disk-usage field.
 </Note>
 
 ## Runtime capabilities
@@ -135,6 +154,6 @@ gh auth token | docker login ghcr.io \
 
 ## Server configuration
 
-The image supports the same environment variables as the npm server, including `PORT`, `HOSTNAME`, `AGENT_WS_HOSTNAME`, `AGENT_WS_PORT`, `DATABASE_URL`, credential-storage settings, and Vault settings. It applies pending Prisma migrations before starting.
+The image supports the same environment variables as the npm server, including Better Auth and OIDC settings, `PORT`, `HOSTNAME`, `AGENT_WS_HOSTNAME`, `AGENT_WS_PORT`, `DATABASE_URL`, credential-storage settings, and Vault settings. It applies pending Prisma migrations before starting.
 
 See [Hosting and networking](/reference/hosting) before exposing the control plane beyond localhost.

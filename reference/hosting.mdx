@@ -11,32 +11,34 @@ Give the app that origin either by running behind a reverse proxy that sends cor
 
 The server binds two ports, not one.
 
-| Listener | Variable | Homebrew, npm, and Docker default | Source default |
-| --- | --- | --- | --- |
-| HTTP (dashboard, GraphQL, REST, MCP) | `PORT`, `HOSTNAME` | `3090` | `3000` |
-| Agent GraphQL WebSocket | `AGENT_WS_PORT`, `AGENT_WS_HOSTNAME` | `3091` | `3092` under `npm run dev:all` |
+| Listener                             | Variable                             | Homebrew, npm, and Docker default | Source default                 |
+| ------------------------------------ | ------------------------------------ | --------------------------------- | ------------------------------ |
+| HTTP (dashboard, GraphQL, REST, MCP) | `PORT`, `HOSTNAME`                   | `3090`                            | `3000`                         |
+| Agent GraphQL WebSocket              | `AGENT_WS_PORT`, `AGENT_WS_HOSTNAME` | `3091`                            | `3092` under `npm run dev:all` |
 
 The WebSocket listener carries GraphQL subscriptions: agent job traffic, live build and run output, and the dashboard's own streaming updates. Control agents dial it outbound, so managed machines and agent containers never expose a listening port of their own.
 
 The app also rewrites `/graphql` on the HTTP origin to the WebSocket listener, and the browser defaults to `wss://<page host>/graphql` when `NEXT_PUBLIC_AGENT_WS_URL` is unset. That is what makes a single-origin deployment possible.
 
-The production server accepts the standard Next.js `HOSTNAME` and `PORT` environment variables plus `DATABASE_URL`.
+The production server accepts the standard Next.js `HOSTNAME` and `PORT` environment variables plus `DATABASE_URL`. Set `APP_ORIGINS` to the public origin users and the OIDC provider use; a request arriving on an origin missing from it is then rejected. It is optional — unset, the server trusts each request's own host — but setting it is what pins the absolute URLs this server hands to other systems. See [Environment variables](/reference/environment-variables).
 
 ## How the public origin is resolved
 
 Several features need to know the address an outside device would use to reach this server. That is resolved per request, in this order:
 
-| Precedence | Source | Notes |
-| --- | --- | --- |
-| 1 | `PUBLIC_BASE_URL` | Wins outright, because only you know the true public address when a proxy rewrites headers |
-| 2 | `X-Forwarded-Proto` with `X-Forwarded-Host` (or `Host`) | The normal reverse-proxy path |
-| 3 | `X-Forwarded-Host` alone | Assumed `http:` |
-| 4 | `Host` | Assumed `http:` |
+| Precedence | Source                                                  | Notes                                                                                      |
+| ---------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| 1          | `PUBLIC_BASE_URL`                                       | Wins outright, because only you know the true public address when a proxy rewrites headers |
+| 2          | `X-Forwarded-Proto` with `X-Forwarded-Host` (or `Host`) | The normal reverse-proxy path                                                              |
+| 3          | `X-Forwarded-Host` alone                                | Assumed `http:`                                                                            |
+| 4          | `Host`                                                  | Assumed `http:`                                                                            |
 
 The resolved origin is classified as secure (HTTPS) and as loopback or not. Loopback covers `localhost`, `127.0.0.0/8`, `::1`, `.local` and `.localhost` names, and the `10.0.0.0/8`, `172.16.0.0/12`, and `192.168.0.0/16` private ranges. Features that require publicly trusted HTTPS check both flags and disable themselves rather than minting a URL a device cannot use.
 
 <Note>
-  A malformed `PUBLIC_BASE_URL` falls through to the request headers instead of throwing, so a typo shows up as a greyed-out enrollment button rather than a `500`. If enrollment is unexpectedly unavailable, check the value first.
+  A malformed `PUBLIC_BASE_URL` falls through to the request headers instead of
+  throwing, so a typo shows up as a greyed-out enrollment button rather than a
+  `500`. If enrollment is unexpectedly unavailable, check the value first.
 </Note>
 
 Hosts carrying whitespace, a slash, or a backslash are rejected. The origin is interpolated into an XML property list for iOS, so a header that could break out of the URL never reaches it.
@@ -47,13 +49,17 @@ A proxy in front of the app needs to do three things:
 
 <Steps>
   <Step title="Terminate TLS with a publicly trusted certificate">
-    A self-signed certificate is enough for the dashboard but not for iOS enrollment or over-the-air installs — iOS will refuse the callback.
+    A self-signed certificate is enough for the dashboard but not for iOS
+    enrollment or over-the-air installs — iOS will refuse the callback.
   </Step>
   <Step title="Forward the original scheme and host">
-    Send `X-Forwarded-Proto` and `X-Forwarded-Host`. If your proxy cannot, set `PUBLIC_BASE_URL` instead.
+    Send `X-Forwarded-Proto` and `X-Forwarded-Host`. If your proxy cannot, set
+    `PUBLIC_BASE_URL` instead.
   </Step>
   <Step title="Proxy the WebSocket upgrade on /graphql">
-    Route `/graphql` to the agent WebSocket port, upgrade headers intact. Without it the dashboard loads but never updates, and agents cannot connect through the proxy.
+    Route `/graphql` to the agent WebSocket port, upgrade headers intact.
+    Without it the dashboard loads but never updates, and agents cannot connect
+    through the proxy.
   </Step>
 </Steps>
 
@@ -79,31 +85,47 @@ location /graphql {
 Give the WebSocket location a long read timeout. Subscriptions are idle between events, and a proxy that closes them after the default minute produces a dashboard that silently stops updating.
 
 <Tip>
-  Only set `NEXT_PUBLIC_AGENT_WS_URL` when the browser genuinely cannot reach subscriptions at `/graphql` on the page's own origin. It is baked into the client bundle at build time, and on an HTTPS page a configured value that is not `wss://` is ignored in favour of the same-origin URL.
+  Only set `NEXT_PUBLIC_AGENT_WS_URL` when the browser genuinely cannot reach
+  subscriptions at `/graphql` on the page's own origin. It is baked into the
+  client bundle at build time, and on an HTTPS page a configured value that is
+  not `wss://` is ignored in favour of the same-origin URL.
 </Tip>
 
 Agents are configured separately, with `--server` and their own WebSocket address at enrollment time. If the control plane sits behind Cloudflare Access, pass each service-token header to the agent with a repeatable `--header "Name: value"` argument.
 
 ## Cloudflare Access paths
 
-When the dashboard sits behind Cloudflare Access, create one more-specific Access application for `/api/public/*` and attach a **Bypass / Everyone** policy. Configure the path without a query string, because Access path matching does not support one.
+When the dashboard sits behind Cloudflare Access, its external sign-in layer must not intercept the routes that perform the application's own authentication or receive integrations. Create more-specific **Bypass / Everyone** applications for this allowlist:
+
+- Localized sign-in and registration pages
+- `/api/auth/*`
+- `/api/public/*`
+- `/api/openapi.json`
+- `/api/telemetry/analytics-events`
+- `/api/telemetry/console-logs`
+- `/api/ios/apns-devices`
+
+Configure paths without query strings, because Access path matching does not support one. Better Auth protects its own session and management routes. The integration routes retain their signature, token, validation, and rate-limit checks.
 
 That namespace contains only intentionally unauthenticated endpoints:
 
-| Path | Method | Purpose |
-| --- | --- | --- |
-| `/api/public/ios/enrollment-profile` | `GET` | Serves the signed enrollment profile to the device |
-| `/api/public/ios/profile-response` | `POST` | Receives the device's signed profile callback |
-| `/api/public/ios/enrollment-complete` | `GET` | The page the device lands on when enrollment finishes |
-| `/api/public/builds/{buildId}/artifacts/{artifactId}` | `GET`, `HEAD` | Downloads a build artifact, with range support |
-| `/api/public/builds/{buildId}/artifacts/{artifactId}/manifest.plist` | `GET` | The over-the-air install manifest iOS fetches |
-| `/api/public/github/webhook` | `POST` | Signature-verified GitHub App deliveries |
-| `/api/public/jira/webhook` | `POST` | Signature-verified Jira deliveries |
+| Path                                                                 | Method        | Purpose                                               |
+| -------------------------------------------------------------------- | ------------- | ----------------------------------------------------- |
+| `/api/public/ios/enrollment-profile`                                 | `GET`         | Serves the signed enrollment profile to the device    |
+| `/api/public/ios/profile-response`                                   | `POST`        | Receives the device's signed profile callback         |
+| `/api/public/ios/enrollment-complete`                                | `GET`         | The page the device lands on when enrollment finishes |
+| `/api/public/builds/{buildId}/artifacts/{artifactId}`                | `GET`, `HEAD` | Downloads a build artifact, with range support        |
+| `/api/public/builds/{buildId}/artifacts/{artifactId}/manifest.plist` | `GET`         | The over-the-air install manifest iOS fetches         |
+| `/api/public/github/webhook`                                         | `POST`        | Signature-verified GitHub App deliveries              |
+| `/api/public/jira/webhook`                                           | `POST`        | Signature-verified Jira deliveries                    |
 
 Both webhooks verify an HMAC signature before doing any work — `X-Hub-Signature-256` for GitHub, `X-Hub-Signature` for Jira — reject bodies over 1 MiB with `413`, answer `401` on a bad signature, and `503` when the integration is not configured. A processed delivery returns `200`, an ignored but valid one `202`. Deliveries are logged on the [GitHub webhooks](/github/webhooks) and [Jira webhooks](/jira/webhooks) pages.
 
 <Warning>
-  Do **not** bypass `/en/devices*` (or another locale), `/api/ios/enrollment/start`, `/api/ios/devices/export.tsv`, or `/api/graphql`. Those stay behind Cloudflare Access.
+  Do **not** bypass dashboard pages, `/api/graphql`, `/api/mcp`, `/api/tools/*`,
+  `/api/codebases/*`, `/api/ios/notification-devices`,
+  `/api/ios/enrollment/start`, or `/api/ios/devices/export.tsv`. Those require
+  Better Auth or their documented agent credential.
 </Warning>
 
 Access applications are path-scoped rather than method-scoped; the route handlers themselves expose only the methods listed above. Avoid JavaScript or CAPTCHA challenges on the callback. Add a WAF skip for the exact `/api/public/ios/profile-response` path only if production logs show that a managed rule blocks genuine iOS callbacks.
@@ -114,13 +136,12 @@ Over-the-air installs are the reason the artifact routes are public. iOS fetches
 
 Install manifests mint expiring links: the artifact ID and an expiry are signed with HMAC-SHA256 and travel as `token` and `expires` query parameters, valid for six hours. A link is only rejected when a token is supplied and fails verification — the plain links the dashboard renders carry none and are protected by the dashboard's own authentication instead.
 
-| Variable | Effect |
-| --- | --- |
-| `OTA_TOKEN_SECRET` | Signs those links. When unset, a random per-process value is used, which invalidates outstanding links on every restart |
-| `ARTIFACT_CACHE_DIRECTORY` | Where artifacts fetched from an agent are cached locally. Defaults to the system temporary directory |
-| `ARTIFACT_CACHE_MAX_BYTES` | Cache ceiling. Defaults to 5 GiB |
+| Variable                   | Effect                                                                                                                  |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `ARTIFACT_CACHE_DIRECTORY` | Where artifacts fetched from an agent are cached locally. Defaults to the system temporary directory                    |
+| `ARTIFACT_CACHE_MAX_BYTES` | Cache ceiling. Defaults to 5 GiB                                                                                        |
 
-Set `OTA_TOKEN_SECRET` on any long-running install. Without it, a restart mid-install breaks the install.
+The signing key is derived from `APP_SECRET`, so outstanding links survive a restart. Rotating `APP_SECRET` invalidates them; they expire in six hours regardless.
 
 Artifact responses are sent with `cache-control: private, no-store` and support HTTP range requests, which is how a resumed or interrupted iOS download recovers.
 
@@ -135,19 +156,22 @@ Cloudflare Tunnel keeps the origin private, so IP observations trust headers in 
 Each candidate is parsed and validated as an IP address — bracketed IPv6, an appended port, and IPv4-mapped IPv6 forms are all normalized — and an entry that is not a valid address is skipped rather than stored. The selected header source is saved with every observation, so the [device detail](/system/device-detail) page shows whether an address came from Cloudflare, a forwarding proxy, or a real-IP header. In direct mode this same behavior assumes the existing trusted localhost/LAN deployment boundary.
 
 <Note>
-  These headers are trusted as sent. Only expose the server through a proxy that overwrites them, or a client can claim any address it likes.
+  These headers are trusted as sent. Only expose the server through a proxy that
+  overwrites them, or a client can claim any address it likes.
 </Note>
 
 ## Security checklist
 
 <Warning>
-  Do not expose an unprotected origin to untrusted networks. Publishing the server publishes every route, not just build artifacts.
+  Do not expose an unprotected origin to untrusted networks. Publishing the
+  server publishes every route, not just build artifacts.
 </Warning>
 
-- Put an authenticating proxy in front of everything except `/api/public/*`.
-- Set `TOOLS_API_TOKEN` before the MCP endpoint is reachable beyond localhost — see [APIs](/reference/api#authentication).
-- Set `CREDENTIAL_ENCRYPTION_KEY` when using the database credential backend, and back it up.
-- Set `OTA_TOKEN_SECRET` so install links survive a restart.
+- Use only the documented Better Auth and integration [public-route allowlist](#cloudflare-access-paths).
+- Set and back up a stable `APP_SECRET`. It signs sessions, encrypts stored credentials, and signs install links.
+- List every hostname this server is reached at in `APP_ORIGINS`, and use exact hosts — wildcards are rejected in production because they widen both the CSRF check and the post-login redirect allowlist. Leaving it unset is supported but lets a forged `Host` steer the URLs this server generates.
+- Create an `aide_` [API key](/system/api-keys) for every GraphQL or MCP client. Never bypass those endpoints.
+- Enable `TRUST_PROXY_HEADERS` only when a proxy in front of this server sets the forwarded headers and strips client-supplied copies.
 - Leave `APOLLO_SANDBOX` unset in production; it enables schema introspection and the Apollo sandbox.
 - Remember that the database file is as sensitive as the secrets in it — see [Database](/reference/database#backups).
 
@@ -167,6 +191,7 @@ Each candidate is parsed and validated as an IP address — bracketed IPv6, an a
     Installing, enrolling an agent, and credential storage.
   </Card>
   <Card title="Docker" icon="box" href="/reference/docker">
-    Production images, Compose deployment, volumes, and container-agent enrollment.
+    Production images, Compose deployment, volumes, and container-agent
+    enrollment.
   </Card>
 </Columns>
