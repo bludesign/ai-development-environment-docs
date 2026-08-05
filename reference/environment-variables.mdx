@@ -70,7 +70,7 @@ The server reads its configuration from the environment. A source checkout loads
   `password`, `oidc`, or `both`. The server enforces the mode on its routes; hiding a form in the browser does not enable a disabled method.
 </ParamField>
 
-The remaining variables apply only when `AUTH_MODE` is `oidc` or `both`. Supply either a discovery URL **or** all three explicit endpoint URLs — not both. Issuer validation and PKCE are always enabled. See [Authentication](/reference/authentication) for the full workflow.
+The remaining variables apply only when `AUTH_MODE` is `oidc` or `both`. Supply either a discovery URL **or** all three explicit endpoint URLs — not both. PKCE is always enabled. Issuer validation defaults to `false` and can be enabled with the setting below. See [Authentication](/reference/authentication) for the full workflow.
 
 | Variable                        | Purpose                                                              |
 | ------------------------------- | -------------------------------------------------------------------- |
@@ -79,6 +79,7 @@ The remaining variables apply only when `AUTH_MODE` is `oidc` or `both`. Supply 
 | `AUTH_OAUTH_CLIENT_ID`          | Client identifier issued by the provider                             |
 | `AUTH_OAUTH_CLIENT_SECRET`      | Client secret issued by the provider                                 |
 | `AUTH_OAUTH_SCOPES`             | Comma-separated scopes, for example `openid,profile,email`           |
+| `AUTH_OAUTH_REQUIRE_ISSUER_VALIDATION` | Require a matching OAuth `iss` response parameter; defaults to `false` and accepts `true`, `false`, `1`, or `0` |
 | `AUTH_OAUTH_DISCOVERY_URL`      | OpenID configuration document                                        |
 | `AUTH_OAUTH_ISSUER`             | Expected issuer; required with explicit endpoints                    |
 | `AUTH_OAUTH_AUTHORIZATION_URL`  | Explicit authorization endpoint                                      |

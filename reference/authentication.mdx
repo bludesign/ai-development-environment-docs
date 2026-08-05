@@ -55,6 +55,7 @@ AUTH_OAUTH_PROVIDER_NAME="Company SSO"
 AUTH_OAUTH_CLIENT_ID="client-id"
 AUTH_OAUTH_CLIENT_SECRET="client-secret"
 AUTH_OAUTH_SCOPES="openid,profile,email"
+AUTH_OAUTH_REQUIRE_ISSUER_VALIDATION="false"
 AUTH_OAUTH_DISCOVERY_URL="https://identity.example.com/.well-known/openid-configuration"
 AUTH_OAUTH_ISSUER="https://identity.example.com"
 ```
@@ -73,7 +74,7 @@ AUTH_OAUTH_TOKEN_URL="https://identity.example.com/oauth2/token"
 AUTH_OAUTH_USER_INFO_URL="https://identity.example.com/oauth2/userinfo"
 ```
 
-The server stops at startup when the provider settings are incomplete or inconsistent. PKCE and issuer validation are enabled. The provider must return an email address.
+The server stops at startup when the provider settings are incomplete or inconsistent. PKCE is always enabled. Issuer validation is controlled by `AUTH_OAUTH_REQUIRE_ISSUER_VALIDATION`, which defaults to `false`; set it to `true` only when the provider includes and validates the OAuth `iss` response parameter. The provider must return an email address.
 
 The server does not link a new OIDC identity to a password account solely because their email addresses match. It rejects the ambiguous signup instead. This avoids assigning an external identity to an existing account without a dedicated linking flow.
 
