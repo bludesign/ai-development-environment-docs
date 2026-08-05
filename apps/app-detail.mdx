@@ -16,7 +16,7 @@ An app hub at `/apps/[appId]` brings every resource backed by the app's assigned
 | --- | --- |
 | **Overview** | Review resource totals and assigned repositories. Open any scoped view from its summary card. |
 | **Repositories** | Inspect assigned repositories and their checkouts. Open a repository or codebase for repository-level and checkout-level operations. |
-| **Worktrees** | Search, create, inspect, and manage worktrees from the assigned repositories. Hidden worktrees remain scoped to the app. |
+| **Worktrees** | Search, create, inspect, and manage worktrees from the assigned repositories. Hidden worktrees remain scoped to the app, and the search and filters are saved per app, so leaving this view and returning restores them. |
 | **Plans** | Search and manage Plans that use an app worktree. Start a new Plan with only eligible app worktrees offered. |
 | **Sessions** | Search and manage Sessions that use an app worktree. Start a new Session without leaving the app context. |
 | **Builds** | Review app build history and start a build from an app worktree. Build scripts remain repository-level configuration. |
@@ -25,7 +25,7 @@ The scoped views keep their normal actions. Opening a resource takes you to its 
 
 ## Edit repository assignments
 
-Click **Edit** to change the name, description, or assigned repositories. You must keep at least one repository assigned.
+Click **Edit** to change the name, description, or assigned repositories. You must keep at least one repository assigned. Check agents under **Agents** to narrow the repository list to the repositories checked out on them; the filter changes only what the list shows, never what is assigned.
 
 Removing an assignment only changes the grouping. It does not delete the repository, its checkouts, worktrees, Plans, Sessions, or builds. If you later add the repository again, its existing resources reappear in the app.
 

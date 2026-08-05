@@ -31,6 +31,23 @@ The card updates as workflow and AI run state changes. It disappears after this 
   Queue position is an effective display order, not a promise that every row starts serially. Plans and Sessions have separate lanes and may advance independently until an exclusive workflow becomes the admission barrier.
 </Note>
 
+## Why a run is waiting
+
+A run that is not finishing shows a **Waiting on** card above the run graph, naming every step that is currently sitting still and why.
+
+Steps sit still for two different reasons, and the card separates them:
+
+| | What it means | What resolves it |
+| --- | --- | --- |
+| **Parked** | The step handed work to something outside the runtime — an agent job, a Plan or Session, a build, a command — and is waiting for it to report back. It holds no worktree or codebase lock while it waits. | The external work finishing, or the wait timing out |
+| **Held** | The step never started, because the codebase or worktree it needs is busy with another run. | The other run releasing it |
+
+Each parked step lists what it is **Waiting on** — a link straight to the job, Plan, or Session — along with how long it has been waiting, when it **Times out**, and when the runtime next checks. A held step shows the contention that is blocking it instead.
+
+<Tip>
+  A parked step is normal, not stuck. Use **Times out** to tell the difference: a wait that is still well short of its timeout is simply slow external work, while one approaching it will fail the step and surface a real error.
+</Tip>
+
 ## Live run graph
 
 The published graph, annotated with live state — which node succeeded, which failed, which is waiting, which is currently active. It updates as the run progresses.
@@ -88,10 +105,14 @@ A replay writes a row for every step of the graph, not just the ones it re-execu
 
 <Tabs>
   <Tab title="Timeline">
-    Every event the run has emitted, in order. Event types include run lifecycle events — started, pausing, paused, resumed, cancelled, succeeded, failed, data repaired, replayed — and step events: succeeded, failed, blocked, waiting, retry scheduled, recovery blocked, and waiting for codebase.
+    Every event the run has emitted, in order. Event types include run lifecycle events — started, pausing, paused, resumed, cancelled, succeeded, failed, data repaired, replayed — and step events: succeeded, failed, blocked, waiting, wait resolved, retry scheduled, recovery blocked, and waiting for codebase.
+
+    A **Step waiting** event names the step and what it parked on. Its matching **Wait resolved** event reports how long the wait lasted and what freed it — the external work reporting back, the runtime's own poll, your answer to a question, or a delay elapsing.
   </Tab>
   <Tab title="Step attempts">
-    One row per attempt with **Step**, **Status**, **Phase**, **Generation**, **Iteration**, **Attempt**, **Duration**, and **Error**. Phase is the scheduler's own sub-state for the attempt — including **Reused** and **Queued for replay** after a replay. Iteration distinguishes passes through a **For each** body; attempt distinguishes retries of the same step.
+    One row per attempt with **Step**, **Status**, **Phase**, **Generation**, **Iteration**, **Attempt**, **Duration**, and **Error**. Phase is the scheduler's own sub-state for the attempt — including **Reused** and **Queued for replay** after a replay, and **Waiting for codebase** or **Waiting for worktree** while a step is held. Iteration distinguishes passes through a **For each** body; attempt distinguishes retries of the same step.
+
+    A parked attempt notes what it is waiting on beneath its status badge.
 
     Attempt statuses include Pending, Ready, Running, Waiting, Blocked, Succeeded, Failed, Skipped, Superseded, and Timed out.
   </Tab>

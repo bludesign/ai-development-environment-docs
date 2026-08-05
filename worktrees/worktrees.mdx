@@ -14,11 +14,12 @@ The **Worktrees** page at `/worktrees` is the busiest page in the product. It sh
 
 - **Search** across branches, agents, repositories, tickets, and codebases.
 - **Filter by agent** and **filter by repository**.
+- **Filter by changes** narrows the list to **Dirty worktrees** or **Clean worktrees**. A worktree counts as dirty when it has staged or unstaged changes — the same rule behind its **Dirty** badge.
 - Use **Group by agent** or **Group by repository** to choose the primary grouping. The other dimension remains visible on each worktree.
 - Switch between **Card layout** and **Table layout**.
 - **Refresh** re-reads status; **Fetch now** runs `git fetch origin` for eligible codebases.
 
-Your search, filters, grouping, and layout are saved in the browser and restored the next time you open the page. A saved agent or repository filter is ignored if that item no longer exists.
+Your search, filters, grouping, and layout are saved in the browser and restored the next time you open the page. A saved agent or repository filter is ignored if that item no longer exists. The worktrees view inside an [app](/apps/app-detail) keeps its own saved filters, separate from this page's.
 
 Each worktree shows its branch, path, base branch, agent, repository, upstream status, base freshness, nonzero commit counts, and — where they exist — its pull request, latest build, review decision, and comment count.
 
@@ -70,12 +71,15 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
     | **Stage all** / **Unstage all** | Bulk staging |
     | **Commit** | Stage changes and create a commit — see [Committing changes](#committing-changes) |
     | **Change branch** | Switch this worktree to a different branch |
+    | **Change branch to `<default>`** | Switch straight to the repository default branch in one step |
 
     **Pull** fetches the branch's remote and fast-forwards onto it, and is offered only while the branch is behind its upstream. A branch that has diverged cannot fast-forward: **Sync** or **Rebase** are the ways through.
 
     **Force push**, **Reset**, **Stash all**, and **Stage all** / **Unstage all** live behind **More** at the end of the action row. **Force push** and **Reset** ask for a second click to confirm before they run.
 
-    When Git cannot switch because of local changes, the action offers **Stash and retry**: it stashes tracked and untracked changes, retries, and leaves the stash for you to restore by hand.
+    **Change branch to `<default>`** names the repository default branch — for most repositories that reads **Change branch to main** — and skips the branch form entirely. It is hidden when another worktree already holds that branch, since Git refuses to check a branch out twice, and disabled when this worktree is already on it.
+
+    When Git cannot switch because of local changes, the action offers **Stash and retry**: it stashes tracked and untracked changes, retries, and leaves the stash for you to restore by hand. The one-step default-branch item has no retry of its own — it reports the error, and **Change branch** is where you stash and retry.
   </Accordion>
   <Accordion title="Starting a run" icon="play">
     **New session** and **New plan** open the [new run page](/ai/run-new) with this worktree already selected, and its Jira ticket filled in when it has one.
