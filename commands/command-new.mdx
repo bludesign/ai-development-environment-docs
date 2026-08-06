@@ -55,6 +55,12 @@ The default is **Non-exclusive**. Queue order prevents an exclusive run from bei
   A worktree command can still wait while Git or worktree work holds its codebase. It retries when the codebase becomes available instead of failing with a busy-codebase error.
 </Note>
 
+### Git and worktree operations
+
+Enable **Block Git operations while this command runs** when the script can change repository or worktree state. While a worktree command with this setting is active, Git and worktree operations on the same codebase wait. Leave it off for scripts that only read files or run unrelated tools.
+
+Exclusive commands always block Git and worktree operations, so the setting is enabled and locked when **Requires exclusive** is selected. Agent-home commands have no worktree codebase to block.
+
 ## Restart policy
 
 | Policy | Restarts when |

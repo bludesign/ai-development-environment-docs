@@ -23,7 +23,7 @@ The run number, its status badge, and its **generation** — replays append a ne
 
 ## Waiting for worktree admission
 
-A queued run shows a live **Queue** card before the run graph. It displays the combined workflow, Plan, and Session admission order for the run's worktree. The current workflow run is highlighted, and exclusive workflow runs carry an **Exclusive** badge.
+A queued run shows a live **Queue** card before the run graph. It displays the combined workflow, Plan, and Session admission order for the run's worktree. The current workflow run is highlighted, and workflow rows carry their **Exclusive**, **Non-exclusive**, or **Excluded** admission mode.
 
 The card updates as workflow and AI run state changes. It disappears after this run is admitted and starts scheduling.
 
@@ -50,7 +50,7 @@ Each parked step lists what it is **Waiting on** — a link straight to the job,
 
 ## Live run graph
 
-The published graph, annotated with live state — which node succeeded, which failed, which is waiting, which is currently active. It updates as the run progresses.
+The published graph is annotated with live state — which node succeeded, failed, is waiting, or is active. It updates as the run progresses. For command-output matching, the graph shows the actual execution of each emitted match branch instead of the dormant scheduling template; the source command continues to display its own terminal state separately.
 
 ## Answering a question
 

@@ -37,6 +37,7 @@ The outgoing handles a node offers depend on its kind:
 | **If** | `true`, `false` |
 | **For each** | `body`, `empty` |
 | **Try** | `success`, `catch` |
+| **Saved command** and **Custom command** | `success`, `failure`, and `match` when an output pattern is configured |
 | Choice triggers | One handle per choice you define |
 
 <Note>
@@ -105,6 +106,21 @@ Selecting a node opens its inspector.
   </Accordion>
 </AccordionGroup>
 
+### Reacting to command output
+
+**Saved command** and **Custom command** steps can route work as soon as their output matches a case-sensitive RE2 regular expression. Set **Output match pattern (RE2)**, keep **Completion** on **Wait for exit**, then connect the `match` handle to an independent branch.
+
+| Match behavior | Effect |
+| --- | --- |
+| **Once** | Emits the first match, then ignores later matches |
+| **Each match** | Starts one isolated branch for every match while the command continues running |
+
+The match branch receives the current result at `steps.<stepId>.latestMatch`; `steps.<stepId>.matches` keeps the ordered results emitted so far. Each result includes `text`, positional `captures`, `namedCaptures`, the command run and attempt, and start/end output coordinates. The command's `success` or `failure` branch still activates when the process exits, so a match branch cannot reconnect to either terminal branch.
+
+<Note>
+  Matching works across output chunks and UTF-8 boundaries. Keep patterns focused: the matcher retains at most 16 MiB of unmatched output before it fails the step.
+</Note>
+
 ### Importing coverage after a test command
 
 For a non-Xcode test suite, connect these **Builds** and command steps in order:
@@ -129,7 +145,8 @@ The import creates a host-only build record, so the result appears on the [Build
 | **Running** | **Overlap policy** | **Queue every event**, **Run concurrently**, or **Keep latest pending event** |
 | **Running** | **Maximum concurrent runs** | The ceiling on simultaneous executions. Shown only for **Run concurrently** |
 | **Running** | **Overlap scope** | Whether the policy is counted **Per worktree** or across **Every worktree** |
-| **Running** | **Reserve the worktree for this workflow** | Wait for earlier work, then keep other workflows, Plans, and Sessions off the worktree until this run finishes |
+| **Running** | **Worktree concurrency** | Choose exclusive, non-exclusive, or excluded worktree admission |
+| **Running** | **Block Git operations during command and terminal steps** | Prevent concurrent Git and worktree operations while command-like steps run. Always enabled for exclusive workflows |
 | **Running** | **Notify when this workflow completes successfully** | Turn off to suppress success notifications for this workflow only |
 | **Canvas** | **Viewer layout** | **Regular** uses your authored positions in read-only views; **Basic** auto-arranges them for the available width, leaving your positions untouched |
 | **Canvas** | **Step connectors** | Handles drawn **On the sides** or **On top and bottom** |
@@ -151,9 +168,19 @@ The default is **Per worktree**, which is what you want for a workflow that is t
 
 A workflow exported before this setting existed imports with the scope its old behavior implied — **Per worktree** if it reserved the worktree, **Every worktree** if it did not.
 
-<Note>
-  Worktree reservation is off by default and only applies when a top-level run resolves a worktree. It is a different thing from the overlap policy, which only counts this workflow's own runs: a reservation also holds back *other* workflows, Plans, and Sessions. The run waits behind earlier work, then holds the worktree until it succeeds, fails, or is cancelled. Plans and Sessions started by that workflow can still run inside the reservation.
-</Note>
+### Worktree concurrency and Git blocking
+
+Worktree concurrency applies when a top-level run resolves a worktree. It is separate from overlap, which only compares this workflow's own runs.
+
+| Mode | Behavior |
+| --- | --- |
+| **Exclusive** | Waits for older participating workflows, Plans, and Sessions, then runs alone. New participating work waits until it finishes |
+| **Non-exclusive** | Shares the worktree with other non-exclusive work, but waits behind exclusive work |
+| **Excluded** | Skips the worktree admission lane. Git and worktree steps still serialize when they execute |
+
+**Non-exclusive** is the default. An older exported workflow that reserved its worktree imports as **Exclusive**; other older workflows import as **Non-exclusive**.
+
+Enable **Block Git operations during command and terminal steps** when those steps can modify repository or worktree state. Dedicated Git and worktree steps always serialize. **Exclusive** workflows enable Git blocking automatically. Plans and Sessions started by an exclusive workflow can still run inside its admission reservation.
 
 ### Worktree admission for AI run steps
 
@@ -167,7 +194,7 @@ A workflow exported before this setting existed imports with the scope its old b
 These limits control AI runs on one worktree. They are independent of **Maximum concurrent runs**, which controls top-level executions of the workflow itself.
 
 <Note>
-  Turning off completion notifications suppresses successful-run notifications only. Failure and attention notifications still fire. MCP clients can set the same flag as `completionNotificationsEnabled` on `create_workflow` or `update_workflow_settings`, and pick the queue scope with `overlapScope` — `WORKTREE` or `GLOBAL` — on either tool.
+  Turning off completion notifications suppresses successful-run notifications only. Failure and attention notifications still fire. MCP clients can use `completionNotificationsEnabled`, `overlapScope`, `worktreeConcurrency`, and `blocksGitOperations` on `create_workflow` or `update_workflow_settings`.
 </Note>
 
 ## Validate, save, publish
@@ -203,6 +230,9 @@ These limits control AI runs on one worktree. They are independent of **Maximum 
 | Subworkflow version required | A subworkflow step must pin a version |
 | Resource kind required | A resource trigger must name the resource kind it accepts |
 | Command allowlist required / Command pattern must be anchored | An issue-command trigger needs a safe, anchored allowlist |
+| Command match pattern required / invalid | A command uses the `match` connector without a pattern, or its RE2 expression is invalid |
+| Command matching requires wait | Output matching is configured on a fire-and-forget command |
+| Command match branch reconverges | A match branch reconnects to the command's `success` or `failure` branch |
 | Trigger choices required / Unknown trigger choice | A choice trigger needs choices, and every edge must leave a defined one |
 
 ## Related pages

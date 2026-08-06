@@ -80,6 +80,8 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
     **Change branch to `<default>`** names the repository default branch — for most repositories that reads **Change branch to main** — and skips the branch form entirely. It is hidden when another worktree already holds that branch, since Git refuses to check a branch out twice, and disabled when this worktree is already on it.
 
     When Git cannot switch because of local changes, the action offers **Stash and retry**: it stashes tracked and untracked changes, retries, and leaves the stash for you to restore by hand. The one-step default-branch item has no retry of its own — it reports the error, and **Change branch** is where you stash and retry.
+
+    Git and worktree actions wait while a command or workflow terminal step configured to block Git is running on the same codebase. Commands that leave Git blocking off can run alongside these actions.
   </Accordion>
   <Accordion title="Starting a run" icon="play">
     **New session** and **New plan** open the [new run page](/ai/run-new) with this worktree already selected, and its Jira ticket filled in when it has one.

@@ -4379,6 +4379,9 @@ type App {
   """Optional longer description for this app."""
   description: String!
 
+  """Agent identifiers selected to filter repositories in the app editor."""
+  agentIds: [ID!]!
+
   """Repositories assigned to this app."""
   repositories: [CodebaseRepository!]!
 
@@ -4421,6 +4424,9 @@ input CreateAppInput {
   """Optional longer description for the app."""
   description: String
 
+  """Agent identifiers selected to filter repositories in the app editor."""
+  agentIds: [ID!]! = []
+
   """Identifiers of repositories assigned to the app."""
   repositoryIds: [ID!]!
 }
@@ -4435,6 +4441,9 @@ input UpdateAppInput {
 
   """Optional longer description for the app."""
   description: String
+
+  """Agent identifiers selected to filter repositories in the app editor."""
+  agentIds: [ID!]! = []
 
   """Identifiers of repositories assigned to the app."""
   repositoryIds: [ID!]!
@@ -7205,6 +7214,11 @@ type CommandDefinition {
   concurrency: CommandConcurrency!
 
   """
+  Whether worktree runs of this command block Git and worktree operations on the codebase.
+  """
+  blocksGitOperations: Boolean!
+
+  """
   Whether the quick action enabled condition is true for this command definition.
   """
   quickActionEnabled: Boolean!
@@ -7458,6 +7472,9 @@ type CommandRun {
   """The snapshot concurrency associated with this command run."""
   snapshotConcurrency: CommandConcurrency!
 
+  """Whether this run blocks Git and worktree operations on its codebase."""
+  snapshotBlocksGitOperations: Boolean!
+
   """
   Whether the snapshot notifications enabled condition is true for this command run.
   """
@@ -7628,6 +7645,11 @@ input CommandDefinitionInput {
   """The concurrency mode to use for the request."""
   concurrency: CommandConcurrency = NON_EXCLUSIVE
 
+  """
+  Whether worktree runs should block Git and worktree operations on the codebase. Exclusive commands always enable this.
+  """
+  blocksGitOperations: Boolean = false
+
   """Whether quick action enabled applies to the request."""
   quickActionEnabled: Boolean = false
 
@@ -7765,17 +7787,11 @@ enum CredentialProtection {
 
 """Stable, machine-readable credential-store warning."""
 enum CredentialStoreWarningCode {
-  """Represents the database unencrypted option."""
-  DATABASE_UNENCRYPTED
+  """Represents the app secret invalid option."""
+  APP_SECRET_INVALID
 
-  """Represents the credential encryption key invalid option."""
-  CREDENTIAL_ENCRYPTION_KEY_INVALID
-
-  """Represents the credential encryption key missing option."""
-  CREDENTIAL_ENCRYPTION_KEY_MISSING
-
-  """Represents the credential encryption key mismatch option."""
-  CREDENTIAL_ENCRYPTION_KEY_MISMATCH
+  """Represents the credential key mismatch option."""
+  CREDENTIAL_KEY_MISMATCH
 
   """Represents the credential data invalid option."""
   CREDENTIAL_DATA_INVALID
@@ -15666,6 +15682,18 @@ enum WorkflowOverlapScope {
   GLOBAL
 }
 
+"""How a workflow run participates in worktree admission."""
+enum WorkflowWorktreeConcurrency {
+  """Runs alone after older participating work has finished."""
+  EXCLUSIVE
+
+  """Shares the worktree with other non-exclusive runs."""
+  NON_EXCLUSIVE
+
+  """Does not wait in or contribute to the worktree admission lane."""
+  EXCLUDED
+}
+
 """Lifecycle statuses for workflow run."""
 enum WorkflowRunStatus {
   """Represents the queued status for workflow run."""
@@ -15755,6 +15783,14 @@ type Workflow {
 
   """Whether each top-level run reserves its worktree for this workflow."""
   exclusiveWorktree: Boolean!
+
+  """How runs participate in worktree admission."""
+  worktreeConcurrency: WorkflowWorktreeConcurrency!
+
+  """
+  Whether command-like jobs launched by this workflow block Git operations.
+  """
+  blocksGitOperations: Boolean!
 
   """The quick action kind associated with this workflow."""
   quickActionKind: WorkflowQuickActionKind!
@@ -16096,6 +16132,14 @@ type WorkflowRun {
 
   """Whether this run was configured to reserve its worktree exclusively."""
   exclusiveWorktree: Boolean!
+
+  """
+  The immutable worktree concurrency mode captured when this run was created.
+  """
+  worktreeConcurrency: WorkflowWorktreeConcurrency!
+
+  """The immutable Git-blocking setting captured when this run was created."""
+  blocksGitOperations: Boolean!
 
   """The generation associated with this workflow run."""
   generation: Int!
@@ -16470,6 +16514,9 @@ type WorktreeRunQueueEntry {
   """Whether this workflow entry will reserve the worktree when admitted."""
   exclusiveWorktree: Boolean!
 
+  """How this workflow entry participates in worktree admission."""
+  worktreeConcurrency: WorkflowWorktreeConcurrency!
+
   """The plan or session's worktree concurrency limit."""
   worktreeConcurrencyLimit: Int
 }
@@ -16562,6 +16609,14 @@ input CreateWorkflowInput {
   Queue other workflows, plans, and sessions while this workflow owns a worktree.
   """
   exclusiveWorktree: Boolean = false
+
+  """How runs participate in worktree admission."""
+  worktreeConcurrency: WorkflowWorktreeConcurrency
+
+  """
+  Whether command-like jobs launched by this workflow block Git operations.
+  """
+  blocksGitOperations: Boolean
 }
 
 """Values used to save a workflow draft."""
@@ -16588,6 +16643,14 @@ input SaveWorkflowDraftInput {
   Queue other workflows, plans, and sessions while this workflow owns a worktree.
   """
   exclusiveWorktree: Boolean
+
+  """How runs participate in worktree admission."""
+  worktreeConcurrency: WorkflowWorktreeConcurrency
+
+  """
+  Whether command-like jobs launched by this workflow block Git operations.
+  """
+  blocksGitOperations: Boolean
 }
 
 """Values used to trigger a workflow."""
@@ -17079,6 +17142,11 @@ type WorktreeCodebaseGroup {
 
   """Worktrees associated with this worktree codebase group."""
   worktrees: [Worktree!]!
+
+  """
+  The active codebase job that prevents starting another worktree operation.
+  """
+  blockingJob: AgentJob
 
   """
   Whether the iOS build configured condition is true for this worktree codebase group.
