@@ -37,12 +37,12 @@ The current state of the checkout, with changes grouped as **Conflicted**, **Sta
 
 The **Worktree queue** combines every queued workflow, Plan, and Session that targets this checkout. Each row shows its effective position, run kind and number, phase, and queued time. Select a run to open its details.
 
-Plans and Sessions use separate FIFO lanes. Plans allow unlimited concurrency by default, while Sessions allow one active run by default. A workflow configured to reserve the worktree waits behind earlier work, then becomes an admission barrier until it finishes; its own AI run steps continue inside that reservation.
+Plans and Sessions use separate FIFO lanes. Plans allow unlimited concurrency by default, while Sessions allow one active run by default. An exclusive workflow waits behind earlier participating work, then becomes an admission barrier until it finishes. A non-exclusive workflow shares the lane, while an excluded workflow does not enter it. AI run steps launched by an exclusive workflow continue inside its reservation.
 
 Queue records are durable. The control plane reconciles them after a restart or a missed completion event and promotes eligible work when capacity returns.
 
 <Note>
-  The card shows queued entries only. Active runs are not included, and the two AI run lanes may advance independently before an exclusive workflow reaches the front.
+  The card shows queued entries only. Active and excluded runs are not included, and the two AI run lanes may advance independently before an exclusive workflow reaches the front.
 </Note>
 
 ## Branch changes

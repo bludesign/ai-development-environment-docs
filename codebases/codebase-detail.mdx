@@ -20,7 +20,7 @@ The origin, current branch, upstream, and last fetch time, plus an **Uncommitted
 | **Refresh** | Re-inspects the folder and reports status without contacting the remote |
 | **Repository settings** | Opens the shared [repository details](/codebases/repository-detail) page |
 
-While a Git operation is running, the page shows which kind is in flight and blocks conflicting actions until it completes.
+While a Git operation is running, the page shows which kind is in flight and blocks conflicting actions until it completes. A command or workflow terminal step configured to block Git operations produces its own message here and holds the same actions until it finishes.
 
 <Note>
   When the agent is offline, or is running a `control-agent` build too old to inspect branches, the page falls back to stored branch information in read-only mode and says so.

@@ -34,8 +34,8 @@ The name, description, and an **Enabled** or **Disabled** badge, with the top-le
   <Card title="Overlap policy" icon="layer-group">
     What happens when a trigger fires while a run is already in flight — **Queue** every event, run **Concurrent**, or keep only the **Latest** pending event — and the [scope](/workflows/workflow-edit#overlap-scope) it is measured in, **Per worktree** or **Every worktree**. A concurrent workflow also shows its maximum. The card spells out what the combination means in a sentence.
   </Card>
-  <Card title="Worktree reservation" icon="lock">
-    **Enabled** means a top-level run waits for earlier work, then reserves its worktree until it finishes, holding back other workflows, Plans, and Sessions. **Disabled** leaves worktree admission to the individual Plan and Session lanes.
+  <Card title="Worktree concurrency" icon="lock">
+    Shows whether top-level runs use **Exclusive**, **Non-exclusive**, or **Excluded** admission. A separate **Blocks Git operations** badge appears when command and terminal steps serialize with Git and worktree operations.
   </Card>
 </Columns>
 
@@ -75,7 +75,7 @@ This is where you decide whether the workflow appears as a button on other pages
 
 ## Queue
 
-The **Queue** card collects queued workflow runs and queued AI runs launched by this workflow. Each row shows its effective position, run and phase, worktree, and queued time. An **Exclusive** badge marks a workflow run that will reserve its worktree.
+The **Queue** card collects queued workflow runs and queued AI runs launched by this workflow. Each row shows its effective position, run and phase, worktree, queued time, and worktree concurrency mode.
 
 Positions are relative to all queued work on each worktree, even though this card only includes entries associated with the current workflow. Open the linked worktree to see the complete combined queue.
 
