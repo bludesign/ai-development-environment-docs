@@ -41,11 +41,17 @@ The server reads its configuration from the environment. A source checkout loads
 </ParamField>
 
 <ParamField path="PUBLIC_BASE_URL" type="string">
-  The origin external systems use to reach this server, when that differs from where the dashboard is served. Used to build iOS enrollment and over-the-air install URLs and to register the GitHub App webhook. It is automatically trusted as though listed in `APP_ORIGINS`.
+  The origin external systems use to reach this server, when that differs from where the dashboard is served. Used to build iOS enrollment and over-the-air install URLs and to register GitHub, GitLab, and Jira webhooks. It is automatically trusted as though listed in `APP_ORIGINS`.
 
   These integrations require publicly trusted HTTPS and are offered only when this resolves to a public `https` origin.
 
   Setting this is enough on its own to leave inferred mode, so a deployment that only cares about pinning generated URLs does not also need `APP_ORIGINS`.
+</ParamField>
+
+<ParamField path="NODE_EXTRA_CA_CERTS" type="string">
+  Path to a PEM bundle containing additional certificate authorities trusted by the Node.js process. Set this when a self-hosted GitLab instance uses a certificate issued by a private CA. The path must be readable by the AIDE server or mounted into its container.
+
+  This extends normal certificate verification. AIDE does not provide a GitLab certificate upload or insecure TLS bypass.
 </ParamField>
 
 <ParamField path="TRUST_PROXY_HEADERS" type="boolean" default="false">

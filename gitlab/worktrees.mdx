@@ -1,0 +1,18 @@
+---
+title: "Worktrees"
+description: "Link GitLab remotes and merge requests to AIDE worktrees."
+---
+
+AIDE recognizes GitLab.com remotes and remotes under the configured self-hosted instance root. A worktree chooses its provider from its canonical remote and cannot mix GitHub and GitLab request or pipeline records.
+
+For a GitLab worktree, the detail page can:
+
+- Discover and attach the branch's merge request
+- Create a merge request for the branch
+- Show merge-request metadata and pipeline badges
+- Show normalized pipeline history and retry actions
+- Enable auto-merge when GitLab permits it
+
+The provider-neutral `sourceControlRequest` GraphQL field powers new clients. The legacy GitHub-only `pullRequest` field remains available so existing integrations do not break.
+
+Project paths are used for display and links. Numeric GitLab project IDs remain the canonical linkage even after a namespace or project rename.

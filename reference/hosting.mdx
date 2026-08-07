@@ -3,7 +3,7 @@ title: "Hosting and networking"
 description: "Ports, public HTTPS, reverse proxies, Cloudflare Access paths, artifact links, and how client IPs are trusted."
 ---
 
-Most of the app works fine on `http://127.0.0.1`. iOS device enrollment, over-the-air installs, and the GitHub and Jira webhooks do not: they need a publicly trusted HTTPS origin, because iOS requires a trusted HTTPS callback and the webhook senders have to reach you from the internet.
+Most of the app works fine on `http://127.0.0.1`. iOS device enrollment, over-the-air installs, and the GitHub, GitLab, and Jira webhooks do not: they need a publicly trusted HTTPS origin, because iOS requires a trusted HTTPS callback and the webhook senders have to reach you from the internet.
 
 Give the app that origin either by running behind a reverse proxy that sends correct `X-Forwarded-Proto` and `X-Forwarded-Host` values, or by setting `PUBLIC_BASE_URL` to the public HTTPS origin. Direct HTTP localhost and LAN dashboard access stays available, but the enrollment form and profile download are disabled.
 
@@ -117,9 +117,10 @@ That namespace contains only intentionally unauthenticated endpoints:
 | `/api/public/builds/{buildId}/artifacts/{artifactId}`                | `GET`, `HEAD` | Downloads a build artifact, with range support        |
 | `/api/public/builds/{buildId}/artifacts/{artifactId}/manifest.plist` | `GET`         | The over-the-air install manifest iOS fetches         |
 | `/api/public/github/webhook`                                         | `POST`        | Signature-verified GitHub App deliveries              |
+| `/api/public/gitlab/webhook`                                         | `POST`        | Signature-verified GitLab project deliveries          |
 | `/api/public/jira/webhook`                                           | `POST`        | Signature-verified Jira deliveries                    |
 
-Both webhooks verify an HMAC signature before doing any work — `X-Hub-Signature-256` for GitHub, `X-Hub-Signature` for Jira — reject bodies over 1 MiB with `413`, answer `401` on a bad signature, and `503` when the integration is not configured. A processed delivery returns `200`, an ignored but valid one `202`. Deliveries are logged on the [GitHub webhooks](/github/webhooks) and [Jira webhooks](/jira/webhooks) pages.
+All webhook routes authenticate the raw body before doing any work. GitHub uses `X-Hub-Signature-256`, Jira uses `X-Hub-Signature`, and GitLab Standard Webhooks use `webhook-id`, `webhook-timestamp`, and `webhook-signature` with a five-minute replay window. Deliveries are logged on the [GitHub webhooks](/github/webhooks), [GitLab webhooks](/gitlab/webhooks), and [Jira webhooks](/jira/webhooks) pages.
 
 <Warning>
   Do **not** bypass dashboard pages, `/api/graphql`, `/api/mcp`, `/api/tools/*`,

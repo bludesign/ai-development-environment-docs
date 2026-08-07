@@ -8,7 +8,7 @@ description: "Configure development tools, Apple services, and external integrat
   <img className="hidden dark:block" src="/images/dark/settings.png" alt="Settings page in dark theme" />
 </Frame>
 
-The **Settings** page at `/settings` is where the app is connected to everything outside itself: the editor it opens worktrees in, the Apple services it signs and pushes with, and the Jira, GitHub, and cache accounts it reads from.
+The **Settings** page at `/settings` is where the app is connected to everything outside itself: the editor it opens worktrees in, the Apple services it signs and pushes with, and the Jira, GitHub, GitLab, and cache accounts it reads from.
 
 Every credential-backed value entered here is written through the server-only credential service. That includes secrets and the connection settings required to use them, such as service URLs and public key identifiers. Secret values are stored server-side and never returned to the browser. The [Credentials](/system/credentials) page shows metadata for every stored item without exposing its payload.
 
@@ -118,6 +118,16 @@ Once Jira credentials are saved, a **Jira webhook** card appears. The webhook is
 
 The card shows the time and outcome of the most recent delivery and links to [Jira Webhooks](/jira/webhooks) for the full log and the manual setup steps.
 
+### GitLab credentials
+
+Connect GitLab.com or one self-hosted GitLab 19.2+ instance. Enter the HTTPS instance root and a personal, project, or group access token with the `api` scope. Saving verifies both the current user and server version.
+
+The instance root may include a relative installation path such as `https://code.example.com/gitlab`. It must not include credentials, `/api/v4`, a query, or a fragment. Private network hosts are allowed. Private certificate authorities are configured for the server process with `NODE_EXTRA_CA_CERTS`; there is no insecure TLS setting.
+
+After verification, add the projects AIDE should manage. A Maintainer or Owner token can create the signed project hook automatically. Lower-permission tokens receive a manual callback URL, event checklist, and one-time signing token while the rest of the integration remains usable.
+
+See [Set up GitLab](/gitlab/setup) for the complete flow.
+
 ### GitHub credentials
 
 A personal access token for pull requests, review threads, and workflow-run details.
@@ -174,7 +184,7 @@ Removing these settings hides the Actions Cache page until it is reconfigured.
 ## Notes
 
 - Credential-backed settings are stored server-side. Secret values are never returned to the browser.
-- Saving GitHub, GitHub App, Jira, App Store Connect, and cache-server credentials verifies the connection before it is used, so a bad value fails at save time rather than at first use.
+- Saving GitHub, GitHub App, GitLab, Jira, App Store Connect, and cache-server credentials verifies the connection before it is used, so a bad value fails at save time rather than at first use.
 - Every secret field follows the same convention: leave it blank to keep the stored value, enter a new value to replace it.
 - A read-only Vault disables credential-backed inputs and removals. Update shared values from a read-write install.
 - Registering the Jira webhook needs the **Administer Jira** global permission on the account that owns the API token. Without it, Jira answers `403` and the card falls back to the manual steps.

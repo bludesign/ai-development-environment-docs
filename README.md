@@ -11,7 +11,7 @@ The [Mintlify](https://mintlify.com) documentation site for [AI Development Envi
 | `dashboard.mdx`, `notifications.mdx` | Top-level dashboard pages |
 | `apps/`, `agents/`, `workflows/`, `commands/`, `codebases/`, `worktrees/`, `builds/` | Dashboard areas |
 | `ai/`, `skills/` | Plans, Sessions, drafts, usage, costs, and skill packages |
-| `debugging/`, `github/`, `jira/`, `system/` | Debugging tools and integrations |
+| `debugging/`, `github/`, `gitlab/`, `jira/`, `system/` | Debugging tools and integrations |
 | `reference/` | Local development, APIs, database, and hosting |
 | `images/light/`, `images/dark/` | Page screenshots, one pair per documented page |
 | `logo/`, `favicon.svg` | Branding |

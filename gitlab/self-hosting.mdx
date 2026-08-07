@@ -1,0 +1,41 @@
+---
+title: "Self-hosting and TLS"
+description: "Connect a self-hosted GitLab 19.2+ instance, including installations under a relative URL root."
+---
+
+AIDE supports one GitLab instance per deployment. It can be GitLab.com or a self-hosted GitLab 19.2+ server.
+
+## Instance root
+
+Use the user-facing HTTPS root of the installation:
+
+```text
+https://gitlab.example.com
+https://code.example.com/gitlab
+```
+
+AIDE preserves a relative root such as `/gitlab` when it builds REST v4 paths. It removes trailing slashes and rejects credentials, queries, fragments, non-HTTPS schemes, and URLs that do not identify a host.
+
+Private DNS names and private network addresses are allowed because the control plane may run beside GitLab. Redirects must remain on the configured origin and under its relative root. The access token is never forwarded elsewhere.
+
+## Private certificate authorities
+
+If the GitLab server uses a certificate signed by a private CA, place the CA certificate bundle on the AIDE server and start Node.js with `NODE_EXTRA_CA_CERTS`:
+
+```bash
+NODE_EXTRA_CA_CERTS=/etc/aide/gitlab-ca.pem npm start
+```
+
+For Docker, mount the PEM read-only and set the same variable to the path inside the container.
+
+<Warning>
+  AIDE has no certificate upload field and no insecure TLS bypass. Keep certificate verification enabled and trust the issuing CA at the server process instead.
+</Warning>
+
+## Version verification
+
+Saving the integration calls GitLab's version endpoint. GitLab.com is accepted directly; a self-hosted instance must report version 19.2 or newer. AIDE does not include a reduced compatibility mode for earlier releases.
+
+## Webhooks
+
+The AIDE server may reach GitLab over a private network, but GitLab must be able to reach AIDE's webhook callback. Use a public HTTPS deployment or tunnel for live webhook acceptance. Without one, pipelines and merge requests remain usable and polling provides fallback updates.

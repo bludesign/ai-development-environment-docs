@@ -1,0 +1,35 @@
+---
+title: "Troubleshooting GitLab"
+description: "Resolve connection, permission, webhook, cache, and pipeline issues."
+---
+
+## Connection verification fails
+
+- Confirm the URL is HTTPS and points to the instance root, not `/api/v4`.
+- Remove embedded credentials, queries, and fragments.
+- Confirm the token has the `api` scope and has not expired.
+- For self-hosted GitLab, confirm the reported version is 19.2 or newer.
+- For a private CA, configure [`NODE_EXTRA_CA_CERTS`](/gitlab/self-hosting#private-certificate-authorities) on the AIDE server.
+
+## A project or action is missing
+
+The token may not see the project or may lack the role required by the action. Personal, project, and group tokens expose different resources. GitLab subscription tiers can also limit review outcomes and auto-merge behavior. AIDE keeps available features enabled and shows the unavailable capability's reason.
+
+## A webhook says Manual required
+
+The token lacks Maintainer or Owner permission. Copy the one-time signing token and create the project hook manually with all five documented event groups and SSL verification enabled.
+
+## Webhook deliveries do not arrive
+
+- Confirm GitLab can reach the callback over public HTTPS.
+- Check that a proxy or access layer bypasses `/api/public/gitlab/webhook` without presenting an interactive login.
+- Keep the original request body and signature headers intact.
+- Check for timestamp drift greater than five minutes.
+
+## Credential clearing is blocked
+
+AIDE could not remove one or more hooks it created. Restore project-hook permission and retry. Use **Force clear** only when you accept that the listed hooks may be orphaned.
+
+## Pipeline data is delayed
+
+Check [Polling](/system/polling), the project hook state, GitLab rate limits, and the [API cache](/gitlab/cache). A stale cache response can keep the UI useful during a temporary GitLab outage.

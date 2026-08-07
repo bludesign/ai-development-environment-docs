@@ -50,6 +50,11 @@ Types are grouped into five categories on the **Settings** tab. Every type defau
     | GitHub Actions succeeded | A GitHub Actions workflow finishes successfully. |
     | GitHub Actions failed | A GitHub Actions workflow finishes with a failure. |
   </Accordion>
+  <Accordion title="GitLab" icon="gitlab">
+    Merge-request reviews and discussions, pipeline and job results, retries, and auto-retry outcomes link back to the configured GitLab.com or self-hosted instance.
+
+    GitLab events arrive from signed project hooks when available and from polling fallback otherwise. GitHub and GitLab notification preferences and links remain provider-scoped when both are connected.
+  </Accordion>
   <Accordion title="Plans and Sessions" icon="robot">
     | Type | Fires when |
     | --- | --- |
