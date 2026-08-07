@@ -7,6 +7,8 @@ GitLab adds provider-scoped workflow values without changing any existing `GITHU
 
 Webhook events bridge into workflows first. Polling observations can provide fallback pipeline events when a project hook is unavailable.
 
+Pipeline workflows can persist an auto-retry rule or wait for a specific GitLab pipeline to reach a terminal state. A successful pipeline resumes the workflow; failed, canceled, skipped, or manual terminal states fail the wait step with the observed status available in `pipeline.*`.
+
 ## Built-in tools
 
 The `gitlab_*` tool group is available when GitLab is configured. It includes operations for:
@@ -15,6 +17,9 @@ The `gitlab_*` tool group is available when GitLab is configured. It includes op
 - Merge-request list, detail, creation, updates, reviews, and discussions
 - Labels and reviewers
 - Pipeline and job list, dispatch, cancel, and retry
+- Pipeline lookup, rate-limit snapshots, and auto-retry rule administration
 - Merge and auto-merge
+
+The **Cache Administration** group also exposes GitLab cache metrics, sanitized API-call history, cached REST entries, and cache clearing. GitHub and GitLab provider groups—including their cache subgroups—are registered independently and only appear when that provider's primary access token is configured.
 
 The tools use the same capability checks, encrypted credential, API cache, scoped invalidation, logging, and provider-aware audit trail as the web and iOS apps. GitHub tools remain independently available when GitHub is configured.
