@@ -20,8 +20,8 @@ GitLab statuses map into the AIDE pipeline model, including created, preparing, 
 - Retry an individual job
 - Open the pipeline or job in the configured GitLab instance
 
-## Auto Retry
+## Auto retry
 
-Auto Retry rules are scoped by provider and project, with an optional pipeline target and a maximum attempt count. Executions, notifications, polling observations, and audit entries retain the GitLab provider discriminator.
+Auto retry rules are scoped by provider and project, with an optional pipeline target and a maximum attempt count. You can choose 1 to 100 attempts and delete a rule when you no longer need it. Executions, notifications, polling observations, and audit entries retain the GitLab provider discriminator.
 
 Signed webhook events are the primary update source. Polling uses the configured pipeline interval as a fallback and is visible on [Polling](/system/polling). GitHub and GitLab retry rules can run at the same time without sharing counters or pipeline records.
