@@ -70,7 +70,7 @@ The server reads its configuration from the environment. A source checkout loads
   `password`, `oidc`, or `both`. The server enforces the mode on its routes; hiding a form in the browser does not enable a disabled method.
 </ParamField>
 
-The remaining variables apply only when `AUTH_MODE` is `oidc` or `both`. Supply either a discovery URL **or** all three explicit endpoint URLs — not both. PKCE is always enabled. Issuer validation defaults to `false` and can be enabled with the setting below. See [Authentication](/reference/authentication) for the full workflow.
+The remaining variables apply only when `AUTH_MODE` is `oidc` or `both`. Supply either a discovery URL **or** all three explicit endpoint URLs — not both. Better Auth always uses PKCE for the server-to-provider exchange, and the iOS app-to-server exchange independently requires S256 PKCE. Neither exchange has a PKCE environment variable. Issuer validation defaults to `false` and can be enabled with the setting below. See [Authentication](/reference/authentication) for the full workflow, one-minute native authorization code, and coordinated upgrade requirement.
 
 | Variable                        | Purpose                                                              |
 | ------------------------------- | -------------------------------------------------------------------- |

@@ -74,7 +74,23 @@ AUTH_OAUTH_TOKEN_URL="https://identity.example.com/oauth2/token"
 AUTH_OAUTH_USER_INFO_URL="https://identity.example.com/oauth2/userinfo"
 ```
 
-The server stops at startup when the provider settings are incomplete or inconsistent. PKCE is always enabled. Issuer validation is controlled by `AUTH_OAUTH_REQUIRE_ISSUER_VALIDATION`, which defaults to `false`; set it to `true` only when the provider includes and validates the OAuth `iss` response parameter. The provider must return an email address.
+The server stops at startup when the provider settings are incomplete or inconsistent. Better Auth always uses PKCE for the server-to-provider authorization-code exchange. Issuer validation is controlled by `AUTH_OAUTH_REQUIRE_ISSUER_VALIDATION`, which defaults to `false`; set it to `true` only when the provider includes and validates the OAuth `iss` response parameter. The provider must return an email address.
+
+The native iOS flow adds a separate S256 PKCE exchange between the app and this server. It does not change the provider registration or the provider redirect URL above:
+
+1. The app creates independent 32-byte random `state` and `code_verifier` values and sends `state`, the S256 `code_challenge`, and `code_challenge_method=S256` to `GET /api/auth/mobile/oauth/start`.
+2. The server keeps its own independent HttpOnly browser-flow nonce while Better Auth completes the PKCE-protected provider exchange.
+3. The `aide-auth://callback` deep link returns only an opaque `code` and the app's `state`. An unsuccessful authorization returns a sanitized OAuth `error`, optional `error_description`, and the same `state`. The callback never contains a Better Auth session or one-time token.
+4. After validating the callback scheme, host, and state, the app sends `{"code":"…","code_verifier":"…"}` to `POST /api/auth/mobile/redeem`.
+5. The server validates the S256 binding and returns the Better Auth bearer session. The authorization code expires after one minute and can be consumed only once; an expired, replayed, or mismatched exchange returns `INVALID_AUTHORIZATION_CODE`.
+
+The verifier remains only in memory for the active `ASWebAuthenticationSession`. No additional environment variables are required for either PKCE exchange.
+
+<Warning>
+  Upgrade the server and iOS app together. PKCE is required immediately, so an
+  older iOS build cannot start or redeem native OIDC sign-in against an updated
+  server.
+</Warning>
 
 The server does not link a new OIDC identity to a password account solely because their email addresses match. It rejects the ambiguous signup instead. This avoids assigning an external identity to an existing account without a dedicated linking flow.
 
@@ -106,7 +122,7 @@ Keep `/api/graphql`, `/api/mcp`, first-party `/api/ios/notification-devices`, en
 
 ## iOS sessions
 
-The iOS app fetches `/api/auth/config` for the selected server before it initializes the dashboard. It stores a bearer session in Keychain, scoped to that server origin. Password sign-in stays native. OIDC opens an `ASWebAuthenticationSession` and returns through the `aide-auth` URL scheme before redeeming a short-lived, single-use token.
+The iOS app fetches `/api/auth/config` for the selected server before it initializes the dashboard. It stores a bearer session in Keychain, scoped to that server origin. Password sign-in stays native. OIDC opens an `ASWebAuthenticationSession`, returns through the `aide-auth` URL scheme with an opaque authorization code, and redeems that code with the in-memory PKCE verifier. The one-minute code is single-use and is not itself a Better Auth session or token.
 
 Signing out invalidates the server session, removes the Keychain item, clears Apollo's cache, closes subscriptions, and defers first-party push registration until the next sign-in.
 
