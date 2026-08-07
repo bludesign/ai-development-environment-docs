@@ -134,6 +134,23 @@
             ]
           },
           {
+            "group": "GitLab",
+            "icon": "gitlab",
+            "pages": [
+              "gitlab/setup",
+              "gitlab/self-hosting",
+              "gitlab/projects",
+              "gitlab/merge-requests",
+              "gitlab/pipelines",
+              "gitlab/webhooks",
+              "gitlab/cache",
+              "gitlab/workflows-tools",
+              "gitlab/worktrees",
+              "gitlab/notifications",
+              "gitlab/troubleshooting"
+            ]
+          },
+          {
             "group": "Jira",
             "icon": "jira",
             "pages": [

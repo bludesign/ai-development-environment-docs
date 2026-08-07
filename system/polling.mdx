@@ -10,7 +10,7 @@ description: "Inspect background server and agent operations, their cadence, fre
 
 The **Polling** page at `/polling` is the single place to see every recurring background operation that keeps the control plane and its agents in sync — how often each one runs, when it last ran, when it runs next, and why it last failed.
 
-Almost everything on the dashboard that appears to update on its own is driven by one of these operations. When a codebase looks stale, a build never starts, or a GitHub notification never arrives, this page tells you whether the responsible loop is running, disabled, or erroring.
+Almost everything on the dashboard that appears to update on its own is driven by one of these operations. When a codebase looks stale, a build never starts, or a GitHub or GitLab notification never arrives, this page tells you whether the responsible loop is running, disabled, or erroring.
 
 ## Using the page
 
@@ -51,6 +51,8 @@ These loops live in the server process and start with it.
 | --- | --- | --- |
 | **GitHub actions notifications** | 60s | Polls tracked repositories for workflow run results and raises [notifications](/notifications) |
 | **GitHub auto-retry** | 60s | Reconciles [Auto Retry](/github/actions) rules and reruns failed workflows or jobs |
+| **GitLab pipeline fallback** | GitLab setting | Polls managed projects when a signed project hook is unavailable |
+| **GitLab auto-retry** | GitLab setting | Reconciles provider-scoped [pipeline retry rules](/gitlab/pipelines) |
 | **APNs batch recovery** | 30s | Picks up [push notification](/debugging/push-notifications) batches that were interrupted |
 | **Worktree automation** | 60s | Drives [worktree](/worktrees/worktrees) auto-sync and automation rules |
 | **Sidebar usage** | 300s | Collects the Claude usage totals shown in the sidebar and on [Usage](/ai/usage) |
@@ -64,6 +66,8 @@ These loops live in the server process and start with it.
 | `DISABLED` with `reason: GITHUB_TOKEN_REQUIRED` | Neither is configured — add a token in [Settings](/system/settings) |
 
 Its interval comes from the GitHub settings rather than from this page. Auto-retry is scheduled at its configured cadence but never runs faster than every 30 seconds.
+
+GitLab follows the same webhook-first model independently. A configured project hook supplies merge-request, pipeline, and job events. Polling remains scheduled as a fallback and shares neither state nor retry counters with GitHub.
 
 ## Agent operations
 

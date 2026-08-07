@@ -8,7 +8,7 @@ description: "Manage primary and linked Git worktrees across every enrolled agen
   <img className="hidden dark:block" src="/images/dark/worktrees.png" alt="Worktrees page in dark theme" />
 </Frame>
 
-The **Worktrees** page at `/worktrees` is the busiest page in the product. It shows every primary and linked Git worktree across every enrolled machine, and gives each one a full set of Git operations, automation toggles, and links to the pull request, build, and AI work attached to it.
+The **Worktrees** page at `/worktrees` is the busiest page in the product. It shows every primary and linked Git worktree across every enrolled machine, and gives each one a full set of Git operations, automation toggles, and links to the GitHub pull request or GitLab merge request, build, and AI work attached to it.
 
 ## Finding a worktree
 
@@ -98,7 +98,7 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
     The **Latest build** badge is a menu: **View build** opens the [build details](/builds/build-detail), and **Rebuild** starts a fresh build from the same configuration. A successful build that produced a runnable app also gets its run controls on the same row.
   </Accordion>
   <Accordion title="Navigation" icon="arrow-up-right-from-square">
-    Select the card surface or **Open details** in the table to open the [worktree details page](/worktrees/worktree-detail). **View codebase**, **View repository**, and **Open in GitHub** jump to the related resource, and **Refresh pull request** re-reads the PR state.
+    Select the card surface or **Open details** in the table to open the [worktree details page](/worktrees/worktree-detail). **View codebase**, **View repository**, and **Open in GitHub/GitLab** jump to the related resource, and **Refresh request** re-reads the pull or merge request state.
   </Accordion>
   <Accordion title="Quick actions" icon="bolt">
     Workflow and command quick actions share one row when space allows, separated by a divider. They wrap into separate rows on narrower cards.
@@ -144,7 +144,7 @@ It can also handle conflicts for you — enable **Run a quick-action workflow to
 
 ## Auto Merge
 
-**Auto Merge** hands the merge to GitHub: the pull request merges as soon as its required checks, reviews, and branch rules are satisfied. Two optional follow-ups:
+**Auto Merge** hands the merge to the worktree's provider: the GitHub pull request or GitLab merge request merges as soon as its required checks, reviews, and branch rules are satisfied. Two optional follow-ups:
 
 - **Delete this worktree after the pull request merges**.
 - **Move the linked Jira ticket to the project's configured done status**.

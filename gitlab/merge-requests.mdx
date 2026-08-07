@@ -1,0 +1,35 @@
+---
+title: "Merge requests"
+description: "Browse, review, update, and merge GitLab merge requests."
+---
+
+The **Merge requests** page at `/gitlab/merge-requests` lists requests authored by you, requests awaiting your review, or all requests visible to the token. Filters can span managed projects or target one project.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/gitlab-merge-requests.png" alt="GitLab merge requests page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/gitlab-merge-requests.png" alt="GitLab merge requests page in dark theme" />
+</Frame>
+
+Open a merge request to inspect its description, commits, reviewers, labels, mergeability, source and target branches, conflicts, discussions, and related pipelines.
+
+## Actions
+
+Depending on your GitLab permissions, you can:
+
+- Create a merge request and set reviewers, labels, squash, and source-branch removal
+- Update the title, description, labels, reviewers, or open state
+- Reply to discussions and resolve or reopen resolvable threads
+- Approve, comment, or request changes
+- Merge immediately or enable auto-merge when the pipeline succeeds
+- Squash commits and remove the source branch during merge
+
+Review outcomes use GitLab's supported review quick actions, including `/submit_review approve`, `reviewed`, and `requested_changes`. GitLab tier- or permission-dependent outcomes are disabled when the capability is known to be unavailable; an API rejection is shown as a capability message without disabling the rest of the merge request.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/gitlab-comments.png" alt="GitLab review discussions page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/gitlab-comments.png" alt="GitLab review discussions page in dark theme" />
+</Frame>
+
+<Note>
+  GitLab calls pull requests “merge requests.” GitHub routes and stored pull-request data remain unchanged when GitLab is enabled.
+</Note>

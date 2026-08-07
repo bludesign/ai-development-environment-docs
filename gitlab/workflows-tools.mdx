@@ -1,0 +1,20 @@
+---
+title: "Workflows and tools"
+description: "Use GitLab triggers, steps, resources, quick actions, and built-in tools."
+---
+
+GitLab adds provider-scoped workflow values without changing any existing `GITHUB_*` value. Persisted `GITLAB_*` triggers, steps, resources, and quick actions cover merge requests, reviews, comments, pushes, pipelines, jobs, labels, synchronization, approvals, retries, and merges.
+
+Webhook events bridge into workflows first. Polling observations can provide fallback pipeline events when a project hook is unavailable.
+
+## Built-in tools
+
+The `gitlab_*` tool group is available when GitLab is configured. It includes operations for:
+
+- Connection status and managed projects
+- Merge-request list, detail, creation, updates, reviews, and discussions
+- Labels and reviewers
+- Pipeline and job list, dispatch, cancel, and retry
+- Merge and auto-merge
+
+The tools use the same capability checks, encrypted credential, API cache, scoped invalidation, logging, and provider-aware audit trail as the web and iOS apps. GitHub tools remain independently available when GitHub is configured.

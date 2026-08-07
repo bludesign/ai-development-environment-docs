@@ -91,7 +91,7 @@ query Agents {
 }
 ```
 
-Arguments, return types, deprecations, and a sample response are listed on each generated operation page — for example [`agents`](/graphql-reference/queries/agents) and [`enrollAgent`](/graphql-reference/mutations/enrollAgent). Field types link through to the **Types** section, so you can walk the graph from any operation.
+Arguments, return types, deprecations, and a sample response are listed on each generated operation page. Open **Queries** or **Mutations** in the generated GraphQL navigation and select `agents` or `enrollAgent`. Field types link through to the **Types** section, so you can walk the graph from any operation.
 
 ## Worktree admission queues
 
@@ -121,7 +121,7 @@ Set `CreateWorkflowInput.exclusiveWorktree` or `SaveWorkflowDraftInput.exclusive
 
 ## Subscriptions
 
-The schema also defines subscriptions, which power the dashboard's live output — job and build logs, run events, Action Center changes, and status updates. Mintlify generates pages for `Query` and `Mutation` fields only, so subscriptions do not appear in the sidebar. Their payloads do: each one resolves to a documented type, such as [`BuildLogChunk`](/graphql-reference/types/BuildLogChunk) below. For the full subscription list, use [Apollo Studio](https://studio.apollographql.com/public/ai-development-environment/variant/current) or the Apollo sandbox at `/api/graphql`.
+The schema also defines subscriptions, which power the dashboard's live output — job and build logs, run events, Action Center changes, and status updates. Mintlify generates pages for `Query` and `Mutation` fields only, so subscriptions do not appear in the sidebar. Their payloads do: each one resolves to a documented type, such as `BuildLogChunk`. For the full subscription list, use [Apollo Studio](https://studio.apollographql.com/public/ai-development-environment/variant/current) or the Apollo sandbox at `/api/graphql`.
 
 Log chunks arrive Base64-encoded, with a sequence number for ordering:
 

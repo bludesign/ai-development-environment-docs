@@ -1,0 +1,27 @@
+---
+title: "Pipelines and retries"
+description: "Run, cancel, inspect, and retry GitLab pipelines and jobs."
+---
+
+The **Pipelines** page at `/gitlab/pipelines` shows project and merge-request pipelines, their jobs, retry history, and shared normalized status.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/gitlab-pipelines.png" alt="GitLab pipelines page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/gitlab-pipelines.png" alt="GitLab pipelines page in dark theme" />
+</Frame>
+
+GitLab statuses map into the AIDE pipeline model, including created, preparing, pending, running, success, failed, canceled, skipped, manual, scheduled, and unknown states.
+
+## Pipeline actions
+
+- Create a pipeline for a ref with optional variables
+- Cancel an active pipeline
+- Retry a failed or canceled pipeline
+- Retry an individual job
+- Open the pipeline or job in the configured GitLab instance
+
+## Auto Retry
+
+Auto Retry rules are scoped by provider and project, with an optional pipeline target and a maximum attempt count. Executions, notifications, polling observations, and audit entries retain the GitLab provider discriminator.
+
+Signed webhook events are the primary update source. Polling uses the configured pipeline interval as a fallback and is visible on [Polling](/system/polling). GitHub and GitLab retry rules can run at the same time without sharing counters or pipeline records.

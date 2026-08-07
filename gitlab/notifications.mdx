@@ -1,0 +1,10 @@
+---
+title: "Notifications and search"
+description: "Find GitLab activity and route notifications to the right self-hosted instance."
+---
+
+Global search includes GitLab merge requests and pipelines alongside GitHub, Jira, worktrees, and other AIDE resources. Results retain the provider and use the configured instance root when they open a GitLab link.
+
+Notifications cover merge-request activity, review changes, discussion updates, pipeline and job status, retries, and auto-retry outcomes. Webhook events normally create updates first; polling provides a fallback for pipeline observations.
+
+GitHub and GitLab notification links remain independent when both providers are configured. Clearing one provider removes its navigation section without changing the other provider's destinations or stored settings.

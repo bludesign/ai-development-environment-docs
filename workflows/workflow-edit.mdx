@@ -14,10 +14,10 @@ The workflow editor at `/workflows/{id}/edit` is a visual canvas for building du
 
 <Columns cols={2}>
   <Card title="Trigger" icon="play">
-    Exactly one, and it starts the run. Triggers cover manual starts, schedules, GitHub and Jira events, build results, worktree state changes, AI run lifecycle events, agent and disk thresholds, and more.
+    Exactly one, and it starts the run. Triggers cover manual starts, schedules, GitHub, GitLab, and Jira events, build results, worktree state changes, AI run lifecycle events, agent and disk thresholds, and more.
   </Card>
   <Card title="Steps" icon="code-fork">
-    The work. Over a hundred typed kinds spanning Jira, GitHub, worktrees, codebases, builds, AI runs, skills, commands, notifications, signing, devices, control flow, and MCP calls.
+    The work. Typed kinds span Jira, GitHub, GitLab, worktrees, codebases, builds, AI runs, skills, commands, notifications, signing, devices, control flow, and MCP calls.
   </Card>
   <Card title="Connections" icon="diagram-project">
     Typed handles between nodes. Most steps expose `success` and `failure`; control-flow steps name their own branches.
@@ -46,7 +46,7 @@ The outgoing handles a node offers depend on its kind:
 
 ## The canvas
 
-The left panel toggles between the **palette** and the **outline**. The palette groups steps and triggers by category — Agents, AI runs, Builds, Codebases, Control flow, Extensibility, GitHub, GitHub Actions, Human loop, Jira, Manual, Plans and sessions, Schedule, Skills, Workflows, and Worktrees — and searches across label, kind, category, and description. Drag an entry onto the canvas to add it.
+The left panel toggles between the **palette** and the **outline**. The palette groups steps and triggers by category — Agents, AI runs, Builds, Codebases, Control flow, Extensibility, GitHub, GitHub Actions, GitLab, Human loop, Jira, Manual, Plans and sessions, Schedule, Skills, Workflows, and Worktrees — and searches across label, kind, category, and description. Drag an entry onto the canvas to add it.
 
 Canvas controls:
 
