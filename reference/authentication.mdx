@@ -37,6 +37,18 @@ The default is `password`. The server enforces the mode on its routes. Hiding a 
 
 On an empty database, open `/register`. The first successful account creation closes self-registration automatically. A short-lived database lease makes this atomic when two people submit the setup form at the same time.
 
+<Frame>
+  <img className="block dark:hidden" src="/images/light/register.png" alt="Registration page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/register.png" alt="Registration page in dark theme" />
+</Frame>
+
+Afterwards, `/sign-in` offers whichever methods `AUTH_MODE` enables.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/sign-in.png" alt="Sign-in page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/sign-in.png" alt="Sign-in page in dark theme" />
+</Frame>
+
 After setup, any signed-in user can open [Users](/system/users) to create accounts or turn self-registration back on. A manually enabled setting stays enabled until a user turns it off.
 
 <Note>

@@ -33,6 +33,11 @@ The token's actual GitLab role and subscription tier determine which projects an
 
 After verification, the settings card shows the GitLab identity, server version, and managed projects. The GitLab section appears immediately in web and iOS navigation.
 
+<Frame>
+  <img className="block dark:hidden" src="/images/light/gitlab-settings.png" alt="GitLab credentials card in Settings in light theme" />
+  <img className="hidden dark:block" src="/images/dark/gitlab-settings.png" alt="GitLab credentials card in Settings in dark theme" />
+</Frame>
+
 <Warning>
   Never put a GitLab token in an environment variable committed to source control, a fixture, documentation, or an app log. AIDE stores it through the configured encrypted credential backend.
 </Warning>
