@@ -231,7 +231,7 @@ Nothing reaches the network: `scripts/mock-api-server.ts` stubs the GitHub and J
 
 Routes are listed in `playwright/routes.ts`, keyed to the deterministic IDs the seed writes, so detail pages always resolve to a populated record. A route fails if it returns HTTP 4xx/5xx or raises an uncaught page error; the screenshot is still written first so failures stay diagnosable.
 
-The capture server runs on port `4321` with the mock API on `4322`, binds its own agent WebSocket port `39091` so it never collides with a dev server on `3091`, and sets a placeholder `PUBLIC_BASE_URL` so the device-enrollment form renders rather than disabling itself.
+The capture server takes an OS-selected free port, as does the agent WebSocket port the instrumentation hook binds, so a capture never collides with a dev server or another capture; the mock API stays on `4322`. Set `SCREENSHOT_PORT` or `AGENT_WS_PORT` to pin either one. The server also sets a placeholder `PUBLIC_BASE_URL` so the device-enrollment form renders rather than disabling itself.
 
 <Warning>
   The seeder refuses to write to any database not named `mock.db`. Override it
