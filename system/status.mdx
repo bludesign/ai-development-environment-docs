@@ -1,0 +1,71 @@
+---
+title: "Status"
+description: "Review installed versions and cached CLI health for every enrolled agent."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/status.png" alt="System Status page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/status.png" alt="System Status page in dark theme" />
+</Frame>
+
+Open **System → Status** to compare the software installed on the control plane with every enrolled agent and to run CLI authentication checks. The page keeps the latest completed results, so you can investigate an offline machine without losing its last report.
+
+## Installed versions
+
+The **Installed versions** card reports the version of the running server package and the versions bundled with its control agent:
+
+- Next.js
+- Claude Agent SDK
+- Codex SDK
+- OpenCode SDK
+
+The server reads its version from the installed package at runtime. A source checkout falls back to the version in its package manifest.
+
+Each agent card shows that agent's reported version beside its connection state. Versions can differ during a rolling upgrade.
+
+## Health badges
+
+The agent badge summarizes its current or cached result.
+
+| Badge | Meaning |
+| --- | --- |
+| **Healthy** | Every current check completed with exit code `0` |
+| **Issues** | At least one completed check returned a nonzero exit code, timed out, or could not launch, or a current check has not run yet |
+| **Not checked** | No current check has a completed result |
+| **Running** | A health job is active for this agent |
+| **Update required** | The agent does not advertise the `cli.health` capability |
+
+Each command has its own **Passed**, **Failed**, or **Not run** badge. Expand a command to inspect its exact shell command, exit code, duration, timestamp, standard output, and standard error. The page also identifies timeouts and truncated output.
+
+<Note>
+  Exit code `0` is the only passing result. A command can print a warning and still pass, or print nothing and fail, so inspect its output when the result is unexpected.
+</Note>
+
+## Run checks
+
+Select **Run checks** on one agent to refresh only that machine. Select **Run all** to dispatch a job to every online agent that supports CLI health checks. A second run cannot overlap an active run for the same agent.
+
+The page updates when a run starts or finishes. Checks are manual; opening or refreshing the page does not execute commands.
+
+## Cached and offline results
+
+Completed results are stored as hidden system jobs. When an agent goes offline, its card remains visible with a **Cached** badge and the last-check time. You can expand the cached command output, but **Run checks** stays unavailable until the agent reconnects.
+
+The server merges the latest completed result with the current check definitions. A newly added check appears as **Not run**. A deleted or disabled custom check disappears without changing older job records.
+
+## Older agents
+
+Agents released before CLI health support continue to appear with **Update required**. The server does not send health jobs to them. Upgrade and reconnect the control agent to make the checks available.
+
+The same command list and cached output appear under **General information** on the [agent details page](/agents/agent-detail).
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="CLI health checks" icon="terminal" href="/system/cli-health-checks">
+    Built-in commands, custom checks, limits, and shell-execution security.
+  </Card>
+  <Card title="Agent details" icon="laptop" href="/agents/agent-detail">
+    Inspect health alongside one agent's hardware and connection information.
+  </Card>
+</Columns>
