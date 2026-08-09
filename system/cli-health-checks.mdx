@@ -4,8 +4,16 @@ description: "Understand built-in CLI authentication checks and configure truste
 ---
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/cli-health-checks.png" alt="CLI health check settings in light theme" />
-  <img className="hidden dark:block" src="/images/dark/cli-health-checks.png" alt="CLI health check settings in dark theme" />
+  <img
+    className="block dark:hidden"
+    src="/images/light/cli-health-checks.png"
+    alt="CLI health check settings in light theme"
+  />
+  <img
+    className="hidden dark:block"
+    src="/images/dark/cli-health-checks.png"
+    alt="CLI health check settings in dark theme"
+  />
 </Frame>
 
 The [Status page](/system/status) runs a fixed set of read-only checks on every compatible agent. You can also open **Settings** to maintain global custom checks.
@@ -14,22 +22,17 @@ The [Status page](/system/status) runs a fixed set of read-only checks on every 
 
 Built-in checks are always enabled and cannot be edited or deleted.
 
-| Tool | Command | When it runs |
-| --- | --- | --- |
-| Atlassian Jira | `acli jira auth status` | Every eligible agent |
-| Atlassian CLI | `acli auth status` | Every eligible agent |
-| Claude | `claude auth status` | Every eligible agent |
-| Codex | `codex login status` | Every eligible agent |
-| OpenCode | `opencode auth list` | Every eligible agent |
-| Xcode | `xcodebuild -version` | Every eligible agent, including non-macOS machines |
-| GitHub | `gh auth status` | When GitHub is configured on the control plane |
-| GitLab | `glab auth status` | When GitLab is configured on the control plane |
+| Tool           | Command                 | When it runs                                   |
+| -------------- | ----------------------- | ---------------------------------------------- |
+| Atlassian Jira | `acli jira auth status` | Every eligible agent                           |
+| Atlassian CLI  | `acli auth status`      | Every eligible agent                           |
+| Claude         | `claude auth status`    | Every eligible agent                           |
+| Codex          | `codex login status`    | Every eligible agent                           |
+| OpenCode       | `opencode auth list`    | Every eligible agent                           |
+| GitHub         | `gh auth status`        | When GitHub is configured on the control plane |
+| GitLab         | `glab auth status`      | When GitLab is configured on the control plane |
 
 GitHub and GitLab configuration controls whether their checks are included. The command still validates the CLI authentication installed on each individual agent.
-
-<Note>
-  `xcodebuild -version` intentionally runs everywhere. An agent without Xcode reports a failed check, which makes the platform difference visible instead of hiding it.
-</Note>
 
 ## Custom checks
 
@@ -50,20 +53,23 @@ Each check receives a stable identifier. Renaming or editing a check preserves t
 
 The agent runs each command through its login shell from the agent user's home directory. A sweep runs up to four checks concurrently while preserving the configured definition order in the result.
 
-| Limit | Behavior |
-| --- | --- |
-| Per-command timeout | 15 seconds |
-| Retained output | 32 KiB across standard output and standard error per check |
-| Entire sweep | 10 minutes |
+| Limit               | Behavior                                                   |
+| ------------------- | ---------------------------------------------------------- |
+| Per-command timeout | 15 seconds                                                 |
+| Retained output     | 32 KiB across standard output and standard error per check |
+| Entire sweep        | 10 minutes                                                 |
 
-Standard output and standard error remain separate. Terminal color and unsafe control characters are removed before output is stored. When output crosses the limit, the page retains the prefix and shows **Output truncated**.
+The two output streams remain separate. Terminal color and unsafe control characters are removed before output is stored. When output crosses the limit, the page retains the prefix and shows **Output truncated**.
 
 A zero exit code produces a green **Passed** badge. A nonzero exit, timeout, or launch failure produces a red **Failed** badge. One failed command does not fail the containing system job, so the remaining checks still complete and retain their output.
 
 ## Shell security
 
 <Warning>
-  Custom checks execute as shell commands with the same operating-system permissions as the control agent. They can read files, change data, invoke network clients, and expand shell syntax. Add only commands you trust and keep the settings restricted to control-plane administrators.
+  Custom checks execute as shell commands with the same operating-system
+  permissions as the control agent. They can read files, change data, invoke
+  network clients, and expand shell syntax. Add only commands you trust and keep
+  the settings restricted to control-plane administrators.
 </Warning>
 
 Prefer commands that only inspect authentication or tool state. Avoid inline secrets: command text is sent to each eligible agent and retained with the health result. If a check needs a credential, let the target CLI read its existing secure configuration.
