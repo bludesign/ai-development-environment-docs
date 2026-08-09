@@ -33,6 +33,16 @@ Hardware and resource figures come from the agent's heartbeat, so they are as fr
 | Memory | Used and free, with a usage bar |
 | Disk space | Used and free for the agent's volume |
 
+### CLI health
+
+The **CLI health** section appears in the **General information** card. It uses the same current definitions and latest completed result as the [System Status page](/system/status), including the agent's overall badge, connection state, last-check time, and cached indicator.
+
+Commands and badges are visible immediately. Expand a command to inspect its exact shell command, exit code, duration, timestamp, standard output, standard error, timeout state, and output-truncation notice. Output stays collapsed by default.
+
+Select **Run checks** to refresh this agent. The button is unavailable while the agent is offline, while a run is already active, or when an older agent does not advertise the `cli.health` capability. Offline agents retain their most recent cached output.
+
+See [CLI health checks](/system/cli-health-checks) for the built-in command list, custom check settings, execution limits, and shell security guidance.
+
 ## Capabilities
 
 An agent advertises the set of job kinds it knows how to execute. Because capabilities are declared by the agent itself, an older `control-agent` build simply advertises fewer of them — which is how the UI decides whether a feature is available on that machine.

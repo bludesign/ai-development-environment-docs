@@ -167,6 +167,8 @@
             "pages": [
               "system/users",
               "system/api-keys",
+              "system/status",
+              "system/cli-health-checks",
               "system/polling",
               "system/build-data",
               "system/provisioning-profiles",
