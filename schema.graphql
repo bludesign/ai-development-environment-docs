@@ -4759,6 +4759,9 @@ type AppCounts {
   """Number of visible worktrees."""
   worktrees: Int!
 
+  """Number of visible worktrees with staged or unstaged changes."""
+  dirtyWorktrees: Int!
+
   """Number of active plans."""
   plans: Int!
 
@@ -6998,6 +7001,9 @@ type RepositoryPreparation {
 
   """Uploaded content size for write preparations."""
   byteCount: Int
+
+  """Base64-encoded uploaded contents for write preparations."""
+  contentBase64: String
 
   """Hash of all behavior-affecting fields."""
   definitionHash: String!
@@ -18737,6 +18743,9 @@ type WorktreePreparationFileStatus {
 type WorktreePreparationWorktree {
   """The worktree represented by this preparation state."""
   worktree: Worktree!
+
+  """The agent that owns this worktree."""
+  agent: Agent!
 
   """Whether the owning agent supports preparation jobs."""
   supported: Boolean!
