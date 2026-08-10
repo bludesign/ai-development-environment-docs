@@ -59,6 +59,19 @@ A normal **Sync** or **Rebase** first checks whether managed changes block the o
 
 A real rebase conflict remains active and suspends preparation statuses. **Cancel rebase** reapplies the rules. If a rebase is completed outside AIDE, use **Apply** on [Prepare](/system/prepare).
 
+## MCP and workflows
+
+The built-in MCP catalog exposes the same preparation lifecycle:
+
+- `get_codebase_repository_preparations` reads repository rules and uploaded write contents.
+- `save_codebase_repository_preparations` atomically replaces the rule set. Omitted rules are deleted, so MCP clients treat it as a destructive tool.
+- `get_worktree_preparation_overview` reads a compact status matrix without duplicating uploaded file bytes.
+- `run_worktree_preparations` dispatches **Inspect**, **Apply**, or **Undo** for one or more worktrees and returns jobs plus explicit skip reasons.
+- `run_worktree_operation` accepts `forcePreparations` for an explicitly forced **Sync** or **Rebase**.
+- `get_worktree_automations` includes the typed Auto Sync pause reason, and `force_worktree_auto_sync` retries only an Auto Sync paused by a preparation conflict.
+
+In the workflow editor, add **Run worktree preparations** to inspect, apply, or undo one worktree and wait for its per-file agent result. **Run worktree operation** exposes **Force preparation conflicts**, and **Set worktree Auto Sync** includes **Force** for the preparation-conflict recovery path. These force options are destructive for the same reasons as their UI equivalents.
+
 ## Related pages
 
 <Columns cols={2}>
