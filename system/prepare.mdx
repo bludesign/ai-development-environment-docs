@@ -1,0 +1,50 @@
+---
+title: "Prepare"
+description: "Inspect, apply, and undo repository preparation rules across every worktree."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/prepare.png" alt="Prepare page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/prepare.png" alt="Prepare page in dark theme" />
+</Frame>
+
+Open **System → Prepare** to compare repository preparation rules across every primary and linked worktree. The page loads the last persisted result immediately, then requests one deduplicated inspection from each eligible worktree.
+
+## Read the matrix
+
+Repositories appear as sections. Each file rule is a row and each worktree is a column. The path column stays visible while you scroll horizontally.
+
+| Color | Statuses | Meaning |
+| --- | --- | --- |
+| Green | Applied | The file and its Git metadata match the current rule. |
+| Amber | Pending, Undone, Suspended | The rule needs attention, was intentionally undone, or is paused during a rebase. |
+| Red | Drifted, Error | The file differs from the definition or the last operation failed. |
+| Neutral | Unknown, Not applicable, Not configured | The worktree has not been inspected, the tracked-path rule does not apply, or the repository has no rules. |
+
+Hover a badge on the web app to read its latest message. The iOS app exposes the same message and status in an accessible row.
+
+## Apply or undo rules
+
+- **Apply** enforces all current rules in one worktree.
+- **Undo** restores managed tracked files from `HEAD`, removes untracked files that a write rule added, and clears AIDE-managed assume-unchanged flags.
+- **Apply all** and **Undo all** run the action across every eligible worktree.
+- **Refresh** reloads persisted results and requests current inspections.
+
+<Warning>
+  Apply and Undo can overwrite local work on managed write and delete paths. Review the repository's [preparation rules](/codebases/repository-preparations) before you continue.
+</Warning>
+
+## Offline and older agents
+
+Missing worktrees, offline agents, and agents without the `worktree.prepare` capability remain in the matrix. Their saved status stays visible, but actions are unavailable. Upgrade and reconnect an unsupported agent before applying rules on it.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Repository preparations" icon="file-pen" href="/codebases/repository-preparations">
+    Define the write, delete, and assume-unchanged rules shown here.
+  </Card>
+  <Card title="Worktrees" icon="code-fork" href="/worktrees/worktrees">
+    Create worktrees and run force-aware Sync or Rebase operations.
+  </Card>
+</Columns>
