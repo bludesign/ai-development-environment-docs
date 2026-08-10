@@ -51,7 +51,7 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
     Select a base, or inherit the remote default.
   </Step>
   <Step title="Create" icon="check">
-    The agent creates the worktree and reports it back.
+    The agent creates the worktree, applies the repository's preparation rules, and reports it back. If preparation fails, AIDE removes the incomplete worktree and removes only a branch created by that job.
   </Step>
 </Steps>
 
@@ -88,6 +88,8 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
   </Accordion>
   <Accordion title="Rebase conflicts" icon="triangle-exclamation">
     A rebase that stops on conflicts leaves the worktree in **Rebase paused**. Resolve them by running a merge-conflict quick-action workflow, or **Cancel rebase** to restore the branch to its pre-rebase state.
+
+    A preparation conflict is detected before Sync or Rebase modifies the worktree. The dialog lists the managed paths and offers a force action only for this result. Forcing clears managed paths and assume-unchanged flags, discards edits on assume-only paths, runs Git, and reapplies preparations. A genuine Git conflict suspends preparations until the rebase is cancelled or completed.
   </Accordion>
   <Accordion title="Opening in an editor" icon="code">
     **Open in VS Code** and **Open in VS Code Insiders** launch the worktree folder on its agent. They sit in the **Customize worktree** menu, alongside the worktree's tags and highlight color.
@@ -141,6 +143,8 @@ The action is unavailable when the worktree has no staged or unstaged changes, h
 **Auto Sync** keeps a branch current without you asking: whenever its target branch changes, the worktree is rebased and pushed with force-with-lease.
 
 It can also handle conflicts for you — enable **Run a quick-action workflow to resolve merge conflicts automatically** and select a merge-conflict workflow, optionally with a specific trigger choice. Auto Sync can be paused, resumed, and cancelled.
+
+Auto Sync never forces through a preparation conflict automatically. It pauses with a preparation reason and shows the affected paths. **Force Sync** runs the existing conflict workflow when needed, reapplies repository preparations, and resumes Auto Sync after success.
 
 ## Auto Merge
 

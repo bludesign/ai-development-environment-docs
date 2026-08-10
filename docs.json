@@ -60,7 +60,8 @@
                 "pages": [
                   "codebases/codebases",
                   "codebases/codebase-detail",
-                  "codebases/repository-detail"
+                  "codebases/repository-detail",
+                  "codebases/repository-preparations"
                 ]
               },
               {
@@ -168,6 +169,7 @@
               "system/users",
               "system/api-keys",
               "system/status",
+              "system/prepare",
               "system/cli-health-checks",
               "system/polling",
               "system/build-data",

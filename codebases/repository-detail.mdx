@@ -10,7 +10,7 @@ description: "Manage settings shared by every registered checkout of a repositor
 
 The repository details page at `/codebases/repositories/{id}` manages settings that belong to the *logical* repository rather than to any one checkout. Everything here applies across every agent checkout and every worktree that shares the origin.
 
-The page has four tabs.
+The page has five tabs.
 
 <Tabs>
   <Tab title="Repository details">
@@ -25,6 +25,11 @@ The page has four tabs.
     <Tip>
       Skill groups are how a repository gets a consistent set of agent skills on every machine. Define them under [Skills](/skills/skill-groups), then assign them here once instead of per checkout.
     </Tip>
+  </Tab>
+  <Tab title="Preparations">
+    Upload files to write or override, list exact paths to delete, and select tracked paths that should always be assume-unchanged. Saving updates the repository definition without modifying existing worktrees.
+
+    See [Repository preparations](/codebases/repository-preparations) for path rules, upload limits, Git behavior, and force-aware Sync and Rebase handling.
   </Tab>
   <Tab title="iOS App">
     Enables reusable Xcode build configurations for every checkout and worktree of this repository.
@@ -75,7 +80,7 @@ The page has four tabs.
 
 ## Why these settings are repository-wide
 
-A repository is usually checked out on more than one Mac, and each checkout can carry several worktrees. Putting build configurations, skill groups, and retry rules on the repository means a new checkout inherits them the moment it is registered — there is nothing to copy per machine, and no way for two Macs to drift apart.
+A repository is usually checked out on more than one Mac, and each checkout can carry several worktrees. Putting preparations, build configurations, skill groups, and retry rules on the repository means every checkout uses one definition instead of maintaining per-machine copies.
 
 ## Related pages
 
@@ -85,5 +90,8 @@ A repository is usually checked out on more than one Mac, and each checkout can 
   </Card>
   <Card title="Builds" icon="hammer" href="/builds/builds">
     Build history and the reusable build scripts you allow here.
+  </Card>
+  <Card title="Repository preparations" icon="file-pen" href="/codebases/repository-preparations">
+    Configure managed files for every worktree.
   </Card>
 </Columns>
