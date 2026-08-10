@@ -14,6 +14,8 @@ Open **System → Prepare** to compare repository preparation rules across every
 
 Repositories appear as sections. Each file rule is a row and each worktree is a column. The path column stays visible while you scroll horizontally.
 
+Worktree cards and matrix headers include the owning agent and hostname, branch or detached commit, full checkout path, and whether the checkout is primary or linked. These details distinguish primary checkouts of the same repository that are registered on different agents.
+
 | Color | Statuses | Meaning |
 | --- | --- | --- |
 | Green | Applied | The file and its Git metadata match the current rule. |
@@ -27,7 +29,8 @@ Hover a badge on the web app to read its latest message. The iOS app exposes the
 
 - **Apply** enforces all current rules in one worktree.
 - **Undo** restores managed tracked files from `HEAD`, removes untracked files that a write rule added, and clears AIDE-managed assume-unchanged flags.
-- **Apply all** and **Undo all** run the action across every eligible worktree.
+- **Apply all** in a repository header applies its rules to every eligible worktree for that repository.
+- The page-level **Apply all** and **Undo all** run the action across every eligible worktree on the page.
 - **Refresh** reloads persisted results and requests current inspections.
 
 <Warning>
