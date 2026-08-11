@@ -64,10 +64,8 @@ The server reads its configuration from the environment. A source checkout loads
   SQLite connection string. Only `file:` URLs are accepted. Read by both the runtime client and the Prisma CLI.
 </ParamField>
 
-<ParamField path="AIDE_SERVER_HOSTNAME" type="string" default="127.0.0.1">
-  Interface the HTTP server binds to when you use the installed npm launcher or Docker image. Set it to `0.0.0.0` only when a container or reverse proxy must reach the listener.
-
-  The launcher intentionally ignores the ambient `HOSTNAME` variable because shells and container runtimes commonly populate it with a network-reachable machine name. A source checkout started directly with `npm start`, and the Homebrew service's explicit environment file, still use Next.js's `HOSTNAME` variable.
+<ParamField path="HOSTNAME" type="string" default="127.0.0.1">
+  Interface the HTTP server binds to. Standard Next.js variable.
 </ParamField>
 
 <ParamField path="PORT" type="number" default="3000">
