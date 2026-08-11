@@ -67,6 +67,7 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
     | **Push** / **Publish** | Push, or publish an unpublished branch |
     | **Force push** | Push with force-with-lease |
     | **Reset** | Discard local state back to a known point |
+    | **Clear lock** | Remove the selected worktree's stale Git `index.lock` file |
     | **Stash all** | Stash tracked and untracked changes |
     | **Stage all** / **Unstage all** | Bulk staging |
     | **Commit** | Stage changes and create a commit — see [Committing changes](#committing-changes) |
@@ -75,7 +76,15 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
 
     **Pull** fetches the branch's remote and fast-forwards onto it, and is offered only while the branch is behind its upstream. A branch that has diverged cannot fast-forward: **Sync** or **Rebase** are the ways through.
 
-    **Force push**, **Reset**, **Stash all**, and **Stage all** / **Unstage all** live behind **More** at the end of the action row. **Force push** and **Reset** ask for a second click to confirm before they run.
+    **Force push**, **Reset**, **Clear lock**, **Stash all**, and **Stage all** / **Unstage all** live behind **More** at the end of the action row. **Force push**, **Reset**, and **Clear lock** ask for a second click to confirm before they run.
+
+    Use **Clear lock** when Git reports that it cannot create `.git/index.lock` because the file already exists. Stop any Git process using the worktree first. The action removes only the selected worktree's index lock and succeeds if the stale file is already gone.
+
+    In the iOS app, open **Worktree Actions → Changes → Clear Lock**. Confirm the safety warning to run the same operation.
+
+    <Warning>
+      Do not clear the lock while a Git command is still running. Removing an active lock can allow concurrent writes to the Git index and corrupt it.
+    </Warning>
 
     **Change branch to `<default>`** names the repository default branch — for most repositories that reads **Change branch to main** — and skips the branch form entirely. It is hidden when another worktree already holds that branch, since Git refuses to check a branch out twice, and disabled when this worktree is already on it.
 
