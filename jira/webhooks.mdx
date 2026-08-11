@@ -41,7 +41,7 @@ The **Jira webhook** card in **Settings** registers the webhook for you, using t
 
 <Steps>
   <Step title="Check the webhook URL">
-    The card fills in this server's address. Edit it if Jira reaches the server somewhere else — a private or loopback address is rejected, because Jira would accept it and then fail every delivery.
+    The card fills in this server's address. Edit it if Jira reaches the server somewhere else. The URL must use publicly trusted HTTPS; HTTP, private, and loopback addresses are rejected before registration.
   </Step>
   <Step title="Scope it with JQL">
     Set a filter such as `project in (ABC, XYZ)` so only the projects you automate send deliveries. Each issue-mutating delivery costs one Jira API call to refresh the ticket, so keep the filter tight. Leave it empty to receive every issue event.

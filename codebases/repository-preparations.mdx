@@ -70,6 +70,8 @@ The built-in MCP catalog exposes the same preparation lifecycle:
 - `run_worktree_operation` accepts `forcePreparations` for an explicitly forced **Sync** or **Rebase**.
 - `get_worktree_automations` includes the typed Auto Sync pause reason, and `force_worktree_auto_sync` retries only an Auto Sync paused by a preparation conflict.
 
+When an AI run calls the first two tools through run-scoped MCP, their `repositoryId` must match the repository attached to that run. Unscoped and direct preset connections retain their normal caller permissions.
+
 In the workflow editor, add **Run worktree preparations** to inspect, apply, or undo one worktree and wait for its per-file agent result. **Run worktree operation** exposes **Force preparation conflicts**, and **Set worktree Auto Sync** includes **Force** for the preparation-conflict recovery path. These force options are destructive for the same reasons as their UI equivalents.
 
 ## Related pages
