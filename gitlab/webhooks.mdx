@@ -29,6 +29,8 @@ Create the project webhook in GitLab and paste the token. AIDE does not store a 
 
 GitLab 19.x Standard Webhooks sign the raw request body. AIDE validates `webhook-id`, `webhook-timestamp`, and `webhook-signature`, compares the HMAC in constant time, rejects timestamps outside a five-minute window, and deduplicates delivery IDs.
 
+Webhook payloads are capped at 1 MiB. AIDE stops reading an oversized streamed body and responds with `413` before parsing or processing it.
+
 The `/gitlab/webhooks` page records the event, project, action, outcome, timestamps, and sanitized error. Invalid signatures are rejected before event processing. If downstream processing fails, GitLab can redeliver the same delivery ID and AIDE retries it. A delivery is treated as a duplicate only after it reaches a processed or intentionally ignored outcome.
 
 <Warning>

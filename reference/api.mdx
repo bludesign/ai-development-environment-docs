@@ -110,6 +110,7 @@ Both ingestion endpoints accept either a single record or an atomic `{ "items": 
 </Note>
 
 The export endpoint caps its request body at 256 KiB and returns `PAYLOAD_TOO_LARGE` beyond that.
+Direct export calls may omit `locale` and `timeZone`. When supplied, `locale` must be one of the dashboard's supported locales and `timeZone` must be a valid IANA time-zone identifier; unrecognized values return `400` instead of reaching the formatter.
 
 ### APNs device registration
 
@@ -155,6 +156,8 @@ The dashboard and the control agents use a handful of further routes. They are p
 | `GET /api/worktrees/{worktreeId}/diff-image`                         | Rendering an image diff for a worktree change              |
 | `POST /api/ios/enrollment/start`                                     | Starting a signed iOS device enrollment                    |
 | `GET /api/ios/devices/export.tsv`                                    | Exporting device UDIDs for the Apple Developer portal      |
+| `GET /{locale}/builds/{buildId}/output`                              | Opening a build's authenticated raw terminal output        |
+| `GET /{locale}/commands/runs/{runId}/output`                         | Opening a command run's authenticated raw terminal output  |
 
 <Warning>
   These stay behind whatever authentication protects the dashboard.
@@ -164,7 +167,7 @@ The dashboard and the control agents use a handful of further routes. They are p
 
 ### Public endpoints
 
-Everything under `/api/public/*` is intentionally unauthenticated: iOS enrollment callbacks, short-lived build artifact and over-the-air manifest downloads, and the two signature-verified webhooks. [Hosting and networking](/reference/hosting) lists the full path set and explains how to expose exactly that namespace and nothing else.
+Everything under `/api/public/*` is intentionally unauthenticated: iOS enrollment callbacks, short-lived build artifact and over-the-air manifest downloads, and the three signature-verified webhooks. [Hosting and networking](/reference/hosting) lists the full path set and explains how to expose exactly that namespace and nothing else.
 
 ## MCP
 
@@ -183,6 +186,8 @@ The same endpoint serves three scopes, selected by query parameter:
 | `/api/mcp?run=<runId>` | Only the tools granted to that AI run                                    | An enrolled agent's credential     |
 
 Supplying both `preset` and `run`, or either one twice, is rejected with `400 INVALID_MCP_SCOPE`.
+
+Run scope applies argument-level containment as well as tool-name grants. `get_codebase_repository_preparations` and `save_codebase_repository_preparations` may access only the logical repository attached to the run; a preset cannot let a run read or replace another repository's rules.
 
 ### Authentication
 

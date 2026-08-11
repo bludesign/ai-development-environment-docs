@@ -179,7 +179,7 @@ Tests live beside the code they cover as `*.test.ts` and `*.test.tsx`. The suite
 | `npm run schema:publish` | Publishes the schema to Apollo GraphOS using `APOLLO_KEY`.                  |
 | `npm run clean`          | Removes `.next`, coverage, generated sources, and the development database. |
 
-The production server accepts the standard Next.js `HOSTNAME` and `PORT` environment variables plus `DATABASE_URL`. It also requires `APP_SECRET`, and `APP_ORIGINS` is recommended; see [Environment variables](/reference/environment-variables) for the full list and [Authentication](/reference/authentication) for the password and OIDC mode variables.
+The source checkout's standalone Next.js server accepts `HOSTNAME`, `PORT`, and `DATABASE_URL`. The packaged npm launcher and Docker image use the explicit `AIDE_SERVER_HOSTNAME` override instead and ignore an ambient `HOSTNAME`; Homebrew supplies `HOSTNAME` explicitly from its service environment file. Every production server also requires `APP_SECRET`, and `APP_ORIGINS` is recommended; see [Environment variables](/reference/environment-variables) for the full list and [Authentication](/reference/authentication) for the password and OIDC mode variables.
 
 ## The control agent
 

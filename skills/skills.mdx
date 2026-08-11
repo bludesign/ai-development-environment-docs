@@ -65,6 +65,7 @@ A client that is disabled here is excluded from scanning and deployment entirely
 ## Notes
 
 - Where a skill is written depends on which clients are enabled. Claude Code has its own location; the shared `AGENTS` location covers Codex, global GitHub Copilot, and any other enabled client when Claude Code is not in play. One deployment can therefore serve several clients at once.
+- A skill package may be a symbolic link only when its resolved directory stays inside that configured global or project skill root. A project skill root must also resolve inside the project checkout. Escaping links are skipped with a scan warning and cannot be read through the agent.
 - **Tracked** marks an installation this app deployed, which is what lets a sync safely update or remove it. An untracked copy that diverges is always treated as a conflict rather than being overwritten.
 - Deleting a database skill removes its managed copies during the next sync.
 

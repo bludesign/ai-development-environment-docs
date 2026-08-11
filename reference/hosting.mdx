@@ -13,14 +13,14 @@ The server binds two ports, not one.
 
 | Listener                             | Variable                             | Homebrew, npm, and Docker default | Source default                 |
 | ------------------------------------ | ------------------------------------ | --------------------------------- | ------------------------------ |
-| HTTP (dashboard, GraphQL, REST, MCP) | `PORT`, `HOSTNAME`                   | `3090`                            | `3000`                         |
+| HTTP (dashboard, GraphQL, REST, MCP) | `PORT`; bind variable varies by install       | `3090`                            | `3000`                         |
 | Agent GraphQL WebSocket              | `AGENT_WS_PORT`, `AGENT_WS_HOSTNAME` | `3091`                            | `3092` under `npm run dev:all` |
 
 The WebSocket listener carries GraphQL subscriptions: agent job traffic, live build and run output, and the dashboard's own streaming updates. Control agents dial it outbound, so managed machines and agent containers never expose a listening port of their own.
 
 The app also rewrites `/graphql` on the HTTP origin to the WebSocket listener, and the browser defaults to `wss://<page host>/graphql` when `NEXT_PUBLIC_AGENT_WS_URL` is unset. That is what makes a single-origin deployment possible.
 
-The production server accepts the standard Next.js `HOSTNAME` and `PORT` environment variables plus `DATABASE_URL`. Set `APP_ORIGINS` to the public origin users and the OIDC provider use; a request arriving on an origin missing from it is then rejected. It is optional — unset, the server trusts each request's own host — but setting it is what pins the absolute URLs this server hands to other systems. See [Environment variables](/reference/environment-variables).
+The installed npm launcher and Docker image use `AIDE_SERVER_HOSTNAME`; they ignore an ambient `HOSTNAME` value and bind HTTP to `127.0.0.1` unless you explicitly override it. The Homebrew service and a source checkout use an explicit `HOSTNAME` from their deployment environment. All variants accept `PORT` and `DATABASE_URL`. Set `APP_ORIGINS` to the public origin users and the OIDC provider use; a request arriving on an origin missing from it is then rejected. It is optional — unset, the server trusts each request's own host — but setting it is what pins the absolute URLs this server hands to other systems. See [Environment variables](/reference/environment-variables).
 
 ## How the public origin is resolved
 

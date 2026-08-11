@@ -22,7 +22,7 @@ services:
     image: ghcr.io/bludesign/ai-development-environment:latest
     restart: unless-stopped
     environment:
-      HOSTNAME: 0.0.0.0
+      AIDE_SERVER_HOSTNAME: 0.0.0.0
       PORT: 3090
       AGENT_WS_HOSTNAME: 0.0.0.0
       AGENT_WS_PORT: 3091
@@ -154,6 +154,6 @@ gh auth token | docker login ghcr.io \
 
 ## Server configuration
 
-The image supports the same environment variables as the npm server, including Better Auth and OIDC settings, `PORT`, `HOSTNAME`, `AGENT_WS_HOSTNAME`, `AGENT_WS_PORT`, `DATABASE_URL`, credential-storage settings, and Vault settings. It applies pending Prisma migrations before starting.
+The image supports the same environment variables as the npm server, including Better Auth and OIDC settings, `PORT`, `AIDE_SERVER_HOSTNAME`, `AGENT_WS_HOSTNAME`, `AGENT_WS_PORT`, `DATABASE_URL`, credential-storage settings, and Vault settings. It applies pending Prisma migrations before starting. The image sets `AIDE_SERVER_HOSTNAME=0.0.0.0`; an ambient container `HOSTNAME` never controls the bind address.
 
 See [Hosting and networking](/reference/hosting) before exposing the control plane beyond localhost.

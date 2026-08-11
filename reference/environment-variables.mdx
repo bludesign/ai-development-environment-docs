@@ -31,6 +31,8 @@ The server reads its configuration from the environment. A source checkout loads
 
   Entries may be a bare host (`app.example.com`), a host and port (`10.0.0.5:3000`), or a full origin (`https://app.example.com`). An entry without a port matches any port; an entry with one is exact.
 
+  The same matching protects browser WebSocket handshakes. If an entry includes a port, the dashboard page must use that exact port even when the WebSocket listener itself runs on another port.
+
   Optional. Outside production, `localhost`, `127.0.0.1`, and `[::1]` are always trusted in addition to whatever you list, so a source checkout usually needs nothing here.
 
   In production, leaving both this and `PUBLIC_BASE_URL` unset puts the server in **inferred mode**: it trusts whatever host each request arrived on. Sign-in works on any hostname without configuration, and a cross-site request is still rejected — a browser sets `Host` to the real destination, so an attacker's page cannot make its own origin look trusted.
@@ -62,8 +64,10 @@ The server reads its configuration from the environment. A source checkout loads
   SQLite connection string. Only `file:` URLs are accepted. Read by both the runtime client and the Prisma CLI.
 </ParamField>
 
-<ParamField path="HOSTNAME" type="string" default="127.0.0.1">
-  Interface the HTTP server binds to. Standard Next.js variable.
+<ParamField path="AIDE_SERVER_HOSTNAME" type="string" default="127.0.0.1">
+  Interface the HTTP server binds to when you use the installed npm launcher or Docker image. Set it to `0.0.0.0` only when a container or reverse proxy must reach the listener.
+
+  The launcher intentionally ignores the ambient `HOSTNAME` variable because shells and container runtimes commonly populate it with a network-reachable machine name. A source checkout started directly with `npm start`, and the Homebrew service's explicit environment file, still use Next.js's `HOSTNAME` variable.
 </ParamField>
 
 <ParamField path="PORT" type="number" default="3000">
