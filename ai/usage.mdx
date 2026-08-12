@@ -8,7 +8,7 @@ description: "Review token usage and cost across every enrolled machine."
   <img className="hidden dark:block" src="/images/dark/usage.png" alt="Usage page in dark theme" />
 </Frame>
 
-The **Usage** page at `/usage` answers "what have my AI tools actually cost?" across every machine you manage. It does not read a stored table — each visit fans a collection job out to your online agents, runs `ccusage --json` on each of them, and aggregates the reports into one view broken down by day, model, and agent.
+The **Usage** page at `/usage` answers "what have my AI tools actually cost?" across every machine you manage. Each visit shows durable usage history immediately, fans a fresh collection job out to your online agents, runs `ccusage --json` on each of them, and aggregates the reports into one view broken down by day, model, and agent.
 
 <Note>
   This page reports what the AI tools themselves recorded on disk, covering all local usage including work you did outside this control plane. The per-run figures on a [Plan](/ai/plan-detail) or [Session](/ai/session-detail) come from the run's own token counts instead — the two answer different questions.
@@ -24,10 +24,10 @@ The **Usage** page at `/usage` answers "what have my AI tools actually cost?" ac
     A job runs `ccusage --json` locally, with a 120-second timeout and a 16 MB cap on output. Results stream back as each agent finishes.
   </Step>
   <Step title="Reports are merged" icon="layers">
-    Daily entries from every agent are merged by date, then by model, then by agent. The whole collection has a 150-second deadline; whatever has reported by then is what you see.
+    Daily entries from every agent are merged by date, then by model, then by agent. Successful reports are stored as they arrive, including partial collections. The whole collection has a 150-second deadline.
   </Step>
   <Step title="The page updates live" icon="refresh-cw">
-    Progress arrives over a subscription and is reconciled every two seconds until the collection completes. **Refresh usage** discards the result and starts a fresh collection.
+    Progress arrives over a subscription and is reconciled every two seconds until the collection completes. Stored totals remain visible while the current agents load. **Refresh usage** starts a fresh collection without blanking the history already on screen.
   </Step>
 </Steps>
 
@@ -51,10 +51,19 @@ Each agent row inside the table also names the sources ccusage attributed that u
 ## Filters
 
 - **Range** — **All data**, **7 days**, or **30 days**.
-- **Agent** — appears once more than one agent has reported, and narrows every chart, tile, and table row to that agent.
+- **Agent** — derives its choices from the displayed aggregate, so an offline agent with stored usage remains selectable. The web control appears once more than one agent is available; iOS shows its picker whenever the aggregate contains an agent. It narrows every chart, tile, and usage row without recollecting.
 - **Model** — set by selecting a model in the chart legend. The summary tiles say so explicitly when they cover one model rather than the whole range.
 
 Selecting a model and then narrowing the range past the point where that model appears drops the model filter rather than showing a row of zeros.
+
+## History controls
+
+Usage history is enabled each time you open the page. AIDE stores the last cumulative report from each agent plus the usage archived from earlier local histories. If an agent's counters decrease, disappear, or later reappear because local tool history was cleared, AIDE treats the new counters as a new epoch and adds them to the preserved total.
+
+- **History on / Live only** changes only what the page displays. Collection and durable recording continue in either mode, and the choice resets to **History on** on the next visit.
+- **Clear history** asks for confirmation, then removes stored history for every agent and date. The current live collection remains visible. Reports completed before the clear cannot silently restore the deleted history; the next new collection establishes a fresh baseline.
+
+The five-minute sidebar usage collection also updates this history. Its temporary collection jobs can be cleaned up without removing the durable totals.
 
 ## Empty states
 
@@ -63,15 +72,15 @@ The page distinguishes several kinds of "nothing here", so the fix is never a gu
 | Message | What to do |
 | --- | --- |
 | **No agents enrolled** | Enroll a machine from the [Agents](/agents/agents) page |
-| **No agents online** | Connect an enrolled agent and refresh |
-| **No compatible agents online** | Update `control-agent` on an online machine to pick up the ccusage capability |
+| **No agents online** | Connect an enrolled agent and refresh; stored history remains available when it exists |
+| **No compatible agents online** | Update `control-agent` on an online machine to pick up the ccusage capability; stored history remains available when it exists |
 | **Usage collection failed** | No agent returned a valid report — check the per-agent errors in the banner |
 | **No usage found** | Agents reported successfully but ccusage has no daily usage recorded |
 | **No usage in this range** | Widen the range to reach older usage |
 
 ## Notes
 
-- Nothing is cached between visits: every load is a fresh collection, so the figures always match what is on disk right now.
+- Every load still runs a fresh collection, but successful cumulative reports are stored so clearing usage from an agent does not erase previously observed totals. Use **Live only** when you need to compare against what agents currently report from disk.
 - `ccusage` must be installed on the agent. A machine that cannot run it reports a failure rather than silently contributing zero.
 - The agent does not rely on `PATH` alone. A service started by `brew services` inherits a bare `PATH` that hides Homebrew, npm, and bun installs, so the agent also searches `~/.local/bin`, `~/.bun/bin`, `~/.npm-global/bin`, the directory holding its own `node` binary, and `/opt/homebrew/bin` and `/usr/local/bin` on macOS. Set `CONTROL_AGENT_CCUSAGE_EXECUTABLE` to a full path to pin an install the search misses.
 
