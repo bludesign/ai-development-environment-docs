@@ -15,11 +15,12 @@ The **Worktrees** page at `/worktrees` is the busiest page in the product. It sh
 - **Search** across branches, agents, repositories, tickets, and codebases.
 - **Filter by agent** and **filter by repository**.
 - **Filter by changes** narrows the list to **Dirty worktrees** or **Clean worktrees**. A worktree counts as dirty when it has staged or unstaged changes — the same rule behind its **Dirty** badge.
+- **Filter by branch** can show only worktrees **Not on default branch**. Detached worktrees count when the repository's default branch is known; repositories whose default branch is unknown are excluded because they cannot be classified.
 - Use **Group by agent** or **Group by repository** to choose the primary grouping. The other dimension remains visible on each worktree.
 - Switch between **Card layout** and **Table layout**.
 - **Refresh** re-reads status; **Fetch now** runs `git fetch origin` for eligible codebases.
 
-Your search, filters, grouping, and layout are saved in the browser and restored the next time you open the page. A saved agent or repository filter is ignored if that item no longer exists. The worktrees view inside an [app](/apps/app-detail) keeps its own saved filters, separate from this page's.
+Your search, changes filter, branch filter, grouping, and layout are saved in the browser and restored the next time you open the page. Filters combine, so you can show, for example, dirty worktrees that are also off their default branch. A saved agent or repository filter is ignored if that item no longer exists. The worktrees view inside an [app](/apps/app-detail) keeps its own saved filters, separate from this page's. The iOS Worktree Actions menu offers the same changes and branch filters for the current visit.
 
 Each worktree shows its branch, path, base branch, agent, repository, upstream status, base freshness, nonzero commit counts, and — where they exist — its pull request, latest build, review decision, and comment count.
 

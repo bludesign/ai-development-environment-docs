@@ -2131,6 +2131,11 @@ type Mutation {
     requestId: ID
   ): CcusageCollection!
 
+  """
+  Clears all durable Claude Code usage history and returns the number of agent histories removed.
+  """
+  clearCcusageHistory: Int!
+
   """Starts manual CLI health sweeps for one agent or every eligible agent."""
   runCliHealthChecks(
     """Agent to check, or null to dispatch to all online compatible agents."""
@@ -6721,10 +6726,16 @@ type CcusageCollection {
   """The progress associated with this Claude Code usage collection."""
   progress: CcusageProgress!
 
+  """Whether durable Claude Code usage history is stored."""
+  hasStoredHistory: Boolean!
+
   """The aggregate associated with this Claude Code usage collection."""
   aggregate(
     """The range used to filter or perform the operation. Defaults to `ALL`."""
     range: CcusageRange = ALL
+
+    """Whether stored usage history is included. Defaults to `true`."""
+    includeHistory: Boolean = true
   ): CcusageAggregate!
 }
 
