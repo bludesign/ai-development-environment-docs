@@ -39,6 +39,7 @@ The status banner above the results always shows ***n* of *N* compatible agents 
 | --- | --- |
 | **Daily cost by model** | Stacked USD per day across the selected range. Selecting a model in the legend charts it alone; selecting it again restores every model |
 | Summary tiles | Total cost, total tokens, input, output, cache creation, and cache read for the current filters |
+| **Spend records** | The highest rolling 7-day and 30-day spend across all retained dates, with each winning inclusive date span |
 | Usage table | One row per day, expandable to models, expandable again to the agents that used each model |
 | Grand total | The table footer, covering the selected range |
 
@@ -48,13 +49,20 @@ Each agent row inside the table also names the sources ccusage attributed that u
   A day can carry an **Unattributed tokens** row. That is usage ccusage recorded without a model attached — it counts toward totals but cannot be charted against a specific model.
 </Note>
 
-## Filters
+## Date windows and filters
 
-- **Range** — **All data**, **7 days**, or **30 days**.
+- **Range** — **30 days** is selected by default. You can also choose **7 days** or **All data**.
+- **End date** — appears for the 7-day and 30-day ranges and defaults to today. The selected day is included, so a 7-day range contains that day and the six preceding calendar days. You cannot select a future day. **All data** hides and ignores the end date, while switching between ranges preserves it.
 - **Agent** — derives its choices from the displayed aggregate, so an offline agent with stored usage remains selectable. The web control appears once more than one agent is available; iOS shows its picker whenever the aggregate contains an agent. It narrows every chart, tile, and usage row without recollecting.
 - **Model** — set by selecting a model in the chart legend. The summary tiles say so explicitly when they cover one model rather than the whole range.
 
-Selecting a model and then narrowing the range past the point where that model appears drops the model filter rather than showing a row of zeros.
+Changing the range, end date, History/Live state, agent, or model refreshes the current view without starting another collection. Selecting a model and then narrowing the range past the point where that model appears drops the model filter rather than showing a row of zeros.
+
+### Spend records
+
+The two spend records use fixed inclusive calendar windows across all retained dates. Days without usage contribute zero. If multiple windows have the same total, AIDE shows the one with the latest end date.
+
+Spend records ignore the selected range and end date. They do follow **History on / Live only**, the agent filter, and the web model filter. When those filters have no matching usage, both records show an empty state.
 
 ## History controls
 
@@ -81,6 +89,7 @@ The page distinguishes several kinds of "nothing here", so the fix is never a gu
 ## Notes
 
 - Every load still runs a fresh collection, but successful cumulative reports are stored so clearing usage from an agent does not erase previously observed totals. Use **Live only** when you need to compare against what agents currently report from disk.
+- The public GraphQL API keeps `range: ALL` as its default for backward compatibility. For `LAST_7_DAYS` and `LAST_30_DAYS`, pass `endDate` as a strict `YYYY-MM-DD` value to choose the inclusive last day.
 - `ccusage` must be installed on the agent. A machine that cannot run it reports a failure rather than silently contributing zero.
 - The agent does not rely on `PATH` alone. A service started by `brew services` inherits a bare `PATH` that hides Homebrew, npm, and bun installs, so the agent also searches `~/.local/bin`, `~/.bun/bin`, `~/.npm-global/bin`, the directory holding its own `node` binary, and `/opt/homebrew/bin` and `/usr/local/bin` on macOS. Set `CONTROL_AGENT_CCUSAGE_EXECUTABLE` to a full path to pin an install the search misses.
 

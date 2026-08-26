@@ -219,6 +219,11 @@
           "anchor": "GitHub Project",
           "href": "https://github.com/bludesign/ai-development-environment",
           "icon": "github"
+        },
+        {
+          "anchor": "Apollo GraphQL Studio",
+          "href": "https://studio.apollographql.com/public/ai-development-environment/variant/current",
+          "icon": "rocket"
         }
       ]
     }
