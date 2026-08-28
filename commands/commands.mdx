@@ -21,7 +21,7 @@ A command run is durable. The script executes as an agent job, output is retaine
 Each saved command shows its name, description, target scope, and a **Quick action** marker when it is configured to appear as a button elsewhere.
 
 - **New command** opens the [command editor](/commands/command-new).
-- **Run** launches it. If the target scope is broad — any agent home, any worktree — you are asked to pick the concrete agent or worktree first.
+- **Run** opens the eligible-target picker. You choose one concrete agent home or worktree, and the launch creates one run on that target.
 - **Edit** opens the [edit page](/commands/command-edit).
 - **Archive** removes it from the active view while keeping its run history.
 
@@ -44,7 +44,7 @@ A command travels between control planes as a JSON file. **Export** writes it; *
 **Import** accepts several files at once. Importing a single file opens it straight in the [command editor](/commands/command-edit); importing several stays on the **Definitions** tab, where the new cards are the result. Each file is handled on its own, so one unreadable file names itself in the error banner rather than costing you the rest of the batch.
 
 <Note>
-  Agent and repository identifiers are specific to one install, so a scoped command travels by target *name*. If the importing control plane has no agent or repository by that name, the target widens — **This agent's home** becomes **Any agent home**, and **This repository's worktree** becomes **Any worktree** — and the quick action is switched off, since running the script anywhere is a decision for whoever imported it.
+  Agent identifiers are specific to one install, so a specifically targeted agent travels by name; a missing agent widens the command to **Any agent home** and switches off its Quick Action. Repository targets travel with both canonical origins and names. A version 2 import keeps every repository it can match. If any selected repository is missing, the imported command keeps the matched allow-list but its Quick Action is switched off. Only when none of the repositories match does the target widen to **Any worktree**. Version 1 exports with one repository name remain supported.
 </Note>
 
 An exported file carries the command's name, description, script, target, restart policy, quick action settings, and notification setting. A hand-written file containing just those fields imports as well, without the export envelope.
@@ -83,7 +83,7 @@ Each run also records its **origin** — **Manual**, **Quick action**, **Workflo
 
 ## Quick actions
 
-A saved command can be surfaced as a button on the pages of the things it targets: agent-home commands appear on the [Agents](/agents/agents) page and agent detail, and worktree commands appear on worktree pages. Configure the icon and button style when you create or edit the command.
+A saved command can be surfaced as a button on the pages of the things it targets: agent-home commands appear on the [Agents](/agents/agents) page and agent detail, and worktree commands appear on eligible worktree pages. A command scoped to selected repositories appears on worktrees from every repository in its allow-list. Configure the icon and button style when you create or edit the command.
 
 When the command has active runs on that target, a spinner menu appears beside its button. The menu lists every active run and lets you **Terminate**, **Restart**, or **View** it. Select the command button again to start another run; its concurrency setting decides whether it starts or queues. **Restart** terminates the selected run and creates a successor from its snapshot. The successor waits for the original to finish.
 
