@@ -7860,15 +7860,19 @@ type CommandDefinition {
   """
   targetAgent: Agent
 
-  """
-  Identifier of the related target repository. May be null when unavailable or not applicable.
-  """
-  targetRepositoryId: ID
+  """Identifiers of the repositories whose worktrees may run this command."""
+  targetRepositoryIds: [ID!]!
+
+  """Repositories whose worktrees may run this command."""
+  targetRepositories: [CodebaseRepository!]!
 
   """
-  The target repository associated with this command definition. May be null when unavailable or not applicable.
+  Identifier of the sole target repository. Null for zero or multiple repositories.
   """
-  targetRepository: CodebaseRepository
+  targetRepositoryId: ID @deprecated(reason: "Use targetRepositoryIds.")
+
+  """The sole target repository. Null for zero or multiple repositories."""
+  targetRepository: CodebaseRepository @deprecated(reason: "Use targetRepositories.")
 
   """The restart policy associated with this command definition."""
   restartPolicy: CommandRestartPolicy!
@@ -8303,8 +8307,11 @@ input CommandDefinitionInput {
   """Identifier of the target agent to use."""
   targetAgentId: ID
 
+  """Identifiers of the target repositories to use."""
+  targetRepositoryIds: [ID!]
+
   """Identifier of the target repository to use."""
-  targetRepositoryId: ID
+  targetRepositoryId: ID @deprecated(reason: "Use targetRepositoryIds.")
 
   """The restart policy to use for the request."""
   restartPolicy: CommandRestartPolicy = NEVER
