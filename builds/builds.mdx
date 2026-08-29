@@ -45,6 +45,8 @@ Filter by status, select builds individually or a whole day at once, and **Delet
 
 Starting a build or coverage build closes its dialog and refreshes the surface where you started it. Rebuild behaves the same way. None of these actions automatically navigate to this page.
 
+The build dialog offers **Any iOS Simulator** or **Any Physical iOS Device** immediately, then refreshes the live destination list in the background. You can start with the generic destination without waiting. If the refresh fails, the dialog shows a warning and keeps the generic destination available. Scheme and configuration validation runs when the build is queued, before any pre-build script, so an invalid configuration fails without triggering script side effects.
+
 <Warning>
   Deleting a build permanently removes the build record *and* its build folder — logs, products, archives, and exports. There is no undo.
 </Warning>
@@ -56,9 +58,10 @@ Starting a build or coverage build closes its dialog and refreshes the surface w
 - Agent tabs appear above device search. The Mac that produced the build is selected first and labeled **Build agent**; other macOS agents appear beside it. Offline, outdated, non-macOS, and known architecture-incompatible agents remain visible with a reason but cannot be selected.
 - Switching agents clears the current device selection and loads that agent's destinations on demand. Search, **Select All**, **Clear**, quick run, and **Run Selected** always apply only to the active agent.
 - Each row has a checkbox, the device name, and a second line with platform, OS version, and a humanized state such as **Connected**, **Offline**, or **Running**.
+- Booted destinations appear first, followed by other available destinations and then unavailable ones. The first booted simulator is therefore the default when one is present.
 - Select an available row anywhere except its play button to toggle it for a multi-device run.
 - Use the trailing play button to run immediately on only that device without changing the multi-selection.
-- **Select All** selects every runnable compatible device. **Clear** removes the selection. **Run Selected** starts the selected destinations together.
+- **Select All** selects every runnable compatible device. **Clear** removes the selection. **Run Selected** stays visible in the picker and starts the selected destinations together once at least one is selected.
 - Offline and otherwise unavailable devices stay visible for status awareness, but their selection and play controls are disabled.
 
 Availability is rechecked by the server when a run starts. A device that disconnected after the picker opened is rejected instead of receiving stale work.
