@@ -62,7 +62,11 @@ The first four are grouped under **Needs attention**. Only **Active** items land
     - It produced a runnable app artifact.
     - It has no deployment records — nobody has installed or run it yet.
 
-    Run it straight from the card. The controls default to the destination the build was made for.
+    Run it straight from the card. The detailed device picker shows compatible available and unavailable destinations, supports checkbox multi-selection, and includes a per-device quick-run button.
+
+    **Dismiss** hides this particular unrun build without marking it as deployed. The server accepts dismissal only while it is still the newest successful, runnable, undeployed build for its worktree, configuration, and destination.
+
+    The dismissal fingerprint includes the build ID. A newer successful build gets a different fingerprint and appears again.
   </Accordion>
   <Accordion title="How a failure is tracked" icon="fingerprint">
     Each failed item gets a **failure fingerprint** built from its kind, id, generation, and the time it finished. Acknowledging stores that fingerprint and hides the item.
@@ -86,6 +90,9 @@ The first four are grouped under **Needs attention**. Only **Active** items land
   <Step title="Acknowledge failures you have handled" icon="check-double">
     **Acknowledge** clears a failed item from the queue without touching the underlying resource.
   </Step>
+  <Step title="Dismiss an unrun build" icon="xmark">
+    **Dismiss** removes a ready-to-run build from the full or compact Action Center. The UI removes it immediately and refreshes the counters; a stale dismissal is rejected if the build stopped being the current eligible candidate.
+  </Step>
   <Step title="Page through the rest" icon="angles-down">
     The list loads 50 items at a time. **Load more** appends the next page.
   </Step>
@@ -106,7 +113,7 @@ Question batches come from Plans and Sessions directly, and from workflow runs b
 
 ## Mini Action Center
 
-The app shell carries a compact copy of the same queue in the sidebar, showing the total count and a condensed row per item — title, reason badge, the first pending question, any error, and the linked worktree. It shares state with the full page, so answering or acknowledging in one place updates the other immediately.
+The app shell carries a compact copy of the same queue in the sidebar, showing the total count and a condensed row per item — title, reason badge, the first pending question, any error, and the linked worktree. It shares state with the full page, so answering, acknowledging, running, or dismissing in one place updates the other immediately. The iOS list exposes **Dismiss** as a swipe action and repeats it on Action Center details.
 
 ## Live updates
 

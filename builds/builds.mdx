@@ -43,9 +43,23 @@ An LCOV or Istanbul [coverage import](/builds/build-coverage#importing-coverage-
 
 Filter by status, select builds individually or a whole day at once, and **Delete selected**. The list pages with **Load more**.
 
+Starting a build or coverage build closes its dialog and refreshes the surface where you started it. Rebuild behaves the same way. None of these actions automatically navigate to this page.
+
 <Warning>
   Deleting a build permanently removes the build record *and* its build folder — logs, products, archives, and exports. There is no undo.
 </Warning>
+
+## Running on devices
+
+**Run** opens the same detailed destination picker on Builds, Build Details, Worktrees, Worktree Details, Plan and Session build cards, and the Action Center.
+
+- Each row has a checkbox, the device name, and a second line with platform, OS version, and a humanized state such as **Connected**, **Offline**, or **Running**.
+- Select an available row anywhere except its play button to toggle it for a multi-device run.
+- Use the trailing play button to run immediately on only that device without changing the multi-selection.
+- **Select All** selects every runnable compatible device. **Clear** removes the selection. **Run Selected** starts the selected destinations together.
+- Offline and otherwise unavailable devices stay visible for status awareness, but their selection and play controls are disabled.
+
+Availability is rechecked by the server when a run starts. A device that disconnected after the picker opened is rejected instead of receiving stale work.
 
 ## Build Scripts
 

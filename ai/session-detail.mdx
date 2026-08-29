@@ -91,6 +91,20 @@ Switching tools on a resumed follow-up asks how to carry context across, since h
   Starting a resumed follow-up from a paused Session cancels the parent and atomically transfers its worktree admission slot to the child. The page asks you to confirm — the parent will not survive it.
 </Warning>
 
+## Worktree controls
+
+Immediately below **Follow Up**, three cards bring the linked worktree into the Session without making you leave the run:
+
+| Card | What it contains |
+| --- | --- |
+| **Actions** | **Build**, **New Plan**, **New Session**, plus the command and workflow quick actions eligible for this worktree |
+| **Worktree Status** | Clean or dirty state, origin sync, current and base branches, path, upstream, HEAD, agent, availability, base freshness, and pull request, review, and pipeline status |
+| **Builds** | The latest 50 builds for the worktree, with **Load more**, build navigation, rebuild, and device run controls |
+
+**Open Worktree** opens the complete [worktree details](/worktrees/worktree-detail) page. Build and worktree changes refresh these cards in place. If supplementary worktree data cannot load, the Session itself remains usable and the card shows a retryable warning. Imported runs without a resolvable worktree omit the cards.
+
+The iOS app presents the same order and actions with native sheets. Its Follow Up form also supports attachments, eligible MCP presets, provider defaults, cross-provider context, and paused-Session transfer confirmation, then opens the created child run.
+
 ## Exporting
 
 **Export** in the activity header offers **JSON** and **Markdown** of the complete unfiltered history, including superseded events. Claude, Codex, and OpenCode runs add an export of the tool's own JSONL transcript, and Claude and Codex runs still attached to an agent can download the original session file from disk verbatim.

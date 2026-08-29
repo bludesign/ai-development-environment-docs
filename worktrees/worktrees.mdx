@@ -107,7 +107,9 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
   <Accordion title="Builds" icon="hammer">
     **Start Build** picks one saved configuration and a destination. The selected configuration names its source path, scheme, build configuration, and the agent the build will run on — the one that owns the codebase — so you can tell where the work is going before you start it.
 
-    The **Latest build** badge is a menu: **View build** opens the [build details](/builds/build-detail), and **Rebuild** starts a fresh build from the same configuration. A successful build that produced a runnable app also gets its run controls on the same row.
+    Starting a build or rebuild closes its dialog and refreshes this worktree in place. It does not send you to Build History.
+
+    A successful **Latest build** badge is a direct keyboard-accessible link to the [build details](/builds/build-detail) page. Rebuild and run actions remain available beside it. Builds that produced a runnable app use the detailed device picker described on the [Builds page](/builds/builds#running-on-devices).
   </Accordion>
   <Accordion title="Navigation" icon="arrow-up-right-from-square">
     Select the card surface or **Open details** in the table to open the [worktree details page](/worktrees/worktree-detail). **View codebase**, **View repository**, and **Open in GitHub/GitLab** jump to the related resource, and **Refresh request** re-reads the pull or merge request state.

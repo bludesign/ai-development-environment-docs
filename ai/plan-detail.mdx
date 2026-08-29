@@ -108,6 +108,18 @@ Choosing a *different* tool for a resumed follow-up asks how to carry the contex
   Starting a resumed follow-up from a **paused Session** cancels the parent and transfers its worktree admission slot to the child. The page confirms before doing it.
 </Warning>
 
+## Worktree controls
+
+The cards immediately after **Follow Up** let you act on the Plan's worktree while keeping its proposal in view:
+
+| Card | What it contains |
+| --- | --- |
+| **Actions** | **Build**, **New Plan**, **New Session**, plus eligible command and workflow quick actions |
+| **Worktree Status** | Clean or dirty state, origin sync, branches, path, upstream, HEAD, agent, availability, base freshness, and pull request, review, and pipeline status, with **Open Worktree** |
+| **Builds** | The worktree's latest 50 builds, live updates, **Load more**, build navigation, rebuild, and device run controls |
+
+These are supplementary to the Plan. A failed worktree or build refresh shows a non-blocking warning, while an imported Plan with no resolvable worktree simply omits the cards. The iOS app provides the same cards and native Build, Plan, Session, quick-action, pagination, rebuild, and run controls.
+
 ## Exporting
 
 The **Export** menu in the activity header always offers **JSON** and **Markdown** of the complete, unfiltered history — including superseded events. For Claude, Codex, and OpenCode runs it adds an export of the tool's own JSONL transcript, and for Claude and Codex runs still attached to an agent it can fetch the original session file from disk and download it verbatim.
