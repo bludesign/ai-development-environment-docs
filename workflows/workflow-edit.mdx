@@ -131,6 +131,12 @@ For a non-Xcode test suite, connect these **Builds** and command steps in order:
 
 The import creates a host-only build record, so the result appears on the [Build coverage report](/builds/build-coverage) page and in the coverage picker on [Changes](/changes). The step fails when the file is missing, unreadable, outside the worktree, too large, or contains no files.
 
+### Managing Tailscale Serve
+
+The **System** category contains four typed fleet steps: **Inspect Tailscale Serve**, **Upsert Tailscale Serve template**, **Set Tailscale Serve agent enabled**, and **Delete Tailscale Serve template**. Agent fields are multi-selectors, template settings use typed catalog fields, and mutation steps wait for their durable operation before taking a handle.
+
+Results are written under `tailscale.*` and include the operation, per-agent progress, and a resource link to [System → Tailscale](/system/tailscale). A partial fleet result takes `failure`; connect that handle to retry or recovery steps when partial availability is acceptable. See [Tailscale Serve automation interfaces](/system/tailscale#automation-interfaces) for MCP equivalents.
+
 <Warning>
   Steps that change external state are marked **Mutates** and carry an explicit warning: configure an idempotency strategy, and do not blindly retry a result you are unsure about. A retried Jira transition or PR merge is a real second attempt at a real side effect.
 </Warning>

@@ -124,6 +124,7 @@ Vault settings apply only when `CREDENTIAL_STORAGE_TYPE=vault`. See [credential 
 | `AGENT_WS_HOSTNAME`        | Interface the agent GraphQL WebSocket binds to                | `127.0.0.1`                   |
 | `AGENT_WS_PORT`            | Agent GraphQL WebSocket port                                  | `3091`                        |
 | `NEXT_PUBLIC_AGENT_WS_URL` | WebSocket URL compiled into the browser bundle                | Derived from the port above   |
+| `CONTROL_AGENT_TAILSCALE_EXECUTABLE` | Absolute `tailscale` executable path used by a control agent | Auto-detected                 |
 
 Change `AGENT_WS_PORT` and `NEXT_PUBLIC_AGENT_WS_URL` together. The first moves the listener; the second tells the browser where to find it. Out of sync, the dashboard loads but never receives live updates.
 

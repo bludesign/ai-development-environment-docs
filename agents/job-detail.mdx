@@ -12,6 +12,8 @@ The job details page at `/jobs/{id}` shows one durable job on an agent: its kind
 
 Jobs are the unit of work the control plane hands to an agent. Nearly every Git operation, codebase scan, worktree move, and build step in the product runs as a job, so this page is where you go when you need to see exactly what a Mac did.
 
+Tailscale fleet management uses three typed kinds: `tailscale.serve.inspect.v1`, `tailscale.serve.upsert.v1`, and `tailscale.serve.remove.v1`. Their payloads contain validated listener and loopback destination fields, never shell source. Completion handlers project their normalized result into the [Tailscale Serve](/system/tailscale) overview, while this page remains the place to diagnose the underlying job and timeout.
+
 ## What the page shows
 
 - The job **kind** and its id.

@@ -32,6 +32,8 @@ Search filters across tool names, descriptions, and server names at once. **Refr
 
 The built-in **Builds** group includes `import_coverage_report`. It records an LCOV or Istanbul file already written inside a worktree as a host-only build and coverage report. See [Importing coverage from other test runners](/builds/build-coverage#importing-coverage-from-other-test-runners) for its inputs, limits, and workflow equivalent.
 
+The built-in **Tailscale** group reads the fleet Serve overview, inspects agents, upserts typed templates, toggles individual assignments, and deletes templates. Its write tools operate through durable agent jobs and expose operation progress rather than raw CLI output. See [Tailscale Serve](/system/tailscale#automation-interfaces) for the complete catalog and safety constraints.
+
 ### Tool badges
 
 Each tool carries MCP annotations that drive both its badge and whether running it needs confirmation.
