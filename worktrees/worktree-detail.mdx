@@ -33,7 +33,7 @@ Starting a build, coverage build, or rebuild refreshes this page in place instea
 
 ## Build history
 
-The **Build History** card loads the latest 50 builds for this worktree and appends older records with **Load more**. Select a row to open its immutable build details. **Rebuild** queues a new build without leaving the page, and a successful runnable build adds **Run** with the shared detailed device picker.
+The **Build History** card loads the latest 50 builds for this worktree and appends older records with **Load more**. Select a row to open its immutable build details. **Rebuild** queues a new build without leaving the page, and a successful runnable build adds **Run** with the shared detailed agent-and-device picker. It defaults to the build agent, lazily loads devices when you select another eligible Mac, and transfers the app through the control plane when the active agent differs from the builder.
 
 The same build-history card appears below **Worktree Status** on Plan and Session details, including live refresh and pagination.
 

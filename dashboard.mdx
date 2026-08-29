@@ -62,7 +62,7 @@ The first four are grouped under **Needs attention**. Only **Active** items land
     - It produced a runnable app artifact.
     - It has no deployment records — nobody has installed or run it yet.
 
-    Run it straight from the card. The detailed device picker shows compatible available and unavailable destinations, supports checkbox multi-selection, and includes a per-device quick-run button.
+    Run it straight from the card. The detailed picker starts on the build agent, can switch to another eligible Mac, shows compatible available and unavailable destinations, supports search and checkbox multi-selection, and includes a per-device quick-run button. A cross-agent run transfers the app through the authenticated artifact relay.
 
     **Dismiss** hides this particular unrun build without marking it as deployed. The server accepts dismissal only while it is still the newest successful, runnable, undeployed build for its worktree, configuration, and destination.
 

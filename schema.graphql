@@ -402,6 +402,14 @@ type Query {
     id: ID!
   ): Build
 
+  """
+  Returns agents that can inspect destinations and run a completed build.
+  """
+  buildRunAgents(
+    """Identifier of the build."""
+    buildId: ID!
+  ): [BuildRunAgent!]!
+
   """Returns build log chunks."""
   buildLogChunks(
     """Identifier of the build."""
@@ -2004,6 +2012,9 @@ type Mutation {
   inspectBuildRunDestinations(
     """Identifier of the build."""
     buildId: ID!
+
+    """Agent to inspect. Omit to inspect the build agent."""
+    agentId: ID
 
     """Identifier of the request."""
     requestId: ID!
@@ -5817,6 +5828,14 @@ type BuildDeployment {
   """The destination associated with this build deployment."""
   destination: JSON!
 
+  """The agent selected to install and launch this build."""
+  targetAgent: Agent
+
+  """
+  The cross-agent artifact transfer used by this deployment, when applicable.
+  """
+  transfer: BuildArtifactTransfer
+
   """Current status of this build deployment."""
   status: String!
 
@@ -5844,6 +5863,115 @@ type BuildDeployment {
   """
   ISO 8601 timestamp when this build deployment finished. May be null when unavailable or not applicable.
   """
+  finishedAt: String
+}
+
+"""Why an agent cannot currently run a build."""
+enum BuildRunAgentUnavailableReason {
+  """The agent is not currently connected to the control plane."""
+  OFFLINE
+
+  """
+  The agent must be updated before it can participate in cross-agent running.
+  """
+  AGENT_UPDATE_REQUIRED
+
+  """
+  The source agent is unavailable and the runnable artifact is not cached.
+  """
+  BUILD_AGENT_UNAVAILABLE
+
+  """
+  The runnable app architecture is known to be incompatible with this agent.
+  """
+  INCOMPATIBLE_ARCHITECTURE
+
+  """The agent is not running macOS."""
+  NOT_MACOS
+}
+
+"""An agent that may inspect devices and run a completed build."""
+type BuildRunAgent {
+  """The enrolled agent represented by this option."""
+  agent: Agent!
+
+  """Whether this agent produced the build."""
+  isBuildAgent: Boolean!
+
+  """
+  Whether the agent can currently inspect destinations and accept this build.
+  """
+  available: Boolean!
+
+  """Why this agent cannot be selected, or null when it is available."""
+  unavailableReason: BuildRunAgentUnavailableReason
+}
+
+"""Lifecycle state for a relayed runnable build artifact."""
+enum BuildArtifactTransferStatus {
+  """The transfer record exists and is waiting for source work."""
+  QUEUED
+
+  """The source agent is uploading package chunks."""
+  UPLOADING
+
+  """The verified package is cached and ready for the target agent."""
+  READY
+
+  """The target agent is downloading package ranges."""
+  DOWNLOADING
+
+  """The target agent completed deployment successfully."""
+  SUCCEEDED
+
+  """Packaging, transfer, validation, or deployment failed."""
+  FAILED
+
+  """The transfer was cancelled before completion."""
+  CANCELLED
+
+  """The transfer expired before completion."""
+  EXPIRED
+}
+
+"""A durable artifact relay from the build agent to a target agent."""
+type BuildArtifactTransfer {
+  """Stable identifier for this artifact transfer."""
+  id: ID!
+
+  """Current relay and deployment lifecycle state."""
+  status: BuildArtifactTransferStatus!
+
+  """Agent that produced and may upload the runnable artifact."""
+  sourceAgent: Agent
+
+  """Agent selected to download and deploy the runnable artifact."""
+  targetAgent: Agent!
+
+  """Number of bytes durably received from the source agent."""
+  uploadOffset: Float!
+
+  """
+  Declared total package size in bytes, or null before upload initialization.
+  """
+  uploadLength: Float
+
+  """Highest byte offset downloaded by the target agent."""
+  downloadOffset: Float!
+
+  """Expected SHA-256 checksum, or null before upload initialization."""
+  checksum: String
+
+  """Failure message, or null while the transfer has no failure."""
+  error: String
+
+  """ISO 8601 timestamp when this artifact transfer was created."""
+  createdAt: String!
+
+  """ISO 8601 timestamp when this artifact transfer last changed."""
+  updatedAt: String!
+
+  """ISO 8601 timestamp when this artifact transfer finished."""
   finishedAt: String
 }
 
@@ -6206,6 +6334,11 @@ input StartBuildInput {
 input RunBuildInput {
   """Identifier of the build to use."""
   buildId: ID!
+
+  """
+  Agent that should install and launch the build. Omit to use the build agent.
+  """
+  targetAgentId: ID
 
   """Destinations to use for the request."""
   destinations: [JSON!]!

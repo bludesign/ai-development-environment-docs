@@ -29,6 +29,12 @@ Browser clients authenticate with a Better Auth cookie. Native clients and enrol
 
 Every query, mutation, and type is documented in the [GraphQL API](/graphql/overview) tab, generated from that schema.
 
+Build clients use `buildRunAgents(buildId:)` to discover eligible target Macs, optionally pass `agentId` to `inspectBuildRunDestinations`, and pass `targetAgentId` with `RunBuildInput`. Omitting either agent field preserves the original build-agent behavior. Deployment results expose the target agent and optional artifact-transfer status and progress.
+
+### Agent build-transfer routes
+
+Cross-agent app deployment uses REST routes under `/api/agent/build-artifact-transfers/{transferId}`. They support transfer status and metadata, `HEAD` offset inspection, sequential `PATCH` upload chunks, completion, and ranged download. These endpoints accept only the enrolled source or target agent assigned to that transfer; browser sessions and general API keys cannot substitute for that identity. Their payloads are intentionally small or ranged so reverse proxies never receive a whole large `.app` archive in one request.
+
 A placeholder `health` query verifies database connectivity. It returns `"ok"` when the database is reachable, and `"degraded"` otherwise:
 
 ```graphql

@@ -49,6 +49,8 @@ An agent advertises the set of job kinds it knows how to execute. Because capabi
 
 The Linux container agent advertises portable codebase, worktree, command, workflow, coverage, skill, and AI-run capabilities. Xcode build data, iOS builds, and signing assets remain available only from a macOS agent.
 
+Recent macOS agents also advertise worktree-independent run-destination inspection, resumable artifact upload, and remote app deployment. These capabilities let a build produced on one Mac run on a simulator or physical device connected to another Mac. They do not copy the repository and do not expose an inbound listener on either agent.
+
 <Steps>
   <Step title="Find a capability" icon="magnifying-glass">
     Search by capability name. The table shows each capability and its **kind**.

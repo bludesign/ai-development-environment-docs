@@ -25,6 +25,8 @@ An **Out of date** marker appears when the worktree has moved on since this buil
 
 **Rebuild** stays on this build. After the replacement is queued, an inline success notice offers an explicit link to the new build. **Run** uses the shared detailed device picker: checkbox multi-selection, per-device quick play, platform and OS details, live availability, **Select All**, **Clear**, and **Run Selected**.
 
+The picker starts on the build agent and can switch to another eligible Mac. Cross-agent deployments show their target agent and transfer state in **Runs and exports**. While the app package moves through the relay, Build Details reports upload/download progress; checksum, compatibility, disk-space, extraction, signing, installation, and launch failures remain attached to that deployment with an actionable message.
+
 ## Overview
 
 The scheme, action, destination, commit, build ID, start and finish times, duration, and the build folder path on the agent.
@@ -97,7 +99,7 @@ Requirements and limits:
 
 ## Runs and exports
 
-A record of every time this build has been run on a device or exported, so a single build's distribution history stays in one place.
+A record of every time this build has been run on a device or exported, so a single build's distribution history stays in one place. Device deployments identify the target agent as well as the destination, which prevents identical simulator or device identifiers on different Macs from being conflated.
 
 ## Related pages
 
