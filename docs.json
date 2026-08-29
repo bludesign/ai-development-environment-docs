@@ -169,6 +169,7 @@
               "system/users",
               "system/api-keys",
               "system/status",
+              "system/tailscale",
               "system/prepare",
               "system/cli-health-checks",
               "system/polling",

@@ -77,7 +77,7 @@ curl -s http://127.0.0.1:3090/api/graphql \
 
 Queries read control-plane state: agents and their jobs, codebases and worktrees, builds and build logs, AI Plans, Sessions and runs, workflows, commands, skills, GitHub and Jira caches, devices, signing assets, and settings.
 
-Mutations drive the same objects: enroll and configure agents, start and cancel builds, create worktrees, launch AI runs, answer run questions, edit and run workflows and commands, sync skills, and update settings.
+Mutations drive the same objects: enroll and configure agents, start and cancel builds, create worktrees, launch AI runs, answer run questions, edit and run workflows and commands, sync skills, manage Tailscale Serve templates, and update settings.
 
 ```graphql
 query Agents {
@@ -92,6 +92,12 @@ query Agents {
 ```
 
 Arguments, return types, deprecations, and a sample response are listed on each generated operation page. Open **Queries** or **Mutations** in the generated GraphQL navigation and select `agents` or `enrollAgent`. Field types link through to the **Types** section, so you can walk the graph from any operation.
+
+### Tailscale Serve operations
+
+`tailscaleServeOverview` returns typed templates, explicit per-agent assignments, Tailscale identities, desired-versus-observed state, and related `AgentJob` records. `tailscaleServeOperation(id:)` returns durable per-agent progress. Use `expectedRevision` when updating, toggling, or deleting a template, and always send explicit `{agentId, enabled}` assignments when upserting.
+
+The inspect, upsert, toggle, and delete mutations return an operation immediately. Subscribe to `tailscaleServeOverviewChanged` for fleet updates or `tailscaleServeOperationChanged(id:)` for one operation; clients never need to parse an agent job's JSON result. See [Tailscale Serve](/system/tailscale) for validation and lifecycle behavior.
 
 ## Worktree admission queues
 
