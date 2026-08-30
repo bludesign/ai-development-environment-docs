@@ -18239,6 +18239,9 @@ input SseHistoryQueryInput {
   """event names input value."""
   eventNames: [String!]
 
+  """event stages input value."""
+  stages: [SseHistoryEventStage!]
+
   """search input value."""
   search: String
 
