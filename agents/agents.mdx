@@ -138,6 +138,10 @@ Once connected, an agent runs four recurring loops. Each has a configurable inte
   </Card>
 </Columns>
 
+Eligible macOS agents also participate in cross-agent build running. The build agent packages and uploads a runnable app when the server cache is cold; the selected target agent inspects its own simulators and devices, downloads the verified package, and performs installation and launch. Both roles are outbound clients of the control plane, so this does not open a port on either Mac and works through the same configured local, remote, or Cloudflare Access endpoint.
+
+Older agents continue to build and run locally. They appear disabled as cross-agent targets until they advertise destination-inspection and remote-deployment capabilities; a cold-cache transfer also requires the build agent to advertise resumable artifact upload.
+
 ## Notes
 
 - In development, the first run auto-enrolls a `-dev` agent for the current host so you have something to work against immediately.

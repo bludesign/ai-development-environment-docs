@@ -55,9 +55,11 @@ That path is deliberately distinct from the `~/.config/control-agent/config.json
 Next.js keeps hot reload, and agent source changes restart only the development agent. Open `http://127.0.0.1:3000/en/agents` to inspect it.
 
 <Note>
-  Automatic development enrollment refuses non-loopback server addresses. It is
-  a convenience for `127.0.0.1`, not a way to skip the enrollment-token flow
-  against a real server.
+  Automatic development enrollment can target a local or remote development
+  control plane. Set `CONTROL_AGENT_DEV_SERVER` and, when necessary,
+  `CONTROL_AGENT_DEV_WEBSOCKET_SERVER` to its reachable addresses. The first
+  enrollment still requires a valid one-time token; using a remote address does
+  not bypass the enrollment flow.
 </Note>
 
 ### Port overrides
@@ -81,7 +83,7 @@ npm run dev:all
 
 Change `AGENT_WS_PORT` and `NEXT_PUBLIC_AGENT_WS_URL` together. The first moves the listener; the second tells the browser where to find it. Leaving them out of sync produces a dashboard that loads but never receives live updates.
 
-For agent-only development, `CONTROL_AGENT_DEV_SERVER`, `CONTROL_AGENT_DEV_WEBSOCKET_SERVER`, and `CONTROL_AGENT_DEV_CONFIG` override the local endpoints and the dedicated credential path — useful for pointing a watch-mode agent at a server you started separately.
+For agent-only development, `CONTROL_AGENT_DEV_SERVER`, `CONTROL_AGENT_DEV_WEBSOCKET_SERVER`, and `CONTROL_AGENT_DEV_CONFIG` override the control-plane endpoints and the dedicated credential path — useful for pointing a watch-mode agent at a server you started separately, including one on another host.
 
 ## Repository layout
 
@@ -124,7 +126,7 @@ Everything in `src/generated/` is produced by `npm run generate`. It is regenera
 | ------------------- | --------------------------------------------------------------------------- |
 | `npm run dev:all`   | Starts the development server and a watch-mode local agent.                 |
 | `npm run dev`       | Starts only the development server.                                         |
-| `npm run agent:dev` | Starts only the watch-mode development agent, waiting for the local server. |
+| `npm run agent:dev` | Starts only the watch-mode development agent, waiting for its configured development control plane. |
 | `npm run build`     | Creates a deployable standalone build.                                      |
 | `npm run start`     | Starts the standalone production server.                                    |
 

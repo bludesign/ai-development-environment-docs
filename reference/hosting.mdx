@@ -137,14 +137,24 @@ Over-the-air installs are the reason the artifact routes are public. iOS fetches
 
 Install manifests mint expiring links: the artifact ID and an expiry are signed with HMAC-SHA256 and travel as `token` and `expires` query parameters, valid for six hours. A link is only rejected when a token is supplied and fails verification — the plain links the dashboard renders carry none and are protected by the dashboard's own authentication instead.
 
-| Variable                   | Effect                                                                                                                  |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `ARTIFACT_CACHE_DIRECTORY` | Where artifacts fetched from an agent are cached locally. Defaults to the system temporary directory                    |
-| `ARTIFACT_CACHE_MAX_BYTES` | Cache ceiling. Defaults to 5 GiB                                                                                        |
+| Variable                      | Effect                                                                                                       |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `ARTIFACT_CACHE_DIRECTORY`    | Where artifacts fetched from an agent are cached locally. Defaults to the system temporary directory         |
+| `ARTIFACT_CACHE_MAX_BYTES`    | Cache ceiling. Defaults to 5 GiB                                                                             |
+| `ARTIFACT_TRANSFER_DIRECTORY` | Durable staging for resumable cross-agent uploads. Defaults to the system temporary directory                |
+| `ARTIFACT_TRANSFER_MAX_BYTES` | Maximum accepted transfer package size. Defaults to 20 GiB                                                   |
 
 The signing key is derived from `APP_SECRET`, so outstanding links survive a restart. Rotating `APP_SECRET` invalidates them; they expire in six hours regardless.
 
 Artifact responses are sent with `cache-control: private, no-store` and support HTTP range requests, which is how a resumed or interrupted iOS download recovers.
+
+### Cross-agent artifact relay
+
+Cross-agent runs use agent-authenticated routes under `/api/agent/build-artifact-transfers/{transferId}` for metadata, upload offset inspection, chunk append, completion, status, and ranged download. Keep these routes behind the same Cloudflare Access policy as the rest of the agent control plane; enrolled agents send their saved bearer credential and any configured Access service-token headers.
+
+Uploads are sequential, resumable 16 MiB requests with validated `Upload-Offset` and `Upload-Length` headers. This keeps every request below common reverse-proxy upload limits, including Cloudflare's Free/Pro 100 MB limit. Downloads also use 16 MiB ranges for retry and resume reliability. The server verifies the final SHA-256 before placing the package in its bounded cache, and the target verifies it again before extracting into isolated temporary storage.
+
+Give both the cache and transfer directories enough persistent space for your largest runnable apps. Active transfers are not pruned; completed packages use the cache ceiling and can be reused for later target agents. A server restart reconciles the saved offset with the staging file instead of retransmitting completed chunks.
 
 ## Client IP observation
 
