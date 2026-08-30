@@ -1,0 +1,257 @@
+---
+title: "SSE endpoints"
+description: "Host SSE proxy endpoints that can forward streams, compose mocks, pause on breakpoints, run scripts, and retain searchable history."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/sse-endpoints.png" alt="SSE Endpoints page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/sse-endpoints.png" alt="SSE Endpoints page in dark theme" />
+</Frame>
+
+The **SSE Endpoints** area at `/sse` creates hosted Server-Sent Events routes that can proxy an upstream server, return a composed mock, or wait for an operator at a breakpoint. The web control plane runs every stream. The iOS app provides the same endpoint, script, mock, breakpoint, shared-storage, and history controls through native screens.
+
+<Warning>
+  A public SSE URL is a 256-bit opaque bearer secret, not an authentication system. Anyone who has the URL can connect. Rotate the URL if it leaks, and add authentication in a request script when callers need stronger controls.
+</Warning>
+
+## Create and call an endpoint
+
+Click **Create endpoint**, enter a name and an HTTP(S) forwarding URL, then save. New endpoints start in **Forward** mode. Copy the generated public URL from the endpoint detail page.
+
+The public route accepts `GET`, `POST`, and CORS preflight `OPTIONS` requests:
+
+```bash
+curl --no-buffer \
+  -H 'Accept: text/event-stream' \
+  'https://control-plane.example.com/api/public/sse/OPAQUE_TOKEN'
+```
+
+```bash
+curl --no-buffer \
+  -X POST \
+  -H 'Accept: text/event-stream' \
+  -H 'Content-Type: application/json' \
+  --data '{"conversationId":"conv_123"}' \
+  'https://control-plane.example.com/api/public/sse/OPAQUE_TOKEN'
+```
+
+Successful streams return `Content-Type: text/event-stream`, `Cache-Control: no-cache, no-transform`, `X-Accel-Buffering: no`, and `Access-Control-Allow-Origin: *`. Credentialed cross-origin requests are not enabled. The default 15-second heartbeat is an SSE comment, so it keeps intermediaries active without appearing in event history or firing event workflows.
+
+The server buffers an inbound request body once and rejects bodies larger than 2 MiB with `413`. A connection snapshots its endpoint mode, scripts, limits, buffering, and active mock composition when it starts. Later edits apply only to new connections. Deleting an endpoint rejects future connections while streams that already hold a snapshot can finish.
+
+## Choose a mode
+
+Use the segmented mode switch on the endpoint list or detail page. Switching takes effect immediately for new connections.
+
+| Mode | Behavior |
+| --- | --- |
+| **Forward** | Runs the request script, connects to the effective upstream URL, transforms its SSE response, and sends the results to the caller. |
+| **Mock** | Runs the request script but ignores any URL override. It builds the response from the active saved composition. You cannot select this mode until a composition is active. |
+| **Breakpoint** | Stores the request and waits for one versioned decision: forward it, use a saved mock, or send an ad hoc composition. The default timeout is five minutes. |
+
+Mode changes never move an existing connection onto another execution path.
+
+## Forward an upstream stream
+
+Forward mode can change the target URL, method, body, and headers before the connection opens. Header mutations support set, append, delete, and complete replacement. The control plane always owns hop-by-hop headers plus the computed `Host` and `Content-Length` values.
+
+The proxy follows at most five redirects. It returns a bounded non-2xx upstream status and body to the caller and records the failure. A successful response whose media type is not `text/event-stream` fails with `502`.
+
+The default response uses standard SSE delivery framing. It dispatches on a blank line and joins multiple `data:` lines with `\n`. You can independently select **Standard**, **Concatenate**, or **Preserve frames** for delivered data and retained history.
+
+## Build reusable mocks
+
+Open **Mocks** from an endpoint detail page. The event-template library stores reusable event names, data, IDs, and retry values for that endpoint. A saved composition adds response status and headers, then orders these block types:
+
+| Block | Purpose |
+| --- | --- |
+| **Event template** | Emits one saved SSE event. |
+| **Delay** | Waits for the configured duration before the next block. |
+| **Script** | Uses the request, headers, fetch, and global storage APIs to generate zero, one, or many events. |
+
+Drag blocks to reorder them. Save, duplicate, restore, select, or delete compositions. Activate one composition before entering Mock mode. A mock can **Close** after its final block, **Hold** the stream open, or **Loop** from the first block; **Close** is the default.
+
+A mock script can fetch an event from another API, including one that uses a caller token:
+
+```js
+const authorization = request.headers.get("authorization");
+
+const response = await fetch("https://api.example.com/current-card", {
+  headers: { authorization },
+});
+const card = await response.json();
+return { event: "display_card", data: JSON.stringify(card) };
+```
+
+<Warning>
+  Script `fetch` can call unrestricted outbound HTTP(S) destinations. Treat endpoint scripts as trusted server code and apply network egress controls outside the application when your deployment requires them.
+</Warning>
+
+## Pause on a breakpoint
+
+Requests to a **Breakpoint** endpoint appear under `/sse/breakpoints` and in the iOS breakpoint list. Open a row to inspect its method, URL, headers, and body, then choose **Forward**, **Saved mock**, or **Ad hoc response**. The ad hoc editor uses the same composition builder as saved mocks.
+
+Each pending breakpoint has a version. The first matching resolution wins; a concurrent second decision receives a version conflict instead of replacing it. An unresolved breakpoint returns `504` when its timeout expires before response headers are sent. Client disconnects and server-orphaned waits are retained as cancelled or failed history.
+
+## Transform requests and response events
+
+Scripts are asynchronous JavaScript executed by QuickJS. They have no imports, Node.js APIs, DOM, or filesystem. They receive read-only original request data, mutable forwarding data, endpoint metadata, response and event context, console capture, HTTP(S) `fetch`, buffer state, and shared global storage.
+
+The request script runs once before Forward, Mock, or Breakpoint routing. In Forward mode it can override the URL, method, body, and headers. In Mock mode its request and header changes remain visible to mock scripts, but its URL override is ignored.
+
+```js
+forwarding.headers.delete("x-remove-me");
+const token = (await storage.get("upstream-token"))?.value;
+forwarding.headers.set("authorization", `Bearer ${token}`);
+forwarding.method = "POST";
+forwarding.body = JSON.stringify({ original: originalRequest.body });
+
+if (originalRequest.headers.get("x-tenant") === "sandbox") {
+  forwarding.url = "https://sandbox.example.com/events";
+}
+```
+
+The response script first runs in the `headers` phase. Only that phase can change response status or headers. It then runs in the `event` phase for every source event. Returning `undefined` passes the source event through. Returning `null` or `[]` drops it. Return one event or an array to replace, split, or fan out the source.
+
+```js
+if (phase === "headers") {
+  response.headers.set("x-sse-proxy", endpoint.name);
+  return;
+}
+
+if (event.event === "message" && buffers.history.includes("\n\n")) {
+  const offset = buffers.history.indexOf("\n\n");
+  return { split: { target: "history", offset, separatorLength: 2 } };
+}
+
+return event;
+```
+
+A split directive flushes the requested buffer prefix, removes only the separator, and retains the remainder. Event history links every source record to all emitted records and marks dropped, split, and fan-out transformations explicitly.
+
+Use **Test script** before saving. A test runs against copy-on-write storage and reports its return value, console output, duration, error, and proposed storage writes without committing those writes.
+
+### Script and payload limits
+
+| Limit | Default |
+| --- | ---: |
+| Request or mock-script invocation | 30 seconds |
+| Response-event invocation | 5 seconds |
+| QuickJS memory | 32 MiB |
+| Script HTTP fetch | 15 seconds |
+| Inbound request body | 2 MiB |
+| Source or generated event | 512 KiB |
+| Retained event data per stream | 50 MiB |
+
+An oversized event fails the stream. After a stream reaches its persisted-data limit, delivery continues but additional payloads are not retained and history is marked truncated. A script failure returns `500` if headers are still unsent; otherwise the server records the error and closes the stream.
+
+## Use global script storage
+
+Open `/sse/storage` to inspect and manage the JSON values shared by every SSE endpoint and every script location. Each entry has a monotonically increasing version. Storage supports `get`, `set`, `delete`, `compareAndSet`, `increment`, and transactional `update`; `update` retries version conflicts a bounded number of times.
+
+```js
+const count = await storage.increment("events-seen", 1);
+await storage.update("tenant-config", (current) => ({
+  ...current,
+  lastEventAt: new Date().toISOString(),
+  count,
+}));
+```
+
+<Warning>
+  Global storage is visible JSON, not a secret vault. Every SSE script can read and write every entry. Do not store credentials here unless that exposure is acceptable for all endpoint authors and scripts.
+</Warning>
+
+## Understand framing, buffering, and IDs
+
+The parser accepts fragmented chunks, CRLF or LF endings, comments, multiline `data`, `event`, `id`, and `retry` fields. Delivery defaults to **Standard**. History defaults to **Concatenate**, which combines consecutive unnamed data frames until a named event arrives or the stream ends. An empty `data:` line becomes a newline in this mode.
+
+This source stream:
+
+```text
+event:display_card
+data:{"title":"test"}
+data:Good morning
+data:
+data:How are you?
+event:loading
+data:{"text":"Loading"}
+data:What
+data:w
+data:ould you like to work on?
+```
+
+creates four history items:
+
+| Event | Data |
+| --- | --- |
+| `display_card` | `{"title":"test"}` |
+| `text` | `Good morning\nHow are you?` |
+| `loading` | `{"text":"Loading"}` |
+| `text` | `What would you like to work on?` |
+
+**Preserve frames** keeps each unnamed frame separate. **Standard** records each blank-line-delimited SSE event with multiline data joined by `\n`.
+
+A non-empty `id:` becomes the inherited stream ID. It also backfills every earlier ID-less history item in that stream. Later events inherit it until another ID replaces it. An empty `id:` clears forward inheritance but does not erase IDs already assigned to historical items.
+
+## Search and export history
+
+Endpoint detail shows history scoped to that endpoint. `/sse/history` combines all endpoints and adds a prominent endpoint filter and endpoint-name column. Switch between **Streams** and **Events**, then use text, glob, or regular-expression search; quick and advanced filters; saved filters; configurable columns and presets; pagination; live updates; selection; and clear/delete controls.
+
+Stream details retain the original and effective request, duplicate header values, the mode/configuration snapshot, upstream and emitted response headers, source and emitted events, IDs, timings, truncation, and errors. Export matching data as CSV, Markdown, or PDF. The iOS app provides the same stream/event toggle, filtering, details, and native share sheet.
+
+<Warning>
+  Request, forwarded, upstream, and response headers are retained without redaction, including duplicate values. Tokens, cookies, authorization headers, bodies, and other sensitive data can therefore appear in history and exports.
+</Warning>
+
+Completed history is retained for 30 days and up to 100,000 persisted event records per endpoint by default. Maintenance deletes the oldest completed streams until both conditions are satisfied. Active streams are never pruned. Endpoint name and token snapshots remain attached to history after endpoint deletion.
+
+## Automate SSE endpoints
+
+The built-in **SSE Endpoints** MCP group exposes endpoint CRUD and URL rotation, mode switching, event templates, mock compositions, script tests, global storage atomic operations, breakpoint listing and resolution, and history query/clear operations. Tool names use the `sse_` prefix:
+
+- `sse_endpoint_*` manages endpoints, modes, tokens, and deletion.
+- `sse_mock_template_*` and `sse_mock_composition_*` manage mocks.
+- `sse_script_test` tests QuickJS without committing storage writes.
+- `sse_storage_*` exposes list, get, set, compare-and-set, increment, and delete.
+- `sse_breakpoint_list` and `sse_breakpoint_resolve` manage waiting requests.
+- `sse_history_query`, `sse_history_export`, and `sse_history_clear` read, export, and delete retained data. MCP exports support JSON, CSV, and Markdown.
+
+Workflow actions mirror write-capable operations through `SSE_ENDPOINT_ACTION`, `SSE_MOCK_ACTION`, `SSE_STORAGE_ACTION`, `SSE_BREAKPOINT_RESOLVE`, `SSE_HISTORY_CLEAR`, and `SSE_SCRIPT_TEST`. Use the existing tool-execution action for MCP reads.
+
+GraphQL provides cursor pages for endpoints, endpoint-scoped templates and compositions, shared storage, breakpoints, history, facets, saved filters, and column presets. Live clients can subscribe independently to endpoint, storage, breakpoint, request-history, and event-history changes; the combined `sseHistoryChanged` subscription remains available for clients that prefer one history invalidation stream.
+
+SSE workflows can start from `SSE_REQUEST_OPENED`, `SSE_EVENT_EMITTED`, `SSE_BREAKPOINT_WAITING`, `SSE_BREAKPOINT_RESOLVED`, `SSE_STREAM_COMPLETED`, and `SSE_STREAM_FAILED`. Filter them by endpoint, mode, event name, breakpoint resolution, or outcome. Records are persisted before trigger dispatch, and request/event IDs deduplicate deliveries. A workflow failure is retained but never interrupts the SSE connection.
+
+## Configure production proxies
+
+Disable proxy buffering for this route at every layer. The application sends `X-Accel-Buffering: no`, but your ingress, CDN, or load balancer can still delay chunks, enforce idle timeouts, or transform compression unless you configure it for streaming.
+
+```nginx
+location /api/public/sse/ {
+    proxy_pass http://control_plane;
+    proxy_http_version 1.1;
+    proxy_buffering off;
+    proxy_cache off;
+    proxy_read_timeout 1h;
+}
+```
+
+Preserve the application’s `Cache-Control: no-cache, no-transform` and `Content-Type: text/event-stream` headers. The 15-second heartbeat default is suitable for many proxies; shorten it only when an intermediary has a lower idle timeout.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Workflows" icon="diagram-project" href="/workflows/workflows">
+    React to SSE request, event, breakpoint, completion, and failure triggers.
+  </Card>
+  <Card title="Tools & MCP" icon="wrench" href="/system/tools">
+    Browse and invoke the built-in SSE tool group.
+  </Card>
+  <Card title="GraphQL API" icon="diagram-project" href="/graphql/overview">
+    Query, mutate, and subscribe to the SSE control plane with generated types.
+  </Card>
+  <Card title="Hosting" icon="server" href="/reference/hosting">
+    Configure the production control-plane process and reverse proxy.
+  </Card>
+</Columns>
