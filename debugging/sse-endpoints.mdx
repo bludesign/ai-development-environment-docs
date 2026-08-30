@@ -196,9 +196,14 @@ A non-empty `id:` becomes the inherited stream ID. It also backfills every earli
 
 ## Search and export history
 
-Endpoint detail shows history scoped to that endpoint. `/sse/history` combines all endpoints and adds a prominent endpoint filter and endpoint-name column. Switch between **Streams** and **Events**, then use text, glob, or regular-expression search; quick and advanced filters; saved filters; configurable columns and presets; pagination; live updates; selection; and clear/delete controls.
+Endpoint detail shows history scoped to that endpoint. `/sse/history` combines all endpoints and adds a prominent endpoint filter and endpoint-name column. History opens in **Events** with the **Source** stage selected. Switch between **Streams** and **Events**, then use text, glob, or regular-expression search; quick and advanced filters; saved filters; configurable columns and presets; pagination; live updates; selection; and clear/delete controls.
 
-Stream details retain the original and effective request, duplicate header values, the mode/configuration snapshot, upstream and emitted response headers, source and emitted events, IDs, timings, truncation, and errors. Export matching data as CSV, Markdown, or PDF. The iOS app provides the same stream/event toggle, filtering, details, and native share sheet.
+Select an event row to expand that event in the table without leaving the history page. Select a stream row to open its dedicated stream-history page. That page retains the original and effective request, duplicate header values, the mode/configuration snapshot, upstream and emitted response headers, source and emitted events, IDs, timings, truncation, and errors. Its event table supports text, stage, and event-name filters, and each event expands inline. Export matching data as CSV, Markdown, or PDF. The iOS app provides the same stream/event toggle, filtering, details, and native share sheet.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/sse-stream-history.png" alt="Dedicated SSE stream history page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/sse-stream-history.png" alt="Dedicated SSE stream history page in dark theme" />
+</Frame>
 
 <Warning>
   Request, forwarded, upstream, and response headers are retained without redaction, including duplicate values. Tokens, cookies, authorization headers, bodies, and other sensitive data can therefore appear in history and exports.
