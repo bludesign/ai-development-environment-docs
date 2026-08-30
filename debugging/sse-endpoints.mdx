@@ -4,14 +4,24 @@ description: "Host SSE proxy endpoints that can forward streams, compose mocks, 
 ---
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/sse-endpoints.png" alt="SSE Endpoints page in light theme" />
-  <img className="hidden dark:block" src="/images/dark/sse-endpoints.png" alt="SSE Endpoints page in dark theme" />
+  <img
+    className="block dark:hidden"
+    src="/images/light/sse-endpoints.png"
+    alt="SSE Endpoints page in light theme"
+  />
+  <img
+    className="hidden dark:block"
+    src="/images/dark/sse-endpoints.png"
+    alt="SSE Endpoints page in dark theme"
+  />
 </Frame>
 
 The **SSE Endpoints** area at `/sse` creates hosted Server-Sent Events routes that can proxy an upstream server, return a composed mock, or wait for an operator at a breakpoint. The web control plane runs every stream. The iOS app provides the same endpoint, script, mock, breakpoint, shared-storage, and history controls through native screens.
 
 <Warning>
-  A public SSE URL is a 256-bit opaque bearer secret, not an authentication system. Anyone who has the URL can connect. Rotate the URL if it leaks, and add authentication in a request script when callers need stronger controls.
+  A public SSE URL is a 256-bit opaque bearer secret, not an authentication
+  system. Anyone who has the URL can connect. Rotate the URL if it leaks, and
+  add authentication in a request script when callers need stronger controls.
 </Warning>
 
 ## Create and call an endpoint
@@ -43,11 +53,11 @@ The server buffers an inbound request body once and rejects bodies larger than 2
 
 Use the segmented mode switch on the endpoint list or detail page. Switching takes effect immediately for new connections.
 
-| Mode | Behavior |
-| --- | --- |
-| **Forward** | Runs the request script, connects to the effective upstream URL, transforms its SSE response, and sends the results to the caller. |
-| **Mock** | Runs the request script but ignores any URL override. It builds the response from the active saved composition. You cannot select this mode until a composition is active. |
-| **Breakpoint** | Stores the request and waits for one versioned decision: forward it, use a saved mock, or send an ad hoc composition. The default timeout is five minutes. |
+| Mode           | Behavior                                                                                                                                                                   |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Forward**    | Runs the request script, connects to the effective upstream URL, transforms its SSE response, and sends the results to the caller.                                         |
+| **Mock**       | Runs the request script but ignores any URL override. It builds the response from the active saved composition. You cannot select this mode until a composition is active. |
+| **Breakpoint** | Stores the request and waits for one versioned decision: forward it, use a saved mock, or send an ad hoc composition. The default timeout is five minutes.                 |
 
 Mode changes never move an existing connection onto another execution path.
 
@@ -61,15 +71,19 @@ The default response uses standard SSE delivery framing. It dispatches on a blan
 
 ## Build reusable mocks
 
-Open **Mocks** from an endpoint detail page. The event-template library stores reusable event names, data, IDs, and retry values for that endpoint. A saved composition adds response status and headers, then orders these block types:
+Open **Mocks** from an endpoint detail page. The full-width composition builder appears first, followed by a card library of reusable templates. Each template card shows its event name, data, ID, and retry value; select **Add to Mock** to append it to the active builder. Select **New Template** to create a template in a dialog without leaving the composition.
 
-| Block | Purpose |
-| --- | --- |
-| **Event template** | Emits one saved SSE event. |
-| **Delay** | Waits for the configured duration before the next block. |
-| **Script** | Uses the request, headers, fetch, and global storage APIs to generate zero, one, or many events. |
+A saved composition adds response status and headers, then orders these block types:
 
-Drag blocks to reorder them. Save, duplicate, restore, select, or delete compositions. Activate one composition before entering Mock mode. A mock can **Close** after its final block, **Hold** the stream open, or **Loop** from the first block; **Close** is the default.
+| Block      | Purpose                                                                                                                                               |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Event**  | Emits a saved template or a custom event defined only inside this composition. Event blocks show the effective event name, data, ID, and retry value. |
+| **Delay**  | Waits for the configured duration before the next block.                                                                                              |
+| **Script** | Uses the request, headers, fetch, and global storage APIs to generate zero, one, or many events.                                                      |
+
+Select **Custom Event** when an event belongs only to the current mock and should not become a reusable template. Reorder blocks, then save, duplicate, restore, select, or delete compositions. Activate one composition before entering Mock mode. A mock can **Close** after its final block, **Hold** the stream open, or **Loop** from the first block; **Close** is the default.
+
+The native iOS composition editor preserves the same template or custom-event choice and shows the selected template payload before you save.
 
 A mock script can fetch an event from another API, including one that uses a caller token:
 
@@ -84,7 +98,9 @@ return { event: "display_card", data: JSON.stringify(card) };
 ```
 
 <Warning>
-  Script `fetch` can call unrestricted outbound HTTP(S) destinations. Treat endpoint scripts as trusted server code and apply network egress controls outside the application when your deployment requires them.
+  Script `fetch` can call unrestricted outbound HTTP(S) destinations. Treat
+  endpoint scripts as trusted server code and apply network egress controls
+  outside the application when your deployment requires them.
 </Warning>
 
 ## Pause on a breakpoint
@@ -133,15 +149,15 @@ Use **Test script** before saving. A test runs against copy-on-write storage and
 
 ### Script and payload limits
 
-| Limit | Default |
-| --- | ---: |
+| Limit                             |    Default |
+| --------------------------------- | ---------: |
 | Request or mock-script invocation | 30 seconds |
-| Response-event invocation | 5 seconds |
-| QuickJS memory | 32 MiB |
-| Script HTTP fetch | 15 seconds |
-| Inbound request body | 2 MiB |
-| Source or generated event | 512 KiB |
-| Retained event data per stream | 50 MiB |
+| Response-event invocation         |  5 seconds |
+| QuickJS memory                    |     32 MiB |
+| Script HTTP fetch                 | 15 seconds |
+| Inbound request body              |      2 MiB |
+| Source or generated event         |    512 KiB |
+| Retained event data per stream    |     50 MiB |
 
 An oversized event fails the stream. After a stream reaches its persisted-data limit, delivery continues but additional payloads are not retained and history is marked truncated. A script failure returns `500` if headers are still unsent; otherwise the server records the error and closes the stream.
 
@@ -159,7 +175,9 @@ await storage.update("tenant-config", (current) => ({
 ```
 
 <Warning>
-  Global storage is visible JSON, not a secret vault. Every SSE script can read and write every entry. Do not store credentials here unless that exposure is acceptable for all endpoint authors and scripts.
+  Global storage is visible JSON, not a secret vault. Every SSE script can read
+  and write every entry. Do not store credentials here unless that exposure is
+  acceptable for all endpoint authors and scripts.
 </Warning>
 
 ## Understand framing, buffering, and IDs
@@ -183,12 +201,12 @@ data:ould you like to work on?
 
 creates four history items:
 
-| Event | Data |
-| --- | --- |
-| `display_card` | `{"title":"test"}` |
-| `text` | `Good morning\nHow are you?` |
-| `loading` | `{"text":"Loading"}` |
-| `text` | `What would you like to work on?` |
+| Event          | Data                              |
+| -------------- | --------------------------------- |
+| `display_card` | `{"title":"test"}`                |
+| `text`         | `Good morning\nHow are you?`      |
+| `loading`      | `{"text":"Loading"}`              |
+| `text`         | `What would you like to work on?` |
 
 **Preserve frames** keeps each unnamed frame separate. **Standard** records each blank-line-delimited SSE event with multiline data joined by `\n`.
 
@@ -200,15 +218,29 @@ Endpoint detail shows history scoped to that endpoint. `/sse/history` combines a
 
 Select **Columns** to show, hide, and reorder columns or manage reusable presets. You can also remove a column directly from its table heading. Select **Edit** to reveal row and date-group checkboxes, then delete selected history. **Load More** appends the next history page without replacing the records already displayed.
 
-Select an event row to expand that event in the table without leaving the history page. Select a stream row to open its dedicated stream-history page. That page retains the original and effective request, duplicate header values, the mode/configuration snapshot, upstream and emitted response headers, source and emitted events, IDs, timings, truncation, and errors. Its event table supports text, stage, and event-name filters, and each event expands inline. **Export** opens a dialog where you can choose CSV, Markdown, or a formatted PDF and select the fields to include. When rows are selected, the export contains only those rows; otherwise, it contains every matching record. The iOS app provides the same stream/event toggle, filtering, details, and native share sheet.
+Select an event row to expand that event in the table without leaving the history page. The expanded details include **Create Template**, which pre-fills a reusable endpoint template from the retained event and lets you edit it before saving.
+
+Select a stream row to open its dedicated stream-history page. That page retains the original and effective request, duplicate header values, the mode/configuration snapshot, upstream and emitted response headers, source and emitted events, IDs, timings, truncation, and errors. Its event table supports text, stage, and event-name filters, and each event expands inline. Select **Save as Composition** to turn the emitted events into custom event blocks for that endpoint; you can optionally preserve their recorded timing with delay blocks.
+
+**Export** opens a dialog where you can choose CSV, Markdown, or a formatted PDF and select the fields to include. When rows are selected, the export contains only those rows; otherwise, it contains every matching record. The iOS app provides the same stream/event toggle, filtering, details, and native share sheet.
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/sse-stream-history.png" alt="Dedicated SSE stream history page in light theme" />
-  <img className="hidden dark:block" src="/images/dark/sse-stream-history.png" alt="Dedicated SSE stream history page in dark theme" />
+  <img
+    className="block dark:hidden"
+    src="/images/light/sse-stream-history.png"
+    alt="Dedicated SSE stream history page in light theme"
+  />
+  <img
+    className="hidden dark:block"
+    src="/images/dark/sse-stream-history.png"
+    alt="Dedicated SSE stream history page in dark theme"
+  />
 </Frame>
 
 <Warning>
-  Request, forwarded, upstream, and response headers are retained without redaction, including duplicate values. Tokens, cookies, authorization headers, bodies, and other sensitive data can therefore appear in history and exports.
+  Request, forwarded, upstream, and response headers are retained without
+  redaction, including duplicate values. Tokens, cookies, authorization headers,
+  bodies, and other sensitive data can therefore appear in history and exports.
 </Warning>
 
 Completed history is retained for 30 days and up to 100,000 persisted event records per endpoint by default. Maintenance deletes the oldest completed streams until both conditions are satisfied. Active streams are never pruned. Endpoint name and token snapshots remain attached to history after endpoint deletion.
