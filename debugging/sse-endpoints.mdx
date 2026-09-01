@@ -73,6 +73,35 @@ The default response uses standard SSE delivery framing. It dispatches on a blan
 
 Open **Mocks** from an endpoint detail page. The full-width composition builder appears first, followed by a card library of reusable templates. Each template card shows its event name, data, ID, and retry value; select **Add to Mock** to append it to the active builder. Select **New Template** to create a template in a dialog without leaving the composition.
 
+Reusable templates can declare ordered, typed fields. Give each field a placeholder key, label, optional help text, type, required state, and optional default. The web and iOS builders render those fields in template order whenever you select the template in an event block. Every occurrence keeps its own overrides, so the same template can appear more than once with different values. Select **Reset** beside a value to use its default again, or leave an optional field without a default empty.
+
+Use either placeholder form in the event name, data, ID, or templated retry value:
+
+| Syntax              | Result                                                                                        |
+| ------------------- | --------------------------------------------------------------------------------------------- |
+| `{{fieldKey}}`      | Inserts the field's serialized value directly.                                                |
+| `{{json:fieldKey}}` | Inserts a JSON-safe value. Text is quoted and escaped; JSON, numbers, and booleans stay typed. |
+| `\{{`               | Emits a literal `{{` instead of opening a placeholder.                                        |
+
+For example, this template declares required text field `customerName`, optional number field `sequence` with default `1`, and JSON field `details`:
+
+```text
+event: customer_{{customerName}}
+data: {"customer":{{json:customerName}},"sequence":{{json:sequence}},"details":{{json:details}}}
+id: {{customerName}}-{{sequence}}
+retry: {{sequence}}000
+```
+
+Text values are inserted verbatim. Numbers must be finite, booleans must be `true` or `false`, and JSON values must parse successfully. A resolved retry must be an integer from `0` through `86400000` milliseconds. You can configure a fixed retry or a templated retry, but not both. Saving fails for missing required values, invalid typed values, unknown or duplicate fields, undeclared placeholders, or definitions the template does not use.
+
+Field IDs remain stable when you rename a placeholder key or label, so saved block values follow the field. Editing a referenced template validates every saved block in one transaction. Removing a field prunes its saved values; incompatible required or type changes are rejected. Delete every referencing block before deleting its template. Connections render from the endpoint snapshot captured when they opened, so template and value edits affect only new streams.
+
+<Warning>
+  Template field definitions and block values are ordinary persisted mock data.
+  Authorized GraphQL, MCP, web, and iOS clients can read them. Do not use them
+  for secrets.
+</Warning>
+
 A saved composition adds response status and headers, then orders these block types:
 
 | Block      | Purpose                                                                                                                                               |
@@ -83,7 +112,7 @@ A saved composition adds response status and headers, then orders these block ty
 
 Select **Custom Event** when an event belongs only to the current mock and should not become a reusable template. Reorder blocks, then save, duplicate, restore, select, or delete compositions. Activate one composition before entering Mock mode. A mock can **Close** after its final block, **Hold** the stream open, or **Loop** from the first block; **Close** is the default.
 
-The native iOS composition editor preserves the same template or custom-event choice and shows the selected template payload before you save.
+The native iOS composition editor preserves the same template or custom-event choice, shows the tokenized template payload, and provides the same typed field and reset controls before you save.
 
 A mock script can fetch an event from another API, including one that uses a caller token:
 
@@ -250,13 +279,13 @@ Completed history is retained for 30 days and up to 100,000 persisted event reco
 The built-in **SSE Endpoints** MCP group exposes endpoint CRUD and URL rotation, mode switching, event templates, mock compositions, script tests, global storage atomic operations, breakpoint listing and resolution, and history query/clear operations. Tool names use the `sse_` prefix:
 
 - `sse_endpoint_*` manages endpoints, modes, tokens, and deletion.
-- `sse_mock_template_*` and `sse_mock_composition_*` manage mocks.
+- `sse_mock_template_*` and `sse_mock_composition_*` manage mocks, including template field definitions and per-block values.
 - `sse_script_test` tests QuickJS without committing storage writes.
 - `sse_storage_*` exposes list, get, set, compare-and-set, increment, and delete.
 - `sse_breakpoint_list` and `sse_breakpoint_resolve` manage waiting requests.
 - `sse_history_query`, `sse_history_export`, and `sse_history_clear` read, export, and delete retained data. MCP exports support JSON, CSV, and Markdown.
 
-Workflow actions mirror write-capable operations through `SSE_ENDPOINT_ACTION`, `SSE_MOCK_ACTION`, `SSE_STORAGE_ACTION`, `SSE_BREAKPOINT_RESOLVE`, `SSE_HISTORY_CLEAR`, and `SSE_SCRIPT_TEST`. Use the existing tool-execution action for MCP reads.
+Workflow actions mirror write-capable operations through `SSE_ENDPOINT_ACTION`, `SSE_MOCK_ACTION`, `SSE_STORAGE_ACTION`, `SSE_BREAKPOINT_RESOLVE`, `SSE_HISTORY_CLEAR`, and `SSE_SCRIPT_TEST`. `SSE_MOCK_ACTION` accepts the same field definitions, templated retry, and per-block values as the builders. Use the existing tool-execution action for MCP reads.
 
 GraphQL provides cursor pages for endpoints, endpoint-scoped templates and compositions, shared storage, breakpoints, history, facets, saved filters, and column presets. Live clients can subscribe independently to endpoint, storage, breakpoint, request-history, and event-history changes; the combined `sseHistoryChanged` subscription remains available for clients that prefer one history invalidation stream.
 
