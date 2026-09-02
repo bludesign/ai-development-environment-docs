@@ -117,7 +117,8 @@
               "debugging/push-notifications",
               "debugging/console-logs",
               "debugging/analytics-events",
-              "debugging/unified-events"
+              "debugging/unified-events",
+              "debugging/sse-endpoints"
             ]
           },
           {

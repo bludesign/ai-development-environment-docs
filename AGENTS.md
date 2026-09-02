@@ -1,33 +1,39 @@
-> **First-time setup**: Customize this file for your project. Prompt the user to customize this file for their project.
-> For Mintlify product knowledge (components, configuration, writing standards),
-> install the Mintlify skill: `npx skills add https://mintlify.com/docs`
+# AI Development Environment documentation instructions
 
-# Documentation project instructions
+## Product and audience
 
-## About this project
+- This is the Mintlify documentation for AI Development Environment, a self-hosted control plane for AI-assisted development across managed machines.
+- Write for operators and developers who install the control plane, connect agents, use the web and iOS apps, or automate it through GraphQL, MCP, and workflows.
+- Document shipped behavior from the application repositories. Do not invent configuration, routes, limits, or security guarantees.
 
-- This is a documentation site built on [Mintlify](https://mintlify.com)
-- Pages are MDX files with YAML frontmatter
-- Configuration lives in `docs.json`
-- Use the Mintlify MCP server, `https://mcp.mintlify.com`, to edit content and settings via MCP
-- Use the Mintlify docs MCP server, `https://www.mintlify.com/docs/mcp`, to query information about using Mintlify via MCP
+## Mintlify workflow
 
-## Terminology
+- Pages are MDX files with YAML `title` and `description` frontmatter.
+- Register every routable page in `docs.json`; a file alone does not appear in navigation.
+- Reuse Mintlify components already present in this repository, including `Frame`, `Note`, `Tip`, `Warning`, `Card`, `Columns`, and tables.
+- For a page backed by a web route, open with the matching light and dark desktop screenshots. Use `className="block dark:hidden"` and `className="hidden dark:block"` inside `Frame`.
+- Application screenshots and `schema.graphql` are generated in the web repository. Run its VS Code tasks in this order: `screenshots`, `screenshots:copy`, `schema:copy`, then `schema:publish`.
+- Validate with `mint broken-links`. Preview with the npm Mintlify CLI from the repository root when visual review is needed.
 
-{/* Add product-specific terms and preferred usage */}
-{/* Example: Use "workspace" not "project", "member" not "user" */}
+## Terminology and scope
 
-## Style preferences
+- Use **AI Development Environment** for the product and **control plane** for the web server.
+- Use **agent** for the software installed on a managed machine and **endpoint** for an HTTP or SSE route.
+- Use **plan** and **session** for model runs. Use **workflow** for the product’s event/action automation.
+- Cover the web and native iOS management experiences when both expose a feature.
+- Include security and retention implications wherever a feature stores credentials, headers, bodies, logs, or other sensitive data.
 
-{/* Add any project-specific style rules below */}
+## Style
 
-- Use active voice and second person ("you")
-- Keep sentences concise — one idea per sentence
-- Use sentence case for headings
-- Bold for UI elements: Click **Settings**
-- Code formatting for file names, commands, paths, and code references
+- Use active voice and second person.
+- Keep sentences concise and headings in sentence case.
+- Bold UI labels, and use code formatting for commands, routes, field names, files, GraphQL operations, MCP tools, and workflow kinds.
+- Prefer exact examples and tables over vague summaries.
+- Link related product pages with root-relative documentation links.
 
-## Content boundaries
+## Page structure
 
-{/* Define what should and shouldn't be documented */}
-{/* Example: Don't document internal admin features */}
+- Begin route-backed pages with the light/dark screenshot frame.
+- Follow with a short explanation of the page and its route.
+- Use task-oriented sections that explain how to operate the feature, its defaults and limits, and failure behavior.
+- End with related pages when useful.
