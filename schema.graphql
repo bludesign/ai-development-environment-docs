@@ -1,16 +1,16 @@
-directive @link(url: String, as: String, for: link__Purpose, import: [link__Import]) repeatable on SCHEMA
-
-directive @key(fields: _FieldSet!, resolvable: Boolean = true) repeatable on OBJECT | INTERFACE
+directive @key(fields: _FieldSet!) repeatable on OBJECT | INTERFACE
 
 directive @requires(fields: _FieldSet!) on FIELD_DEFINITION
 
 directive @provides(fields: _FieldSet!) on FIELD_DEFINITION
 
-directive @external(reason: String) on OBJECT | FIELD_DEFINITION
-
-directive @tag(name: String!) repeatable on FIELD_DEFINITION | OBJECT | INTERFACE | UNION | ARGUMENT_DEFINITION | SCALAR | ENUM | ENUM_VALUE | INPUT_OBJECT | INPUT_FIELD_DEFINITION
+directive @external on FIELD_DEFINITION
 
 directive @extends on OBJECT | INTERFACE
+
+directive @tag(name: String!) repeatable on FIELD_DEFINITION | INTERFACE | OBJECT | UNION | ARGUMENT_DEFINITION | SCALAR | ENUM | ENUM_VALUE | INPUT_OBJECT | INPUT_FIELD_DEFINITION
+
+directive @link(url: String, as: String, for: Purpose, import: [Import]) repeatable on SCHEMA
 
 """Values supported for action center resource."""
 enum ActionCenterResourceKind {
@@ -260,1633 +260,453 @@ input DismissActionCenterItemInput {
 }
 
 """
-Root query type — extended by domain-specific schema files as models are added.
+An arbitrary JSON value whose object shape is defined by the field that uses it.
 """
-type Query {
-  """
-  Health check that also verifies database connectivity. Returns "ok" or "degraded".
-  """
-  health: String!
-  _service: _Service!
+scalar JSON
 
-  """Returns an action center page."""
-  actionCenter(
-    """Maximum number of records to return. Defaults to `50`."""
-    first: Int = 50
+"""Lifecycle statuses for agent connection."""
+enum AgentConnectionStatus {
+  """Represents the online status for agent connection."""
+  ONLINE
 
-    """
-    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
-    """
-    after: String
-  ): ActionCenterPage!
+  """Represents the offline status for agent connection."""
+  OFFLINE
+}
 
-  """Returns agents."""
-  agents: [Agent!]!
+"""Lifecycle statuses for agent job."""
+enum AgentJobStatus {
+  """Represents the queued status for agent job."""
+  QUEUED
 
-  """Returns an agent, or null when it cannot be found."""
-  agent(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): Agent
+  """Represents the running status for agent job."""
+  RUNNING
 
-  """Returns an agent, or null when it cannot be found."""
-  agentSelf: Agent
+  """Represents the cancelling status for agent job."""
+  CANCELLING
 
-  """Returns agent cadence settings."""
-  agentCadenceSettings(
-    """Identifier of the agent."""
-    agentId: ID!
-  ): AgentCadenceSettings!
+  """Represents the succeeded status for agent job."""
+  SUCCEEDED
 
-  """Returns agent jobs."""
-  agentJobs(
-    """Identifier of the agent."""
-    agentId: ID!
+  """Represents the failed status for agent job."""
+  FAILED
 
-    """Maximum number of records to return. Defaults to `50`."""
-    limit: Int = 50
-  ): [AgentJob!]!
+  """Represents the cancelled status for agent job."""
+  CANCELLED
 
-  """Returns an agent job, or null when it cannot be found."""
-  agentJob(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): AgentJob
+  """Represents the timed out status for agent job."""
+  TIMED_OUT
+}
 
-  """Returns agent job logs."""
-  agentJobLogs(
-    """Identifier of the job."""
-    jobId: ID!
+"""Values supported for agent log stream."""
+enum AgentLogStream {
+  """Represents the stdout option."""
+  STDOUT
 
-    """
-    The after sequence used to filter or perform the operation. Defaults to `-1`.
-    """
-    afterSequence: Int = -1
-  ): [AgentJobLog!]!
+  """Represents the stderr option."""
+  STDERR
 
-  """Returns all apps."""
-  apps: [App!]!
+  """Represents the system option."""
+  SYSTEM
+}
 
-  """Returns an app, or null when it cannot be found."""
-  app(
-    """Identifier of the app."""
-    id: ID!
-  ): App
+"""Values supported for derived data location."""
+enum DerivedDataLocationMode {
+  """Uses the default mode."""
+  DEFAULT
 
-  """Returns a derived data collection, or null when it cannot be found."""
-  derivedDataCollection(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): DerivedDataCollection
+  """Uses the absolute mode."""
+  ABSOLUTE
 
-  """Returns a derived data deletion history page."""
-  derivedDataDeletionHistory(
-    """Maximum number of records to return. Defaults to `100`."""
-    first: Int = 100
+  """Uses the relative mode."""
+  RELATIVE
+}
 
-    """
-    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
-    """
-    after: ID
-  ): DerivedDataDeletionHistoryPage!
+"""Values supported for agent event."""
+enum AgentEventType {
+  """Represents the job available option."""
+  JOB_AVAILABLE
 
-  """Returns a codebase project, or null when it cannot be found."""
-  iosAppProject(
-    """Identifier of the codebase."""
-    codebaseId: ID!
-  ): CodebaseProject
+  """Represents the job cancel requested option."""
+  JOB_CANCEL_REQUESTED
 
-  """Returns build signing options."""
-  buildSigningOptions(
-    """Identifier of the build."""
-    buildId: ID!
-  ): BuildSigningOptions!
+  """Represents the codebase reconcile requested option."""
+  CODEBASE_RECONCILE_REQUESTED
 
-  """Returns build scripts."""
-  buildScripts: [BuildScript!]!
+  """Represents the agent configuration changed option."""
+  AGENT_CONFIGURATION_CHANGED
 
-  """Returns a build page."""
-  builds(
-    """Maximum number of records to return. Defaults to `50`."""
-    first: Int = 50
+  """Represents the run command available option."""
+  RUN_COMMAND_AVAILABLE
 
-    """
-    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
-    """
-    after: ID
+  """Represents the disk space poll requested option."""
+  DISK_SPACE_POLL_REQUESTED
+}
 
-    """
-    The status used to filter or perform the operation. Omit it to leave this dimension unfiltered.
-    """
-    status: BuildStatus
+"""Represents an agent in the GraphQL API."""
+type Agent {
+  """Stable identifier for this agent."""
+  id: ID!
 
-    """
-    Identifier of the codebase. Omit it to leave this dimension unfiltered.
-    """
-    codebaseId: ID
+  """Display name of this agent."""
+  name: String!
 
-    """
-    Identifier of the worktree. Omit it to leave this dimension unfiltered.
-    """
-    worktreeId: ID
+  """Host name reported by this agent."""
+  hostname: String!
 
-    """
-    Identifier of an app whose assigned repositories should scope the results.
-    """
-    appId: ID
-  ): BuildPage!
+  """Version reported for this agent."""
+  version: String!
 
-  """Returns a build, or null when it cannot be found."""
-  build(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): Build
+  """The OS version associated with this agent."""
+  osVersion: String!
+
+  """CPU architecture reported for this agent."""
+  architecture: String!
 
   """
-  Returns agents that can inspect destinations and run a completed build.
+  The CPU model associated with this agent. May be null when unavailable or not applicable.
   """
-  buildRunAgents(
-    """Identifier of the build."""
-    buildId: ID!
-  ): [BuildRunAgent!]!
-
-  """Returns build log chunks."""
-  buildLogChunks(
-    """Identifier of the build."""
-    buildId: ID!
-
-    """
-    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
-    """
-    after: ID
-
-    """Maximum number of records to return. Defaults to `1000`."""
-    first: Int = 1000
-  ): [BuildLogChunk!]!
-
-  """Returns build reports."""
-  worktreeCoverageReports(
-    """Identifier of the worktree."""
-    worktreeId: ID!
-  ): [BuildReport!]!
-
-  """Returns cache server settings."""
-  cacheServerSettings: CacheServerSettings!
-
-  """Returns a cache entry page."""
-  cacheEntries(
-    """
-    The key used to filter or perform the operation. Omit it to leave this dimension unfiltered.
-    """
-    key: String
-
-    """
-    The version used to filter or perform the operation. Omit it to leave this dimension unfiltered.
-    """
-    version: String
-
-    """
-    The scope used to filter or perform the operation. Omit it to leave this dimension unfiltered.
-    """
-    scope: String
-
-    """Identifier of the repo. Omit it to leave this dimension unfiltered."""
-    repoId: String
-
-    """Maximum number of records on each page. Defaults to `20`."""
-    itemsPerPage: Int = 20
-
-    """One-based page number to return. Defaults to `1`."""
-    page: Int = 1
-  ): CacheEntryPage!
-
-  """Returns a cache entry detail, or null when it cannot be found."""
-  cacheEntryDetail(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): CacheEntryDetail
-
-  """Returns a storage location, or null when it cannot be found."""
-  cacheStorageLocation(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): StorageLocation
-
-  """Returns a cache entry match, or null when it cannot be found."""
-  cacheEntryMatch(
-    """The primary key used to filter or perform the operation."""
-    primaryKey: String!
-
-    """
-    Restore keys used to filter or perform the operation. Omit it to leave this dimension unfiltered.
-    """
-    restoreKeys: [String!]
-
-    """Scopes used to filter or perform the operation."""
-    scopes: [String!]!
-
-    """Identifier of the repo."""
-    repoId: String!
-
-    """The version used to filter or perform the operation."""
-    version: String!
-  ): CacheEntryMatch
+  cpuModel: String
 
   """
-  Returns a Claude Code usage collection, or null when it cannot be found.
+  Total memory, in bytes. May be null when unavailable or not applicable.
   """
-  ccusageCollection(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): CcusageCollection
+  memoryTotalBytes: Float
 
-  """
-  Returns installed versions, global custom checks, and CLI health for all agents.
-  """
-  installationStatus: InstallationStatus!
+  """Free memory, in bytes. May be null when unavailable or not applicable."""
+  memoryFreeBytes: Float
 
-  """Returns cached CLI health for one agent."""
-  agentCliHealthStatus(
-    """Identifier of the agent to inspect."""
-    agentId: ID!
-  ): AgentCliHealthStatus!
+  """Total disk, in bytes. May be null when unavailable or not applicable."""
+  diskTotalBytes: Float
 
-  """Returns a codebase overview."""
-  codebaseOverview: CodebaseOverview!
+  """Free disk, in bytes. May be null when unavailable or not applicable."""
+  diskFreeBytes: Float
 
-  """Returns a codebase repository, or null when it cannot be found."""
-  codebaseRepository(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): CodebaseRepository
-
-  """Returns a codebase, or null when it cannot be found."""
-  codebase(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): Codebase
-
-  """Returns codebase settings."""
-  codebaseSettings: CodebaseSettings!
-
-  """Returns agent codebase registrations."""
-  agentCodebases: [AgentCodebaseRegistration!]!
-
-  """Returns an agent codebase configuration."""
-  agentCodebaseConfiguration: AgentCodebaseConfiguration!
-
-  """Returns command definitions."""
-  commandDefinitions(
-    """Whether archived records should be included. Defaults to `false`."""
-    includeArchived: Boolean = false
-  ): [CommandDefinition!]!
-
-  """Returns a command definition, or null when it cannot be found."""
-  commandDefinition(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): CommandDefinition
-
-  """Returns a command run page."""
-  commandRuns(
-    """Whether archived records should be included. Defaults to `false`."""
-    includeArchived: Boolean = false
-
-    """
-    Text used to filter matching records. Omit it to leave this dimension unfiltered.
-    """
-    search: String
-
-    """Identifier of the agent. Omit it to leave this dimension unfiltered."""
-    agentId: ID
-
-    """
-    Identifier of the worktree. Omit it to leave this dimension unfiltered.
-    """
-    worktreeId: ID
-
-    """Statuses to include. Omit them to leave this dimension unfiltered."""
-    statuses: [CommandRunStatus!]
-
-    """Maximum number of records to return. Defaults to `50`."""
-    first: Int = 50
-
-    """
-    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
-    """
-    after: ID
-  ): CommandRunPage!
-
-  """Returns a command run, or null when it cannot be found."""
-  commandRun(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): CommandRun
-
-  """Returns command run output chunks."""
-  commandRunOutput(
-    """Identifier of the run."""
-    runId: ID!
-
-    """
-    The after attempt used to filter or perform the operation. Defaults to `0`.
-    """
-    afterAttempt: Int = 0
-
-    """
-    The after sequence used to filter or perform the operation. Defaults to `-1`.
-    """
-    afterSequence: Int = -1
-
-    """Maximum number of records to return. Defaults to `1000`."""
-    first: Int = 1000
-  ): [CommandRunOutputChunk!]!
-
-  """Returns an export of a command definition."""
-  exportCommandDefinition(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): JSON!
-
-  """Returns command definitions eligible for the specified agent."""
-  eligibleCommandsForAgent(
-    """Identifier of the agent."""
-    agentId: ID!
-  ): [CommandDefinition!]!
-
-  """Returns command definitions eligible for the specified worktree."""
-  eligibleCommandsForWorktree(
-    """Identifier of the worktree."""
-    worktreeId: ID!
-  ): [CommandDefinition!]!
-
-  """Returns credential store status."""
-  credentialStoreStatus: CredentialStoreStatus!
-
-  """Returns credential metadata."""
-  credentials: [CredentialMetadata!]!
-
-  """Returns iOS device summaries."""
-  iosDevices(
-    """
-    The status used to filter or perform the operation. Omit it to leave this dimension unfiltered.
-    """
-    status: IosDeviceStatus
-  ): [IosDeviceSummary!]!
-
-  """Returns an iOS device, or null when it cannot be found."""
-  iosDevice(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): IosDevice
-
-  """Returns an iOS device firmware, or null when it cannot be found."""
-  iosDeviceFirmware(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): IosDeviceFirmware
-
-  """Returns iOS device settings."""
-  iosDeviceSettings: IosDeviceSettings!
-
-  """Returns disk space settings."""
-  diskSpaceSettings: DiskSpaceSettings!
-
-  """Returns a disk space overview."""
-  diskSpaceOverview: DiskSpaceOverview!
-
-  """Returns an agent disk space."""
-  agentDiskSpace(
-    """Identifier of the agent."""
-    agentId: ID!
-  ): AgentDiskSpace!
-
-  """Returns sidebar status."""
-  sidebarStatus: SidebarStatus!
-
-  """Returns an agent disk space configuration."""
-  agentDiskSpaceConfiguration: AgentDiskSpaceConfiguration!
-
-  """Returns GitHub settings."""
-  githubSettings: GitHubSettings!
-
-  """Returns GitHub cache TTL overrides."""
-  githubCacheTtlOverrides: [GitHubCacheTtlOverride!]!
-
-  """Returns strings."""
-  githubCacheableGraphqlOperations: [String!]!
-
-  """Returns GitHub rate limit snapshots."""
-  githubRateLimitSnapshots: [GitHubRateLimitSnapshot!]!
-
-  """Returns GitHub cache metrics."""
-  githubCacheMetrics: GitHubCacheMetrics!
-
-  """Returns a GitHub API call page."""
-  githubApiCalls(
-    """Maximum number of records to return. Defaults to `50`."""
-    limit: Int = 50
-
-    """Number of matching records to skip. Defaults to `0`."""
-    offset: Int = 0
-
-    """
-    The API type used to filter or perform the operation. Omit it to leave this dimension unfiltered.
-    """
-    apiType: GitHubApiType
-
-    """
-    The request source used to filter or perform the operation. Omit it to leave this dimension unfiltered.
-    """
-    requestSource: GitHubRequestSource
-
-    """
-    The source used to filter or perform the operation. Omit it to leave this dimension unfiltered.
-    """
-    source: GitHubCallSource
-  ): GitHubApiCallPage!
-
-  """Returns a GitHub cached entry page."""
-  githubCachedEntries(
-    """Maximum number of records to return. Defaults to `50`."""
-    limit: Int = 50
-
-    """Number of matching records to skip. Defaults to `0`."""
-    offset: Int = 0
-  ): GitHubCachedEntryPage!
-
-  """Returns a GitHub cached entry detail, or null when it cannot be found."""
-  githubCachedEntry(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): GitHubCachedEntryDetail
-
-  """Returns GitHub app settings."""
-  githubAppSettings: GitHubAppSettings!
-
-  """Returns whether GitHub webhooks are enabled."""
-  githubWebhooksEnabled: Boolean!
-
-  """Returns a GitHub webhook delivery page."""
-  githubWebhookDeliveries(
-    """Maximum number of records to return. Defaults to `50`."""
-    limit: Int = 50
-
-    """Number of matching records to skip. Defaults to `0`."""
-    offset: Int = 0
-  ): GitHubWebhookDeliveryPage!
-
-  """Returns GitHub repositories."""
-  githubRepositories: [GitHubRepository!]!
-
-  """Returns a GitHub repository candidate page."""
-  githubAvailableRepositories(
-    """
-    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
-    """
-    after: String
-  ): GitHubRepositoryCandidatePage!
-
-  """Returns a GitHub actions workflow run page."""
-  githubActionsWorkflowRuns(
-    """The source used to filter or perform the operation."""
-    source: GitHubRequestSource!
-
-    """
-    Identifier of the codebase repository. Omit it to leave this dimension unfiltered.
-    """
-    codebaseRepositoryId: ID
-
-    """
-    The branch used to filter or perform the operation. Omit it to leave this dimension unfiltered.
-    """
-    branch: String
-
-    """
-    Identifier of the workflow. Omit it to leave this dimension unfiltered.
-    """
-    workflowId: ID
-
-    """Maximum number of records to return. Defaults to `25`."""
-    first: Int = 25
-
-    """
-    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
-    """
-    after: String
-  ): GitHubActionsWorkflowRunPage!
-
-  """Returns GitHub workflow jobs."""
-  githubActionsWorkflowJobs(
-    """The source used to filter or perform the operation."""
-    source: GitHubRequestSource!
-
-    """Identifier of the codebase repository."""
-    codebaseRepositoryId: ID!
-
-    """Identifier of the workflow run."""
-    workflowRunId: ID!
-  ): [GitHubWorkflowJob!]!
-
-  """Returns a GitHub workflow run attempt."""
-  githubActionsWorkflowRunAttempt(
-    """The source used to filter or perform the operation."""
-    source: GitHubRequestSource!
-
-    """Identifier of the repository."""
-    repositoryId: ID!
-
-    """Identifier of the workflow run."""
-    workflowRunId: ID!
-
-    """The attempt used to filter or perform the operation."""
-    attempt: Int!
-  ): GitHubWorkflowRunAttempt!
-
-  """Returns GitHub actions workflow runs."""
-  githubWorktreeWorkflowRuns(
-    """Identifier of the worktree."""
-    worktreeId: ID!
-  ): [GitHubActionsWorkflowRun!]!
-
-  """Returns GitHub repository workflows."""
-  githubRepositoryWorkflows(
-    """The source used to filter or perform the operation."""
-    source: GitHubRequestSource!
-
-    """Identifier of the codebase repository."""
-    codebaseRepositoryId: ID!
-  ): [GitHubRepositoryWorkflow!]!
-
-  """Returns GitHub auto retry rules."""
-  githubAutoRetryRules(
-    """
-    Identifier of the codebase repository. Omit it to leave this dimension unfiltered.
-    """
-    codebaseRepositoryId: ID
-
-    """
-    Identifier of the workflow run. Omit it to leave this dimension unfiltered.
-    """
-    workflowRunId: ID
-  ): [GitHubAutoRetryRule!]!
-
-  """Returns a GitHub pull request page."""
-  githubPullRequests(
-    """The source used to filter or perform the operation."""
-    source: GitHubRequestSource!
-
-    """The scope used to filter or perform the operation."""
-    scope: GitHubPullRequestScope!
-
-    """
-    Identifier of the repository. Omit it to leave this dimension unfiltered.
-    """
-    repositoryId: ID
-
-    """The state used to filter or perform the operation. Defaults to `OPEN`."""
-    state: GitHubPullRequestStateFilter = OPEN
-
-    """Maximum number of records to return. Defaults to `25`."""
-    first: Int = 25
-
-    """
-    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
-    """
-    after: String
-  ): GitHubPullRequestPage!
-
-  """Returns a GitHub pull request detail, or null when it cannot be found."""
-  githubPullRequest(
-    """The owner used to filter or perform the operation."""
-    owner: String!
-
-    """The name used to filter or perform the operation."""
-    name: String!
-
-    """The number used to filter or perform the operation."""
-    number: Int!
-  ): GitHubPullRequestDetail
-
-  """Returns GitHub pull request merge options."""
-  githubPullRequestMergeOptions(
-    """The source used to filter or perform the operation."""
-    source: GitHubRequestSource!
-
-    """The owner used to filter or perform the operation."""
-    owner: String!
-
-    """The name used to filter or perform the operation."""
-    name: String!
-
-    """The number used to filter or perform the operation."""
-    number: Int!
-  ): GitHubPullRequestMergeOptions!
-
-  """Returns a GitHub review thread page."""
-  githubReviewThreads: GitHubReviewThreadPage!
-
-  """Returns GitHub pipeline status snapshots."""
-  githubPipelineStatuses(
-    """Keys used to filter or perform the operation."""
-    keys: [GitHubPipelineStatusKeyInput!]!
-  ): [GitHubPipelineStatusSnapshot!]!
-
-  """Returns GitHub pipeline records."""
-  githubPipelineRecords(
-    """Keys used to filter or perform the operation."""
-    keys: [GitHubPipelineRecordKeyInput!]!
-  ): [GitHubPipelineRecord!]!
-
-  """Source control integration state for Query."""
-  sourceControlIntegrationState: SourceControlIntegrationState!
-
-  """Gitlab settings for Query."""
-  gitlabSettings: GitLabSettings!
-
-  """Gitlab webhooks enabled for Query."""
-  gitlabWebhooksEnabled: Boolean!
-
-  """Gitlab projects for Query."""
-  gitlabProjects: [GitLabProject!]!
-
-  """Gitlab available projects for Query."""
-  gitlabAvailableProjects(
-    """Search used by gitlabAvailableProjects."""
-    search: String
-
-    """Page used by gitlabAvailableProjects."""
-    page: Int = 1
-
-    """Per page used by gitlabAvailableProjects."""
-    perPage: Int = 50
-  ): GitLabProjectCandidatePage!
-
-  """Gitlab merge requests for Query."""
-  gitlabMergeRequests(
-    """Scope used by gitlabMergeRequests."""
-    scope: GitLabMergeRequestScope!
-
-    """Project id used by gitlabMergeRequests."""
-    projectId: ID
-
-    """State used by gitlabMergeRequests."""
-    state: GitLabMergeRequestState = OPENED
-
-    """Page used by gitlabMergeRequests."""
-    page: Int = 1
-
-    """Per page used by gitlabMergeRequests."""
-    perPage: Int = 25
-  ): GitLabMergeRequestPage!
-
-  """Gitlab merge request for Query."""
-  gitlabMergeRequest(
-    """Project id used by gitlabMergeRequest."""
-    projectId: ID!
-
-    """Iid used by gitlabMergeRequest."""
-    iid: Int!
-  ): GitLabMergeRequestDetail!
-
-  """Gitlab pipelines for Query."""
-  gitlabPipelines(
-    """Project id used by gitlabPipelines."""
-    projectId: ID!
-
-    """Page used by gitlabPipelines."""
-    page: Int = 1
-
-    """Per page used by gitlabPipelines."""
-    perPage: Int = 25
-  ): GitLabPipelinePage!
-
-  """Gitlab pipeline for Query."""
-  gitlabPipeline(
-    """Project id used by gitlabPipeline."""
-    projectId: ID!
-
-    """Pipeline id used by gitlabPipeline."""
-    pipelineId: ID!
-  ): GitLabPipeline!
-
-  """Gitlab pipeline jobs for Query."""
-  gitlabPipelineJobs(
-    """Project id used by gitlabPipelineJobs."""
-    projectId: ID!
-
-    """Pipeline id used by gitlabPipelineJobs."""
-    pipelineId: ID!
-  ): [GitLabJob!]!
-
-  """Gitlab cached entries for Query."""
-  gitlabCachedEntries(
-    """Limit used by gitlabCachedEntries."""
-    limit: Int = 50
-
-    """Offset used by gitlabCachedEntries."""
-    offset: Int = 0
-  ): GitLabCacheEntryPage!
-
-  """Gitlab cached entry for Query."""
-  gitlabCachedEntry(
-    """Id used by gitlabCachedEntry."""
-    id: ID!
-  ): GitLabCacheEntryDetail
-
-  """Gitlab api calls for Query."""
-  gitlabApiCalls(
-    """Limit used by gitlabApiCalls."""
-    limit: Int = 50
-
-    """Offset used by gitlabApiCalls."""
-    offset: Int = 0
-  ): GitLabApiCallPage!
-
-  """Gitlab webhook deliveries for Query."""
-  gitlabWebhookDeliveries(
-    """Limit used by gitlabWebhookDeliveries."""
-    limit: Int = 50
-
-    """Offset used by gitlabWebhookDeliveries."""
-    offset: Int = 0
-  ): GitLabWebhookDeliveryPage!
-
-  """Gitlab cache ttl overrides for Query."""
-  gitlabCacheTtlOverrides: [GitLabCacheTtlOverride!]!
-
-  """Gitlab rate limit snapshots for Query."""
-  gitlabRateLimitSnapshots: [GitLabRateLimitSnapshot!]!
-
-  """Gitlab auto retry rules for Query."""
-  gitlabAutoRetryRules(
-    """Project id used by gitlabAutoRetryRules."""
-    projectId: ID
-  ): [GitLabAutoRetryRule!]!
-
-  """Returns Jira settings."""
-  jiraSettings: JiraSettings!
-
-  """Returns the Jira webhook configuration."""
-  jiraWebhookSettings: JiraWebhookSettings!
-
-  """Returns whether Jira webhooks are enabled."""
-  jiraWebhooksEnabled: Boolean!
-
-  """Returns a Jira webhook delivery page."""
-  jiraWebhookDeliveries(
-    """Maximum number of records to return. Defaults to `50`."""
-    limit: Int = 50
-
-    """Number of matching records to skip. Defaults to `0`."""
-    offset: Int = 0
-  ): JiraWebhookDeliveryPage!
-
-  """Returns Jira available projects."""
-  jiraAvailableProjects: [JiraAvailableProject!]!
-
-  """Returns Jira projects."""
-  jiraProjects: [JiraProject!]!
-
-  """Returns Jira project statuses."""
-  jiraProjectStatuses(
-    """Identifier of the project."""
-    projectId: ID!
-  ): [JiraProjectStatus!]!
-
-  """Returns a Jira ticket board."""
-  jiraTicketBoard(
-    """Identifier of the source."""
-    sourceId: ID!
-  ): JiraTicketBoard!
-
-  """Returns a Jira ticket detail."""
-  jiraTicket(
-    """The issue key used to filter or perform the operation."""
-    issueKey: ID!
-  ): JiraTicketDetail!
-
-  """Returns Jira people."""
-  jiraAssignableUsers(
-    """The issue key used to filter or perform the operation."""
-    issueKey: ID!
-
-    """Text used to filter matching records. Defaults to `""`."""
-    query: String = ""
-  ): [JiraPerson!]!
-
-  """Returns Jira transitions."""
-  jiraTicketTransitions(
-    """The issue key used to filter or perform the operation."""
-    issueKey: ID!
-  ): [JiraTransition!]!
-
-  """Returns Jira edit fields."""
-  jiraTicketEditFields(
-    """The issue key used to filter or perform the operation."""
-    issueKey: ID!
-  ): [JiraEditField!]!
-
-  """Returns a Jira change page."""
-  jiraTicketChanges(
-    """The issue key used to filter or perform the operation."""
-    issueKey: ID!
-
-    """Maximum number of records to return. Defaults to `50`."""
-    limit: Int = 50
-
-    """Number of matching records to skip. Defaults to `0`."""
-    offset: Int = 0
-  ): JiraChangePage!
-
-  """Returns a Jira worklog page."""
-  jiraTicketWorklogs(
-    """The issue key used to filter or perform the operation."""
-    issueKey: ID!
-
-    """Maximum number of records to return. Defaults to `50`."""
-    limit: Int = 50
-
-    """Number of matching records to skip. Defaults to `0`."""
-    offset: Int = 0
-  ): JiraWorklogPage!
-
-  """Returns Jira cache metrics."""
-  jiraCacheMetrics: JiraCacheMetrics!
-
-  """Returns a Jira API call page."""
-  jiraApiCalls(
-    """Maximum number of records to return. Defaults to `50`."""
-    limit: Int = 50
-
-    """Number of matching records to skip. Defaults to `0`."""
-    offset: Int = 0
-  ): JiraApiCallPage!
-
-  """Returns a Jira cached ticket page."""
-  jiraCachedTickets(
-    """Maximum number of records to return. Defaults to `50`."""
-    limit: Int = 50
-
-    """Number of matching records to skip. Defaults to `0`."""
-    offset: Int = 0
-  ): JiraCachedTicketPage!
-
-  """Returns a Jira cached ticket detail, or null when it cannot be found."""
-  jiraCachedTicket(
-    """The issue key used to filter or perform the operation."""
-    issueKey: ID!
-  ): JiraCachedTicketDetail
-
-  """Returns a model cost catalog."""
-  modelCostCatalog: ModelCostCatalog!
-
-  """Returns a model cost entry page."""
-  modelCostEntries(
-    """
-    Text used to filter matching records. Omit it to leave this dimension unfiltered.
-    """
-    search: String
-
-    """Maximum number of records to return. Defaults to `100`."""
-    first: Int = 100
-
-    """Number of matching records to skip. Defaults to `0`."""
-    offset: Int = 0
-
-    """
-    The sort key used to filter or perform the operation. Defaults to `MODEL`.
-    """
-    sortKey: ModelCostSortKey = MODEL
-
-    """
-    The direction used to filter or perform the operation. Defaults to `ASC`.
-    """
-    direction: ModelCostSortDirection = ASC
-  ): ModelCostEntryPage!
-
-  """Returns an app notification page."""
-  notifications(
-    """Maximum number of records to return. Defaults to `100`."""
-    first: Int = 100
-
-    """
-    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
-    """
-    after: ID
-  ): AppNotificationPage!
-
-  """Returns app notifications."""
-  sidebarNotifications(
-    """Maximum number of records to return. Defaults to `50`."""
-    limit: Int = 50
-  ): [AppNotification!]!
-
-  """Returns notification preferences."""
-  notificationPreferences: [NotificationPreference!]!
-
-  """Returns a web push state."""
-  webPushState: WebPushState!
-
-  """Returns web push subscriptions."""
-  webPushSubscriptions: [WebPushSubscription!]!
-
-  """Returns the native APNs delivery state."""
-  notificationApnsState: NotificationApnsState!
-
-  """Returns the iOS devices registered for native notification delivery."""
-  notificationDevices: [NotificationDevice!]!
-
-  """Returns polling operations."""
-  pollingOperations: [PollingOperation!]!
-
-  """Returns APNs registrations."""
-  apnsRegistrations: [ApnsRegistration!]!
-
-  """Returns push notification settings."""
-  pushNotificationSettings: PushNotificationSettings!
-
-  """Returns APNs broadcast channels."""
-  apnsBroadcastChannels: [ApnsBroadcastChannel!]!
-
-  """Returns push notification presets."""
-  pushNotificationPresets: [PushNotificationPreset!]!
-
-  """Returns push notification batches."""
-  pushNotificationHistory(
-    """Maximum number of records to return. Defaults to `100`."""
-    limit: Int = 100
-  ): [PushNotificationBatch!]!
-
-  """Validates a push notification and returns the diagnostics."""
-  validatePushNotification(
-    """The editor used to filter or perform the operation."""
-    editor: JSON!
-  ): PushNotificationPreview!
-
-  """Returns an agent run page."""
-  agentRuns(
-    """The kind used to filter or perform the operation."""
-    kind: RunKind!
-
-    """
-    Text used to filter matching records. Omit it to leave this dimension unfiltered.
-    """
-    search: String
-
-    """
-    The archive used to filter or perform the operation. Defaults to `"ACTIVE"`.
-    """
-    archive: String = "ACTIVE"
-
-    """
-    The provider used to filter or perform the operation. Omit it to leave this dimension unfiltered.
-    """
-    provider: String
-
-    """
-    The origin used to filter or perform the operation. Omit it to leave this dimension unfiltered.
-    """
-    origin: RunOrigin
-
-    """
-    Identifier of an app whose assigned repositories should scope the results.
-    """
-    appId: ID
-
-    """Maximum number of records to return. Defaults to `100`."""
-    first: Int = 100
-
-    """
-    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
-    """
-    after: ID
-  ): AgentRunPage!
-
-  """Returns an agent run, or null when it cannot be found."""
-  agentRun(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): AgentRun
-
-  """Returns run events."""
-  runEvents(
-    """Identifier of the run."""
-    runId: ID!
-
-    """
-    Text used to filter matching records. Omit it to leave this dimension unfiltered.
-    """
-    search: String
-
-    """
-    The after sequence used to filter or perform the operation. Defaults to `-1`.
-    """
-    afterSequence: Int = -1
-
-    """Maximum number of records to return. Defaults to `200`."""
-    first: Int = 200
-
-    """
-    Whether include superseded applies to the operation. Defaults to `false`.
-    """
-    includeSuperseded: Boolean = false
-  ): [RunEvent!]!
-
-  """Returns a run question batch page."""
-  runQuestionBatches(
-    """Identifier of the run."""
-    runId: ID!
-
-    """Maximum number of records to return. Defaults to `100`."""
-    first: Int = 100
-
-    """
-    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
-    """
-    after: ID
-  ): RunQuestionBatchPage!
-
-  """Returns a run usage summary, or null when it cannot be found."""
-  runUsage(
-    """Identifier of the run."""
-    runId: ID!
-  ): RunUsageSummary
-
-  """Returns a run native session file."""
-  runNativeSessionFile(
-    """Identifier of the run."""
-    runId: ID!
-  ): RunNativeSessionFile!
-
-  """Returns agent runs."""
-  runLinkedItems(
-    """Identifier of the run."""
-    runId: ID!
-  ): [AgentRun!]!
-
-  """Returns a run draft page."""
-  runDrafts(
-    """
-    Text used to filter matching records. Omit it to leave this dimension unfiltered.
-    """
-    search: String
-
-    """
-    The archive used to filter or perform the operation. Defaults to `"ACTIVE"`.
-    """
-    archive: String = "ACTIVE"
-
-    """Maximum number of records to return. Defaults to `100`."""
-    first: Int = 100
-
-    """
-    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
-    """
-    after: ID
-  ): RunDraftPage!
-
-  """Returns a run draft, or null when it cannot be found."""
-  runDraft(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): RunDraft
-
-  """Returns run provider catalog entries."""
-  runProviderCatalog(
-    """Identifier of the run. Omit it to leave this dimension unfiltered."""
-    runId: ID
-
-    """
-    Identifier of the worktree. Omit it to leave this dimension unfiltered.
-    """
-    worktreeId: ID
-  ): [RunProviderCatalogEntry!]!
-
-  """Returns run provider import statuses."""
-  runProviderImportStatus: [RunProviderImportStatus!]!
-
-  """Returns run commands."""
-  pendingRunCommands: [RunCommand!]!
-
-  """Returns a global search payload."""
-  globalSearch(
-    """Text used to filter matching records."""
-    query: String!
-
-    """
-    The first per group used to filter or perform the operation. Defaults to `5`.
-    """
-    firstPerGroup: Int = 5
-
-    """
-    The related first used to filter or perform the operation. Defaults to `3`.
-    """
-    relatedFirst: Int = 3
-  ): GlobalSearchPayload!
-
-  """Returns signing agent summaries."""
-  signingAgents: [SigningAgentSummary!]!
-
-  """Returns local signing profiles."""
-  signingProfiles: [LocalSigningProfile!]!
-
-  """Returns a local signing profile, or null when it cannot be found."""
-  signingProfile(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): LocalSigningProfile
-
-  """Returns local signing certificates."""
-  signingCertificates: [LocalSigningCertificate!]!
-
-  """Returns signing operations."""
-  signingOperations(
-    """Maximum number of records to return. Defaults to `50`."""
-    limit: Int = 50
-  ): [SigningOperation!]!
-
-  """Returns an Apple developer inventory."""
-  appleDeveloperInventory: AppleDeveloperInventory!
-
-  """Returns a skills overview."""
-  skillsOverview(
-    """Text used to filter matching records. Defaults to `""`."""
-    search: String = ""
-  ): SkillsOverview!
-
-  """Returns a skill, or null when it cannot be found."""
-  skill(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): Skill
-
-  """Returns a skill sync run, or null when it cannot be found."""
-  skillSyncRun(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): SkillSyncRun
-
-  """sse endpoints field."""
-  sseEndpoints(
-    """request origin input value."""
-    requestOrigin: String
-  ): [SseEndpoint!]!
-
-  """Return a cursor-paginated page of hosted SSE endpoints."""
-  sseEndpointPage(
-    """Maximum nodes to return."""
-    first: Int = 100
-
-    """Cursor returned by the previous page."""
-    after: String
-
-    """Origin used to build absolute public endpoint URLs."""
-    requestOrigin: String
-  ): SseEndpointPage!
-
-  """sse endpoint field."""
-  sseEndpoint(
-    """id input value."""
-    id: ID!
-
-    """request origin input value."""
-    requestOrigin: String
-  ): SseEndpoint
-
-  """sse mock event templates field."""
-  sseMockEventTemplates(
-    """endpoint id input value."""
-    endpointId: ID!
-  ): [SseMockEventTemplate!]!
-
-  """Return a cursor-paginated endpoint-scoped template library."""
-  sseMockEventTemplatePage(
-    """Endpoint that owns the templates."""
-    endpointId: ID!
-
-    """Maximum nodes to return."""
-    first: Int = 100
-
-    """Cursor returned by the previous page."""
-    after: String
-  ): SseMockEventTemplatePage!
-
-  """sse mock compositions field."""
-  sseMockCompositions(
-    """endpoint id input value."""
-    endpointId: ID!
-  ): [SseMockComposition!]!
-
-  """Return a cursor-paginated endpoint-scoped mock library."""
-  sseMockCompositionPage(
-    """Endpoint that owns the compositions."""
-    endpointId: ID!
-
-    """Maximum nodes to return."""
-    first: Int = 100
-
-    """Cursor returned by the previous page."""
-    after: String
-  ): SseMockCompositionPage!
-
-  """sse storage entries field."""
-  sseStorageEntries: [SseStorageEntry!]!
-
-  """Return a cursor-paginated page of shared global storage."""
-  sseStorageEntryPage(
-    """Maximum nodes to return."""
-    first: Int = 100
-
-    """Cursor returned by the previous page."""
-    after: String
-  ): SseStorageEntryPage!
-
-  """sse breakpoints field."""
-  sseBreakpoints(
-    """status input value."""
-    status: String
-  ): [SseBreakpoint!]!
-
-  """Return a cursor-paginated page of pending or resolved breakpoints."""
-  sseBreakpointPage(
-    """Optional breakpoint status filter."""
-    status: String
-
-    """Maximum nodes to return."""
-    first: Int = 100
-
-    """Cursor returned by the previous page."""
-    after: String
-  ): SseBreakpointPage!
-
-  """sse history field."""
-  sseHistory(
-    """input input value."""
-    input: SseHistoryQueryInput!
-  ): SseHistoryPage!
-
-  """sse history request field."""
-  sseHistoryRequest(
-    """id input value."""
-    id: ID!
-  ): SseRequestHistory
-
-  """sse history facets field."""
-  sseHistoryFacets: JSON!
-
-  """Return cursor-paginated endpoint, mode, status, and event-name facets."""
-  sseHistoryFacetPage(
-    """Maximum nodes to return."""
-    first: Int = 100
-
-    """Cursor returned by the previous page."""
-    after: String
-  ): SseHistoryFacetPage!
-
-  """sse history view settings field."""
-  sseHistoryViewSettings(
-    """view input value."""
-    view: SseHistoryView!
-  ): SseHistoryViewSettings!
-
-  """sse history column presets field."""
-  sseHistoryColumnPresets(
-    """view input value."""
-    view: SseHistoryView!
-  ): [SseHistoryColumnPreset!]!
-
-  """Return cursor-paginated history column presets for a view."""
-  sseHistoryColumnPresetPage(
-    """History view that owns the presets."""
-    view: SseHistoryView!
-
-    """Maximum nodes to return."""
-    first: Int = 100
-
-    """Cursor returned by the previous page."""
-    after: String
-  ): SseHistoryColumnPresetPage!
-
-  """sse history saved filters field."""
-  sseHistorySavedFilters(
-    """view input value."""
-    view: SseHistoryView!
-  ): [SseHistorySavedFilter!]!
-
-  """Return cursor-paginated saved history filters for a view."""
-  sseHistorySavedFilterPage(
-    """History view that owns the filters."""
-    view: SseHistoryView!
-
-    """Maximum nodes to return."""
-    first: Int = 100
-
-    """Cursor returned by the previous page."""
-    after: String
-  ): SseHistorySavedFilterPage!
-
-  """Returns fleet templates, agent identities, and observed configuration."""
-  tailscaleServeOverview: TailscaleServeOverview!
-
-  """Returns one durable Tailscale Serve operation."""
-  tailscaleServeOperation(
-    """Stable operation identifier."""
-    id: ID!
-  ): TailscaleServeOperation
-
-  """Returns a telemetry timeline page."""
-  telemetryTimeline(
-    """Values for the requested operation."""
-    input: TelemetryTimelineInput!
-  ): TelemetryTimelinePage!
-
-  """Returns telemetry entries."""
-  telemetryEntries(
-    """Identifiers of the resources to return or affect."""
-    ids: [ID!]!
-  ): [TelemetryEntry!]!
-
-  """Returns structured JSON data for telemetry facets."""
-  telemetryFacets(
-    """The view used to filter or perform the operation."""
-    view: TelemetryView!
-  ): JSON!
-
-  """Returns strings."""
-  telemetryFields(
-    """The view used to filter or perform the operation."""
-    view: TelemetryView!
-  ): [String!]!
-
-  """Returns telemetry settings."""
-  telemetrySettings(
-    """
-    The request origin used to filter or perform the operation. Omit it to leave this dimension unfiltered.
-    """
-    requestOrigin: String
-  ): TelemetrySettings!
-
-  """Returns telemetry view settings."""
-  telemetryViewSettings(
-    """The view used to filter or perform the operation."""
-    view: TelemetryView!
-  ): TelemetryViewSettings!
-
-  """Returns telemetry column presets."""
-  telemetryColumnPresets(
-    """The view used to filter or perform the operation."""
-    view: TelemetryView!
-  ): [TelemetryColumnPreset!]!
-
-  """Returns telemetry saved filters."""
-  telemetrySavedFilters(
-    """The view used to filter or perform the operation."""
-    view: TelemetryView!
-  ): [TelemetrySavedFilter!]!
-
-  """Returns external MCP servers."""
-  externalMcpServers: [ExternalMcpServer!]!
-
-  """Returns MCP tool presets."""
-  mcpToolPresets(
-    """
-    The kind used to filter or perform the operation. Omit it to leave this dimension unfiltered.
-    """
-    kind: RunKind
-  ): [McpToolPreset!]!
-
-  """Returns tool call audits."""
-  toolCallAudits(
-    """
-    Maximum number of records to return. Omit it to leave this dimension unfiltered.
-    """
-    first: Int
-
-    """
-    The tool name used to filter or perform the operation. Omit it to leave this dimension unfiltered.
-    """
-    toolName: String
-
-    """
-    The result status used to filter or perform the operation. Omit it to leave this dimension unfiltered.
-    """
-    resultStatus: String
-  ): [ToolCallAudit!]!
-
-  """Returns a workflow page."""
-  workflows(
-    """
-    Text used to filter matching records. Omit it to leave this dimension unfiltered.
-    """
-    search: String
-
-    """
-    The archive used to filter or perform the operation. Defaults to `"ACTIVE"`.
-    """
-    archive: String = "ACTIVE"
-
-    """
-    Whether enabled applies to the operation. Omit it to leave this dimension unfiltered.
-    """
-    enabled: Boolean
-
-    """Maximum number of records to return. Defaults to `100`."""
-    first: Int = 100
-
-    """
-    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
-    """
-    after: ID
-  ): WorkflowPage!
-
-  """Returns a workflow, or null when it cannot be found."""
-  workflow(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): Workflow
-
-  """Returns a workflow version, or null when it cannot be found."""
-  workflowVersion(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): WorkflowVersion
-
-  """Returns a workflow catalog."""
-  workflowCatalog: WorkflowCatalog!
-
-  """Validates a workflow draft and returns the diagnostics."""
-  validateWorkflowDraft(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): WorkflowValidation!
-
-  """Returns a workflow run page."""
-  workflowRuns(
-    """
-    Identifier of the workflow. Omit it to leave this dimension unfiltered.
-    """
-    workflowId: ID
-
-    """
-    The status used to filter or perform the operation. Omit it to leave this dimension unfiltered.
-    """
-    status: String
-
-    """
-    Text used to filter matching records. Omit it to leave this dimension unfiltered.
-    """
-    search: String
-
-    """
-    The archive used to filter or perform the operation. Defaults to `"ACTIVE"`.
-    """
-    archive: String = "ACTIVE"
-
-    """Maximum number of records to return. Defaults to `100`."""
-    first: Int = 100
-
-    """
-    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
-    """
-    after: ID
-  ): WorkflowRunPage!
+  """Capability identifiers advertised by this agent."""
+  capabilities: [String!]!
 
   """
-  Returns the durable queue for one worktree or the queued entries associated with one workflow.
+  Filesystem directory associated with this agent. May be null when unavailable or not applicable.
   """
-  worktreeRunQueue(
-    """
-    Worktree whose combined workflow, plan, and session queue should be returned.
-    """
-    worktreeId: ID
+  baseRepoDirectory: String
 
-    """
-    Workflow whose queued workflow runs and AI-run steps should be returned.
-    """
-    workflowId: ID
-  ): [WorktreeRunQueueEntry!]!
-
-  """Returns a workflow run, or null when it cannot be found."""
-  workflowRun(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): WorkflowRun
-
-  """Returns workflow run events."""
-  workflowRunEvents(
-    """Identifier of the run."""
-    runId: ID!
-
-    """
-    The after sequence used to filter or perform the operation. Defaults to `-1`.
-    """
-    afterSequence: Int = -1
-
-    """Maximum number of records to return. Defaults to `500`."""
-    first: Int = 500
-  ): [WorkflowRunEvent!]!
-
-  """Returns workflow runs."""
-  workflowRunsForResource(
-    """The kind used to filter or perform the operation."""
-    kind: String!
-
-    """Identifier of the resource."""
-    resourceId: ID!
-  ): [WorkflowRun!]!
-
-  """Returns workflows."""
-  workflowsAcceptingResource(
-    """The kind used to filter or perform the operation."""
-    kind: String!
-  ): [Workflow!]!
-
-  """Returns workflows."""
-  workflowQuickActions(
-    """The kind used to filter or perform the operation."""
-    kind: WorkflowQuickActionKind!
-
-    """The resource kind used to filter or perform the operation."""
-    resourceKind: String!
-
-    """
-    Identifier of the repository. Omit it to leave this dimension unfiltered.
-    """
-    repositoryId: ID
-  ): [Workflow!]!
-
-  """Returns an export of a workflow."""
-  exportWorkflow(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-
-    """Identifier of the version. Omit it to leave this dimension unfiltered."""
-    versionId: ID
-  ): JSON!
+  """The derived data location mode associated with this agent."""
+  derivedDataLocationMode: DerivedDataLocationMode!
 
   """
-  Prepares a workflow replay and returns a preview without applying changes.
+  Filesystem path associated with this agent. May be null when unavailable or not applicable.
   """
-  prepareWorkflowReplay(
-    """Identifier of the run."""
-    runId: ID!
+  derivedDataPath: String
 
-    """Identifier of the node."""
-    nodeId: ID!
-  ): WorkflowReplayPreview!
+  """
+  Filesystem directory associated with this agent. May be null when unavailable or not applicable.
+  """
+  buildsDirectory: String
 
-  """Returns workflow job secrets."""
-  workflowJobSecrets(
-    """Identifier of the job."""
-    jobId: ID!
-  ): [WorkflowJobSecret!]!
+  """
+  Filesystem directory associated with this agent. May be null when unavailable or not applicable.
+  """
+  defaultBuildsDirectory: String
 
-  """Returns the preparation state of every known worktree."""
-  worktreePreparationOverview: WorktreePreparationOverview!
+  """
+  Filesystem directory associated with this agent. May be null when unavailable or not applicable.
+  """
+  effectiveBuildsDirectory: String
 
-  """Returns a worktree overview."""
-  worktreeOverview(
-    """
-    Identifier of an app whose assigned repositories should scope the results.
-    """
-    appId: ID
-  ): WorktreeOverview!
+  """The connection status associated with this agent."""
+  connectionStatus: AgentConnectionStatus!
 
-  """Returns worktrees."""
-  hiddenWorktrees(
-    """
-    Identifier of an app whose assigned repositories should scope the results.
-    """
-    appId: ID
-  ): [Worktree!]!
+  """
+  The IP address associated with this agent. May be null when unavailable or not applicable.
+  """
+  ipAddress: String
 
-  """Returns worktree settings."""
-  worktreeSettings: WorktreeSettings!
+  """
+  ISO 8601 timestamp when this agent was last seen. May be null when unavailable or not applicable.
+  """
+  lastSeenAt: String
 
-  """Returns a worktree ticket branch preview."""
-  previewWorktreeTicketBranch(
-    """Values for the requested operation."""
-    input: PreviewWorktreeTicketBranchInput!
-  ): WorktreeTicketBranchPreview!
+  """
+  ISO 8601 timestamp when this agent disconnected. May be null when unavailable or not applicable.
+  """
+  disconnectedAt: String
 
-  """Returns a worktree move, or null when it cannot be found."""
-  worktreeMove(
-    """Identifier of the resource to return or affect."""
-    id: ID!
-  ): WorktreeMove
+  """ISO 8601 timestamp when this agent was created."""
+  createdAt: String!
 
-  """Returns a worktree auto sync, or null when it cannot be found."""
-  worktreeAutoSync(
-    """Identifier of the worktree."""
-    worktreeId: ID!
-  ): WorktreeAutoSync
+  """ISO 8601 timestamp when this agent was last updated."""
+  updatedAt: String!
+}
 
-  """Returns a worktree auto merge, or null when it cannot be found."""
-  worktreeAutoMerge(
-    """Identifier of the worktree."""
-    worktreeId: ID!
-  ): WorktreeAutoMerge
+"""Represents an agent enrollment token in the GraphQL API."""
+type AgentEnrollmentToken {
+  """Sensitive token returned for the requested operation."""
+  token: String!
+
+  """ISO 8601 timestamp when this agent enrollment token expires."""
+  expiresAt: String!
+}
+
+"""Configurable settings for agent cadence."""
+type AgentCadenceSettings {
+  """Identifier of the related agent."""
+  agentId: ID!
+
+  """Codebase scan interval, in seconds."""
+  codebaseScanIntervalSeconds: Int!
+
+  """Job reconciliation interval, in seconds."""
+  jobReconciliationIntervalSeconds: Int!
+
+  """Git fetch interval, in seconds."""
+  gitFetchIntervalSeconds: Int!
+
+  """Heartbeat interval, in seconds."""
+  heartbeatIntervalSeconds: Int!
+}
+
+"""Represents a signing secret transfer in the GraphQL API."""
+type SigningSecretTransfer {
+  """PKCS #12 Base64, encoded as Base64."""
+  p12Base64: String!
+
+  """Sensitive passphrase returned for the requested operation."""
+  passphrase: String!
+}
+
+"""Represents an enrolled agent in the GraphQL API."""
+type EnrolledAgent {
+  """The agent associated with this enrolled agent."""
+  agent: Agent!
+
+  """Sensitive credential returned for the requested operation."""
+  credential: String!
+}
+
+"""Represents an agent job in the GraphQL API."""
+type AgentJob {
+  """Stable identifier for this agent job."""
+  id: ID!
+
+  """Identifier of the related agent."""
+  agentId: ID!
+
+  """
+  Identifier of the related worktree. May be null when unavailable or not applicable.
+  """
+  worktreeId: ID
+
+  """Category of this agent job."""
+  kind: String!
+
+  """Structured payload associated with this agent job."""
+  payload: JSON!
+
+  """Current status of this agent job."""
+  status: AgentJobStatus!
+
+  """The idempotency key associated with this agent job."""
+  idempotencyKey: String!
+
+  """
+  Structured result associated with this agent job. May be null when unavailable or not applicable.
+  """
+  result: JSON
+
+  """
+  Error message when this agent job did not complete successfully. May be null when unavailable or not applicable.
+  """
+  error: String
+
+  """Timeout, in seconds."""
+  timeoutSeconds: Int!
+
+  """ISO 8601 timestamp when this agent job was created."""
+  createdAt: String!
+
+  """
+  ISO 8601 timestamp when this agent job started. May be null when unavailable or not applicable.
+  """
+  startedAt: String
+
+  """
+  ISO 8601 timestamp when this agent job finished. May be null when unavailable or not applicable.
+  """
+  finishedAt: String
+
+  """ISO 8601 timestamp when this agent job was last updated."""
+  updatedAt: String!
+
+  """Typed worktree-operation result when this is a worktree operation job."""
+  worktreeOperationResult: WorktreeOperationResult
+}
+
+"""Represents an agent job log in the GraphQL API."""
+type AgentJobLog {
+  """Stable identifier for this agent job log."""
+  id: ID!
+
+  """Identifier of the related job."""
+  jobId: ID!
+
+  """Monotonically increasing sequence number used for ordering."""
+  sequence: Int!
+
+  """The stream associated with this agent job log."""
+  stream: AgentLogStream!
+
+  """Human-readable message associated with this agent job log."""
+  message: String!
+
+  """ISO 8601 timestamp when this agent job log was created."""
+  createdAt: String!
+}
+
+"""An event emitted for agent."""
+type AgentEvent {
+  """Category of this agent event."""
+  type: AgentEventType!
+
+  """
+  The job associated with this agent event. May be null when unavailable or not applicable.
+  """
+  job: AgentJob
+
+  """
+  The run command associated with this agent event. May be null when unavailable or not applicable.
+  """
+  runCommand: RunCommand
+}
+
+"""Values used to enroll an agent."""
+input EnrollAgentInput {
+  """The enrollment token to use for the request."""
+  enrollmentToken: String!
+
+  """The name to use for the request."""
+  name: String!
+
+  """The hostname to use for the request."""
+  hostname: String!
+
+  """The version to use for the request."""
+  version: String!
+
+  """The OS version to use for the request."""
+  osVersion: String!
+
+  """The architecture to use for the request."""
+  architecture: String!
+
+  """The CPU model to use for the request."""
+  cpuModel: String
+
+  """Memory total in bytes."""
+  memoryTotalBytes: Float
+
+  """Memory free in bytes."""
+  memoryFreeBytes: Float
+
+  """Disk total in bytes."""
+  diskTotalBytes: Float
+
+  """Disk free in bytes."""
+  diskFreeBytes: Float
+
+  """Capabilities to use for the request."""
+  capabilities: [String!]!
+
+  """The default builds directory to use for the request."""
+  defaultBuildsDirectory: String
+}
+
+"""Input values for agent heartbeat."""
+input AgentHeartbeatInput {
+  """The version to use for the request."""
+  version: String!
+
+  """The OS version to use for the request."""
+  osVersion: String!
+
+  """The architecture to use for the request."""
+  architecture: String!
+
+  """The CPU model to use for the request."""
+  cpuModel: String
+
+  """Memory total in bytes."""
+  memoryTotalBytes: Float
+
+  """Memory free in bytes."""
+  memoryFreeBytes: Float
+
+  """Disk total in bytes."""
+  diskTotalBytes: Float
+
+  """Disk free in bytes."""
+  diskFreeBytes: Float
+
+  """Capabilities to use for the request."""
+  capabilities: [String!]!
+
+  """The default builds directory to use for the request."""
+  defaultBuildsDirectory: String
+}
+
+"""Values used to update agent derived data settings."""
+input UpdateAgentDerivedDataSettingsInput {
+  """The mode to use for the request."""
+  mode: DerivedDataLocationMode!
+
+  """The path to use for the request."""
+  path: String
+}
+
+"""Values used to update agent cadence settings."""
+input UpdateAgentCadenceSettingsInput {
+  """Codebase scan interval in seconds."""
+  codebaseScanIntervalSeconds: Int!
+
+  """Job reconciliation interval in seconds."""
+  jobReconciliationIntervalSeconds: Int!
+
+  """Git fetch interval in seconds."""
+  gitFetchIntervalSeconds: Int!
+
+  """Heartbeat interval in seconds."""
+  heartbeatIntervalSeconds: Int!
+}
+
+"""Values used to create an agent job."""
+input CreateAgentJobInput {
+  """Identifier of the agent to use."""
+  agentId: ID!
+
+  """The kind to use for the request."""
+  kind: String!
+
+  """Structured payload for the request."""
+  payload: JSON!
+
+  """The idempotency key to use for the request."""
+  idempotencyKey: String!
+
+  """Timeout in seconds."""
+  timeoutSeconds: Int = 86400
+}
+
+"""Input values for agent job log."""
+input AgentJobLogInput {
+  """The sequence to use for the request."""
+  sequence: Int!
+
+  """The stream to use for the request."""
+  stream: AgentLogStream!
+
+  """The message to use for the request."""
+  message: String!
+
+  """The created at to use for the request."""
+  createdAt: String!
 }
 
 """Entry points that change control-plane state or start an operation."""
@@ -4516,6 +3336,11 @@ type Mutation {
 
 """Live events emitted as control-plane resources change."""
 type Subscription {
+  """
+  Integration settings and project configuration invalidations, including an initial recovery signal.
+  """
+  integrationConfigurationChanged: String!
+
   """Emits an agent event for this event stream."""
   agentEvents(
     """Identifier of the agent."""
@@ -4554,8 +3379,29 @@ type Subscription {
     id: ID!
   ): DerivedDataCollection!
 
+  """Emits when a build script is saved or removed."""
+  buildScriptsChanged: Boolean!
+
   """Emits a build change whenever builds change."""
-  buildsChanged: BuildChange!
+  buildsChanged(
+    """
+    Restrict results to repositories assigned to this app; omitted means all apps.
+    """
+    appId: ID
+
+    """
+    Only builds for this worktree; deletions trigger conservative reconciliation.
+    """
+    worktreeId: ID
+  ): BuildChange!
+
+  """
+  A complete current build projection after a change. Null when the build was deleted; no event replay is guaranteed.
+  """
+  buildSnapshotChanged(
+    """Identifier of the build to observe."""
+    id: ID!
+  ): Build
 
   """Emits a build change whenever build changes."""
   buildChanged(
@@ -4584,7 +3430,10 @@ type Subscription {
   ): CliHealthStatusChangedEvent!
 
   """Emits a codebase overview change whenever codebase overview changes."""
-  codebaseOverviewChanged: CodebaseOverviewChange!
+  codebaseOverviewChanged(
+    """Restrict the overview to this agent; omitted means all agents."""
+    agentId: ID
+  ): CodebaseOverviewChange!
 
   """Emits a command definition whenever commands change."""
   commandsChanged: CommandDefinition
@@ -4622,9 +3471,24 @@ type Subscription {
   sidebarStatusChanged: Boolean!
 
   """
-  Emits a GitHub pipeline status change whenever GitHub pipeline status change.
+  Omitted key lists retain the global event stream. Supplying either list scopes
+  delivery to their union; empty lists watch nothing. replayCurrent attaches the
+  listener before reading current revisions to recover registration/reconnect gaps.
   """
-  githubPipelineStatusChanged: GitHubPipelineStatusChanged!
+  githubPipelineStatusChanged(
+    """
+    Only emit statuses for these worktree pipeline snapshots; omitted retains global delivery.
+    """
+    snapshotKeys: [GitHubPipelineStatusKeyInput!]
+
+    """
+    Only emit statuses for these individual pipeline records; omitted retains global delivery.
+    """
+    recordKeys: [GitHubPipelineRecordKeyInput!]
+
+    """Replay current watched statuses after registering for live changes."""
+    replayCurrent: Boolean = false
+  ): GitHubPipelineStatusChanged!
 
   """Gitlab pipeline status changed for Subscription."""
   gitlabPipelineStatusChanged: GitLabPipeline!
@@ -4637,6 +3501,9 @@ type Subscription {
   """
   jiraTicketChanged: JiraTicketChange!
 
+  """Updated model catalog metadata after settings or prices change."""
+  modelCostCatalogChanged: ModelCostCatalog!
+
   """Emits a notification change whenever notifications change."""
   notificationsChanged: NotificationChange!
 
@@ -4645,6 +3512,36 @@ type Subscription {
 
   """Emits a change signal whenever push notifications changes."""
   pushNotificationsChanged: Boolean!
+
+  """Scoped push notification catalog or history invalidations."""
+  pushNotificationChanges: PushNotificationChange!
+
+  """
+  Lightweight invalidations for a run list. Deletes reconcile all formerly matching lists.
+  """
+  agentRunListChanged(
+    """
+    Runs created by this workflow or sharing a worktree with its queued work; deleted runs invalidate conservatively.
+    """
+    workflowId: ID
+
+    """Only runs in this worktree; deleted runs invalidate conservatively."""
+    worktreeId: ID
+
+    """Only emit changes for this run kind."""
+    kind: RunKind
+
+    """
+    Restrict results to repositories assigned to this app; omitted means all apps.
+    """
+    appId: ID
+
+    """Only emit changes for runs using this provider."""
+    provider: String
+
+    """Only emit changes for runs with this origin."""
+    origin: RunOrigin
+  ): Boolean!
 
   """Emits an agent run whenever agent runs change."""
   agentRunsChanged: AgentRun
@@ -4709,10 +3606,36 @@ type Subscription {
   ): TailscaleServeOperation!
 
   """Emits a telemetry change whenever telemetry entries change."""
-  telemetryEntriesChanged: TelemetryChange!
+  telemetryEntriesChanged(
+    """
+    Only emit changes affecting this telemetry view; omitted observes all views.
+    """
+    view: TelemetryView
+  ): TelemetryChange!
 
   """Emits a telemetry settings change whenever telemetry settings change."""
   telemetrySettingsChanged: TelemetrySettingsChange!
+
+  """
+  Changes matching an optional workflow or linked resource. Existing unscoped subscriptions remain available.
+  """
+  workflowChanges(
+    """
+    Include other workflow runs sharing a worktree with queued work in the selected workflow.
+    """
+    includeQueuePeers: Boolean = false
+
+    """
+    Identifier of the workflow affected by this change, or a workflow scope for a subscription.
+    """
+    workflowId: ID
+
+    """Kind of resource whose commands or workflows are being observed."""
+    resourceKind: String
+
+    """Identifier of the target resource."""
+    resourceId: ID
+  ): WorkflowChange!
 
   """Emits a workflow whenever workflows change."""
   workflowsChanged: Workflow
@@ -4745,454 +3668,13 @@ type Subscription {
   ): WorktreeActivity!
 }
 
-"""
-An arbitrary JSON value whose object shape is defined by the field that uses it.
-"""
-scalar JSON
-
-"""Lifecycle statuses for agent connection."""
-enum AgentConnectionStatus {
-  """Represents the online status for agent connection."""
-  ONLINE
-
-  """Represents the offline status for agent connection."""
-  OFFLINE
-}
-
-"""Lifecycle statuses for agent job."""
-enum AgentJobStatus {
-  """Represents the queued status for agent job."""
-  QUEUED
-
-  """Represents the running status for agent job."""
-  RUNNING
-
-  """Represents the cancelling status for agent job."""
-  CANCELLING
-
-  """Represents the succeeded status for agent job."""
-  SUCCEEDED
-
-  """Represents the failed status for agent job."""
-  FAILED
-
-  """Represents the cancelled status for agent job."""
-  CANCELLED
-
-  """Represents the timed out status for agent job."""
-  TIMED_OUT
-}
-
-"""Values supported for agent log stream."""
-enum AgentLogStream {
-  """Represents the stdout option."""
-  STDOUT
-
-  """Represents the stderr option."""
-  STDERR
-
-  """Represents the system option."""
-  SYSTEM
-}
-
-"""Values supported for derived data location."""
-enum DerivedDataLocationMode {
-  """Uses the default mode."""
-  DEFAULT
-
-  """Uses the absolute mode."""
-  ABSOLUTE
-
-  """Uses the relative mode."""
-  RELATIVE
-}
-
-"""Values supported for agent event."""
-enum AgentEventType {
-  """Represents the job available option."""
-  JOB_AVAILABLE
-
-  """Represents the job cancel requested option."""
-  JOB_CANCEL_REQUESTED
-
-  """Represents the codebase reconcile requested option."""
-  CODEBASE_RECONCILE_REQUESTED
-
-  """Represents the agent configuration changed option."""
-  AGENT_CONFIGURATION_CHANGED
-
-  """Represents the run command available option."""
-  RUN_COMMAND_AVAILABLE
-
-  """Represents the disk space poll requested option."""
-  DISK_SPACE_POLL_REQUESTED
-}
-
-"""Represents an agent in the GraphQL API."""
-type Agent {
-  """Stable identifier for this agent."""
-  id: ID!
-
-  """Display name of this agent."""
-  name: String!
-
-  """Host name reported by this agent."""
-  hostname: String!
-
-  """Version reported for this agent."""
-  version: String!
-
-  """The OS version associated with this agent."""
-  osVersion: String!
-
-  """CPU architecture reported for this agent."""
-  architecture: String!
-
-  """
-  The CPU model associated with this agent. May be null when unavailable or not applicable.
-  """
-  cpuModel: String
-
-  """
-  Total memory, in bytes. May be null when unavailable or not applicable.
-  """
-  memoryTotalBytes: Float
-
-  """Free memory, in bytes. May be null when unavailable or not applicable."""
-  memoryFreeBytes: Float
-
-  """Total disk, in bytes. May be null when unavailable or not applicable."""
-  diskTotalBytes: Float
-
-  """Free disk, in bytes. May be null when unavailable or not applicable."""
-  diskFreeBytes: Float
-
-  """Capability identifiers advertised by this agent."""
-  capabilities: [String!]!
-
-  """
-  Filesystem directory associated with this agent. May be null when unavailable or not applicable.
-  """
-  baseRepoDirectory: String
-
-  """The derived data location mode associated with this agent."""
-  derivedDataLocationMode: DerivedDataLocationMode!
-
-  """
-  Filesystem path associated with this agent. May be null when unavailable or not applicable.
-  """
-  derivedDataPath: String
-
-  """
-  Filesystem directory associated with this agent. May be null when unavailable or not applicable.
-  """
-  buildsDirectory: String
-
-  """
-  Filesystem directory associated with this agent. May be null when unavailable or not applicable.
-  """
-  defaultBuildsDirectory: String
-
-  """
-  Filesystem directory associated with this agent. May be null when unavailable or not applicable.
-  """
-  effectiveBuildsDirectory: String
-
-  """The connection status associated with this agent."""
-  connectionStatus: AgentConnectionStatus!
-
-  """
-  The IP address associated with this agent. May be null when unavailable or not applicable.
-  """
-  ipAddress: String
-
-  """
-  ISO 8601 timestamp when this agent was last seen. May be null when unavailable or not applicable.
-  """
-  lastSeenAt: String
-
-  """
-  ISO 8601 timestamp when this agent disconnected. May be null when unavailable or not applicable.
-  """
-  disconnectedAt: String
-
-  """ISO 8601 timestamp when this agent was created."""
-  createdAt: String!
-
-  """ISO 8601 timestamp when this agent was last updated."""
-  updatedAt: String!
-}
-
-"""Represents an agent enrollment token in the GraphQL API."""
-type AgentEnrollmentToken {
-  """Sensitive token returned for the requested operation."""
-  token: String!
-
-  """ISO 8601 timestamp when this agent enrollment token expires."""
-  expiresAt: String!
-}
-
-"""Configurable settings for agent cadence."""
-type AgentCadenceSettings {
-  """Identifier of the related agent."""
-  agentId: ID!
-
-  """Codebase scan interval, in seconds."""
-  codebaseScanIntervalSeconds: Int!
-
-  """Job reconciliation interval, in seconds."""
-  jobReconciliationIntervalSeconds: Int!
-
-  """Git fetch interval, in seconds."""
-  gitFetchIntervalSeconds: Int!
-
-  """Heartbeat interval, in seconds."""
-  heartbeatIntervalSeconds: Int!
-}
-
-"""Represents a signing secret transfer in the GraphQL API."""
-type SigningSecretTransfer {
-  """PKCS #12 Base64, encoded as Base64."""
-  p12Base64: String!
-
-  """Sensitive passphrase returned for the requested operation."""
-  passphrase: String!
-}
-
-"""Represents an enrolled agent in the GraphQL API."""
-type EnrolledAgent {
-  """The agent associated with this enrolled agent."""
-  agent: Agent!
-
-  """Sensitive credential returned for the requested operation."""
-  credential: String!
-}
-
-"""Represents an agent job in the GraphQL API."""
-type AgentJob {
-  """Stable identifier for this agent job."""
-  id: ID!
-
-  """Identifier of the related agent."""
-  agentId: ID!
-
-  """
-  Identifier of the related worktree. May be null when unavailable or not applicable.
-  """
-  worktreeId: ID
-
-  """Category of this agent job."""
-  kind: String!
-
-  """Structured payload associated with this agent job."""
-  payload: JSON!
-
-  """Current status of this agent job."""
-  status: AgentJobStatus!
-
-  """The idempotency key associated with this agent job."""
-  idempotencyKey: String!
-
-  """
-  Structured result associated with this agent job. May be null when unavailable or not applicable.
-  """
-  result: JSON
-
-  """
-  Error message when this agent job did not complete successfully. May be null when unavailable or not applicable.
-  """
-  error: String
-
-  """Timeout, in seconds."""
-  timeoutSeconds: Int!
-
-  """ISO 8601 timestamp when this agent job was created."""
-  createdAt: String!
-
-  """
-  ISO 8601 timestamp when this agent job started. May be null when unavailable or not applicable.
-  """
-  startedAt: String
-
-  """
-  ISO 8601 timestamp when this agent job finished. May be null when unavailable or not applicable.
-  """
-  finishedAt: String
-
-  """ISO 8601 timestamp when this agent job was last updated."""
-  updatedAt: String!
-
-  """Typed worktree-operation result when this is a worktree operation job."""
-  worktreeOperationResult: WorktreeOperationResult
-}
-
-"""Represents an agent job log in the GraphQL API."""
-type AgentJobLog {
-  """Stable identifier for this agent job log."""
-  id: ID!
-
-  """Identifier of the related job."""
-  jobId: ID!
-
-  """Monotonically increasing sequence number used for ordering."""
-  sequence: Int!
-
-  """The stream associated with this agent job log."""
-  stream: AgentLogStream!
-
-  """Human-readable message associated with this agent job log."""
-  message: String!
-
-  """ISO 8601 timestamp when this agent job log was created."""
-  createdAt: String!
-}
-
-"""An event emitted for agent."""
-type AgentEvent {
-  """Category of this agent event."""
-  type: AgentEventType!
-
-  """
-  The job associated with this agent event. May be null when unavailable or not applicable.
-  """
-  job: AgentJob
-
-  """
-  The run command associated with this agent event. May be null when unavailable or not applicable.
-  """
-  runCommand: RunCommand
-}
-
-"""Values used to enroll an agent."""
-input EnrollAgentInput {
-  """The enrollment token to use for the request."""
-  enrollmentToken: String!
-
-  """The name to use for the request."""
-  name: String!
-
-  """The hostname to use for the request."""
-  hostname: String!
-
-  """The version to use for the request."""
-  version: String!
-
-  """The OS version to use for the request."""
-  osVersion: String!
-
-  """The architecture to use for the request."""
-  architecture: String!
-
-  """The CPU model to use for the request."""
-  cpuModel: String
-
-  """Memory total in bytes."""
-  memoryTotalBytes: Float
-
-  """Memory free in bytes."""
-  memoryFreeBytes: Float
-
-  """Disk total in bytes."""
-  diskTotalBytes: Float
-
-  """Disk free in bytes."""
-  diskFreeBytes: Float
-
-  """Capabilities to use for the request."""
-  capabilities: [String!]!
-
-  """The default builds directory to use for the request."""
-  defaultBuildsDirectory: String
-}
-
-"""Input values for agent heartbeat."""
-input AgentHeartbeatInput {
-  """The version to use for the request."""
-  version: String!
-
-  """The OS version to use for the request."""
-  osVersion: String!
-
-  """The architecture to use for the request."""
-  architecture: String!
-
-  """The CPU model to use for the request."""
-  cpuModel: String
-
-  """Memory total in bytes."""
-  memoryTotalBytes: Float
-
-  """Memory free in bytes."""
-  memoryFreeBytes: Float
-
-  """Disk total in bytes."""
-  diskTotalBytes: Float
-
-  """Disk free in bytes."""
-  diskFreeBytes: Float
-
-  """Capabilities to use for the request."""
-  capabilities: [String!]!
-
-  """The default builds directory to use for the request."""
-  defaultBuildsDirectory: String
-}
-
-"""Values used to update agent derived data settings."""
-input UpdateAgentDerivedDataSettingsInput {
-  """The mode to use for the request."""
-  mode: DerivedDataLocationMode!
-
-  """The path to use for the request."""
-  path: String
-}
-
-"""Values used to update agent cadence settings."""
-input UpdateAgentCadenceSettingsInput {
-  """Codebase scan interval in seconds."""
-  codebaseScanIntervalSeconds: Int!
-
-  """Job reconciliation interval in seconds."""
-  jobReconciliationIntervalSeconds: Int!
-
-  """Git fetch interval in seconds."""
-  gitFetchIntervalSeconds: Int!
-
-  """Heartbeat interval in seconds."""
-  heartbeatIntervalSeconds: Int!
-}
-
-"""Values used to create an agent job."""
-input CreateAgentJobInput {
-  """Identifier of the agent to use."""
-  agentId: ID!
-
-  """The kind to use for the request."""
-  kind: String!
-
-  """Structured payload for the request."""
-  payload: JSON!
-
-  """The idempotency key to use for the request."""
-  idempotencyKey: String!
-
-  """Timeout in seconds."""
-  timeoutSeconds: Int = 86400
-}
-
-"""Input values for agent job log."""
-input AgentJobLogInput {
-  """The sequence to use for the request."""
-  sequence: Int!
-
-  """The stream to use for the request."""
-  stream: AgentLogStream!
-
-  """The message to use for the request."""
-  message: String!
-
-  """The created at to use for the request."""
-  createdAt: String!
+"""Inclusive sequences already held by a log consumer."""
+input AgentJobLogRangeInput {
+  """First received sequence in this inclusive range."""
+  fromSequence: Int!
+
+  """Last received sequence in this inclusive range."""
+  throughSequence: Int!
 }
 
 """A product grouping that owns one or more repositories."""
@@ -5285,6 +3767,1775 @@ type AppChange {
   Identifier of the app that changed, or null when the collection changed.
   """
   id: ID
+}
+
+"""
+Root query type — extended by domain-specific schema files as models are added.
+"""
+type Query {
+  """
+  Health check that also verifies database connectivity. Returns "ok" or "degraded".
+  """
+  health: String!
+
+  """Returns an action center page."""
+  actionCenter(
+    """Maximum number of records to return. Defaults to `50`."""
+    first: Int = 50
+
+    """
+    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
+    """
+    after: String
+  ): ActionCenterPage!
+
+  """Returns agents."""
+  agents: [Agent!]!
+
+  """Returns an agent, or null when it cannot be found."""
+  agent(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): Agent
+
+  """Returns an agent, or null when it cannot be found."""
+  agentSelf: Agent
+
+  """Returns agent cadence settings."""
+  agentCadenceSettings(
+    """Identifier of the agent."""
+    agentId: ID!
+  ): AgentCadenceSettings!
+
+  """Returns agent jobs."""
+  agentJobs(
+    """Identifier of the agent."""
+    agentId: ID!
+
+    """Maximum number of records to return. Defaults to `50`."""
+    limit: Int = 50
+  ): [AgentJob!]!
+
+  """Returns an agent job, or null when it cannot be found."""
+  agentJob(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): AgentJob
+
+  """
+  Returns jobs in one bounded lookup, preserving agent ownership restrictions.
+  """
+  agentJobsByIds(
+    """Identifiers of the jobs to retrieve; at most 200 unique IDs."""
+    ids: [ID!]!
+  ): [AgentJob!]!
+
+  """Returns agent job logs."""
+  agentJobLogs(
+    """Identifier of the job."""
+    jobId: ID!
+
+    """
+    The after sequence used to filter or perform the operation. Defaults to `-1`.
+    """
+    afterSequence: Int = -1
+
+    """Maximum records to return; the resolver enforces its page limit."""
+    first: Int = 5000
+
+    """Return records strictly before this sequence."""
+    beforeSequence: Int
+
+    """Select the newest page and return it in ascending sequence order."""
+    latest: Boolean = false
+
+    """
+    Inclusive ranges already received by the consumer; omitted ranges remain eligible for gap recovery.
+    """
+    knownRanges: [AgentJobLogRangeInput!]
+  ): [AgentJobLog!]!
+
+  """Returns all apps."""
+  apps: [App!]!
+
+  """Returns an app, or null when it cannot be found."""
+  app(
+    """Identifier of the app."""
+    id: ID!
+  ): App
+
+  """Returns a derived data collection, or null when it cannot be found."""
+  derivedDataCollection(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): DerivedDataCollection
+
+  """Returns a derived data deletion history page."""
+  derivedDataDeletionHistory(
+    """Maximum number of records to return. Defaults to `100`."""
+    first: Int = 100
+
+    """
+    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
+    """
+    after: ID
+  ): DerivedDataDeletionHistoryPage!
+
+  """Returns a codebase project, or null when it cannot be found."""
+  iosAppProject(
+    """Identifier of the codebase."""
+    codebaseId: ID!
+  ): CodebaseProject
+
+  """Returns build signing options."""
+  buildSigningOptions(
+    """Identifier of the build."""
+    buildId: ID!
+  ): BuildSigningOptions!
+
+  """Returns build scripts."""
+  buildScripts: [BuildScript!]!
+
+  """Returns a build page."""
+  builds(
+    """Maximum number of records to return. Defaults to `50`."""
+    first: Int = 50
+
+    """
+    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
+    """
+    after: ID
+
+    """
+    The status used to filter or perform the operation. Omit it to leave this dimension unfiltered.
+    """
+    status: BuildStatus
+
+    """
+    Identifier of the codebase. Omit it to leave this dimension unfiltered.
+    """
+    codebaseId: ID
+
+    """
+    Identifier of the worktree. Omit it to leave this dimension unfiltered.
+    """
+    worktreeId: ID
+
+    """
+    Identifier of an app whose assigned repositories should scope the results.
+    """
+    appId: ID
+  ): BuildPage!
+
+  """Returns a build, or null when it cannot be found."""
+  build(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): Build
+
+  """
+  Returns agents that can inspect destinations and run a completed build.
+  """
+  buildRunAgents(
+    """Identifier of the build."""
+    buildId: ID!
+  ): [BuildRunAgent!]!
+
+  """Returns build log chunks."""
+  buildLogChunks(
+    """Return the newest page, in ascending chronological order."""
+    latest: Boolean = false
+
+    """Return chunks strictly before this chronological cursor."""
+    before: ID
+
+    """
+    Limit reconciliation to the visible window starting at this cursor, inclusive.
+    """
+    from: ID
+
+    """Identifier of the build."""
+    buildId: ID!
+
+    """
+    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
+    """
+    after: ID
+
+    """
+    Already received sequence ranges to exclude. Unlike the chronological cursor this remains safe for late log ingestion.
+    """
+    knownRanges: [BuildLogRangeInput!]
+
+    """Maximum number of records to return. Defaults to `1000`."""
+    first: Int = 1000
+  ): [BuildLogChunk!]!
+
+  """Returns build reports."""
+  worktreeCoverageReports(
+    """Identifier of the worktree."""
+    worktreeId: ID!
+  ): [BuildReport!]!
+
+  """Returns cache server settings."""
+  cacheServerSettings: CacheServerSettings!
+
+  """Returns a cache entry page."""
+  cacheEntries(
+    """
+    The key used to filter or perform the operation. Omit it to leave this dimension unfiltered.
+    """
+    key: String
+
+    """
+    The version used to filter or perform the operation. Omit it to leave this dimension unfiltered.
+    """
+    version: String
+
+    """
+    The scope used to filter or perform the operation. Omit it to leave this dimension unfiltered.
+    """
+    scope: String
+
+    """Identifier of the repo. Omit it to leave this dimension unfiltered."""
+    repoId: String
+
+    """Maximum number of records on each page. Defaults to `20`."""
+    itemsPerPage: Int = 20
+
+    """One-based page number to return. Defaults to `1`."""
+    page: Int = 1
+  ): CacheEntryPage!
+
+  """Returns a cache entry detail, or null when it cannot be found."""
+  cacheEntryDetail(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): CacheEntryDetail
+
+  """Returns a storage location, or null when it cannot be found."""
+  cacheStorageLocation(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): StorageLocation
+
+  """Returns a cache entry match, or null when it cannot be found."""
+  cacheEntryMatch(
+    """The primary key used to filter or perform the operation."""
+    primaryKey: String!
+
+    """
+    Restore keys used to filter or perform the operation. Omit it to leave this dimension unfiltered.
+    """
+    restoreKeys: [String!]
+
+    """Scopes used to filter or perform the operation."""
+    scopes: [String!]!
+
+    """Identifier of the repo."""
+    repoId: String!
+
+    """The version used to filter or perform the operation."""
+    version: String!
+  ): CacheEntryMatch
+
+  """
+  Returns a Claude Code usage collection, or null when it cannot be found.
+  """
+  ccusageCollection(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): CcusageCollection
+
+  """
+  Returns installed versions, global custom checks, and CLI health for all agents.
+  """
+  installationStatus: InstallationStatus!
+
+  """Returns cached CLI health for one agent."""
+  agentCliHealthStatus(
+    """Identifier of the agent to inspect."""
+    agentId: ID!
+  ): AgentCliHealthStatus!
+
+  """Returns a codebase overview."""
+  codebaseOverview(
+    """Restrict the overview to this agent; omitted means all agents."""
+    agentId: ID
+  ): CodebaseOverview!
+
+  """Returns a codebase repository, or null when it cannot be found."""
+  codebaseRepository(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): CodebaseRepository
+
+  """Returns a codebase, or null when it cannot be found."""
+  codebase(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): Codebase
+
+  """Returns codebase settings."""
+  codebaseSettings: CodebaseSettings!
+
+  """Returns agent codebase registrations."""
+  agentCodebases: [AgentCodebaseRegistration!]!
+
+  """Returns an agent codebase configuration."""
+  agentCodebaseConfiguration: AgentCodebaseConfiguration!
+
+  """
+  Batch eligible action metadata and compact run summaries for rendered resources.
+  """
+  commandTargetSummaries(
+    """
+    Resource targets to retrieve in one batch; duplicate targets are combined.
+    """
+    targets: [CommandTargetSummaryInput!]!
+  ): [CommandTargetSummary!]!
+
+  """Returns command definitions."""
+  commandDefinitions(
+    """Whether archived records should be included. Defaults to `false`."""
+    includeArchived: Boolean = false
+  ): [CommandDefinition!]!
+
+  """Returns a command definition, or null when it cannot be found."""
+  commandDefinition(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): CommandDefinition
+
+  """Returns a command run page."""
+  commandRuns(
+    """Whether archived records should be included. Defaults to `false`."""
+    includeArchived: Boolean = false
+
+    """
+    Text used to filter matching records. Omit it to leave this dimension unfiltered.
+    """
+    search: String
+
+    """Identifier of the agent. Omit it to leave this dimension unfiltered."""
+    agentId: ID
+
+    """
+    Identifier of the worktree. Omit it to leave this dimension unfiltered.
+    """
+    worktreeId: ID
+
+    """Statuses to include. Omit them to leave this dimension unfiltered."""
+    statuses: [CommandRunStatus!]
+
+    """Maximum number of records to return. Defaults to `50`."""
+    first: Int = 50
+
+    """
+    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
+    """
+    after: ID
+  ): CommandRunPage!
+
+  """Returns a command run, or null when it cannot be found."""
+  commandRun(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): CommandRun
+
+  """Returns command run output chunks."""
+  commandRunOutput(
+    """Identifier of the run."""
+    runId: ID!
+
+    """
+    The after attempt used to filter or perform the operation. Defaults to `0`.
+    """
+    afterAttempt: Int = 0
+
+    """
+    The after sequence used to filter or perform the operation. Defaults to `-1`.
+    """
+    afterSequence: Int = -1
+
+    """Maximum number of records to return. Defaults to `1000`."""
+    first: Int = 1000
+  ): [CommandRunOutputChunk!]!
+
+  """Returns an export of a command definition."""
+  exportCommandDefinition(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): JSON!
+
+  """Returns command definitions eligible for the specified agent."""
+  eligibleCommandsForAgent(
+    """Identifier of the agent."""
+    agentId: ID!
+  ): [CommandDefinition!]!
+
+  """Returns command definitions eligible for the specified worktree."""
+  eligibleCommandsForWorktree(
+    """Identifier of the worktree."""
+    worktreeId: ID!
+  ): [CommandDefinition!]!
+
+  """Returns credential store status."""
+  credentialStoreStatus: CredentialStoreStatus!
+
+  """Returns credential metadata."""
+  credentials: [CredentialMetadata!]!
+
+  """Returns iOS device summaries."""
+  iosDevices(
+    """
+    The status used to filter or perform the operation. Omit it to leave this dimension unfiltered.
+    """
+    status: IosDeviceStatus
+  ): [IosDeviceSummary!]!
+
+  """Returns an iOS device, or null when it cannot be found."""
+  iosDevice(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): IosDevice
+
+  """Returns an iOS device firmware, or null when it cannot be found."""
+  iosDeviceFirmware(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): IosDeviceFirmware
+
+  """Returns iOS device settings."""
+  iosDeviceSettings: IosDeviceSettings!
+
+  """Returns disk space settings."""
+  diskSpaceSettings: DiskSpaceSettings!
+
+  """Returns a disk space overview."""
+  diskSpaceOverview: DiskSpaceOverview!
+
+  """Returns an agent disk space."""
+  agentDiskSpace(
+    """Identifier of the agent."""
+    agentId: ID!
+  ): AgentDiskSpace!
+
+  """Returns sidebar status."""
+  sidebarStatus: SidebarStatus!
+
+  """Returns an agent disk space configuration."""
+  agentDiskSpaceConfiguration: AgentDiskSpaceConfiguration!
+
+  """Returns GitHub settings."""
+  githubSettings: GitHubSettings!
+
+  """Returns GitHub cache TTL overrides."""
+  githubCacheTtlOverrides: [GitHubCacheTtlOverride!]!
+
+  """Returns strings."""
+  githubCacheableGraphqlOperations: [String!]!
+
+  """Returns GitHub rate limit snapshots."""
+  githubRateLimitSnapshots: [GitHubRateLimitSnapshot!]!
+
+  """Returns GitHub cache metrics."""
+  githubCacheMetrics: GitHubCacheMetrics!
+
+  """Returns a GitHub API call page."""
+  githubApiCalls(
+    """Maximum number of records to return. Defaults to `50`."""
+    limit: Int = 50
+
+    """Number of matching records to skip. Defaults to `0`."""
+    offset: Int = 0
+
+    """
+    The API type used to filter or perform the operation. Omit it to leave this dimension unfiltered.
+    """
+    apiType: GitHubApiType
+
+    """
+    The request source used to filter or perform the operation. Omit it to leave this dimension unfiltered.
+    """
+    requestSource: GitHubRequestSource
+
+    """
+    The source used to filter or perform the operation. Omit it to leave this dimension unfiltered.
+    """
+    source: GitHubCallSource
+  ): GitHubApiCallPage!
+
+  """Returns a GitHub cached entry page."""
+  githubCachedEntries(
+    """Maximum number of records to return. Defaults to `50`."""
+    limit: Int = 50
+
+    """Number of matching records to skip. Defaults to `0`."""
+    offset: Int = 0
+  ): GitHubCachedEntryPage!
+
+  """Returns a GitHub cached entry detail, or null when it cannot be found."""
+  githubCachedEntry(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): GitHubCachedEntryDetail
+
+  """Returns GitHub app settings."""
+  githubAppSettings: GitHubAppSettings!
+
+  """Returns whether GitHub webhooks are enabled."""
+  githubWebhooksEnabled: Boolean!
+
+  """Returns a GitHub webhook delivery page."""
+  githubWebhookDeliveries(
+    """Maximum number of records to return. Defaults to `50`."""
+    limit: Int = 50
+
+    """Number of matching records to skip. Defaults to `0`."""
+    offset: Int = 0
+  ): GitHubWebhookDeliveryPage!
+
+  """Returns GitHub repositories."""
+  githubRepositories: [GitHubRepository!]!
+
+  """Returns a GitHub repository candidate page."""
+  githubAvailableRepositories(
+    """
+    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
+    """
+    after: String
+  ): GitHubRepositoryCandidatePage!
+
+  """Returns a GitHub actions workflow run page."""
+  githubActionsWorkflowRuns(
+    """The source used to filter or perform the operation."""
+    source: GitHubRequestSource!
+
+    """
+    Identifier of the codebase repository. Omit it to leave this dimension unfiltered.
+    """
+    codebaseRepositoryId: ID
+
+    """
+    The branch used to filter or perform the operation. Omit it to leave this dimension unfiltered.
+    """
+    branch: String
+
+    """
+    Identifier of the workflow. Omit it to leave this dimension unfiltered.
+    """
+    workflowId: ID
+
+    """Maximum number of records to return. Defaults to `25`."""
+    first: Int = 25
+
+    """
+    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
+    """
+    after: String
+  ): GitHubActionsWorkflowRunPage!
+
+  """Returns GitHub workflow jobs."""
+  githubActionsWorkflowJobs(
+    """The source used to filter or perform the operation."""
+    source: GitHubRequestSource!
+
+    """Identifier of the codebase repository."""
+    codebaseRepositoryId: ID!
+
+    """Identifier of the workflow run."""
+    workflowRunId: ID!
+  ): [GitHubWorkflowJob!]!
+
+  """Returns a GitHub workflow run attempt."""
+  githubActionsWorkflowRunAttempt(
+    """The source used to filter or perform the operation."""
+    source: GitHubRequestSource!
+
+    """Identifier of the repository."""
+    repositoryId: ID!
+
+    """Identifier of the workflow run."""
+    workflowRunId: ID!
+
+    """The attempt used to filter or perform the operation."""
+    attempt: Int!
+  ): GitHubWorkflowRunAttempt!
+
+  """Returns GitHub actions workflow runs."""
+  githubWorktreeWorkflowRuns(
+    """Identifier of the worktree."""
+    worktreeId: ID!
+  ): [GitHubActionsWorkflowRun!]!
+
+  """Returns GitHub repository workflows."""
+  githubRepositoryWorkflows(
+    """The source used to filter or perform the operation."""
+    source: GitHubRequestSource!
+
+    """Identifier of the codebase repository."""
+    codebaseRepositoryId: ID!
+  ): [GitHubRepositoryWorkflow!]!
+
+  """Returns GitHub auto retry rules."""
+  githubAutoRetryRules(
+    """
+    Identifier of the codebase repository. Omit it to leave this dimension unfiltered.
+    """
+    codebaseRepositoryId: ID
+
+    """
+    Identifier of the workflow run. Omit it to leave this dimension unfiltered.
+    """
+    workflowRunId: ID
+  ): [GitHubAutoRetryRule!]!
+
+  """Returns a GitHub pull request page."""
+  githubPullRequests(
+    """The source used to filter or perform the operation."""
+    source: GitHubRequestSource!
+
+    """The scope used to filter or perform the operation."""
+    scope: GitHubPullRequestScope!
+
+    """
+    Identifier of the repository. Omit it to leave this dimension unfiltered.
+    """
+    repositoryId: ID
+
+    """The state used to filter or perform the operation. Defaults to `OPEN`."""
+    state: GitHubPullRequestStateFilter = OPEN
+
+    """Maximum number of records to return. Defaults to `25`."""
+    first: Int = 25
+
+    """
+    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
+    """
+    after: String
+  ): GitHubPullRequestPage!
+
+  """Returns a GitHub pull request detail, or null when it cannot be found."""
+  githubPullRequest(
+    """The owner used to filter or perform the operation."""
+    owner: String!
+
+    """The name used to filter or perform the operation."""
+    name: String!
+
+    """The number used to filter or perform the operation."""
+    number: Int!
+  ): GitHubPullRequestDetail
+
+  """Returns GitHub pull request merge options."""
+  githubPullRequestMergeOptions(
+    """The source used to filter or perform the operation."""
+    source: GitHubRequestSource!
+
+    """The owner used to filter or perform the operation."""
+    owner: String!
+
+    """The name used to filter or perform the operation."""
+    name: String!
+
+    """The number used to filter or perform the operation."""
+    number: Int!
+  ): GitHubPullRequestMergeOptions!
+
+  """Returns a GitHub review thread page."""
+  githubReviewThreads: GitHubReviewThreadPage!
+
+  """Returns GitHub pipeline status snapshots."""
+  githubPipelineStatuses(
+    """Keys used to filter or perform the operation."""
+    keys: [GitHubPipelineStatusKeyInput!]!
+  ): [GitHubPipelineStatusSnapshot!]!
+
+  """Returns GitHub pipeline records."""
+  githubPipelineRecords(
+    """Keys used to filter or perform the operation."""
+    keys: [GitHubPipelineRecordKeyInput!]!
+  ): [GitHubPipelineRecord!]!
+
+  """Source control integration state for Query."""
+  sourceControlIntegrationState: SourceControlIntegrationState!
+
+  """Gitlab settings for Query."""
+  gitlabSettings: GitLabSettings!
+
+  """Gitlab webhooks enabled for Query."""
+  gitlabWebhooksEnabled: Boolean!
+
+  """Gitlab projects for Query."""
+  gitlabProjects: [GitLabProject!]!
+
+  """Gitlab available projects for Query."""
+  gitlabAvailableProjects(
+    """Search used by gitlabAvailableProjects."""
+    search: String
+
+    """Page used by gitlabAvailableProjects."""
+    page: Int = 1
+
+    """Per page used by gitlabAvailableProjects."""
+    perPage: Int = 50
+  ): GitLabProjectCandidatePage!
+
+  """Gitlab merge requests for Query."""
+  gitlabMergeRequests(
+    """Scope used by gitlabMergeRequests."""
+    scope: GitLabMergeRequestScope!
+
+    """Project id used by gitlabMergeRequests."""
+    projectId: ID
+
+    """State used by gitlabMergeRequests."""
+    state: GitLabMergeRequestState = OPENED
+
+    """Page used by gitlabMergeRequests."""
+    page: Int = 1
+
+    """Per page used by gitlabMergeRequests."""
+    perPage: Int = 25
+  ): GitLabMergeRequestPage!
+
+  """Gitlab merge request for Query."""
+  gitlabMergeRequest(
+    """Project id used by gitlabMergeRequest."""
+    projectId: ID!
+
+    """Iid used by gitlabMergeRequest."""
+    iid: Int!
+  ): GitLabMergeRequestDetail!
+
+  """Gitlab pipelines for Query."""
+  gitlabPipelines(
+    """Project id used by gitlabPipelines."""
+    projectId: ID!
+
+    """Page used by gitlabPipelines."""
+    page: Int = 1
+
+    """Per page used by gitlabPipelines."""
+    perPage: Int = 25
+  ): GitLabPipelinePage!
+
+  """Gitlab pipeline for Query."""
+  gitlabPipeline(
+    """Project id used by gitlabPipeline."""
+    projectId: ID!
+
+    """Pipeline id used by gitlabPipeline."""
+    pipelineId: ID!
+  ): GitLabPipeline!
+
+  """Gitlab pipeline jobs for Query."""
+  gitlabPipelineJobs(
+    """Project id used by gitlabPipelineJobs."""
+    projectId: ID!
+
+    """Pipeline id used by gitlabPipelineJobs."""
+    pipelineId: ID!
+  ): [GitLabJob!]!
+
+  """Gitlab cached entries for Query."""
+  gitlabCachedEntries(
+    """Limit used by gitlabCachedEntries."""
+    limit: Int = 50
+
+    """Offset used by gitlabCachedEntries."""
+    offset: Int = 0
+  ): GitLabCacheEntryPage!
+
+  """Gitlab cached entry for Query."""
+  gitlabCachedEntry(
+    """Id used by gitlabCachedEntry."""
+    id: ID!
+  ): GitLabCacheEntryDetail
+
+  """Gitlab api calls for Query."""
+  gitlabApiCalls(
+    """Limit used by gitlabApiCalls."""
+    limit: Int = 50
+
+    """Offset used by gitlabApiCalls."""
+    offset: Int = 0
+  ): GitLabApiCallPage!
+
+  """Gitlab webhook deliveries for Query."""
+  gitlabWebhookDeliveries(
+    """Limit used by gitlabWebhookDeliveries."""
+    limit: Int = 50
+
+    """Offset used by gitlabWebhookDeliveries."""
+    offset: Int = 0
+  ): GitLabWebhookDeliveryPage!
+
+  """Gitlab cache ttl overrides for Query."""
+  gitlabCacheTtlOverrides: [GitLabCacheTtlOverride!]!
+
+  """Gitlab rate limit snapshots for Query."""
+  gitlabRateLimitSnapshots: [GitLabRateLimitSnapshot!]!
+
+  """Gitlab auto retry rules for Query."""
+  gitlabAutoRetryRules(
+    """Project id used by gitlabAutoRetryRules."""
+    projectId: ID
+  ): [GitLabAutoRetryRule!]!
+
+  """Returns Jira settings."""
+  jiraSettings: JiraSettings!
+
+  """Returns the Jira webhook configuration."""
+  jiraWebhookSettings: JiraWebhookSettings!
+
+  """Returns whether Jira webhooks are enabled."""
+  jiraWebhooksEnabled: Boolean!
+
+  """Returns a Jira webhook delivery page."""
+  jiraWebhookDeliveries(
+    """Maximum number of records to return. Defaults to `50`."""
+    limit: Int = 50
+
+    """Number of matching records to skip. Defaults to `0`."""
+    offset: Int = 0
+  ): JiraWebhookDeliveryPage!
+
+  """Returns Jira available projects."""
+  jiraAvailableProjects: [JiraAvailableProject!]!
+
+  """Returns Jira projects."""
+  jiraProjects: [JiraProject!]!
+
+  """Returns Jira project statuses."""
+  jiraProjectStatuses(
+    """Identifier of the project."""
+    projectId: ID!
+  ): [JiraProjectStatus!]!
+
+  """Returns a Jira ticket board."""
+  jiraTicketBoard(
+    """Identifier of the source."""
+    sourceId: ID!
+  ): JiraTicketBoard!
+
+  """Returns a Jira ticket detail."""
+  jiraTicketSummary(
+    """Issue key to summarize without loading comments or custom fields."""
+    issueKey: ID!
+  ): JiraTicketSummary!
+
+  """
+  Returns Jira ticket detail; omitted commentsFirst preserves complete comment history.
+  """
+  jiraTicket(
+    """
+    Maximum newest comments to include. Older comments remain available through jiraTicketComments.
+    """
+    commentsFirst: Int
+
+    """The issue key used to filter or perform the operation."""
+    issueKey: ID!
+  ): JiraTicketDetail!
+
+  """
+  Returns one chronological page of comments, paging backward from the newest comments.
+  """
+  jiraTicketComments(
+    """Issue key whose comments to read."""
+    issueKey: ID!
+
+    """Maximum comments in this page."""
+    limit: Int = 50
+
+    """Number of newer comments already read."""
+    offset: Int = 0
+
+    """
+    Total from the first page, anchoring older offsets while new comments arrive.
+    """
+    snapshotTotal: Int
+  ): JiraCommentPage!
+
+  """Returns Jira people."""
+  jiraAssignableUsers(
+    """The issue key used to filter or perform the operation."""
+    issueKey: ID!
+
+    """Text used to filter matching records. Defaults to `""`."""
+    query: String = ""
+  ): [JiraPerson!]!
+
+  """Returns Jira transitions."""
+  jiraTicketTransitions(
+    """The issue key used to filter or perform the operation."""
+    issueKey: ID!
+  ): [JiraTransition!]!
+
+  """Returns Jira edit fields."""
+  jiraTicketEditFields(
+    """The issue key used to filter or perform the operation."""
+    issueKey: ID!
+  ): [JiraEditField!]!
+
+  """Returns a Jira change page."""
+  jiraTicketChanges(
+    """
+    Total from the first page. Pins subsequent offsets to that snapshot until the client refreshes.
+    """
+    snapshotTotal: Int
+
+    """The issue key used to filter or perform the operation."""
+    issueKey: ID!
+
+    """Maximum number of records to return. Defaults to `50`."""
+    limit: Int = 50
+
+    """Number of matching records to skip. Defaults to `0`."""
+    offset: Int = 0
+  ): JiraChangePage!
+
+  """Returns a Jira worklog page."""
+  jiraTicketWorklogs(
+    """
+    Total from the first page. Pins subsequent offsets to that snapshot until the client refreshes.
+    """
+    snapshotTotal: Int
+
+    """The issue key used to filter or perform the operation."""
+    issueKey: ID!
+
+    """Maximum number of records to return. Defaults to `50`."""
+    limit: Int = 50
+
+    """Number of matching records to skip. Defaults to `0`."""
+    offset: Int = 0
+  ): JiraWorklogPage!
+
+  """Returns Jira cache metrics."""
+  jiraCacheMetrics: JiraCacheMetrics!
+
+  """Returns a Jira API call page."""
+  jiraApiCalls(
+    """Maximum number of records to return. Defaults to `50`."""
+    limit: Int = 50
+
+    """Number of matching records to skip. Defaults to `0`."""
+    offset: Int = 0
+  ): JiraApiCallPage!
+
+  """Returns a Jira cached ticket page."""
+  jiraCachedTickets(
+    """Maximum number of records to return. Defaults to `50`."""
+    limit: Int = 50
+
+    """Number of matching records to skip. Defaults to `0`."""
+    offset: Int = 0
+  ): JiraCachedTicketPage!
+
+  """Returns a Jira cached ticket detail, or null when it cannot be found."""
+  jiraCachedTicket(
+    """The issue key used to filter or perform the operation."""
+    issueKey: ID!
+  ): JiraCachedTicketDetail
+
+  """Returns a model cost catalog."""
+  modelCostCatalog: ModelCostCatalog!
+
+  """Returns a model cost entry page."""
+  modelCostEntries(
+    """
+    Text used to filter matching records. Omit it to leave this dimension unfiltered.
+    """
+    search: String
+
+    """Maximum number of records to return. Defaults to `100`."""
+    first: Int = 100
+
+    """Number of matching records to skip. Defaults to `0`."""
+    offset: Int = 0
+
+    """
+    The sort key used to filter or perform the operation. Defaults to `MODEL`.
+    """
+    sortKey: ModelCostSortKey = MODEL
+
+    """
+    The direction used to filter or perform the operation. Defaults to `ASC`.
+    """
+    direction: ModelCostSortDirection = ASC
+  ): ModelCostEntryPage!
+
+  """Returns an app notification page."""
+  notifications(
+    """Maximum number of records to return. Defaults to `100`."""
+    first: Int = 100
+
+    """
+    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
+    """
+    after: ID
+  ): AppNotificationPage!
+
+  """Returns app notifications."""
+  sidebarNotifications(
+    """Maximum number of records to return. Defaults to `50`."""
+    limit: Int = 50
+  ): [AppNotification!]!
+
+  """Returns notification preferences."""
+  notificationPreferences: [NotificationPreference!]!
+
+  """Returns a web push state."""
+  webPushState: WebPushState!
+
+  """Returns web push subscriptions."""
+  webPushSubscriptions: [WebPushSubscription!]!
+
+  """Returns the native APNs delivery state."""
+  notificationApnsState: NotificationApnsState!
+
+  """Returns the iOS devices registered for native notification delivery."""
+  notificationDevices: [NotificationDevice!]!
+
+  """Returns polling operations."""
+  pollingOperations: [PollingOperation!]!
+
+  """Returns APNs registrations."""
+  apnsRegistrations: [ApnsRegistration!]!
+
+  """Returns push notification settings."""
+  pushNotificationSettings: PushNotificationSettings!
+
+  """Returns APNs broadcast channels."""
+  apnsBroadcastChannels: [ApnsBroadcastChannel!]!
+
+  """Returns push notification presets."""
+  pushNotificationPresets: [PushNotificationPreset!]!
+
+  """Returns push notification batches."""
+  pushNotificationHistoryItem(
+    """Stable identifier of this resource."""
+    id: ID!
+  ): PushNotificationBatch
+
+  """
+  Recent push notification batches; delivery details resolve only when selected.
+  """
+  pushNotificationHistory(
+    """Maximum number of records to return. Defaults to `100`."""
+    limit: Int = 100
+  ): [PushNotificationBatch!]!
+
+  """Validates a push notification and returns the diagnostics."""
+  validatePushNotification(
+    """The editor used to filter or perform the operation."""
+    editor: JSON!
+  ): PushNotificationPreview!
+
+  """Returns an agent run page."""
+  agentRuns(
+    """The kind used to filter or perform the operation."""
+    kind: RunKind!
+
+    """
+    Text used to filter matching records. Omit it to leave this dimension unfiltered.
+    """
+    search: String
+
+    """
+    The archive used to filter or perform the operation. Defaults to `"ACTIVE"`.
+    """
+    archive: String = "ACTIVE"
+
+    """
+    The provider used to filter or perform the operation. Omit it to leave this dimension unfiltered.
+    """
+    provider: String
+
+    """
+    The origin used to filter or perform the operation. Omit it to leave this dimension unfiltered.
+    """
+    origin: RunOrigin
+
+    """
+    Identifier of an app whose assigned repositories should scope the results.
+    """
+    appId: ID
+
+    """Maximum number of records to return. Defaults to `100`."""
+    first: Int = 100
+
+    """
+    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
+    """
+    after: ID
+  ): AgentRunPage!
+
+  """Returns an agent run, or null when it cannot be found."""
+  agentRun(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): AgentRun
+
+  """Returns run events."""
+  runEvents(
+    """Identifier of the run."""
+    runId: ID!
+
+    """
+    Text used to filter matching records. Omit it to leave this dimension unfiltered.
+    """
+    search: String
+
+    """
+    The after sequence used to filter or perform the operation. Defaults to `-1`.
+    """
+    afterSequence: Int = -1
+
+    """Maximum number of records to return. Defaults to `200`."""
+    first: Int = 200
+
+    """
+    Whether include superseded applies to the operation. Defaults to `false`.
+    """
+    includeSuperseded: Boolean = false
+
+    """Return records strictly before this sequence."""
+    beforeSequence: Int
+
+    """Select the newest page and return it in ascending sequence order."""
+    latest: Boolean = false
+  ): [RunEvent!]!
+
+  """Returns a run question batch page."""
+  runQuestionBatches(
+    """Identifier of the run."""
+    runId: ID!
+
+    """Maximum number of records to return. Defaults to `100`."""
+    first: Int = 100
+
+    """
+    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
+    """
+    after: ID
+  ): RunQuestionBatchPage!
+
+  """Returns a run usage summary, or null when it cannot be found."""
+  runUsage(
+    """Identifier of the run."""
+    runId: ID!
+  ): RunUsageSummary
+
+  """Returns a run native session file."""
+  runNativeSessionFile(
+    """Identifier of the run."""
+    runId: ID!
+  ): RunNativeSessionFile!
+
+  """Returns agent runs."""
+  runLinkedItems(
+    """Identifier of the run."""
+    runId: ID!
+  ): [AgentRun!]!
+
+  """Returns a run draft page."""
+  runDrafts(
+    """
+    Text used to filter matching records. Omit it to leave this dimension unfiltered.
+    """
+    search: String
+
+    """
+    The archive used to filter or perform the operation. Defaults to `"ACTIVE"`.
+    """
+    archive: String = "ACTIVE"
+
+    """Maximum number of records to return. Defaults to `100`."""
+    first: Int = 100
+
+    """
+    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
+    """
+    after: ID
+  ): RunDraftPage!
+
+  """Returns a run draft, or null when it cannot be found."""
+  runDraft(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): RunDraft
+
+  """Returns run provider catalog entries."""
+  runProviderCatalog(
+    """Identifier of the run. Omit it to leave this dimension unfiltered."""
+    runId: ID
+
+    """
+    Identifier of the worktree. Omit it to leave this dimension unfiltered.
+    """
+    worktreeId: ID
+  ): [RunProviderCatalogEntry!]!
+
+  """Returns run provider import statuses."""
+  runProviderImportStatus: [RunProviderImportStatus!]!
+
+  """Returns run commands."""
+  pendingRunCommands: [RunCommand!]!
+
+  """Returns a global search payload."""
+  globalSearch(
+    """Text used to filter matching records."""
+    query: String!
+
+    """
+    The first per group used to filter or perform the operation. Defaults to `5`.
+    """
+    firstPerGroup: Int = 5
+
+    """
+    The related first used to filter or perform the operation. Defaults to `3`.
+    """
+    relatedFirst: Int = 3
+  ): GlobalSearchPayload!
+
+  """Returns signing agent summaries."""
+  signingAgents: [SigningAgentSummary!]!
+
+  """Returns local signing profiles."""
+  signingProfiles: [LocalSigningProfile!]!
+
+  """Returns a local signing profile, or null when it cannot be found."""
+  signingProfile(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): LocalSigningProfile
+
+  """Returns local signing certificates."""
+  signingCertificates: [LocalSigningCertificate!]!
+
+  """Returns signing operations."""
+  signingOperations(
+    """Maximum number of records to return. Defaults to `50`."""
+    limit: Int = 50
+  ): [SigningOperation!]!
+
+  """Returns an Apple developer inventory."""
+  appleDeveloperInventory: AppleDeveloperInventory!
+
+  """Returns one skill group with its assignments."""
+  skillGroup(
+    """Stable identifier of this resource."""
+    id: ID!
+  ): SkillGroup
+
+  """Returns a skills overview."""
+  skillsOverview(
+    """Text used to filter matching records. Defaults to `""`."""
+    search: String = ""
+  ): SkillsOverview!
+
+  """Returns a skill, or null when it cannot be found."""
+  skill(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): Skill
+
+  """Returns a skill sync run, or null when it cannot be found."""
+  skillSyncRun(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): SkillSyncRun
+
+  """sse endpoints field."""
+  sseEndpoints(
+    """request origin input value."""
+    requestOrigin: String
+  ): [SseEndpoint!]!
+
+  """Return a cursor-paginated page of hosted SSE endpoints."""
+  sseEndpointPage(
+    """Maximum nodes to return."""
+    first: Int = 100
+
+    """Cursor returned by the previous page."""
+    after: String
+
+    """Origin used to build absolute public endpoint URLs."""
+    requestOrigin: String
+  ): SseEndpointPage!
+
+  """sse endpoint field."""
+  sseEndpoint(
+    """id input value."""
+    id: ID!
+
+    """request origin input value."""
+    requestOrigin: String
+  ): SseEndpoint
+
+  """sse mock event templates field."""
+  sseMockEventTemplates(
+    """endpoint id input value."""
+    endpointId: ID!
+  ): [SseMockEventTemplate!]!
+
+  """Return a cursor-paginated endpoint-scoped template library."""
+  sseMockEventTemplatePage(
+    """Endpoint that owns the templates."""
+    endpointId: ID!
+
+    """Maximum nodes to return."""
+    first: Int = 100
+
+    """Cursor returned by the previous page."""
+    after: String
+  ): SseMockEventTemplatePage!
+
+  """sse mock compositions field."""
+  sseMockCompositions(
+    """endpoint id input value."""
+    endpointId: ID!
+  ): [SseMockComposition!]!
+
+  """Return a cursor-paginated endpoint-scoped mock library."""
+  sseMockCompositionPage(
+    """Endpoint that owns the compositions."""
+    endpointId: ID!
+
+    """Maximum nodes to return."""
+    first: Int = 100
+
+    """Cursor returned by the previous page."""
+    after: String
+  ): SseMockCompositionPage!
+
+  """sse storage entries field."""
+  sseStorageEntries: [SseStorageEntry!]!
+
+  """Return a cursor-paginated page of shared global storage."""
+  sseStorageEntryPage(
+    """Maximum nodes to return."""
+    first: Int = 100
+
+    """Cursor returned by the previous page."""
+    after: String
+  ): SseStorageEntryPage!
+
+  """sse breakpoints field."""
+  sseBreakpoints(
+    """status input value."""
+    status: String
+  ): [SseBreakpoint!]!
+
+  """Return a cursor-paginated page of pending or resolved breakpoints."""
+  sseBreakpointPage(
+    """Optional breakpoint status filter."""
+    status: String
+
+    """Maximum nodes to return."""
+    first: Int = 100
+
+    """Cursor returned by the previous page."""
+    after: String
+  ): SseBreakpointPage!
+
+  """sse history field."""
+  sseHistory(
+    """input input value."""
+    input: SseHistoryQueryInput!
+  ): SseHistoryPage!
+
+  """sse history request field."""
+  sseHistoryRequest(
+    """id input value."""
+    id: ID!
+  ): SseRequestHistory
+
+  """sse history facets field."""
+  sseHistoryFacets: JSON!
+
+  """Return cursor-paginated endpoint, mode, status, and event-name facets."""
+  sseHistoryFacetPage(
+    """Maximum nodes to return."""
+    first: Int = 100
+
+    """Cursor returned by the previous page."""
+    after: String
+  ): SseHistoryFacetPage!
+
+  """sse history view settings field."""
+  sseHistoryViewSettings(
+    """view input value."""
+    view: SseHistoryView!
+  ): SseHistoryViewSettings!
+
+  """sse history column presets field."""
+  sseHistoryColumnPresets(
+    """view input value."""
+    view: SseHistoryView!
+  ): [SseHistoryColumnPreset!]!
+
+  """Return cursor-paginated history column presets for a view."""
+  sseHistoryColumnPresetPage(
+    """History view that owns the presets."""
+    view: SseHistoryView!
+
+    """Maximum nodes to return."""
+    first: Int = 100
+
+    """Cursor returned by the previous page."""
+    after: String
+  ): SseHistoryColumnPresetPage!
+
+  """sse history saved filters field."""
+  sseHistorySavedFilters(
+    """view input value."""
+    view: SseHistoryView!
+  ): [SseHistorySavedFilter!]!
+
+  """Return cursor-paginated saved history filters for a view."""
+  sseHistorySavedFilterPage(
+    """History view that owns the filters."""
+    view: SseHistoryView!
+
+    """Maximum nodes to return."""
+    first: Int = 100
+
+    """Cursor returned by the previous page."""
+    after: String
+  ): SseHistorySavedFilterPage!
+
+  """Returns fleet templates, agent identities, and observed configuration."""
+  tailscaleServeOverview: TailscaleServeOverview!
+
+  """Returns one durable Tailscale Serve operation."""
+  tailscaleServeOperation(
+    """Stable operation identifier."""
+    id: ID!
+  ): TailscaleServeOperation
+
+  """Returns a telemetry timeline page."""
+  telemetryTimeline(
+    """Values for the requested operation."""
+    input: TelemetryTimelineInput!
+  ): TelemetryTimelinePage!
+
+  """Returns telemetry entries."""
+  telemetryEntries(
+    """Identifiers of the resources to return or affect."""
+    ids: [ID!]!
+  ): [TelemetryEntry!]!
+
+  """Returns structured JSON data for telemetry facets."""
+  telemetryFacets(
+    """The view used to filter or perform the operation."""
+    view: TelemetryView!
+  ): JSON!
+
+  """Returns strings."""
+  telemetryFields(
+    """The view used to filter or perform the operation."""
+    view: TelemetryView!
+  ): [String!]!
+
+  """Returns telemetry settings."""
+  telemetrySettings(
+    """
+    The request origin used to filter or perform the operation. Omit it to leave this dimension unfiltered.
+    """
+    requestOrigin: String
+  ): TelemetrySettings!
+
+  """Returns telemetry view settings."""
+  telemetryViewSettings(
+    """The view used to filter or perform the operation."""
+    view: TelemetryView!
+  ): TelemetryViewSettings!
+
+  """Returns telemetry column presets."""
+  telemetryColumnPresets(
+    """The view used to filter or perform the operation."""
+    view: TelemetryView!
+  ): [TelemetryColumnPreset!]!
+
+  """Returns telemetry saved filters."""
+  telemetrySavedFilters(
+    """The view used to filter or perform the operation."""
+    view: TelemetryView!
+  ): [TelemetrySavedFilter!]!
+
+  """Returns external MCP servers."""
+  externalMcpServers: [ExternalMcpServer!]!
+
+  """Returns MCP tool presets."""
+  mcpToolPresets(
+    """
+    The kind used to filter or perform the operation. Omit it to leave this dimension unfiltered.
+    """
+    kind: RunKind
+  ): [McpToolPreset!]!
+
+  """Returns tool call audits."""
+  toolCallAudits(
+    """
+    Maximum number of records to return. Omit it to leave this dimension unfiltered.
+    """
+    first: Int
+
+    """
+    The tool name used to filter or perform the operation. Omit it to leave this dimension unfiltered.
+    """
+    toolName: String
+
+    """
+    The result status used to filter or perform the operation. Omit it to leave this dimension unfiltered.
+    """
+    resultStatus: String
+  ): [ToolCallAudit!]!
+
+  """Returns a workflow page."""
+  workflows(
+    """
+    Text used to filter matching records. Omit it to leave this dimension unfiltered.
+    """
+    search: String
+
+    """
+    The archive used to filter or perform the operation. Defaults to `"ACTIVE"`.
+    """
+    archive: String = "ACTIVE"
+
+    """
+    Whether enabled applies to the operation. Omit it to leave this dimension unfiltered.
+    """
+    enabled: Boolean
+
+    """Maximum number of records to return. Defaults to `100`."""
+    first: Int = 100
+
+    """
+    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
+    """
+    after: ID
+  ): WorkflowPage!
+
+  """Returns a workflow, or null when it cannot be found."""
+  workflow(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): Workflow
+
+  """Returns a workflow version, or null when it cannot be found."""
+  workflowVersion(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): WorkflowVersion
+
+  """Returns a workflow catalog."""
+  workflowCatalog: WorkflowCatalog!
+
+  """Validates a workflow draft and returns the diagnostics."""
+  validateWorkflowDraft(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): WorkflowValidation!
+
+  """Returns a workflow run page."""
+  workflowRuns(
+    """
+    Identifier of the workflow. Omit it to leave this dimension unfiltered.
+    """
+    workflowId: ID
+
+    """
+    The status used to filter or perform the operation. Omit it to leave this dimension unfiltered.
+    """
+    status: String
+
+    """
+    Text used to filter matching records. Omit it to leave this dimension unfiltered.
+    """
+    search: String
+
+    """
+    The archive used to filter or perform the operation. Defaults to `"ACTIVE"`.
+    """
+    archive: String = "ACTIVE"
+
+    """Maximum number of records to return. Defaults to `100`."""
+    first: Int = 100
+
+    """
+    Cursor or identifier after which to return records. Omit it to leave this dimension unfiltered.
+    """
+    after: ID
+  ): WorkflowRunPage!
+
+  """
+  Returns the durable queue for one worktree or the queued entries associated with one workflow.
+  """
+  worktreeRunQueue(
+    """
+    Worktree whose combined workflow, plan, and session queue should be returned.
+    """
+    worktreeId: ID
+
+    """
+    Workflow whose queued workflow runs and AI-run steps should be returned.
+    """
+    workflowId: ID
+  ): [WorktreeRunQueueEntry!]!
+
+  """Returns a workflow run, or null when it cannot be found."""
+  workflowRun(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): WorkflowRun
+
+  """Returns workflow run events."""
+  workflowRunEvents(
+    """Identifier of the run."""
+    runId: ID!
+
+    """
+    The after sequence used to filter or perform the operation. Defaults to `-1`.
+    """
+    afterSequence: Int = -1
+
+    """Maximum number of records to return. Defaults to `500`."""
+    first: Int = 500
+
+    """Return events before this sequence, in chronological order."""
+    beforeSequence: Int
+
+    """Select the newest page rather than starting with the oldest events."""
+    latest: Boolean = false
+  ): [WorkflowRunEvent!]!
+
+  """Returns bounded summaries of the newest runs linked to a resource."""
+  workflowRunSummariesForResource(
+    """The kind value for this request."""
+    kind: String!
+
+    """Identifier of the target resource."""
+    resourceId: ID!
+
+    """Maximum records to return; the resolver enforces its page limit."""
+    first: Int = 6
+  ): [WorkflowResourceRunSummary!]!
+
+  """Returns workflow runs."""
+  workflowRunsForResource(
+    """The kind used to filter or perform the operation."""
+    kind: String!
+
+    """Identifier of the resource."""
+    resourceId: ID!
+
+    """Limit the newest linked runs; omit to retain the full legacy result."""
+    first: Int
+  ): [WorkflowRun!]!
+
+  """Returns workflows."""
+  workflowsAcceptingResource(
+    """The kind used to filter or perform the operation."""
+    kind: String!
+  ): [Workflow!]!
+
+  """Returns workflows."""
+  workflowQuickActions(
+    """The kind used to filter or perform the operation."""
+    kind: WorkflowQuickActionKind!
+
+    """The resource kind used to filter or perform the operation."""
+    resourceKind: String!
+
+    """
+    Identifier of the repository. Omit it to leave this dimension unfiltered.
+    """
+    repositoryId: ID
+  ): [Workflow!]!
+
+  """Returns an export of a workflow."""
+  exportWorkflow(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+
+    """Identifier of the version. Omit it to leave this dimension unfiltered."""
+    versionId: ID
+  ): JSON!
+
+  """
+  Prepares a workflow replay and returns a preview without applying changes.
+  """
+  prepareWorkflowReplay(
+    """Identifier of the run."""
+    runId: ID!
+
+    """Identifier of the node."""
+    nodeId: ID!
+  ): WorkflowReplayPreview!
+
+  """Returns workflow job secrets."""
+  workflowJobSecrets(
+    """Identifier of the job."""
+    jobId: ID!
+  ): [WorkflowJobSecret!]!
+
+  """Returns the preparation state of every known worktree."""
+  worktreePreparationOverview: WorktreePreparationOverview!
+
+  """Returns a worktree overview."""
+  worktreeOverview(
+    """
+    Scope to the repository containing this worktree, including sibling checkouts needed for move destinations.
+    """
+    worktreeId: ID
+
+    """
+    Identifier of an app whose assigned repositories should scope the results.
+    """
+    appId: ID
+  ): WorktreeOverview!
+
+  """Returns worktrees."""
+  hiddenWorktrees(
+    """
+    Identifier of an app whose assigned repositories should scope the results.
+    """
+    appId: ID
+  ): [Worktree!]!
+
+  """Returns worktree settings."""
+  worktreeSettings: WorktreeSettings!
+
+  """Returns a worktree ticket branch preview."""
+  previewWorktreeTicketBranch(
+    """Values for the requested operation."""
+    input: PreviewWorktreeTicketBranchInput!
+  ): WorktreeTicketBranchPreview!
+
+  """Returns a worktree move, or null when it cannot be found."""
+  worktreeMove(
+    """Identifier of the resource to return or affect."""
+    id: ID!
+  ): WorktreeMove
+
+  """Returns a worktree auto sync, or null when it cannot be found."""
+  worktreeAutoSync(
+    """Identifier of the worktree."""
+    worktreeId: ID!
+  ): WorktreeAutoSync
+
+  """Returns a worktree auto merge, or null when it cannot be found."""
+  worktreeAutoMerge(
+    """Identifier of the worktree."""
+    worktreeId: ID!
+  ): WorktreeAutoMerge
+  _service: _Service!
 }
 
 """Lifecycle statuses for build data collection."""
@@ -6443,7 +6694,10 @@ type Build {
   artifacts: [BuildArtifact!]!
 
   """Reports associated with this build."""
-  reports: [BuildReport!]!
+  reports(
+    """Filter by report kind; omitted returns every kind."""
+    kind: BuildReportKind
+  ): [BuildReport!]!
 
   """Script executions associated with this build."""
   scriptExecutions: [BuildScriptExecution!]!
@@ -6558,6 +6812,9 @@ type BuildSourceInspection {
 type BuildChange {
   """Stable identifier for this build change."""
   id: ID!
+
+  """Repository containing the build, or null after deletion."""
+  repositoryId: ID
 }
 
 """Values used to save a build configuration."""
@@ -6737,6 +6994,21 @@ input BuildProgressInput {
 }
 
 """Input values for build log chunk."""
+input BuildLogRangeInput {
+  """Log stream scope, such as the build, an export, or a deployment."""
+  scope: String!
+
+  """Identifier of the operation within this log scope."""
+  scopeId: ID!
+
+  """First received sequence in this inclusive range."""
+  fromSequence: Int!
+
+  """Last received sequence in this inclusive range."""
+  throughSequence: Int!
+}
+
+"""A chunk of encoded output from a build operation."""
 input BuildLogChunkInput {
   """The scope to use for the request."""
   scope: String!
@@ -8344,6 +8616,113 @@ input CodebaseStatusReportInput {
   snapshot: CodebaseSnapshotInput!
 }
 
+"""Resource identity used by batched command action summaries."""
+enum CommandResourceKind {
+  """An enrolled control agent."""
+  AGENT
+
+  """A Git worktree belonging to a codebase."""
+  WORKTREE
+}
+
+"""
+A resource to summarize; duplicate targets are merged and at most 200 inputs are accepted.
+"""
+input CommandTargetSummaryInput {
+  """Kind of resource whose commands or workflows are being observed."""
+  resourceKind: CommandResourceKind!
+
+  """Identifier of the target resource."""
+  resourceId: ID!
+
+  """Include eligible commands beyond those enabled as quick actions."""
+  includeAllCommands: Boolean = false
+
+  """Include the bounded recent run list for this target."""
+  includeRecentRuns: Boolean = false
+}
+
+"""
+Command metadata needed for an action button; scripts remain on the definition API.
+"""
+type CommandActionDefinition {
+  """Stable identifier of this resource."""
+  id: ID!
+
+  """Display name of this resource."""
+  name: String!
+
+  """Human-readable description of the command."""
+  description: String!
+
+  """Kind of agent or worktree accepted by the command."""
+  targetKind: CommandTargetKind!
+
+  """Whether the command is offered as a quick action."""
+  quickActionEnabled: Boolean!
+
+  """Icon used for the quick action button."""
+  quickActionIconKey: String!
+
+  """Visual variant of the quick action button."""
+  quickActionButtonVariant: String!
+}
+
+"""
+An active run of a displayed quick action, without attempts or payload history.
+"""
+type CommandActiveRunSummary {
+  """Stable identifier of this resource."""
+  id: ID!
+
+  """Identifier of the command that created this run."""
+  commandId: ID!
+
+  """Human-readable sequential run number."""
+  displayNumber: Int!
+
+  """Current execution or health status."""
+  status: CommandRunStatus!
+}
+
+"""A compact recent run row."""
+type CommandRecentRunSummary {
+  """Stable identifier of this resource."""
+  id: ID!
+
+  """Human-readable sequential run number."""
+  displayNumber: Int!
+
+  """Current execution or health status."""
+  status: CommandRunStatus!
+
+  """Command name captured when the run started."""
+  snapshotName: String!
+
+  """ISO 8601 creation timestamp."""
+  createdAt: String!
+}
+
+"""One keyed result per target, including empty eligible-command lists."""
+type CommandTargetSummary {
+  """Kind of resource whose commands or workflows are being observed."""
+  resourceKind: CommandResourceKind!
+
+  """Identifier of the target resource."""
+  resourceId: ID!
+
+  """Eligible command definitions for this resource."""
+  commands: [CommandActionDefinition!]!
+
+  """
+  All active runs of eligible quick actions; never limited across different targets.
+  """
+  activeRuns: [CommandActiveRunSummary!]!
+
+  """At most eight recent unarchived runs for this target, newest first."""
+  recentRuns: [CommandRecentRunSummary!]!
+}
+
 """Values supported for command target."""
 enum CommandTargetKind {
   """Represents the any agent home option."""
@@ -9830,6 +10209,36 @@ type SidebarUsageToday {
 }
 
 """Represents sidebar status in the GraphQL API."""
+type SidebarDiskAgentIdentity {
+  """Stable identifier of this resource."""
+  id: ID!
+
+  """Display name of this resource."""
+  name: String!
+}
+
+"""Compact disk status for the visible navigation footer."""
+type SidebarDiskAgent {
+  """Identity of the agent reporting disk status."""
+  agent: SidebarDiskAgentIdentity!
+
+  """Whether disk management is enabled for this agent."""
+  enabled: Boolean!
+
+  """Current execution or health status."""
+  status: DiskSpaceAgentStatus!
+
+  """Compact volume usage and threshold summaries."""
+  volumes: [DiskSpaceVolume!]!
+}
+
+"""Compact disk information displayed without opening disk details."""
+type SidebarDiskSummary {
+  """Disk status summaries for agents in the sidebar."""
+  agents: [SidebarDiskAgent!]!
+}
+
+"""Disk and usage summaries for the shared sidebar."""
 type SidebarStatus {
   """The usage today associated with this sidebar status."""
   usageToday: SidebarUsageToday!
@@ -9839,6 +10248,11 @@ type SidebarStatus {
 
   """The disk space associated with this sidebar status."""
   diskSpace: DiskSpaceOverview!
+
+  """
+  Current monitored volumes and status without full agent reports or cleanup history.
+  """
+  diskSummary: SidebarDiskSummary!
 }
 
 """Values supported for GitHub pull request."""
@@ -13583,6 +13997,11 @@ type JiraTicketDetail {
   comments: [JiraComment!]!
 
   """
+  Total number of comments in the observed ticket snapshot, including older unloaded comments.
+  """
+  commentsTotal: Int
+
+  """
   ISO 8601 timestamp when this Jira ticket detail was created. May be null when unavailable or not applicable.
   """
   createdAt: String
@@ -14249,6 +14668,24 @@ type JiraTicketChange {
   event: String!
 }
 
+"""A bounded page of ticket comments with an anchored total."""
+type JiraCommentPage {
+  """Comments in chronological order within this page."""
+  items: [JiraComment!]!
+
+  """Total comments in the observed snapshot."""
+  total: Int!
+
+  """Maximum requested comments per page."""
+  limit: Int!
+
+  """Number of newer comments skipped."""
+  offset: Int!
+
+  """Cache provenance for this page."""
+  cache: JiraCacheMeta!
+}
+
 """
 One model's published prices, as cost per token in the upstream catalog's units.
 """
@@ -14372,271 +14809,6 @@ type ModelCostCatalog {
   True when the catalog is missing or older than the daily refresh interval.
   """
   stale: Boolean!
-}
-
-"""Represents an agent run in the GraphQL API."""
-type AgentRun {
-  """Stable identifier for this agent run."""
-  id: ID!
-
-  """Category of this agent run."""
-  kind: RunKind!
-
-  """The display number associated with this agent run."""
-  displayNumber: Int!
-
-  """Current status of this agent run."""
-  status: RunStatus!
-
-  """The phase associated with this agent run."""
-  phase: String!
-
-  """The origin associated with this agent run."""
-  origin: RunOrigin!
-
-  """The provider associated with this agent run."""
-  provider: String!
-
-  """
-  The provider version associated with this agent run. May be null when unavailable or not applicable.
-  """
-  providerVersion: String
-
-  """
-  Identifier of the related worktree. May be null when unavailable or not applicable.
-  """
-  worktreeId: ID
-
-  """
-  Identifier of the related agent. May be null when unavailable or not applicable.
-  """
-  agentId: ID
-
-  """
-  The worktree associated with this agent run. May be null when unavailable or not applicable.
-  """
-  worktree: RunWorktreeRef
-
-  """
-  The Jira issue key associated with this agent run. May be null when unavailable or not applicable.
-  """
-  jiraIssueKey: String
-
-  """The repository name associated with this agent run."""
-  repositoryName: String!
-
-  """
-  Git branch associated with this agent run. May be null when unavailable or not applicable.
-  """
-  branch: String
-
-  """The model associated with this agent run."""
-  model: String!
-
-  """
-  The effort associated with this agent run. May be null when unavailable or not applicable.
-  """
-  effort: String
-
-  """Whether the web search enabled condition is true for this agent run."""
-  webSearchEnabled: Boolean!
-
-  """Identifiers of the related MCP presets."""
-  mcpPresetIds: [ID!]!
-
-  """MCP tool names associated with this agent run."""
-  mcpToolNames: [String!]!
-
-  """
-  Maximum same-kind runs admitted on this worktree. Zero means unlimited.
-  """
-  worktreeConcurrencyLimit: Int!
-
-  """The initial prompt associated with this agent run."""
-  initialPrompt: String!
-
-  """
-  The final output associated with this agent run. May be null when unavailable or not applicable.
-  """
-  finalOutput: String
-
-  """
-  Error message when this agent run did not complete successfully. May be null when unavailable or not applicable.
-  """
-  error: String
-
-  """
-  The estimated cost associated with this agent run. May be null when unavailable or not applicable.
-  """
-  estimatedCost: Float
-
-  """
-  The pricing source associated with this agent run. May be null when unavailable or not applicable.
-  """
-  pricingSource: String
-
-  """
-  ISO 8601 timestamp when this agent run pricing updated. May be null when unavailable or not applicable.
-  """
-  pricingUpdatedAt: String
-
-  """The input tokens associated with this agent run."""
-  inputTokens: Int!
-
-  """The output tokens associated with this agent run."""
-  outputTokens: Int!
-
-  """The reasoning tokens associated with this agent run."""
-  reasoningTokens: Int!
-
-  """The cache read tokens associated with this agent run."""
-  cacheReadTokens: Int!
-
-  """The cache write tokens associated with this agent run."""
-  cacheWriteTokens: Int!
-
-  """Number of tool calls."""
-  toolCallCount: Int!
-
-  """
-  Identifier of the related source plan. May be null when unavailable or not applicable.
-  """
-  sourcePlanId: ID
-
-  """
-  The source plan number associated with this agent run. May be null when unavailable or not applicable.
-  """
-  sourcePlanNumber: Int
-
-  """
-  ISO 8601 timestamp when this agent run played. May be null when unavailable or not applicable.
-  """
-  playedAt: String
-
-  """
-  The played session number associated with this agent run. May be null when unavailable or not applicable.
-  """
-  playedSessionNumber: Int
-
-  """
-  The source plan associated with this agent run. May be null when unavailable or not applicable.
-  """
-  sourcePlan: AgentRun
-
-  """
-  The played session associated with this agent run. May be null when unavailable or not applicable.
-  """
-  playedSession: AgentRun
-
-  """
-  Identifier of the related parent run. May be null when unavailable or not applicable.
-  """
-  parentRunId: ID
-
-  """
-  The parent run number associated with this agent run. May be null when unavailable or not applicable.
-  """
-  parentRunNumber: Int
-
-  """
-  The parent run associated with this agent run. May be null when unavailable or not applicable.
-  """
-  parentRun: AgentRun
-
-  """
-  The follow up mode associated with this agent run. May be null when unavailable or not applicable.
-  """
-  followUpMode: String
-
-  """Follow ups associated with this agent run."""
-  followUps: [AgentRun!]!
-
-  """Attempts associated with this agent run."""
-  attempts: [RunAttempt!]!
-
-  """Inputs associated with this agent run."""
-  inputs: [RunInput!]!
-
-  """Model usages associated with this agent run."""
-  modelUsage: [RunModelUsage!]!
-
-  """Tool calls associated with this agent run."""
-  toolCalls: [RunToolCall!]!
-
-  """Question batches associated with this agent run."""
-  questionBatches: [RunQuestionBatch!]!
-
-  """Checkpoints associated with this agent run."""
-  checkpoints: [RunCheckpoint!]!
-
-  """
-  ISO 8601 timestamp when this agent run was archived. May be null when unavailable or not applicable.
-  """
-  archivedAt: String
-
-  """
-  ISO 8601 timestamp when this agent run native archived. May be null when unavailable or not applicable.
-  """
-  nativeArchivedAt: String
-
-  """
-  ISO 8601 timestamp when this agent run started. May be null when unavailable or not applicable.
-  """
-  startedAt: String
-
-  """
-  ISO 8601 timestamp when this agent run finished. May be null when unavailable or not applicable.
-  """
-  finishedAt: String
-
-  """ISO 8601 timestamp when this agent run was created."""
-  createdAt: String!
-
-  """ISO 8601 timestamp when this agent run was last updated."""
-  updatedAt: String!
-
-  """
-  Cost derived from the model price catalog rather than from what the provider
-  reported, so a run the provider priced at nothing still shows a number.
-  """
-  catalogCost: Float
-}
-
-"""Represents run model usage in the GraphQL API."""
-type RunModelUsage {
-  """Stable identifier for this run model usage."""
-  id: ID!
-
-  """The model associated with this run model usage."""
-  model: String!
-
-  """The input tokens associated with this run model usage."""
-  inputTokens: Int!
-
-  """The output tokens associated with this run model usage."""
-  outputTokens: Int!
-
-  """The reasoning tokens associated with this run model usage."""
-  reasoningTokens: Int!
-
-  """The cache read tokens associated with this run model usage."""
-  cacheReadTokens: Int!
-
-  """The cache write tokens associated with this run model usage."""
-  cacheWriteTokens: Int!
-
-  """
-  The estimated cost associated with this run model usage. May be null when unavailable or not applicable.
-  """
-  estimatedCost: Float
-
-  """Whether the superseded condition is true for this run model usage."""
-  superseded: Boolean!
-
-  """
-  The catalog cost associated with this run model usage. May be null when unavailable or not applicable.
-  """
-  catalogCost: Float
 }
 
 """Represents an app notification in the GraphQL API."""
@@ -15358,6 +15530,9 @@ type PushNotificationDelivery {
 
 """A batch of push notifications processed together."""
 type PushNotificationBatch {
+  """Push type displayed in history without downloading the editor payload."""
+  pushType: String!
+
   """Stable identifier for this push notification batch."""
   id: ID!
 
@@ -15503,6 +15678,12 @@ input SendPushNotificationInput {
 
   """The direct environment to use for the request."""
   directEnvironment: String
+}
+
+"""Sections invalidated by push notification changes."""
+type PushNotificationChange {
+  """CATALOG, HISTORY, or ALL, identifying which views need reconciliation."""
+  kind: String!
 }
 
 """Values supported for run."""
@@ -15725,6 +15906,43 @@ type RunToolCall {
   ISO 8601 timestamp when this run tool call was superseded. May be null when unavailable or not applicable.
   """
   supersededAt: String
+}
+
+"""Represents run model usage in the GraphQL API."""
+type RunModelUsage {
+  """Stable identifier for this run model usage."""
+  id: ID!
+
+  """The model associated with this run model usage."""
+  model: String!
+
+  """The input tokens associated with this run model usage."""
+  inputTokens: Int!
+
+  """The output tokens associated with this run model usage."""
+  outputTokens: Int!
+
+  """The reasoning tokens associated with this run model usage."""
+  reasoningTokens: Int!
+
+  """The cache read tokens associated with this run model usage."""
+  cacheReadTokens: Int!
+
+  """The cache write tokens associated with this run model usage."""
+  cacheWriteTokens: Int!
+
+  """
+  The estimated cost associated with this run model usage. May be null when unavailable or not applicable.
+  """
+  estimatedCost: Float
+
+  """Whether the superseded condition is true for this run model usage."""
+  superseded: Boolean!
+
+  """
+  The catalog cost associated with this run model usage. May be null when unavailable or not applicable.
+  """
+  catalogCost: Float
 }
 
 """Represents a run question option in the GraphQL API."""
@@ -15954,6 +16172,234 @@ type RunCheckpoint {
 
   """ISO 8601 timestamp when this run checkpoint was created."""
   createdAt: String!
+}
+
+"""Represents an agent run in the GraphQL API."""
+type AgentRun {
+  """Stable identifier for this agent run."""
+  id: ID!
+
+  """Category of this agent run."""
+  kind: RunKind!
+
+  """The display number associated with this agent run."""
+  displayNumber: Int!
+
+  """Current status of this agent run."""
+  status: RunStatus!
+
+  """The phase associated with this agent run."""
+  phase: String!
+
+  """The origin associated with this agent run."""
+  origin: RunOrigin!
+
+  """The provider associated with this agent run."""
+  provider: String!
+
+  """
+  The provider version associated with this agent run. May be null when unavailable or not applicable.
+  """
+  providerVersion: String
+
+  """
+  Identifier of the related worktree. May be null when unavailable or not applicable.
+  """
+  worktreeId: ID
+
+  """
+  Identifier of the related agent. May be null when unavailable or not applicable.
+  """
+  agentId: ID
+
+  """
+  The worktree associated with this agent run. May be null when unavailable or not applicable.
+  """
+  worktree: RunWorktreeRef
+
+  """
+  The Jira issue key associated with this agent run. May be null when unavailable or not applicable.
+  """
+  jiraIssueKey: String
+
+  """The repository name associated with this agent run."""
+  repositoryName: String!
+
+  """
+  Git branch associated with this agent run. May be null when unavailable or not applicable.
+  """
+  branch: String
+
+  """The model associated with this agent run."""
+  model: String!
+
+  """
+  The effort associated with this agent run. May be null when unavailable or not applicable.
+  """
+  effort: String
+
+  """Whether the web search enabled condition is true for this agent run."""
+  webSearchEnabled: Boolean!
+
+  """Identifiers of the related MCP presets."""
+  mcpPresetIds: [ID!]!
+
+  """MCP tool names associated with this agent run."""
+  mcpToolNames: [String!]!
+
+  """
+  Maximum same-kind runs admitted on this worktree. Zero means unlimited.
+  """
+  worktreeConcurrencyLimit: Int!
+
+  """The initial prompt associated with this agent run."""
+  initialPrompt: String!
+
+  """
+  The final output associated with this agent run. May be null when unavailable or not applicable.
+  """
+  finalOutput: String
+
+  """
+  Error message when this agent run did not complete successfully. May be null when unavailable or not applicable.
+  """
+  error: String
+
+  """
+  The estimated cost associated with this agent run. May be null when unavailable or not applicable.
+  """
+  estimatedCost: Float
+
+  """
+  The pricing source associated with this agent run. May be null when unavailable or not applicable.
+  """
+  pricingSource: String
+
+  """
+  ISO 8601 timestamp when this agent run pricing updated. May be null when unavailable or not applicable.
+  """
+  pricingUpdatedAt: String
+
+  """The input tokens associated with this agent run."""
+  inputTokens: Int!
+
+  """The output tokens associated with this agent run."""
+  outputTokens: Int!
+
+  """The reasoning tokens associated with this agent run."""
+  reasoningTokens: Int!
+
+  """The cache read tokens associated with this agent run."""
+  cacheReadTokens: Int!
+
+  """The cache write tokens associated with this agent run."""
+  cacheWriteTokens: Int!
+
+  """Number of tool calls."""
+  toolCallCount: Int!
+
+  """
+  Identifier of the related source plan. May be null when unavailable or not applicable.
+  """
+  sourcePlanId: ID
+
+  """
+  The source plan number associated with this agent run. May be null when unavailable or not applicable.
+  """
+  sourcePlanNumber: Int
+
+  """
+  ISO 8601 timestamp when this agent run played. May be null when unavailable or not applicable.
+  """
+  playedAt: String
+
+  """
+  The played session number associated with this agent run. May be null when unavailable or not applicable.
+  """
+  playedSessionNumber: Int
+
+  """
+  The source plan associated with this agent run. May be null when unavailable or not applicable.
+  """
+  sourcePlan: AgentRun
+
+  """
+  The played session associated with this agent run. May be null when unavailable or not applicable.
+  """
+  playedSession: AgentRun
+
+  """
+  Identifier of the related parent run. May be null when unavailable or not applicable.
+  """
+  parentRunId: ID
+
+  """
+  The parent run number associated with this agent run. May be null when unavailable or not applicable.
+  """
+  parentRunNumber: Int
+
+  """
+  The parent run associated with this agent run. May be null when unavailable or not applicable.
+  """
+  parentRun: AgentRun
+
+  """
+  The follow up mode associated with this agent run. May be null when unavailable or not applicable.
+  """
+  followUpMode: String
+
+  """Follow ups associated with this agent run."""
+  followUps: [AgentRun!]!
+
+  """Attempts associated with this agent run."""
+  attempts: [RunAttempt!]!
+
+  """Inputs associated with this agent run."""
+  inputs: [RunInput!]!
+
+  """Model usages associated with this agent run."""
+  modelUsage: [RunModelUsage!]!
+
+  """Tool calls associated with this agent run."""
+  toolCalls: [RunToolCall!]!
+
+  """Question batches associated with this agent run."""
+  questionBatches: [RunQuestionBatch!]!
+
+  """Checkpoints associated with this agent run."""
+  checkpoints: [RunCheckpoint!]!
+
+  """
+  ISO 8601 timestamp when this agent run was archived. May be null when unavailable or not applicable.
+  """
+  archivedAt: String
+
+  """
+  ISO 8601 timestamp when this agent run native archived. May be null when unavailable or not applicable.
+  """
+  nativeArchivedAt: String
+
+  """
+  ISO 8601 timestamp when this agent run started. May be null when unavailable or not applicable.
+  """
+  startedAt: String
+
+  """
+  ISO 8601 timestamp when this agent run finished. May be null when unavailable or not applicable.
+  """
+  finishedAt: String
+
+  """ISO 8601 timestamp when this agent run was created."""
+  createdAt: String!
+
+  """ISO 8601 timestamp when this agent run was last updated."""
+  updatedAt: String!
+
+  """
+  Cost derived from the model price catalog rather than from what the provider
+  reported, so a run the provider priced at nothing still shows a number.
+  """
+  catalogCost: Float
 }
 
 """A paginated collection of agent runs."""
@@ -17832,7 +18278,22 @@ type SseRequestHistory {
   durationMs: Int
 
   """events field."""
-  events: [SseHistoryEvent!]
+  events(
+    """Maximum events to return; omitted retains the legacy complete history."""
+    first: Int
+
+    """Return events before this sequence, exclusive."""
+    beforeSequence: Int
+
+    """Return events after this sequence, exclusive."""
+    afterSequence: Int
+
+    """Read the newest page, returned in ascending sequence order."""
+    latest: Boolean = false
+
+    """Already received sequences to omit while recovering gaps."""
+    knownRanges: [SseHistorySequenceRangeInput!]
+  ): [SseHistoryEvent!]
 }
 
 """A source, emitted, or dropped SSE history event."""
@@ -18472,6 +18933,15 @@ input SseHistorySavedFilterInput {
 
   """definition input value."""
   definition: JSON!
+}
+
+"""An inclusive range of SSE event sequences already held by a consumer."""
+input SseHistorySequenceRangeInput {
+  """First received sequence in the range."""
+  fromSequence: Int!
+
+  """Last received sequence in the range."""
+  throughSequence: Int!
 }
 
 """Protocols supported by node-level Tailscale Serve templates."""
@@ -20487,6 +20957,46 @@ input ImportWorkflowInput {
   name: String
 }
 
+"""A lightweight workflow definition or run invalidation."""
+type WorkflowChange {
+  """
+  Identifier of the workflow affected by this change, or a workflow scope for a subscription.
+  """
+  workflowId: ID
+
+  """
+  Identifier of the affected workflow run, when the change concerns execution.
+  """
+  runId: ID
+
+  """Whether definitions or resource eligibility may have changed."""
+  definitionsChanged: Boolean!
+}
+
+"""Compact linked-run history without graph or activity payloads."""
+type WorkflowResourceRunSummary {
+  """Stable identifier of this resource."""
+  id: ID!
+
+  """Human-readable sequential run number."""
+  displayNumber: Int!
+
+  """Current execution or health status."""
+  status: WorkflowRunStatus!
+
+  """Compact identity of the workflow that owns this run."""
+  workflow: WorkflowResourceRunDefinition!
+}
+
+"""Workflow identity shown in a linked-run history entry."""
+type WorkflowResourceRunDefinition {
+  """Stable identifier of this resource."""
+  id: ID!
+
+  """Display name of this resource."""
+  name: String!
+}
+
 """Values supported for worktree editor variant."""
 enum WorktreeEditorVariant {
   """Represents the code option."""
@@ -21874,7 +22384,11 @@ input ConfigureWorktreeAutoMergeInput {
   moveTicketToDone: Boolean! = false
 }
 
-enum link__Purpose {
+scalar _FieldSet
+
+scalar Import
+
+enum Purpose {
   """
   `SECURITY` features provide metadata necessary to securely resolve fields.
   """
@@ -21885,12 +22399,6 @@ enum link__Purpose {
   """
   EXECUTION
 }
-
-scalar link__Import
-
-scalar _FieldSet
-
-scalar _Any
 
 type _Service {
   sdl: String
