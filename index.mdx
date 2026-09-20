@@ -41,6 +41,23 @@ The [Worktrees](/worktrees/worktrees) page in that tour is a good example of how
   </Card>
 </Columns>
 
+## Focus on an agent
+
+Use **Active Agent**, immediately to the left of **Search**, to focus the existing agent filters on [Worktrees](/worktrees/worktrees) and [Usage](/ai/usage). The selector starts at **None**. Search by agent name or hostname, then choose any enrolled agent, including an offline one.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/active-agent-selector.png" alt="Active Agent menu with searchable agents in light theme" />
+  <img className="hidden dark:block" src="/images/dark/active-agent-selector.png" alt="Active Agent menu with searchable agents in dark theme" />
+</Frame>
+
+While an agent is active, each affected page's **Agent** filter shows that agent, is disabled, and says **Controlled by Active Agent**. Other filters still apply. Select **None** in the global selector to restore each page's previous agent choice. Worktrees views inside individual apps keep separate saved choices.
+
+The browser remembers your active agent and previous page choices across navigation and reloads. Tabs signed into the same account share the browser's active choice. The iOS app remembers its own selection for each server and account; selecting an agent on one device does not change another device's choice.
+
+On mobile web, the selector collapses to an icon with an active indicator. In the iOS app, tap the dedicated **Active Agent** toolbar icon on the home destination list or a feature page. On iPad, it appears beside Search. The searchable sheet includes **None** to restore page filters.
+
+An agent with no matching worktrees or usage produces empty results. Offline agents remain selectable. A failed catalog refresh preserves your selection; a successful refresh that confirms the agent was removed clears it. Pages without an agent filter keep their usual behavior, and active focus does not change where commands, builds, or other operations run.
+
 ## How it fits together
 
 - The **control plane** is a Next.js app with a GraphQL API and a SQLite database that you run on your own machine or server.
