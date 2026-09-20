@@ -19,8 +19,9 @@ Runs come from the codebases you have registered whose origin is on github.com. 
 | **Repository** | All repositories, or one registered codebase repository |
 | **Branch** | An exact branch name — available once a single repository is selected |
 | **Pipeline** | One workflow, chosen from the workflows seen in the loaded runs — also single-repository only |
+| **Latest only** | Enabled by default. Keeps the newest run for each repository, workflow, GitHub event, and branch combination. Clear it to restore the complete run history. |
 
-Filters are written into the page URL, so a filtered view can be bookmarked or shared, and links from a pull request's **View all** button arrive with the repository and branch already set. Runs load 25 at a time and are grouped under the day they started; **Load more** fetches the next page.
+Filters are written into the page URL, so a filtered view can be bookmarked or shared, and links from a pull request's **View all** button arrive with the repository and branch already set. Because **Latest only** is the default, it is omitted from the URL while enabled; disabling it adds `latest=false`. Runs load 25 visible results at a time and are grouped under the day they were created. The server skips older duplicates while filling each page, and **Load more** fetches the next page.
 
 <Note>
   When one repository in a multi-repository view fails to load — a revoked token, a repository the token cannot see, a GitHub outage — the page lists that repository's error and still shows the runs it could load.
