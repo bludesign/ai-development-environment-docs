@@ -22,6 +22,17 @@ The **Worktrees** page at `/worktrees` is the busiest page in the product. It sh
 
 Your search, changes filter, branch filter, grouping, and layout are saved in the browser and restored the next time you open the page. Filters combine, so you can show, for example, dirty worktrees that are also off their default branch. A saved agent or repository filter is ignored if that item no longer exists. The worktrees view inside an [app](/apps/app-detail) keeps its own saved filters, separate from this page's. The iOS Worktree Actions menu offers the same changes and branch filters for the current visit.
 
+### Use the active agent
+
+The [Active Agent selector](/index#focus-on-an-agent) applies to this page and Worktrees views inside apps. When selected, it locks **Filter by agent** to that agent while preserving each view's previous choice. Select **None** globally to restore it, including after reopening the page. Search, repository, changes, and branch filters still combine with the active agent. An agent without matching worktrees shows **No matching worktrees**.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/active-agent-worktrees.png" alt="Worktrees focused on Studio Mac in light theme" />
+  <img className="hidden dark:block" src="/images/dark/active-agent-worktrees.png" alt="Worktrees focused on Studio Mac in dark theme" />
+</Frame>
+
+In iOS, the dedicated toolbar icon opens the same global selection. The Worktree Actions menu shows the locked agent filter and its explanation. The app saves the underlying agent choice separately for each Worktrees view.
+
 Each worktree shows its branch, path, base branch, agent, repository, upstream status, base freshness, nonzero commit counts, and — where they exist — its pull request, latest build, review decision, and comment count.
 
 <Tip>
