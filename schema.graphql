@@ -4327,6 +4327,11 @@ type Query {
     """
     workflowId: ID
 
+    """
+    Whether to return only the newest run for each repository, workflow, event, and branch. Defaults to `false`.
+    """
+    latestOnly: Boolean = false
+
     """Maximum number of records to return. Defaults to `25`."""
     first: Int = 25
 
