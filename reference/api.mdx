@@ -8,7 +8,7 @@ The control plane exposes three programmable surfaces, all of them thin adapters
 | Surface                 | Endpoint                                                      | Use it for                                         |
 | ----------------------- | ------------------------------------------------------------- | -------------------------------------------------- |
 | [GraphQL](#graphql)     | `POST /api/graphql`, plus a WebSocket for subscriptions       | Everything. This is what the dashboard itself uses |
-| [REST](#rest-endpoints) | `/api/codebases`, `/api/telemetry/*`, `/api/crashes`, `/api/dsyms`, `/api/ios/apns-devices` | Narrow integrations with route-specific security   |
+| [REST](#rest-endpoints) | `/api/codebases`, `/api/telemetry/*`, `/api/public/crashes`, `/api/dsyms`, `/api/ios/apns-devices` | Narrow integrations with route-specific security   |
 | [MCP](#mcp)             | `/api/mcp`                                                    | Giving an AI client a scoped set of tools          |
 
 ## GraphQL
@@ -124,7 +124,7 @@ Apps post crash reports and CI posts debug symbols here. See [Crashes](/debuggin
 
 | Endpoint | Credential | Accepts |
 | --- | --- | --- |
-| `POST /api/crashes` | None required; `X-API-Key` or a session is recorded when sent | One `.ips`, `.crash`, or MetricKit JSON report as the raw body, up to 5 MiB after optional gzip decoding |
+| `POST /api/public/crashes` | None required; `X-API-Key` or a session is recorded when sent | One `.ips`, `.crash`, or MetricKit JSON report as the raw body, up to 5 MiB after optional gzip decoding |
 | `POST /api/dsyms` | `X-API-Key` or a session | A zip of `.dSYM` bundles as the `file` part of `multipart/form-data`, or a raw `application/zip` body, with optional `projectName`, `buildId`, and `url`; up to `DSYM_UPLOAD_MAX_BYTES` (2 GiB by default) |
 | `POST /api/dsyms/uploads` | `X-API-Key` or a session | Starts a resumable upload of up to 20 GiB |
 | `HEAD` / `PATCH /api/dsyms/uploads/{id}` | The credential that started it | Reports or appends at `Upload-Offset`, 16 MiB per chunk |
@@ -190,7 +190,7 @@ The dashboard and the control agents use a handful of further routes. They are p
 
 ### Public endpoints
 
-Everything under `/api/public/*` is intentionally unauthenticated: iOS enrollment callbacks, short-lived build artifact and over-the-air manifest downloads, and the three signature-verified webhooks. [Hosting and networking](/reference/hosting) lists the full path set and explains how to expose exactly that namespace and nothing else.
+Everything under `/api/public/*` is intentionally unauthenticated: iOS enrollment callbacks, short-lived build artifact and over-the-air manifest downloads, rate-limited crash report uploads, and the three signature-verified webhooks. [Hosting and networking](/reference/hosting) lists the full path set and explains how to expose exactly that namespace and nothing else.
 
 ## MCP
 

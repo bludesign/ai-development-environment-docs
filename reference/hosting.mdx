@@ -103,7 +103,6 @@ When the dashboard sits behind Cloudflare Access, its external sign-in layer mus
 - `/api/openapi.json`
 - `/api/telemetry/analytics-events`
 - `/api/telemetry/console-logs`
-- `/api/crashes`
 - `/api/dsyms` and `/api/dsyms/uploads/*`
 - `/api/ios/apns-devices`
 
@@ -121,6 +120,7 @@ That namespace contains only intentionally unauthenticated endpoints:
 | `/api/public/github/webhook`                                         | `POST`        | Signature-verified GitHub App deliveries              |
 | `/api/public/gitlab/webhook`                                         | `POST`        | Signature-verified GitLab project deliveries          |
 | `/api/public/jira/webhook`                                           | `POST`        | Signature-verified Jira deliveries                    |
+| `/api/public/crashes`                                                | `POST`        | Crash reports from shipped apps, rate limited         |
 
 All webhook routes authenticate the raw body before doing any work. GitHub uses `X-Hub-Signature-256`, Jira uses `X-Hub-Signature`, and GitLab Standard Webhooks use `webhook-id`, `webhook-timestamp`, and `webhook-signature` with a five-minute replay window. Deliveries are logged on the [GitHub webhooks](/github/webhooks), [GitLab webhooks](/gitlab/webhooks), and [Jira webhooks](/jira/webhooks) pages.
 

@@ -77,7 +77,7 @@ import MetricKit
 final class CrashReporter: NSObject, MXMetricManagerSubscriber {
   func didReceive(_ payloads: [MXDiagnosticPayload]) {
     for payload in payloads where !(payload.crashDiagnostics ?? []).isEmpty {
-      var request = URLRequest(url: URL(string: "https://aide.example.com/api/crashes")!)
+      var request = URLRequest(url: URL(string: "https://aide.example.com/api/public/crashes")!)
       request.httpMethod = "POST"
       request.setValue("application/json", forHTTPHeaderField: "Content-Type")
       request.httpBody = payload.jsonRepresentation()
@@ -90,19 +90,19 @@ final class CrashReporter: NSObject, MXMetricManagerSubscriber {
 MXMetricManager.shared.add(crashReporter)
 ```
 
-`POST /api/crashes` takes one report as the raw request body. It needs no credential, so a shipped app can report without embedding a secret. Send `X-API-Key` to record which key uploaded the report; a signed-in session records the user instead.
+`POST /api/public/crashes` takes one report as the raw request body. It needs no credential, so a shipped app can report without embedding a secret. Send `X-API-Key` to record which key uploaded the report; a signed-in session records the user instead.
 
 <CodeGroup>
 
 ```bash .ips report
-curl --request POST 'https://aide.example.com/api/crashes' \
+curl --request POST 'https://aide.example.com/api/public/crashes' \
   --header 'content-type: application/json' \
   --header 'x-crash-filename: MyApp-2026-09-20.ips' \
   --data-binary @MyApp-2026-09-20.ips
 ```
 
 ```bash Gzip-compressed MetricKit payload
-gzip -c payload.json | curl --request POST 'https://aide.example.com/api/crashes' \
+gzip -c payload.json | curl --request POST 'https://aide.example.com/api/public/crashes' \
   --header 'content-type: application/json' \
   --header 'content-encoding: gzip' \
   --data-binary @-
@@ -155,7 +155,7 @@ The gear icon opens **Crash settings**.
 Crash reports and extracted dSYMs are stored in `CRASH_DATA_DIRECTORY`, which defaults to a `crash-data` folder next to the SQLite database. Back it up with the database.
 
 <Warning>
-  Crash reports can contain device models, OS versions, file paths, and application-specific messages your app logged before crashing. The uploader's IP address is stored with anonymous reports. Anyone who can reach `/api/crashes` can add reports, so keep the per-address rate limit in mind if the endpoint is public, and turn collection off when you do not need it.
+  Crash reports can contain device models, OS versions, file paths, and application-specific messages your app logged before crashing. The uploader's IP address is stored with anonymous reports. Anyone who can reach `/api/public/crashes` can add reports, so keep the per-address rate limit in mind if the endpoint is public, and turn collection off when you do not need it.
 </Warning>
 
 Crash reports are kept for 90 days by default. Downloads of the original and symbolicated reports under `/api/crash-files/*` need a signed-in session or an API key.
