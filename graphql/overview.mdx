@@ -99,6 +99,12 @@ Arguments, return types, deprecations, and a sample response are listed on each 
 
 The inspect, upsert, toggle, and delete mutations return an operation immediately. Subscribe to `tailscaleServeOverviewChanged` for fleet updates or `tailscaleServeOperationChanged(id:)` for one operation; clients never need to parse an agent job's JSON result. See [Tailscale Serve](/system/tailscale) for validation and lifecycle behavior.
 
+### Crashes and dSYMs
+
+`crashReports(filter:, first:, after:)` pages crash reports newest first, and `crashReport(id:)` returns one with its symbolicated `threads`, `binaryImages`, `missingImages`, `attachedDsyms`, and `similarCrashes`. Frame fields such as `symbol`, `sourceFile`, `sourceLine`, and `inlined` already include what the dSYMs added, and `symbolicatedText` renders the whole report in Apple's text format. `dsyms` and `dsym(id:)` list the indexed dSYMs with their `slices` and `crashes`; `dsymUploads` lists uploads still in progress or failed.
+
+`symbolicateCrashReport` starts a fresh symbolication, `updateDsymUpload` changes an upload's project, build ID, and link, and `updateCrashSettings` changes collection, the symbolication agent, and retention. Uploading files happens over REST — see [Crashes](/debugging/crashes) and [dSYMs](/debugging/dsyms). Subscribe to `crashReportsChanged` and `dsymsChanged` for live updates.
+
 ## Worktree admission queues
 
 `worktreeRunQueue` returns the effective queued order for one worktree or the queued entries associated with one workflow. A worktree query combines workflow runs, Plans, and Sessions:

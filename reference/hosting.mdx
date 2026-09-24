@@ -103,6 +103,8 @@ When the dashboard sits behind Cloudflare Access, its external sign-in layer mus
 - `/api/openapi.json`
 - `/api/telemetry/analytics-events`
 - `/api/telemetry/console-logs`
+- `/api/crashes`
+- `/api/dsyms` and `/api/dsyms/uploads/*`
 - `/api/ios/apns-devices`
 
 Configure paths without query strings, because Access path matching does not support one. Better Auth protects its own session and management routes. The integration routes retain their signature, token, validation, and rate-limit checks.

@@ -300,7 +300,7 @@ Changing `CREDENTIAL_STORAGE_TYPE` does not migrate anything. Items belonging to
 
 iOS device enrollment, over-the-air installs, and the GitHub webhook need a publicly trusted HTTPS origin. Set `PUBLIC_BASE_URL` to that origin, or run behind a reverse proxy that sends correct `X-Forwarded-Proto` and `X-Forwarded-Host` headers.
 
-Behind Cloudflare Access, bypass only the application's documented auth and integration routes: localized sign-in/register pages, `/api/auth/*`, `/api/public/*`, `/api/openapi.json`, the two telemetry ingestion routes, and `/api/ios/apns-devices`. Keep `/api/graphql`, `/api/mcp`, Tools REST, first-party push registration, enrollment start/export, and dashboard routes behind Better Auth. Configure Access paths without query strings.
+Behind Cloudflare Access, bypass only the application's documented auth and integration routes: localized sign-in/register pages, `/api/auth/*`, `/api/public/*`, `/api/openapi.json`, the two telemetry ingestion routes, crash ingestion at `/api/crashes`, the API-key-authenticated dSYM uploads at `/api/dsyms` and `/api/dsyms/uploads/*`, and `/api/ios/apns-devices`. Keep `/api/graphql`, `/api/mcp`, Tools REST, first-party push registration, enrollment start/export, and dashboard routes behind Better Auth. Configure Access paths without query strings.
 
 <Warning>
   Exposing this server publicly exposes every route, not just build artifacts.

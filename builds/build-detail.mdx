@@ -46,7 +46,9 @@ Selected build scripts appear in the log flow; if none were chosen the page says
 
 ## Artifacts
 
-Everything the build captured — the archive, the runnable app, test products, the `xctestrun`, and the result bundle — each with a **Download**.
+Everything the build captured — the archive, the runnable app, test products, the `xctestrun`, the result bundle, and the dSYMs — each with a **Download**.
+
+When the build kept its dSYMs, a **dSYMs** artifact holds them as `dSYMs.zip` with the number of bundles, and **View dSYMs** opens the [dSYMs](/debugging/dsyms) table filtered to this build. After a successful build the control plane imports that zip automatically, so crashes from this build can be symbolicated. **Collect dSYMs** in the advanced settings decides whether a build keeps them; archives do by default.
 
 ## Test results
 
