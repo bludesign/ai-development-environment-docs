@@ -133,6 +133,10 @@ All webhook routes authenticate the raw body before doing any work. GitHub uses 
 
 Access applications are path-scoped rather than method-scoped; the route handlers themselves expose only the methods listed above. Avoid JavaScript or CAPTCHA challenges on the callback. Add a WAF skip for the exact `/api/public/ios/profile-response` path only if production logs show that a managed rule blocks genuine iOS callbacks.
 
+<Tip>
+  To keep `/api/dsyms` and `/api/dsyms/uploads/*` behind Access instead of bypassing them, give the Access application a **Service Auth** policy for a service token, and send the token's `CF-Access-Client-Id` and `CF-Access-Client-Secret` headers from CI. The [Upload dSYMs action](/debugging/upload-dsyms-action#cloudflare-access) takes them in its `headers` input.
+</Tip>
+
 ## Artifact downloads
 
 Over-the-air installs are the reason the artifact routes are public. iOS fetches the manifest, then re-reads the package several times, and it will not present an Access login while doing so.

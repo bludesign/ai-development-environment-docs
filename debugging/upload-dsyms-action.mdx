@@ -1,0 +1,210 @@
+---
+title: "Upload dSYMs action"
+description: "Upload dSYMs from GitHub Actions with the bludesign/ai-development-environment-upload-dsyms action, including through Cloudflare Access."
+---
+
+[`bludesign/ai-development-environment-upload-dsyms`](https://github.com/bludesign/ai-development-environment-upload-dsyms) is a GitHub Action that uploads [dSYMs](/debugging/dsyms) from CI. It finds the `.dSYM` bundles in an archive or build folder, zips them, and sends them through the [resumable upload](/debugging/dsyms#large-zips) in requests of at most 16 MiB. Uploads pass Cloudflare's 100 MB request limit, resume after a dropped connection, and outlast Cloudflare's 125-second timeout while the control plane indexes them. Crashes waiting on the uploaded UUIDs are symbolicated again automatically.
+
+## Requirements
+
+- An [API key](/system/api-keys). dSYM uploads need an `X-API-Key`.
+- A GitHub-hosted or self-hosted runner that runs `node24` actions, which needs runner version 2.328.0 or newer. macOS and Linux runners work, and Xcode is not required.
+- A control plane the runner can reach. Behind Cloudflare Access, the dSYM routes are either [bypassed](/reference/hosting#cloudflare-access-paths) or the runner has a [service token](#cloudflare-access).
+
+## Add the step
+
+<Steps>
+  <Step title="Create an API key">
+    Create a key on the [API Keys](/system/api-keys) page.
+  </Step>
+  <Step title="Add a secret and a variable">
+    In the repository's **Settings → Secrets and variables → Actions**, add the key as the `AIDE_API_KEY` secret and the control plane's origin, such as `https://aide.example.com`, as the `AIDE_URL` variable.
+  </Step>
+  <Step title="Upload after the build">
+    Add the step after the job archives or builds the app.
+  </Step>
+</Steps>
+
+<CodeGroup>
+
+```yaml xcodebuild archive
+- name: Archive
+  run: |
+    xcodebuild archive -scheme MyApp -configuration Release \
+      -destination 'generic/platform=iOS' \
+      -archivePath "$RUNNER_TEMP/MyApp.xcarchive"
+
+- name: Upload dSYMs
+  uses: bludesign/ai-development-environment-upload-dsyms@v1
+  with:
+    url: ${{ vars.AIDE_URL }}
+    api_key: ${{ secrets.AIDE_API_KEY }}
+    dsym_paths: ${{ runner.temp }}/MyApp.xcarchive
+```
+
+```yaml fastlane
+- name: Build with fastlane
+  run: bundle exec fastlane beta # build_app(include_symbols: true, output_directory: "./build")
+
+- name: Upload dSYMs
+  uses: bludesign/ai-development-environment-upload-dsyms@v1
+  with:
+    url: ${{ vars.AIDE_URL }}
+    api_key: ${{ secrets.AIDE_API_KEY }}
+    dsym_paths: build/*.dSYM.zip
+```
+
+</CodeGroup>
+
+The dSYMs are recorded with the repository as their **Project**, the run ID as their **Build ID**, and the workflow run as their **Link**. The job summary lists each dSYM with its UUIDs and a link to its details page.
+
+## Inputs
+
+| Input | Default | Description |
+| --- | --- | --- |
+| `url` | Required | The control plane's origin, such as `https://aide.example.com`. A path, query, or credentials are refused. |
+| `api_key` | Required | The API key, sent as `X-API-Key`. |
+| `dsym_paths` | Required | Paths or globs, one per line: `.dSYM` bundles, folders that contain them (an `.xcarchive`, its `dSYMs` folder, build products), or `.zip` files of dSYMs. Lines that start with `!` exclude matches. |
+| `headers` | None | Extra headers for every request, one `Name: value` per line, such as Cloudflare Access service-token headers. `Authorization`, `X-API-Key`, and the headers the upload sets itself are refused. |
+| `project_name` | `${{ github.repository }}` | The dSYMs' **Project**. Empty leaves it unset. |
+| `build_id` | `${{ github.run_id }}` | The dSYMs' **Build ID**. Empty leaves it unset. |
+| `build_url` | The workflow run | The dSYMs' **Link**. Empty leaves it unset. |
+| `chunk_size` | `16` | MiB per upload request, from 1 to 16. |
+| `retries` | `5` | Retries for each request after a network error, a timeout, or a `408`, `425`, `429`, or `5xx` response. |
+| `timeout` | `120` | Seconds to wait for each request, from 10 to 600. |
+| `if_no_files_found` | `error` | `error`, `warn`, or `ignore` when no dSYMs match. |
+| `dry_run` | `false` | Find and zip the dSYMs without uploading them. `url` and `api_key` can be left out. |
+
+A line of `dsym_paths` that starts with `!` leaves out what the other lines match, not the bundles found inside a matched folder. To leave some bundles out, match the bundles themselves:
+
+```yaml
+dsym_paths: |
+  build/**/*.dSYM
+  !build/**/*Tests*.dSYM
+```
+
+## Outputs
+
+| Output | Description |
+| --- | --- |
+| `uploads` | JSON array with one entry per zip: `id`, `filename`, `sizeBytes`, `sha256`, `duplicate`, and `dsyms`. Each dSYM has `id`, `bundleName`, `version`, `build`, the absolute `url` of its details page, and `slices` with `uuid` and `arch`. |
+| `uuids` | The uploaded UUIDs, one per line, as `xcrun dwarfdump --uuid` prints them. |
+
+```yaml
+- name: Upload dSYMs
+  id: dsyms
+  uses: bludesign/ai-development-environment-upload-dsyms@v1
+  with:
+    url: ${{ vars.AIDE_URL }}
+    api_key: ${{ secrets.AIDE_API_KEY }}
+    dsym_paths: ${{ runner.temp }}/MyApp.xcarchive
+
+- name: List the uploaded UUIDs
+  env:
+    UUIDS: ${{ steps.dsyms.outputs.uuids }}
+  run: echo "$UUIDS"
+```
+
+## How uploads work
+
+- **Finding.** A matched `.dSYM` is a bundle. Any other matched folder is searched for `.dSYM` bundles, without following links to folders. A matched `.zip` is uploaded unchanged.
+- **Zipping.** The bundles go into `dSYMs.zip` with only what the control plane [keeps](/debugging/dsyms#what-an-upload-keeps): `Contents/Info.plist` and the files in `Contents/Resources/DWARF`. Links are stored as the files they point to, because a zip with links is refused. Timestamps and permissions are fixed, so uploading the same dSYMs again makes the same zip, which the control plane stores once and reports as a duplicate. More than 500 bundles or 19 GiB are split across `dSYMs-2.zip` and so on.
+- **Sending.** Each zip goes through `POST /api/dsyms/uploads`, `PATCH` chunks with `Upload-Offset`, and `POST /api/dsyms/uploads/{id}/complete`, with the zip's SHA-256 declared up front and checked at the end. A failed request is retried with exponential backoff, honoring `Retry-After`. After a failure the action asks for the server's offset with `HEAD`, so a chunk that arrived without its answer is not sent twice, and an upload continues across a control plane restart.
+- **Completing.** Indexing a large zip can take longer than a proxy waits. After a `504`, a `524`, or a timeout, the action asks again, which waits for the indexing in progress and returns its result, for up to an hour. If the control plane restarted while indexing, the step fails and can be run again.
+- **Failures.** When one zip fails, the others are still uploaded and the step fails at the end. A failed or cancelled step deletes its unfinished upload, so it does not wait out the 24-hour cleanup in **Uploads in progress**.
+
+<Warning>
+  Store the API key and service-token values as secrets, never in the workflow file. The action masks them in the log and never follows a redirect, so the key is only sent to `url`. Revoke a key on the [API Keys](/system/api-keys) page if it leaks.
+</Warning>
+
+## Cloudflare
+
+### Cloudflare Access
+
+<Tabs>
+  <Tab title="Bypass the dSYM routes">
+    [Hosting](/reference/hosting#cloudflare-access-paths) lists `/api/dsyms` and `/api/dsyms/uploads/*` among the paths that bypass Access, because the control plane checks the API key itself. With the bypass in place, the action needs no extra headers.
+  </Tab>
+  <Tab title="Keep them behind Access">
+    Create a [service token](https://developers.cloudflare.com/cloudflare-one/access-controls/service-credentials/service-tokens/) in Cloudflare Zero Trust, and store its client ID and secret as the `CF_ACCESS_CLIENT_ID` and `CF_ACCESS_CLIENT_SECRET` secrets. Give the Access application that covers the control plane a policy with the **Service Auth** action that includes the token, then send its headers:
+
+    ```yaml
+    - name: Upload dSYMs
+      uses: bludesign/ai-development-environment-upload-dsyms@v1
+      with:
+        url: ${{ vars.AIDE_URL }}
+        api_key: ${{ secrets.AIDE_API_KEY }}
+        dsym_paths: ${{ runner.temp }}/MyApp.xcarchive
+        headers: |
+          CF-Access-Client-Id: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF-Access-Client-Secret: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+    ```
+  </Tab>
+</Tabs>
+
+Without valid headers, Access answers with a redirect to its sign-in page or with a `401`, and the step fails with a hint about the service-token headers.
+
+### Limits and timeouts
+
+| Cloudflare limit | What the action does |
+| --- | --- |
+| Request bodies up to 100 MB on Free and Pro, 200 MB on Business | Sends at most `chunk_size` MiB per request, 16 by default |
+| `524` when the control plane takes longer than 125 seconds to answer | Keeps each chunk small, and asks again while the control plane indexes |
+| `520` to `527`, `530`, and `502` to `504` | Retries, resuming from the control plane's offset |
+| `429` rate limits | Waits for `Retry-After`, up to two minutes |
+
+### Bot protection
+
+Bot Fight Mode, Super Bot Fight Mode, and WAF rules that issue challenges can answer CI with a challenge it cannot pass. The action reports the challenge instead of retrying it. Super Bot Fight Mode and challenge rules can be skipped for `/api/dsyms*` with a WAF custom rule's **Skip** action. Bot Fight Mode on the Free plan cannot be skipped, so it has to be off for the zone.
+
+## Other proxies and networks
+
+| Situation | What to do |
+| --- | --- |
+| nginx in front of the control plane | Set `client_max_body_size 16m;`, since nginx refuses bodies over 1 MB by default, or lower `chunk_size` |
+| A proxy that times out while the control plane indexes | Nothing. A `504`, such as nginx's after its 60-second `proxy_read_timeout`, is handled like Cloudflare's `524` |
+| A runner behind an outbound proxy | Set `NODE_USE_ENV_PROXY: 1` in the step's `env`. Node.js only sends requests through `HTTPS_PROXY` or `HTTP_PROXY`, and honors `NO_PROXY`, with it set |
+| A certificate from a private certificate authority | Set `NODE_EXTRA_CA_CERTS` in the step's `env` to the path of the authority's certificate |
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="The API key is invalid or inactive" icon="key">
+    The control plane refused `X-API-Key`. Check the `AIDE_API_KEY` secret against the [API Keys](/system/api-keys) page; a disabled, expired, or revoked key is refused.
+  </Accordion>
+  <Accordion title="Cloudflare Access stopped the request" icon="lock">
+    Access redirected the request to its sign-in page or answered `401`. Send the service token's headers in `headers`, and check that the Access application has a **Service Auth** policy that includes the token. Alternatively, bypass Access for `/api/dsyms` and `/api/dsyms/uploads/*`.
+  </Accordion>
+  <Accordion title="Cloudflare answered with a challenge or blocked the request" icon="shield">
+    A challenge comes from bot protection or a WAF rule; skip the rule for `/api/dsyms*`, or turn off Bot Fight Mode. A block without a challenge comes from a WAF rule, IP access rule, or Access policy; search the Ray ID in the log in Cloudflare's security events.
+  </Accordion>
+  <Accordion title="A proxy refused the request body as too large" icon="file-arrow-up">
+    Raise the proxy's request body limit to at least 16 MiB, or lower `chunk_size`.
+  </Accordion>
+  <Accordion title="No dSYMs matched dsym_paths" icon="magnifying-glass">
+    Check the paths against the build output, and build with `DEBUG_INFORMATION_FORMAT=dwarf-with-dsym`. A bundle without files in `Contents/Resources/DWARF` is skipped with a warning. For builds that produce no dSYMs, set `if_no_files_found` to `warn` or `ignore`.
+  </Accordion>
+  <Accordion title="The server indexed fewer dSYMs than it received" icon="triangle-exclamation">
+    The control plane skips a DWARF file it cannot read as Mach-O. The warning names the bundles it skipped.
+  </Accordion>
+  <Accordion title="The server stopped indexing or could not index" icon="rotate">
+    If the control plane restarted while indexing, run the step again. Otherwise, **Uploads in progress** on the [dSYMs](/debugging/dsyms) page shows why the upload failed.
+  </Accordion>
+</AccordionGroup>
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="dSYMs" icon="file-zipper" href="/debugging/dsyms">
+    The dSYMs table, dashboard uploads, and the upload API.
+  </Card>
+  <Card title="Crashes" icon="bug" href="/debugging/crashes">
+    How crash reports are symbolicated with dSYMs.
+  </Card>
+  <Card title="API Keys" icon="key" href="/system/api-keys">
+    Create the key the action uploads with.
+  </Card>
+  <Card title="Hosting and networking" icon="globe" href="/reference/hosting">
+    Cloudflare Access paths and reverse proxies.
+  </Card>
+</Columns>

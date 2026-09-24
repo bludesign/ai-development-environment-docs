@@ -124,7 +124,8 @@
                 "pages": [
                   "debugging/crashes",
                   "debugging/crash-detail",
-                  "debugging/dsyms"
+                  "debugging/dsyms",
+                  "debugging/upload-dsyms-action"
                 ]
               }
             ]
