@@ -114,6 +114,9 @@ The server does not link a new OIDC identity to a password account solely becaus
 | GraphQL HTTP and WebSocket       | Full                   | Full         | Agent operations only | Only `enrollAgent` with an `enroll_` token |
 | MCP unscoped or preset           | Full                   | Full         | No                    | No                                         |
 | Run-scoped MCP                   | No                     | No           | Matching run only     | No                                         |
+| dSYM uploads (`/api/dsyms`)      | Full                   | Full         | No                    | No                                         |
+| Crash downloads (`/api/crash-files/*`) | Full             | Full         | No                    | No                                         |
+| Crash uploads (`/api/public/crashes`) | Recorded         | Recorded     | No                    | Yes, rate limited                          |
 | Integration endpoints            | Not required           | Not required | Not required          | Yes                                        |
 
 Browser sessions use the Better Auth cookie. Native clients send the Better Auth session in `Authorization: Bearer <session-token>`. Existing agents use that same header with their `agent_` token. API keys use only `X-API-Key` and begin with `aide_`.
@@ -125,9 +128,10 @@ Invalid or conflicting credentials fail with `401`. The server never falls back 
 Only these application routes should bypass a reverse proxy's sign-in layer:
 
 - Localized `/sign-in` and `/register` pages, plus `/api/auth/*` callbacks and mobile completion routes
-- `/api/public/*`, whose webhook signatures and short-lived artifact tokens remain enforced
+- `/api/public/*`, whose webhook signatures, short-lived artifact tokens, and crash upload rate limits remain enforced
 - `/api/openapi.json`
 - `/api/telemetry/analytics-events` and `/api/telemetry/console-logs`
+- `/api/dsyms` and `/api/dsyms/uploads/*`, which CI reaches with an `X-API-Key` — the route checks the key itself
 - Third-party app registration at `/api/ios/apns-devices`
 
 Keep `/api/graphql`, `/api/mcp`, first-party `/api/ios/notification-devices`, enrollment start and export routes, Tools REST, and every other control-plane route protected. GraphQL performs its own credential checks before parsing or resolving operations, so aliases, batches, introspection, and mixed operations cannot bypass the enrollment exception.

@@ -1,6 +1,6 @@
 ---
 title: "API keys"
-description: "Create, rotate, disable, and revoke keys for GraphQL and MCP clients."
+description: "Create, rotate, disable, and revoke keys for GraphQL, MCP, and CI upload clients."
 ---
 
 <Frame>
@@ -8,7 +8,7 @@ description: "Create, rotate, disable, and revoke keys for GraphQL and MCP clien
   <img className="hidden dark:block" src="/images/dark/api-keys.png" alt="API keys page in dark theme" />
 </Frame>
 
-Open **System → API Keys** to manage programmatic credentials across all users. An API key grants the same GraphQL and unscoped or preset MCP capabilities as a signed-in user. It cannot sign into the dashboard or call user and authentication-management endpoints.
+Open **System → API Keys** to manage programmatic credentials across all users. An API key grants the same GraphQL and unscoped or preset MCP capabilities as a signed-in user, and can upload [dSYMs](/debugging/dsyms#upload-from-ci), directly or with the [Upload dSYMs action](/debugging/upload-dsyms-action), and download crash reports and dSYMs over REST — the usual way to connect CI. It cannot sign into the dashboard or call user and authentication-management endpoints.
 
 ## Create a key
 

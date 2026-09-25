@@ -1,0 +1,215 @@
+---
+title: "dSYMs"
+description: "Upload debug symbols from the dashboard, builds, or GitHub Actions so crash reports can be symbolicated."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/crashes-dsyms.png" alt="dSYMs table in light theme" />
+  <img className="hidden dark:block" src="/images/dark/crashes-dsyms.png" alt="dSYMs table in dark theme" />
+</Frame>
+
+The **dSYMs** tab at `/crashes/dsyms` lists the debug symbols [crash reports](/debugging/crashes) are symbolicated with. A dSYM is the `.dSYM` bundle Xcode writes next to a build; its DWARF file maps every address in the app binary back to a function, file, and line. Each dSYM is identified by the UUID of the binary it belongs to, which is also the UUID a crash report cites.
+
+dSYMs arrive three ways: uploaded in the dashboard, collected from builds this server runs, and posted by CI through the upload API or the [Upload dSYMs action](/debugging/upload-dsyms-action). Each upload can carry a **Project**, **Build ID**, and **Link**. The iOS app lists dSYMs and their details, and shows which crashes each one symbolicated.
+
+## The dSYMs table
+
+Each row is one `.dSYM` bundle: its name and bundle ID, the UUID and architecture of every slice, the version and build number from its `Info.plist`, the project, build ID, and source of its upload, its size, and how many crashes it symbolicated. A build ID that matches a build on this server links to it.
+
+Search matches names, bundle IDs, versions, UUIDs with or without dashes, projects, and build IDs. The **Project** filter lists the projects dSYMs were uploaded with. Open `/crashes/dsyms?buildId=<build>` — or **View dSYMs** on a build — to list only one build's dSYMs.
+
+**Uploads in progress** above the table lists uploads that are still arriving, build dSYMs waiting to be copied from their agent, and uploads that failed, with the reason. A failed build import has **Retry**.
+
+## dSYM details
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/dsym-detail.png" alt="dSYM details page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/dsym-detail.png" alt="dSYM details page in dark theme" />
+</Frame>
+
+The dSYM details page at `/crashes/dsyms/{id}` shows the bundle's binary, version, project, build ID, link, uploader, size, and the SHA-256 of its DWARF file; the UUID, architecture, and `__TEXT` address of each slice; the crashes it symbolicated; and the other dSYMs from the same upload.
+
+| Action | What it does |
+| --- | --- |
+| **Edit details** | Changes the project, build ID, and link. They belong to the upload, so the change applies to every dSYM in it. A build's own dSYMs keep their build |
+| **Download** | Downloads the bundle as a zip that Xcode and `atos` can open |
+| Delete | Deletes the dSYM. Crashes keep the names it already added |
+
+## Upload dSYMs in the dashboard
+
+Click **Upload dSYMs**, optionally fill in **Project**, **Build ID**, and **Link**, then drop any of:
+
+- one or more `.dSYM` bundles from Finder
+- an `.xcarchive` — only its `dSYMs` folder is uploaded
+- a `.zip` of dSYMs, such as fastlane's `MyApp.app.dSYM.zip`
+
+Folders are zipped in the browser. Uploads use the resumable protocol in 16 MiB chunks, so large dSYMs get through proxies with request size limits, and the dialog shows progress. When the upload finishes, the dialog lists each dSYM with its UUIDs.
+
+## Collect dSYMs from builds
+
+Builds keep their dSYMs according to **Collect dSYMs**, under **Advanced settings** in **Start build** and in a build configuration.
+
+| Setting | Behavior |
+| --- | --- |
+| **Automatic (archives)** | Default. Archives keep their dSYMs; other actions do not |
+| **Always** | Every build keeps its dSYMs |
+| **Never** | No dSYMs are kept |
+
+When dSYMs are collected, the build passes `DEBUG_INFORMATION_FORMAT=dwarf-with-dsym` to `xcodebuild` unless you set `DEBUG_INFORMATION_FORMAT` yourself in **Build setting overrides**. An archive keeps everything in `archive.xcarchive/dSYMs`. Other builds keep only the dSYMs whose UUIDs match a binary the build just produced, so older dSYMs left in DerivedData are not picked up.
+
+The agent zips them as a **dSYMs** artifact on the build. After the build succeeds, the control plane copies that zip from the build agent and indexes it as a **Build** upload linked to the build, with the repository or app as its project. If the agent is offline, the import waits and retries.
+
+## Upload from CI
+
+Create an API key on the [API Keys](/system/api-keys) page and store it as a CI secret. dSYM uploads need an `X-API-Key` or a signed-in session. GitHub Actions workflows can use the [Upload dSYMs action](/debugging/upload-dsyms-action); other CI systems call the endpoints below.
+
+### One request
+
+`POST /api/dsyms` takes a zip of one or more `.dSYM` bundles as the `file` part of a `multipart/form-data` body. `projectName`, `buildId`, and `url` are optional form fields.
+
+```bash
+(cd MyApp.xcarchive/dSYMs && zip -qry ../../dSYMs.zip .)
+curl --fail-with-body --header "X-API-Key: $AIDE_API_KEY" \
+  --form file=@dSYMs.zip \
+  --form projectName=MyApp \
+  --form buildId=1234 \
+  --form url=https://ci.example.com/runs/1234 \
+  https://aide.example.com/api/dsyms
+```
+
+A raw `application/zip` body with the same fields as query parameters also works. One request is limited to `DSYM_UPLOAD_MAX_BYTES`, 2 GiB by default.
+
+The response lists every dSYM and its UUIDs, which match `xcrun dwarfdump --uuid`:
+
+```json
+{
+  "duplicate": false,
+  "upload": { "id": "6e6a…", "status": "READY", "buildId": "1234", "url": "https://ci.example.com/runs/1234", "projectName": "MyApp" },
+  "dsyms": [
+    {
+      "id": "9da5…",
+      "bundleName": "MyApp.app.dSYM",
+      "version": "3.2.0",
+      "build": "412",
+      "url": "/crashes/dsyms/9da5…",
+      "slices": [{ "uuid": "776386D0-4386-3F24-9B21-5F7C02EB2873", "arch": "arm64" }]
+    }
+  ]
+}
+```
+
+| Status | Meaning |
+| --- | --- |
+| `201` | Indexed. Crashes waiting on these UUIDs are symbolicated again |
+| `200` | The same zip was already uploaded; its upload is returned, with any new project, build ID, or link applied |
+| `400` | The zip is unreadable, holds no `.dSYM` bundles, contains symbolic links or paths outside the zip, or none of its DWARF files are Mach-O |
+| `401` | No valid API key or session |
+| `413` | The zip is larger than one request allows; use the resumable upload |
+| `415` | The body is neither multipart nor a zip |
+
+### Large zips
+
+Proxies such as Cloudflare cap a request at 100 MB. Larger zips use the resumable protocol:
+
+1. `POST /api/dsyms/uploads` with JSON `{ "filename", "sizeBytes", "sha256", "projectName", "buildId", "url" }`. `sha256` is optional and checked at the end. The response has the upload's `id` and `chunkBytes` (16 MiB).
+2. `PATCH /api/dsyms/uploads/{id}` with each chunk of at most 16 MiB as the body and its byte position in `Upload-Offset`. A `409` means the offset is not where the server is; `HEAD` on the same path returns the right `Upload-Offset` to resume from.
+3. `POST /api/dsyms/uploads/{id}/complete` verifies the checksum, indexes the zip, and returns the same body as the one-request upload.
+
+Only the credential that started an upload can continue it. Unfinished uploads are discarded after 24 hours. This script runs the whole protocol with `curl` and `jq`:
+
+```bash upload-dsyms.sh
+#!/usr/bin/env bash
+# Usage: AIDE_URL=… AIDE_API_KEY=… ./upload-dsyms.sh dSYMs.zip
+# Optional: PROJECT_NAME, BUILD_ID, BUILD_URL
+set -euo pipefail
+ZIP="$1"
+SIZE=$(wc -c < "$ZIP" | tr -d ' ')
+SHA=$(shasum -a 256 "$ZIP" | cut -d' ' -f1)
+CHUNK=$((16 * 1024 * 1024))
+TMP=$(mktemp -d)
+trap 'rm -rf "$TMP"' EXIT
+BODY=$(jq -n --arg filename "$(basename "$ZIP")" --argjson sizeBytes "$SIZE" \
+  --arg sha256 "$SHA" --arg projectName "${PROJECT_NAME:-}" \
+  --arg buildId "${BUILD_ID:-}" --arg url "${BUILD_URL:-}" '$ARGS.named')
+ID=$(curl -sSf -H "X-API-Key: $AIDE_API_KEY" -H 'content-type: application/json' \
+  -d "$BODY" "$AIDE_URL/api/dsyms/uploads" | jq -r .id)
+OFFSET=0
+while [ "$OFFSET" -lt "$SIZE" ]; do
+  dd if="$ZIP" of="$TMP/chunk" bs="$CHUNK" skip=$((OFFSET / CHUNK)) count=1 2>/dev/null
+  curl -sSf --retry 3 --retry-all-errors -X PATCH \
+    -H "X-API-Key: $AIDE_API_KEY" -H "Upload-Offset: $OFFSET" \
+    -H 'content-type: application/offset+octet-stream' \
+    --data-binary @"$TMP/chunk" "$AIDE_URL/api/dsyms/uploads/$ID"
+  OFFSET=$((OFFSET + $(wc -c < "$TMP/chunk")))
+done
+curl -sSf -X POST -H "X-API-Key: $AIDE_API_KEY" \
+  "$AIDE_URL/api/dsyms/uploads/$ID/complete"
+```
+
+The same contract is under the **API** icon on the Crashes page, filled in with your server's address.
+
+### GitHub Actions
+
+The [Upload dSYMs action](/debugging/upload-dsyms-action) runs the resumable protocol for you: it finds and zips the dSYMs, retries through proxies such as Cloudflare, and can send Cloudflare Access service-token headers. Add `AIDE_API_KEY` as a repository secret and `AIDE_URL` as a variable, then upload after archiving:
+
+<CodeGroup>
+
+```yaml xcodebuild archive
+- name: Archive
+  run: |
+    xcodebuild archive -scheme MyApp -configuration Release \
+      -destination 'generic/platform=iOS' \
+      -archivePath "$RUNNER_TEMP/MyApp.xcarchive"
+
+- name: Upload dSYMs
+  uses: bludesign/ai-development-environment-upload-dsyms@v1
+  with:
+    url: ${{ vars.AIDE_URL }}
+    api_key: ${{ secrets.AIDE_API_KEY }}
+    dsym_paths: ${{ runner.temp }}/MyApp.xcarchive
+```
+
+```yaml fastlane
+- name: Build with fastlane
+  run: bundle exec fastlane beta # build_app(include_symbols: true, output_directory: "./build")
+
+- name: Upload dSYMs
+  uses: bludesign/ai-development-environment-upload-dsyms@v1
+  with:
+    url: ${{ vars.AIDE_URL }}
+    api_key: ${{ secrets.AIDE_API_KEY }}
+    dsym_paths: build/*.dSYM.zip
+```
+
+</CodeGroup>
+
+The action records the repository as the **Project**, the run ID as the **Build ID**, and the workflow run as the **Link**. Other CI systems can run the script above.
+
+<Note>
+  Bitcode is gone since Xcode 14, so the dSYMs in your archive are the ones that match App Store and TestFlight builds. You do not need to download dSYMs from App Store Connect.
+</Note>
+
+## What an upload keeps
+
+The control plane reads each zip without Xcode, so a Linux or Docker control plane can index dSYMs. It keeps only each bundle's DWARF file and `Info.plist`, stored under `CRASH_DATA_DIRECTORY`, and discards the zip. Resource forks, `__MACOSX` folders, and anything outside a `.dSYM` bundle are skipped. A zip whose entries are symbolic links or point outside the zip is refused.
+
+Uploading the same zip twice keeps one copy. When several uploads contain the same UUID, the newest is used.
+
+dSYMs are kept until you delete them, unless **Keep dSYMs** is set in the Crashes settings. Downloads under `/api/crash-files/dsyms/*` need a signed-in session or an API key. The symbolicating agent downloads DWARF files over `/api/agent/dsyms/{id}/dwarf` only while it has a job that needs them, and caches them in `~/Library/Caches/control-agent/dsym-cache`, up to 10 GiB, or in `CONTROL_AGENT_DSYM_CACHE`.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Crashes" icon="bug" href="/debugging/crashes">
+    Crash reports, how they are symbolicated, and the crash upload API.
+  </Card>
+  <Card title="Build details" icon="hammer" href="/builds/build-detail">
+    A build's dSYMs artifact and its link to the dSYMs table.
+  </Card>
+  <Card title="API Keys" icon="key" href="/system/api-keys">
+    Create the key CI uploads with.
+  </Card>
+  <Card title="APIs" icon="code" href="/reference/api">
+    Every REST endpoint and the OpenAPI contract.
+  </Card>
+</Columns>

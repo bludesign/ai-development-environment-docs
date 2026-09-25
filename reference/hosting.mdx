@@ -103,6 +103,7 @@ When the dashboard sits behind Cloudflare Access, its external sign-in layer mus
 - `/api/openapi.json`
 - `/api/telemetry/analytics-events`
 - `/api/telemetry/console-logs`
+- `/api/dsyms` and `/api/dsyms/uploads/*`
 - `/api/ios/apns-devices`
 
 Configure paths without query strings, because Access path matching does not support one. Better Auth protects its own session and management routes. The integration routes retain their signature, token, validation, and rate-limit checks.
@@ -119,6 +120,7 @@ That namespace contains only intentionally unauthenticated endpoints:
 | `/api/public/github/webhook`                                         | `POST`        | Signature-verified GitHub App deliveries              |
 | `/api/public/gitlab/webhook`                                         | `POST`        | Signature-verified GitLab project deliveries          |
 | `/api/public/jira/webhook`                                           | `POST`        | Signature-verified Jira deliveries                    |
+| `/api/public/crashes`                                                | `POST`        | Crash reports from shipped apps, rate limited         |
 
 All webhook routes authenticate the raw body before doing any work. GitHub uses `X-Hub-Signature-256`, Jira uses `X-Hub-Signature`, and GitLab Standard Webhooks use `webhook-id`, `webhook-timestamp`, and `webhook-signature` with a five-minute replay window. Deliveries are logged on the [GitHub webhooks](/github/webhooks), [GitLab webhooks](/gitlab/webhooks), and [Jira webhooks](/jira/webhooks) pages.
 
@@ -130,6 +132,10 @@ All webhook routes authenticate the raw body before doing any work. GitHub uses 
 </Warning>
 
 Access applications are path-scoped rather than method-scoped; the route handlers themselves expose only the methods listed above. Avoid JavaScript or CAPTCHA challenges on the callback. Add a WAF skip for the exact `/api/public/ios/profile-response` path only if production logs show that a managed rule blocks genuine iOS callbacks.
+
+<Tip>
+  To keep `/api/dsyms` and `/api/dsyms/uploads/*` behind Access instead of bypassing them, give the Access application a **Service Auth** policy for a service token, and send the token's `CF-Access-Client-Id` and `CF-Access-Client-Secret` headers from CI. The [Upload dSYMs action](/debugging/upload-dsyms-action#cloudflare-access) takes them in its `headers` input.
+</Tip>
 
 ## Artifact downloads
 

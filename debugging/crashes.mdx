@@ -1,0 +1,178 @@
+---
+title: "Crashes"
+description: "Collect iOS crash reports from apps, CI, and uploads, and symbolicate them with your dSYMs on a macOS agent."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/crashes.png" alt="Crashes page in light theme" />
+  <img className="hidden dark:block" src="/images/dark/crashes.png" alt="Crashes page in dark theme" />
+</Frame>
+
+The **Crashes** page at `/crashes` collects iOS crash reports and turns the app's unnamed frames back into function names, files, and line numbers. Reports arrive from your apps through the upload API, from the dashboard and the iOS app as uploaded files, and in any of the three formats Apple platforms produce. The **dSYMs** tab at `/crashes/dsyms` holds the debug symbols they are symbolicated with — see [dSYMs](/debugging/dsyms).
+
+The iOS app shows the same crash and dSYM lists and detail screens under **Debugging → Crashes**, and can import `.crash`, `.ips`, and MetricKit `.json` files from the Files app.
+
+## How symbolication works
+
+A release build's binary is stripped, so the device can only report an address inside it. The matching dSYM holds the names for every address.
+
+<Steps>
+  <Step title="The report is parsed">
+    The control plane reads the report into threads, frames, and binary images, and notes each app binary's UUID and the offset of every frame inside it. System frames are left as the device named them.
+  </Step>
+  <Step title="dSYMs are matched by UUID">
+    Each app binary is matched to the newest uploaded dSYM with the same UUID. A binary without one is listed as missing.
+  </Step>
+  <Step title="A macOS agent runs atos">
+    The offsets that still need names go to an online agent with Xcode as an `ios.crash.symbolicate` job. The agent downloads only the DWARF files it needs, caches them by checksum, and runs `xcrun atos --offset -i` on each, which also recovers inlined frames.
+  </Step>
+  <Step title="The names are stored with the crash">
+    The answers are saved on the crash report, so a symbolicated report keeps its names even after its dSYM is deleted.
+  </Step>
+</Steps>
+
+When a dSYM arrives later, every crash still waiting on one of its UUIDs is symbolicated again automatically. You never need to re-upload a crash.
+
+<Note>
+  Symbolication needs a macOS agent with Xcode, because `atos` ships with Xcode. Linux and Windows agents do not advertise the job. Uploading and indexing dSYMs happens on the control plane, so a Linux or Docker control plane works as long as one Mac agent is enrolled.
+</Note>
+
+### Statuses
+
+| Status | Meaning |
+| --- | --- |
+| **Pending** | Stored and about to be matched with dSYMs |
+| **Waiting for agent** | Needs a macOS agent with Xcode, and none is online. The crash is sent as soon as one connects |
+| **Symbolicating** | An agent is running `atos` |
+| **Symbolicated** | Every app frame has a name |
+| **Partially symbolicated** | Some app frames have names; others still need a dSYM, or `atos` could not name them |
+| **Missing dSYMs** | No uploaded dSYM matches the app's UUIDs yet |
+| **Failed** | `atos` failed, or the agent job failed three times. The message says why |
+
+A failed job is retried up to three times. A job queued on an agent that stays offline for 10 minutes is cancelled and sent to another agent.
+
+## Supported formats
+
+The content decides the format, not the file name.
+
+| Format | Where it comes from |
+| --- | --- |
+| `.ips` | iOS 15 and later devices, Xcode's **Devices and Simulators** window, `~/Library/Logs/DiagnosticReports` on a Mac. Only crash reports (`bug_type` 309) are accepted; hang and jetsam reports carry no backtrace |
+| `.crash` | Xcode's Organizer **Export**, older devices, and in-app crash reporters such as PLCrashReporter and KSCrash |
+| MetricKit JSON | An `MXDiagnosticPayload` or single `MXCrashDiagnostic` from `jsonRepresentation()`. A payload with several crash diagnostics becomes one crash report each |
+
+## Upload crash reports
+
+In the dashboard, click **Upload crash reports**, then drop files or click to choose them. Each file uploads on its own and links to the crashes it created. A file that was already uploaded links to the existing crash instead of adding a copy.
+
+In the iOS app, open **Crashes**, tap the import button, and choose files from the Files app.
+
+## Send crashes from your app
+
+An app cannot read its own `.ips` files. In the field, crash data comes from MetricKit, which delivers the previous launch's crash diagnostics to a subscriber, or from a crash-reporter library that writes `.crash` text. Post either to the upload endpoint.
+
+```swift
+import MetricKit
+
+final class CrashReporter: NSObject, MXMetricManagerSubscriber {
+  func didReceive(_ payloads: [MXDiagnosticPayload]) {
+    for payload in payloads where !(payload.crashDiagnostics ?? []).isEmpty {
+      var request = URLRequest(url: URL(string: "https://aide.example.com/api/public/crashes")!)
+      request.httpMethod = "POST"
+      request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+      request.httpBody = payload.jsonRepresentation()
+      URLSession.shared.dataTask(with: request).resume()
+    }
+  }
+}
+
+// At launch:
+MXMetricManager.shared.add(crashReporter)
+```
+
+`POST /api/public/crashes` takes one report as the raw request body. It needs no credential, so a shipped app can report without embedding a secret. Send `X-API-Key` to record which key uploaded the report; a signed-in session records the user instead.
+
+<CodeGroup>
+
+```bash .ips report
+curl --request POST 'https://aide.example.com/api/public/crashes' \
+  --header 'content-type: application/json' \
+  --header 'x-crash-filename: MyApp-2026-09-20.ips' \
+  --data-binary @MyApp-2026-09-20.ips
+```
+
+```bash Gzip-compressed MetricKit payload
+gzip -c payload.json | curl --request POST 'https://aide.example.com/api/public/crashes' \
+  --header 'content-type: application/json' \
+  --header 'content-encoding: gzip' \
+  --data-binary @-
+```
+
+</CodeGroup>
+
+| Rule | Limit |
+| --- | --- |
+| Body | 5 MiB after gzip decoding |
+| `Content-Type` | `application/json` for `.ips` and MetricKit, `text/plain` for `.crash`, or `application/octet-stream` |
+| `Content-Encoding` | `gzip` or omitted |
+| `X-Crash-Filename` | Optional; shown in the dashboard |
+| Rate limit | 30 reports a minute per address without a session |
+
+| Status | Meaning |
+| --- | --- |
+| `201` | Stored — the body lists each crash's `id`, `status`, and dashboard `url` |
+| `200` | The same bytes were already uploaded; the existing crashes are returned |
+| `202` | Crash collection is off; nothing was stored |
+| `401` | A credential was sent but is invalid. A bad key is never treated as anonymous |
+| `413` | The body is over 5 MiB |
+| `415` | The body is not a recognized crash format |
+| `422` | The report is not a crash, such as an `.ips` hang report, or has no backtrace |
+| `429` | Too many reports from this address; retry after a minute |
+
+The **API** icon in the page header shows this contract with your server's address and copies it as Markdown.
+
+## Find crashes
+
+Search matches the app, bundle ID, version, exception, device, incident ID, and signature. The **Status**, **App**, and **Version** filters list only values present in stored reports. The table shows the exception with the first app frame as the crash's title, and the source file and line underneath once it is symbolicated.
+
+Each crash has a **signature** — a hash of the exception and the first three app frames of the crashed thread. Reports with the same signature failed the same way; the crash detail page lists them under **Similar**. Offsets change with every build, so signatures are stable across versions once the frames have names.
+
+Select rows to delete several reports at once.
+
+## Settings
+
+The gear icon opens **Crash settings**.
+
+| Setting | Default | Effect |
+| --- | --- | --- |
+| **Collect crash reports from apps** | On | When off, anonymous and API-key uploads get `202` and nothing is stored. Signed-in uploads are always accepted |
+| **Symbolication agent** | Any online macOS agent | The agent to use whenever it is online. Otherwise any online agent with Xcode is used |
+| **Keep crash reports** | 90 days | Reports older than this are deleted with their files |
+| **Keep dSYMs** | Until deleted | When set, dSYM uploads older than this are deleted |
+
+## Storage, security, and retention
+
+Crash reports and extracted dSYMs are stored in `CRASH_DATA_DIRECTORY`, which defaults to a `crash-data` folder next to the SQLite database. Back it up with the database.
+
+<Warning>
+  Crash reports can contain device models, OS versions, file paths, and application-specific messages your app logged before crashing. The uploader's IP address is stored with anonymous reports. Anyone who can reach `/api/public/crashes` can add reports, so keep the per-address rate limit in mind if the endpoint is public, and turn collection off when you do not need it.
+</Warning>
+
+Crash reports are kept for 90 days by default. Downloads of the original and symbolicated reports under `/api/crash-files/*` need a signed-in session or an API key.
+
+## Related pages
+
+<Columns cols={2}>
+  <Card title="Crash details" icon="bug" href="/debugging/crash-detail">
+    Threads, missing dSYMs, binary images, and similar crashes for one report.
+  </Card>
+  <Card title="dSYMs" icon="file-zipper" href="/debugging/dsyms">
+    Upload debug symbols from the dashboard, builds, or CI.
+  </Card>
+  <Card title="Agents" icon="server" href="/agents/agents">
+    Enroll the macOS agent that runs `atos`.
+  </Card>
+  <Card title="APIs" icon="code" href="/reference/api">
+    The crash and dSYM upload endpoints alongside the rest of the REST surface.
+  </Card>
+</Columns>

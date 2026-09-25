@@ -39,7 +39,7 @@ The page has five tabs.
         **Add iOS App project** registers the repository as having an Xcode project.
       </Step>
       <Step title="Create build configurations" icon="sliders">
-        A configuration selects a repository-relative Xcode source and saves its scheme, configuration, action, and optional advanced settings. Configurations are repository-wide and available from every worktree.
+        A configuration selects a repository-relative Xcode source and saves its scheme, configuration, action, and optional advanced settings. Configurations are repository-wide and available from every worktree. **Collect dSYMs** under advanced settings keeps a build's dSYMs for [crash symbolication](/debugging/dsyms#collect-dsyms-from-builds): automatically for archives, always, or never.
       </Step>
       <Step title="Allow build scripts" icon="file-code">
         Reusable pre-build and post-build hooks are authored on the [Builds](/builds/builds) page. Come back here to allow specific scripts for this repository — a script cannot run against a repository that has not allowed it.
