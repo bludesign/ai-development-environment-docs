@@ -14,7 +14,7 @@ An app hub at `/apps/[appId]` brings every resource backed by the app's assigned
 
 | View | What you can do |
 | --- | --- |
-| **Overview** | Review resource totals and assigned repositories. Open any scoped view from its summary card. |
+| **Overview** | Review resource totals, assigned repositories, and repository Build cards. |
 | **Repositories** | Inspect assigned repositories and their checkouts. Open a repository or codebase for repository-level and checkout-level operations. |
 | **Worktrees** | Search, create, inspect, and manage worktrees from the assigned repositories. Hidden worktrees remain scoped to the app, and the search and filters are saved per app, so leaving this view and returning restores them. |
 | **Plans** | Search and manage Plans that use an app worktree. Start a new Plan with only eligible app worktrees offered. |
@@ -22,6 +22,17 @@ An app hub at `/apps/[appId]` brings every resource backed by the app's assigned
 | **Builds** | Review app build history and start a build from an app worktree. Build scripts remain repository-level configuration. |
 
 The scoped views keep their normal actions. Opening a resource takes you to its full detail page when the action needs more space.
+
+## Build from the overview
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/app-build-overview.png" alt="Repository Build cards in light theme" />
+  <img className="hidden dark:block" src="/images/dark/app-build-overview.png" alt="Repository Build cards in dark theme" />
+</Frame>
+
+Each assigned repository with an iOS App project gets a Build card. Pick a worktree beside **Build**; options include the agent name, so no separate agent picker is needed. An active agent filters only this worktree picker. A valid selection is retained, otherwise the first eligible worktree is selected. Cards remain visible with an explanation when no eligible worktree exists.
+
+Below the picker, **Latest repository build** shows the newest build across every worktree and agent for that repository, regardless of status or active-agent selection. Open its details or choose **Rebuild** from an **Out of date** badge. The native app provides the same repository cards on app details.
 
 ## Edit repository assignments
 
