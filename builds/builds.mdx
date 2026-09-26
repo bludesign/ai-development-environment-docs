@@ -8,9 +8,9 @@ description: "Configure, run, inspect, deploy, and export iOS builds, and track 
   <img className="hidden dark:block" src="/images/dark/builds.png" alt="Builds page in dark theme" />
 </Frame>
 
-The **Builds** page at `/builds` holds build and imported-coverage history, plus the reusable JavaScript hooks that run around each iOS build. It has two tabs: **History** and **Build Scripts**.
+The **Builds** page at `/builds` holds build and imported-coverage history, plus the reusable JavaScript hooks that run around each iOS build. It has **History**, **Configurations**, and **Build Scripts** tabs.
 
-Builds themselves are started from a worktree, not from this page — see [Worktrees](/worktrees/worktrees).
+Start a build from a [worktree](/worktrees/worktrees) or the repository Build cards on an [app overview](/apps/app-detail). The native Builds page also offers Start Build.
 
 ## Where build settings live
 
@@ -28,7 +28,7 @@ Builds themselves are started from a worktree, not from this page — see [Workt
 
 ## History
 
-Every build record, newest first, with its status, destination, duration, and artifact count.
+Every build record appears newest first, with its status, captured configuration name, destination, duration, and artifact count. Saved configuration names link to [configuration details](/builds/build-configuration-detail). Deleted configurations retain their captured names without links. One-time builds explicitly show **Custom**.
 
 An LCOV or Istanbul [coverage import](/builds/build-coverage#importing-coverage-from-other-test-runners) appears here as a `HOST` destination. That record ran no simulator or device build; it exists to hold the worktree snapshot, import status, logs, and coverage report.
 
@@ -51,6 +51,14 @@ The build dialog offers **Any iOS Simulator** or **Any Physical iOS Device** imm
   Deleting a build permanently removes the build record *and* its build folder — logs, products, archives, and exports. There is no undo.
 </Warning>
 
+## Saved and Custom configurations
+
+Select **Custom** after the saved configuration cards to configure one build without saving a name or icon. On the web, Custom settings open inline below the configuration cards, so you can switch to a saved configuration at any time. Custom is selected automatically when the repository has an iOS App project but no saved configurations. Select an Xcode source, scheme, configuration, action, and build options using the same source inspection controls as the configuration editor, then choose **Use settings**.
+
+For a selected configuration, **Physical Device** and **Simulator** tabs, the device picker, and build scripts stay visible. Expand **Details** for the source summary, action, advanced settings, export settings, and command preview. Archive requires a generic physical-device destination. Test Without Building requires compatible prior test products, including matching Custom source settings.
+
+The **Configurations** tab lists reusable configurations with their repositories, icons, and settings. Open a card to inspect or edit it and review its paginated history.
+
 ## Running on devices
 
 **Run** opens the same detailed destination picker on Builds, Build Details, Worktrees, Worktree Details, Plan and Session build cards, and the Action Center.
@@ -70,12 +78,18 @@ Running on the build agent uses the existing local path. For another agent, AIDE
 
 One Run action targets one agent, but it can still target several devices on that agent. Simulator architecture and minimum-OS metadata disable destinations known to be incompatible. Older builds without complete metadata are allowed through the picker and receive a final compatibility check on the target. Physical-device signing and provisioning requirements are unchanged.
 
+Build rows containing an IPA also show **Install**. The action uses the newest eligible IPA. On a desktop browser, selecting its disabled-looking button opens: “Open this page on an iPhone or iPad to install.” HTTPS, bundle metadata, and export-method checks still apply. **Copy install link** copies that build's own page.
+
+Every **Out of date** badge opens a menu with **Rebuild**. Queuing a rebuild refreshes the current page and displays any failure there.
+
 ## Build Scripts
 
 Reusable pre-build and post-build hooks that run around every build that selects them.
 
 | Field | Notes |
 | --- | --- |
+| **Icon** | The same icon picker used by build configurations |
+| **Repositories** | Search and select the repositories where the script is allowed |
 | **Name** | How the script appears when selecting scripts for a build |
 | **Pre-build JavaScript** | Default-export a function receiving `buildId`, `branch`, `destination`, `action`, and the telemetry URL snapshot |
 | **Post-build JavaScript** | The same, plus `buildFolder`, `failed`, `cancelled`, `errorCode`, and `error` |
@@ -88,7 +102,7 @@ Reusable pre-build and post-build hooks that run around every build that selects
 </Warning>
 
 <Note>
-  Creating a script here does not make it run anywhere. A script has to be allowed for a repository on that repository's [details page](/codebases/repository-detail) before a build in that repository can select it.
+  Assign repositories directly in the script editor, or allow scripts from a repository’s [details page](/codebases/repository-detail). Clearing the repository selection removes this script’s assignments. Other scripts keep their order. Scripts run only when selected for a build.
 </Note>
 
 ## Worktree coverage
@@ -96,6 +110,26 @@ Reusable pre-build and post-build hooks that run around every build that selects
 **Run Worktree Coverage** runs tests with coverage and measures the executable lines changed in the current branch and working tree — a coverage number scoped to the change rather than the whole project. Reports appear on the [worktree details](/worktrees/worktree-detail) page.
 
 For a non-Xcode test suite, a workflow or MCP client can instead [import an LCOV or Istanbul report](/builds/build-coverage#importing-coverage-from-other-test-runners). Imported reports appear in the same worktree coverage list and on the [Changes](/changes) page.
+
+## API inputs and compatibility
+
+`startBuild` and `inspectBuildDestinations` accept exactly one of `configurationId` or
+`customConfiguration`. Custom settings contain `sourceKind`, `sourcePath`, `scheme`, and
+`buildConfiguration`; action, destination, scripts, advanced settings, and export options
+remain separate inputs. Custom runs create no saved configuration. Their snapshots retain
+an explicit Custom marker and the settings required by `rebuildBuild`.
+
+Use `buildConfigurations` and `buildConfiguration(id:)` for saved settings. Build history
+accepts `configurationId` and `repositoryId` filters. Repository `latestBuild` is the newest
+record across all worktrees and agents, including failed and running builds.
+
+Script saves accept nullable `iconKey` and optional `repositoryIds`. Omitting either field
+preserves its existing value for older clients. An empty repository array clears this script's
+assignments; saving the script and its assignments is transactional.
+
+`deleteIosAppProject(id:)` removes project settings, sources, and observations after the UI
+confirmation. It rejects repositories with an active build, including Custom runs, and keeps
+build history, artifacts, repository files, and script assignments.
 
 ## Notes
 
@@ -112,3 +146,20 @@ For a non-Xcode test suite, a workflow or MCP client can instead [import an LCOV
     Overall and changed coverage for one build.
   </Card>
 </Columns>
+
+## Start Build and script editing
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/build-start.png" alt="Start Build with destination tabs, scripts, and collapsed Details" />
+  <img className="hidden dark:block" src="/images/dark/build-start.png" alt="Start Build in dark theme" />
+</Frame>
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/build-custom.png" alt="Custom build source inspection and green Valid badge" />
+  <img className="hidden dark:block" src="/images/dark/build-custom.png" alt="Custom build editor in dark theme" />
+</Frame>
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/build-script-editor.png" alt="Build script icon and searchable repository assignments" />
+  <img className="hidden dark:block" src="/images/dark/build-script-editor.png" alt="Build script editor in dark theme" />
+</Frame>

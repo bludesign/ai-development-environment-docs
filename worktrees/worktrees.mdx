@@ -116,7 +116,7 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
     **Open in VS Code** and **Open in VS Code Insiders** launch the worktree folder on its agent. They sit in the **Customize worktree** menu, alongside the worktree's tags and highlight color.
   </Accordion>
   <Accordion title="Builds" icon="hammer">
-    **Start Build** picks one saved configuration and a destination. The selected configuration names its source path, scheme, build configuration, and the agent the build will run on — the one that owns the codebase — so you can tell where the work is going before you start it.
+    **Start Build** picks a saved configuration or **Custom**, then a destination. Custom is available as soon as the repository has an iOS App project. The selected configuration names its source path, scheme, build configuration, and the agent the build will run on — the one that owns the codebase — so you can tell where the work is going before you start it.
 
     Starting a build or rebuild closes its dialog and refreshes this worktree in place. It does not send you to Build History.
 
@@ -222,3 +222,9 @@ A worktree that disappears from disk is not deleted immediately — it moves to 
     The repositories and checkouts worktrees are created from.
   </Card>
 </Columns>
+
+## Build and path shortcuts
+
+Select an **Out of date** build badge for a **Rebuild** menu. The action refreshes the current surface and reports failures there. **Copy path** in the worktree actions copies the full worktree folder path, including its parent directories.
+
+The Start Build sheet keeps destination tabs, device selection, and scripts visible. Expand **Details** for the remaining settings and command preview. Valid configurations use green badges.

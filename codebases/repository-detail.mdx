@@ -36,19 +36,22 @@ The page has five tabs.
 
     <Steps>
       <Step title="Add the iOS App project" icon="mobile">
-        **Add iOS App project** registers the repository as having an Xcode project.
+        **Add iOS App project** registers the repository as having an Xcode project. This alone enables Start Build, including **Custom** builds before any saved configuration exists.
       </Step>
       <Step title="Create build configurations" icon="sliders">
         A configuration selects a repository-relative Xcode source and saves its scheme, configuration, action, and optional advanced settings. Configurations are repository-wide and available from every worktree. **Collect dSYMs** under advanced settings keeps a build's dSYMs for [crash symbolication](/debugging/dsyms#collect-dsyms-from-builds): automatically for archives, always, or never.
       </Step>
       <Step title="Allow build scripts" icon="file-code">
-        Reusable pre-build and post-build hooks are authored on the [Builds](/builds/builds) page. Come back here to allow specific scripts for this repository — a script cannot run against a repository that has not allowed it.
+        Reusable pre-build and post-build hooks are authored on the [Builds](/builds/builds) page. Allow specific scripts here or select this repository directly in the script editor. Script icons appear alongside their names.
       </Step>
     </Steps>
 
     <Note>
       Project definitions and allowed scripts are shared by the repository, but source discovery, validation, and parse status are computed from the agent checkout you have selected. A configuration can be valid on one Mac and unavailable on another if the checkout differs.
     </Note>
+    A green **Valid** badge identifies successfully validated configuration settings. **Remove iOS App project** asks for confirmation, then removes the project, its configurations, sources, and observations together. Repository files, build history, artifacts, and script assignments remain. Any active build in this repository, including a Custom build, prevents removal until it finishes.
+
+    In the native app, open **Edit Repository → iOS App project** to manage the project and configurations using native controls.
   </Tab>
   <Tab title="Auto Retry">
     Durable rules that automatically rerun GitHub Actions workflows or jobs.
@@ -95,3 +98,10 @@ A repository is usually checked out on more than one Mac, and each checkout can 
     Configure managed files for every worktree.
   </Card>
 </Columns>
+
+## iOS project management
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/repository-ios-project.png" alt="Repository iOS project with configuration validation and removal action" />
+  <img className="hidden dark:block" src="/images/dark/repository-ios-project.png" alt="Repository iOS project management in dark theme" />
+</Frame>

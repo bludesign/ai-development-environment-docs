@@ -74,6 +74,7 @@
                 "pages": [
                   "builds/builds",
                   "builds/build-detail",
+                  "builds/build-configuration-detail",
                   "builds/build-coverage"
                 ]
               },

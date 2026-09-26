@@ -17,11 +17,11 @@ The build details page at `/builds/{id}` covers one immutable build from end to 
 | **Cancel build** | The build is queued, preparing, or running |
 | **Rebuild** | Always — starts a fresh build from the same configuration |
 | **Run** | The build produced a runnable app and a compatible destination is connected |
-| **Install on device** | An archive has been exported for over-the-air installation |
+| **Install** | An archive has been exported for over-the-air installation |
 | **Export archive** | The build captured an `.xcarchive` |
 | **Delete build** | Always |
 
-An **Out of date** marker appears when the worktree has moved on since this build was made.
+An **Out of date** badge appears when the worktree has moved on since this build was made. Select it for a **Rebuild** menu; the current surface refreshes and shows any queuing error. The header shows **Custom** or the captured configuration name, with a link when the saved configuration still exists.
 
 **Rebuild** stays on this build. After the replacement is queued, an inline success notice offers an explicit link to the new build. **Run** uses the shared detailed device picker: checkbox multi-selection, per-device quick play, platform and OS details, live availability, **Select All**, **Clear**, and **Run Selected**.
 
@@ -33,7 +33,11 @@ The scheme, action, destination, commit, build ID, start and finish times, durat
 
 The **Command summary** shows the exact `xcodebuild` invocation, with **Copy command summary** to reproduce it by hand. Advanced settings captured at build time are listed too; older builds may report that advanced settings were not captured.
 
+An **Install** button appears immediately after **Run** when the build contains an IPA. It uses the newest eligible IPA and keeps the same HTTPS, export-method, and metadata checks as artifact installation. On unsupported browser devices, select the disabled-looking button for “Open this page on an iPhone or iPad to install.” Copied installation links always open this build's page.
+
 ## Logs
+
+Logs open at the newest page and follow new output while you remain at the bottom. Scroll upward to fetch preceding pages. Earlier chunks are inserted in chronological order while preserving your reading position; duplicate and late chunks are reconciled in place. Loading and retry feedback appears above the terminal. Return to the bottom or select **Follow output** to resume tailing. The native app loads log history separately from build-detail refreshes.
 
 Live streaming output with the same terminal controls used elsewhere in the app:
 
@@ -88,7 +92,7 @@ Once parsed you get totals — tests, passed, failed, skipped — and a browsabl
 
 ## Installing over the air
 
-**Install on device** serves the exported IPA for direct installation, with **Copy install link** to send it elsewhere. The page reports the bundle identifier and version being installed.
+**Install** serves the exported IPA for direct installation, with **Copy install link** to send it elsewhere. The page reports the bundle identifier and version being installed.
 
 Requirements and limits:
 
