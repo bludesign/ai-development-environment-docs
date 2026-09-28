@@ -99,6 +99,14 @@ Arguments, return types, deprecations, and a sample response are listed on each 
 
 The inspect, upsert, toggle, and delete mutations return an operation immediately. Subscribe to `tailscaleServeOverviewChanged` for fleet updates or `tailscaleServeOperationChanged(id:)` for one operation; clients never need to parse an agent job's JSON result. See [Tailscale Serve](/system/tailscale) for validation and lifecycle behavior.
 
+### App and repository transfers
+
+`repositoryTransferExportPreview(input:)` lists selectable settings, definitions, and dependencies; `exportRepositoryTransfer(input:)` returns the selected portable package. `previewRepositoryTransfer(input:)` resolves matches and mappings, inspects selected clone destinations, and returns conflicts plus a `fingerprint`. Submit the same input and fingerprint to `applyRepositoryTransfer`, with a stable `requestId` for retries of that exact request.
+
+Configuration is saved atomically before independent clone jobs run. Read `repositoryTransferOperation(id:)` or subscribe to `repositoryTransferChanged(operationId:)` for per-checkout results. `retryRepositoryTransfer` retries failed checkouts without applying the configuration again. `appRepositorySync` and `syncAppRepositories` provide app-wide clone coverage and dispatch. These operations reject enrolled agent credentials; use a user session or API key.
+
+See [Import and export](/apps/import-export) for selection behavior, paused automations, destination validation, and sensitive package contents.
+
 ### Crashes and dSYMs
 
 `crashReports(filter:, first:, after:)` pages crash reports newest first, and `crashReport(id:)` returns one with its symbolicated `threads`, `binaryImages`, `missingImages`, `attachedDsyms`, and `similarCrashes`. Frame fields such as `symbol`, `sourceFile`, `sourceLine`, and `inlined` already include what the dSYMs added, and `symbolicatedText` renders the whole report in Apple's text format. `dsyms` and `dsym(id:)` list the indexed dSYMs with their `slices` and `crashes`; `dsymUploads` lists uploads still in progress or failed.

@@ -85,6 +85,21 @@ The page has five tabs.
 
 A repository is usually checked out on more than one Mac, and each checkout can carry several worktrees. Putting preparations, build configurations, skill groups, and retry rules on the repository means every checkout uses one definition instead of maintaining per-machine copies.
 
+## Import and export settings
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/repository-export.png" alt="Selecting repository settings for export in light theme" />
+  <img className="hidden dark:block" src="/images/dark/repository-export.png" alt="Selecting repository settings for export in dark theme" />
+</Frame>
+
+Use **Import** or **Export** in repository details to open the shared configuration review. Save pending repository details and preparation edits first; transfers use the saved definition.
+
+Export can include the repository name, description, Jira regex, base-branch update setting, preparations, iOS build configurations, repository commands, and workflows. Uncheck any item or individual repository setting you want to leave out.
+
+Import applies selected settings to the repository you are editing. Its Git origin and existing checkouts stay in place. When an app package contains several repositories, choose **Repository to use as the template**. Additional clones are optional. The preview shows current and imported values, shared definitions affected elsewhere, and dependencies that need local mappings.
+
+The native app offers this flow from **Edit Repository**. See [Import and export](/apps/import-export) for conflict resolution, dependency handling, and clone progress.
+
 ## Related pages
 
 <Columns cols={2}>

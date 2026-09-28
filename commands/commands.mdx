@@ -49,6 +49,8 @@ A command travels between control planes as a JSON file. **Export** writes it; *
 
 An exported file carries the command's name, description, script, target, restart policy, quick action settings, and notification setting. A hand-written file containing just those fields imports as well, without the export envelope.
 
+For commands that target repositories in an app, [app and repository import/export](/apps/import-export) provides a shared package with repository settings and workflows. Its review requires missing target mappings to be resolved or the command excluded; it does not silently widen the command's scope. Existing `.command.json` files continue to use this page's command-only import flow.
+
 ## Runs tab
 
 A table of every run with **Run** number, **Command**, **Status**, **Agent**, **Worktree**, **Started**, and **Finished**.

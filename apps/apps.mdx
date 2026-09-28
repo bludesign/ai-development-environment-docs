@@ -1,6 +1,6 @@
 ---
 title: "Apps"
-description: "Group repositories into apps and open a scoped development hub for each one."
+description: "Group repositories into apps, import shared configuration, and open a scoped development hub."
 ---
 
 <Frame>
@@ -36,8 +36,14 @@ Each card shows the app description, assigned repositories, and current totals f
 </Steps>
 
 <Note>
-  You create logical repositories from the [Codebases](/codebases/codebases) workflow. The **Create app** button stays disabled until at least one repository exists.
+  You can register existing checkouts from [Codebases](/codebases/codebases), or use **Import** to create repositories from an exported package and clone them onto selected agents. The **Create app** button stays disabled until at least one repository exists; **Import** remains available.
 </Note>
+
+## Import or export an app
+
+Click **Import** to open a portable app or repository package. Choose the contents, select destination agents, and review existing values and conflicts before saving. Each selected missing repository is cloned beneath the destination agent's **Base repository directory**.
+
+To export an existing app, open its details and click **Export**. You can exclude individual repositories, settings, preparations, commands, workflows, and other included configuration before downloading the JSON package. See [Import and export](/apps/import-export) for the shared review flow and dependency mapping.
 
 ## Shared repositories
 
@@ -47,7 +53,7 @@ A shared repository contributes its resources to every app that includes it. For
 
 - App assignments are many-to-many. An app can contain many repositories, and a repository can belong to many apps.
 - Counts exclude hidden worktrees and archived Plans or Sessions where the corresponding global view excludes them.
-- Creating an app does not move, clone, or modify files on an agent.
+- **Create app** only groups existing repositories. **Import** and the app's **Sync** view can create missing checkouts on selected agents.
 
 ## Related pages
 
