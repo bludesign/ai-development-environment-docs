@@ -47,6 +47,12 @@ Tracked write and delete paths are also marked assume-unchanged. Write paths tha
 
 Existing uploads are retained when you edit another field and do not replace the file.
 
+## Include preparations in a package
+
+[App and repository exports](/apps/import-export) can include individual preparation rules and the original uploaded file contents. Uncheck any rule you do not want to share. Review write rules carefully: an uploaded environment or configuration file can contain secrets, and the exported JSON package does not encrypt those bytes.
+
+Import matches preparations by their repository-relative path and previews replacements. Excluding a rule preserves the existing local rule. Importing a definition does not apply it to existing worktrees. The same path, per-file, and repository-total limits apply during import.
+
 ## Worktree creation and Git operations
 
 New worktrees and moved checkouts apply the current rules before they become available. If preparation fails, AIDE removes the new worktree and deletes only a branch created by that job.

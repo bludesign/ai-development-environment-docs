@@ -20,8 +20,34 @@ An app hub at `/apps/[appId]` brings every resource backed by the app's assigned
 | **Plans** | Search and manage Plans that use an app worktree. Start a new Plan with only eligible app worktrees offered. |
 | **Sessions** | Search and manage Sessions that use an app worktree. Start a new Session without leaving the app context. |
 | **Builds** | Review app build history and start a build from an app worktree. Build scripts remain repository-level configuration. |
+| **Sync** | Compare repository coverage across agents and clone selected missing checkouts into each agent's Base repository directory. |
 
 The scoped views keep their normal actions. Opening a resource takes you to its full detail page when the action needs more space.
+
+## Sync repositories to other agents
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/app-sync.png" alt="App Sync with existing and missing repository checkouts in light theme" />
+  <img className="hidden dark:block" src="/images/dark/app-sync.png" alt="App Sync with existing and missing repository checkouts in dark theme" />
+</Frame>
+
+Open **Sync**, or use `/apps/[appId]?view=sync`. Each agent shows its **Base repository directory**, the app's repositories, and whether each checkout is **Already present** or **Missing**. Existing checkouts show their registered paths, even when those paths are outside the base directory. An agent must be online, support repository cloning, and have a base directory configured to receive a missing checkout. **Unavailable** and **Needs attention** identify destinations that cannot currently be cloned.
+
+Select individual missing repositories, or **Select missing repositories on this agent**. Review **Folder relative to base directory** and **Clone URL** for each selection, then click **Clone selected**. The clone URL must identify the same repository and cannot contain embedded HTTP credentials. Configure SSH keys or Git credentials on the destination agent for private repositories.
+
+The control plane checks selected destinations before queuing the clones. An unrelated folder, symbolic link, or conflicting repository blocks the destination. Existing matching checkouts are reused; cloning does not replace their files. If coverage changes while you are selecting destinations, refresh the view before trying again.
+
+**Transfer progress** shows each destination and its result. **Retry failed checkouts** creates another attempt for failed clones without changing repository settings or repeating successful clones. If an agent's base directory changes, review a new Sync request for that destination.
+
+<Note>
+  This view creates missing checkouts. It does not pull, rebase, or mirror local edits between existing checkouts. Use the checkout's Git actions for those operations.
+</Note>
+
+## Import and export configuration
+
+Use **Export** in the app header to select the app's repositories, settings, commands, and workflows for a portable JSON package. **Import** opens the same interactive review used on the [Apps](/apps/apps) page and in repository details.
+
+Review conflicts, dependency mappings, and destination agents before confirming. See [Import and export](/apps/import-export).
 
 ## Build from the overview
 

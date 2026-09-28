@@ -102,6 +102,8 @@ Four intervals control how often this agent performs recurring work. Codebase sc
   <Accordion title="Base repository directory" icon="folder">
     The folder on this agent that contains its repositories. Worktree paths inside it are displayed relative to this folder, which keeps long absolute paths out of the UI.
 
+    [App and repository imports](/apps/import-export) and [App Sync](/apps/app-detail#sync-repositories-to-other-agents) clone missing checkouts beneath this directory. Set it before selecting this agent as a destination. The agent must be online and advertise both `codebase.clone` and `codebase.clone.inspect`; private repositories use the agent's own Git authentication.
+
     Browse the agent's filesystem to pick a directory, or **Clear directory** to unset it. Browsing requires the agent to be online and recent enough to advertise the directory-browse capability.
   </Accordion>
   <Accordion title="Xcode Derived Data" icon="hammer">

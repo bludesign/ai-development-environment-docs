@@ -45,6 +45,8 @@ Clicking anywhere on a card opens that workflow. The name, the menu, and the lin
 
 **Import** accepts more than one file at a time. A single file opens straight in the [workflow editor](/workflows/workflow-edit); several files import in place and the new cards appear on this tab. Each file is handled on its own, so one unreadable file names itself in the error banner rather than costing you the rest of the batch.
 
+To move workflows together with their repository configuration, use [app or repository import/export](/apps/import-export). That review shows associated commands, published snapshots, and references that need a destination mapping. Imported workflows remain disabled unless you explicitly enable them in the review after validation. The workflow-only files described above continue to use the **Workflows** page's existing import flow.
+
 <Note>
   Enabled and published are different things. A workflow must be **published** to have an immutable version to run, and **enabled** for its triggers to fire. Pausing leaves the published version intact and simply stops new runs.
 </Note>
