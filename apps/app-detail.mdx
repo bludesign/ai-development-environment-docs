@@ -31,7 +31,7 @@ The scoped views keep their normal actions. Opening a resource takes you to its 
   <img className="hidden dark:block" src="/images/dark/app-sync.png" alt="App Sync with existing and missing repository checkouts in dark theme" />
 </Frame>
 
-Open **Sync**, or use `/apps/[appId]?view=sync`. Each agent shows its **Base repository directory**, the app's repositories, and whether each checkout is **Already present** or **Missing**. An agent must be online, support repository cloning, and have a base directory configured to receive a missing checkout.
+Open **Sync**, or use `/apps/[appId]?view=sync`. Each agent shows its **Base repository directory**, the app's repositories, and whether each checkout is **Already present** or **Missing**. Existing checkouts show their registered paths, even when those paths are outside the base directory. An agent must be online, support repository cloning, and have a base directory configured to receive a missing checkout. **Unavailable** and **Needs attention** identify destinations that cannot currently be cloned.
 
 Select individual missing repositories, or **Select missing repositories on this agent**. Review **Folder relative to base directory** and **Clone URL** for each selection, then click **Clone selected**. The clone URL must identify the same repository and cannot contain embedded HTTP credentials. Configure SSH keys or Git credentials on the destination agent for private repositories.
 
