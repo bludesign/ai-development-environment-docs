@@ -1,27 +1,50 @@
 ---
 title: "Pipelines and retries"
-description: "Run, cancel, inspect, and retry GitLab pipelines and jobs."
+description: "Filter GitLab pipelines, inspect staged jobs and retry history, and manage retries."
 ---
 
-The **Pipelines** page at `/gitlab/pipelines` shows project and merge-request pipelines, their jobs, retry history, and shared normalized status.
-
 <Frame>
-  <img className="block dark:hidden" src="/images/light/gitlab-pipelines.png" alt="GitLab pipelines page in light theme" />
-  <img className="hidden dark:block" src="/images/dark/gitlab-pipelines.png" alt="GitLab pipelines page in dark theme" />
+  <img className="block dark:hidden" src="/images/light/gitlab-pipelines.png" alt="GitLab pipelines table in light theme" />
+  <img className="hidden dark:block" src="/images/dark/gitlab-pipelines.png" alt="GitLab pipelines table in dark theme" />
 </Frame>
 
-GitLab statuses map into the AIDE pipeline model, including created, preparing, pending, running, success, failed, canceled, skipped, manual, scheduled, and unknown states.
+The **Pipelines** page at `/gitlab/pipelines` shows pipelines for a managed GitLab project. Select a project, filter by branch, status, or source, and use pagination to inspect older pipelines. The URL retains these filters so you can reopen or share the same view.
 
-## Pipeline actions
+## Inspect a pipeline
 
-- Create a pipeline for a ref with optional variables
-- Cancel an active pipeline
-- Retry a failed or canceled pipeline
-- Retry an individual job
-- Open the pipeline or job in the configured GitLab instance
+Each row includes the project-scoped pipeline number, branch, commit SHA, source, status, linked merge requests, start time, and duration. Branch links open a matching worktree; its highlight color also appears on the row.
 
-## Auto retry
+Expand the row to load complete pipeline timing and jobs. Jobs are grouped by stage and show their status, start time, execution duration, and queue time. **Allowed to fail** identifies jobs whose failures GitLab permits. **Show retry history** reveals superseded jobs separately from the current jobs.
 
-Auto retry rules are scoped by provider and project, with an optional pipeline target and a maximum attempt count. You can choose 1 to 100 attempts and delete a rule when you no longer need it. Executions, notifications, polling observations, and audit entries retain the GitLab provider discriminator.
+<Frame>
+  <img className="block dark:hidden" src="/images/light/gitlab-pipeline-details.png" alt="Expanded GitLab pipeline with staged jobs and retry history in light theme" />
+  <img className="hidden dark:block" src="/images/dark/gitlab-pipeline-details.png" alt="Expanded GitLab pipeline with staged jobs and retry history in dark theme" />
+</Frame>
 
-Signed webhook events are the primary update source. Polling uses the configured pipeline interval as a fallback and is visible on [Polling](/system/polling). GitHub and GitLab retry rules can run at the same time without sharing counters or pipeline records.
+Readable badges distinguish **Success**, **Failed**, **Running**, **Canceling**, **Waiting for resource**, **Waiting for callback**, **Manual action**, and other supported states. Unknown provider values appear as **Unknown**.
+
+GitLab stages and job retries have their own structure. The app does not fabricate GitHub-style workflow attempts or script steps. Open a pipeline or job in GitLab to view its logs, artifacts, or additional provider details.
+
+## Run, retry, or cancel
+
+Enter a branch or tag in the run field and select **Run pipeline**. The pipeline menu offers **Retry** for a failed or canceled pipeline and **Cancel** for an active pipeline that is not already canceling. Job retry is available for completed successful, failed, or canceled current jobs.
+
+Actions stay disabled while their request is running. After an action succeeds, the pipeline and job details refresh. Use **Refresh jobs** to retry a failed detail request. Pipeline variables are supported by `createGitLabPipeline` in the API; the web run field accepts a ref.
+
+## Follow live progress
+
+Pipeline events and reconnects refresh visible data. Active pipeline lists and expanded details also refresh at the configured GitLab pipeline polling interval, with a minimum of 30 seconds. Hidden browser tabs stop these reads and refresh when visible again. Completed detail panels stop polling.
+
+The pipeline cards in [merge request details](/gitlab/merge-request-detail) and [worktrees](/gitlab/worktrees) use the same statuses, job grouping, retry history, and controls. Worktree cards use a 60-second fallback when no interval is supplied.
+
+## Configure auto retry
+
+Auto-retry rules are scoped to a GitLab project, optionally to one pipeline. Choose a maximum of 1 to 100 attempts and enable the rule; delete it to stop future automatic retries. The page shows attempts and the most recent error.
+
+Signed webhook events trigger retry processing. Server polling also reconciles enabled rules using the configured interval, and its activity appears on [Polling](/system/polling). GitHub and GitLab retry rules keep separate counters and pipeline records.
+
+## Data and API
+
+`gitlabPipelines` accepts project, pagination, ref, status, and source filters. `gitlabPipeline` loads full timing; `gitlabPipelineJobs` follows provider pagination and includes retry history. These provider details are cached and logged by the control plane. The pipeline views do not download job logs or artifacts.
+
+See [API cache](/gitlab/cache) and [Troubleshooting GitLab](/gitlab/troubleshooting) for stale data, rate limits, and connection failures.

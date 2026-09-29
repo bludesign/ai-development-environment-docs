@@ -1,40 +1,36 @@
 ---
 title: "Merge requests"
-description: "Browse, review, update, and merge GitLab merge requests."
+description: "Compare GitLab merge requests, review their readiness, and open the shared merge controls."
 ---
 
-The **Merge requests** page at `/gitlab/merge-requests` lists requests authored by you, requests awaiting your review, or all requests visible to the token. Filters can span managed projects or target one project.
-
 <Frame>
-  <img className="block dark:hidden" src="/images/light/gitlab-merge-requests.png" alt="GitLab merge requests page in light theme" />
-  <img className="hidden dark:block" src="/images/dark/gitlab-merge-requests.png" alt="GitLab merge requests page in dark theme" />
+  <img className="block dark:hidden" src="/images/light/gitlab-merge-requests.png" alt="GitLab merge requests table in light theme" />
+  <img className="hidden dark:block" src="/images/dark/gitlab-merge-requests.png" alt="GitLab merge requests table in dark theme" />
 </Frame>
 
-Open a merge request to inspect its description, commits, reviewers, labels, mergeability, source and target branches, conflicts, discussions, and related pipelines.
+The **Merge requests** page at `/gitlab/merge-requests` lists requests authored by you, requests awaiting your review, or requests visible to your GitLab token. Select a scope, project, and state to narrow the results. Use the pagination controls to browse more requests.
 
-<Frame>
-  <img className="block dark:hidden" src="/images/light/gitlab-merge-request-detail.png" alt="GitLab merge request details page in light theme" />
-  <img className="hidden dark:block" src="/images/dark/gitlab-merge-request-detail.png" alt="GitLab merge request details page in dark theme" />
-</Frame>
+## Read the table
 
-## Actions
+Each row includes the merge request number, title, project, author, source and target branches, labels, linked Jira ticket, latest pipeline status, approval state, unresolved discussions, and age. Matching worktrees add their highlight color and a link to the worktree.
 
-Depending on your GitLab permissions, you can:
+Badges use readable labels such as **Draft**, **Approved**, **Success**, and **Auto-merge enabled**. A missing approval or discussion result appears as unavailable rather than implying approval or no unresolved threads.
 
-- Create a merge request and set reviewers, labels, squash, and source-branch removal
-- Update the title, description, labels, reviewers, or open state
-- Reply to discussions and resolve or reopen resolvable threads
-- Approve, comment, or request changes
-- Merge immediately or enable auto-merge when the pipeline succeeds
-- Squash commits and remove the source branch during merge
+Select the title or number to open [merge request details](/gitlab/merge-request-detail). The row's actions menu also opens the request in your configured GitLab instance or opens the merge controls.
 
-Review outcomes use GitLab's supported review quick actions, including `/submit_review approve`, `reviewed`, and `requested_changes`. GitLab tier- or permission-dependent outcomes are disabled when the capability is known to be unavailable; an API rejection is shown as a capability message without disabling the rest of the merge request.
+## Review and merge
 
-<Frame>
-  <img className="block dark:hidden" src="/images/light/gitlab-comments.png" alt="GitLab review discussions page in light theme" />
-  <img className="hidden dark:block" src="/images/dark/gitlab-comments.png" alt="GitLab review discussions page in dark theme" />
-</Frame>
+The detail page contains the description, reviewers, discussions, and expandable pipelines. You can submit a review, reply to a discussion, or resolve a resolvable thread. The **Merge options** dialog shows the current project policy and any blocker before you submit a merge.
+
+Immediate merge and auto-merge use the same options in the web and iOS clients: squash policy, source-branch removal, optional commit messages, and available Jira or worktree follow-ups. GitLab still determines whether your token may perform each action.
 
 <Note>
-  GitLab calls pull requests “merge requests.” GitHub routes and stored pull-request data remain unchanged when GitLab is enabled.
+  Enabling auto-merge leaves the request open while GitLab waits for its requirements. The control plane runs selected follow-ups only after it confirms that GitLab merged the request.
 </Note>
+
+## Related pages
+
+- [Merge request details](/gitlab/merge-request-detail)
+- [Pipelines and retries](/gitlab/pipelines)
+- [GitLab worktrees](/gitlab/worktrees)
+- [Troubleshooting GitLab](/gitlab/troubleshooting)

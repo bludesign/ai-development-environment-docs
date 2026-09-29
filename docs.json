@@ -153,6 +153,7 @@
               "gitlab/self-hosting",
               "gitlab/projects",
               "gitlab/merge-requests",
+              "gitlab/merge-request-detail",
               "gitlab/pipelines",
               "gitlab/webhooks",
               "gitlab/cache",
