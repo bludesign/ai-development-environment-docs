@@ -138,11 +138,18 @@ If an external server cannot be discovered, the export reports an error on that 
   </Step>
   <Step title="Ask for a preset">
     Give the file to an AI with a task such as: "Create a read-only crash-investigation preset. Use only references in this catalog and return JSON matching its preset schema." The AI should return the JSON document without Markdown fences.
+
+    In the web import dialog, expand **Prompt for an AI to create presets** and select **Copy AI prompt**. Replace the goal placeholder and attach the exported catalog. The prompt includes a valid example and the current import JSON Schema.
   </Step>
   <Step title="Review and import the JSON">
-    Open **Import MCP presets**, choose the returned JSON file or paste its contents, and select **Review import**. Review the exact tool selections before saving.
+    Open **Import MCP presets**. Drop the returned JSON file into the web upload area, click it to browse, or paste the file's contents. Select **Review import** and review the exact tool selections before saving.
   </Step>
 </Steps>
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/tools-preset-ai-prompt.png" alt="Expandable AI preset prompt with copy action in light theme" />
+  <img className="hidden dark:block" src="/images/dark/tools-preset-ai-prompt.png" alt="Expandable AI preset prompt with copy action in dark theme" />
+</Frame>
 
 ### Share and import presets
 
