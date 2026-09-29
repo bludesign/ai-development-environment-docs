@@ -154,6 +154,7 @@
               "gitlab/projects",
               "gitlab/merge-requests",
               "gitlab/merge-request-detail",
+              "gitlab/comments",
               "gitlab/pipelines",
               "gitlab/webhooks",
               "gitlab/cache",
