@@ -12,7 +12,9 @@ description: "Resolve connection, permission, webhook, pipeline, and merge follo
 
 ## A project or action is missing
 
-The **Project** filter on [Merge Requests](/gitlab/merge-requests) searches accessible projects, including projects not managed in Settings. Use **Load more projects** to continue the search. Choosing a result does not configure project hooks.
+The **Project** filter on [Merge Requests](/gitlab/merge-requests) searches accessible projects, including projects not managed by AIDE. Discovery is member-only by default. Open **Manage GitLab projects** and turn off **Only discover projects where I am a member** when you intentionally need broader GitLab.com or self-hosted results.
+
+Use **Load more projects** to continue the search. If an accessible project still does not appear, open **Enter manually** and add its numeric project ID or full `namespace/project` path. Manual entry bypasses discovery filtering but cannot bypass the configured token's GitLab access. Choosing a project in the merge-request filter alone does not configure project hooks.
 
 The token may not see the project or may lack the role required by the action. Personal, project, and group tokens expose different resources. GitLab subscription tiers can also limit review outcomes. Inspect the action's displayed reason and verify the same operation in GitLab.
 

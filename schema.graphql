@@ -1707,6 +1707,12 @@ type Mutation {
     input: SaveGitLabSettingsInput!
   ): GitLabSettings!
 
+  """Save local GitLab project discovery and merge preferences."""
+  saveGitLabPreferences(
+    """Preferences to update. Omitted values retain their current setting."""
+    input: SaveGitLabPreferencesInput!
+  ): GitLabSettings!
+
   """Test git lab connection for Mutation."""
   testGitLabConnection: GitLabSettings!
 
@@ -13660,6 +13666,22 @@ type GitLabSettings {
   """Cache ttl seconds for GitLabSettings."""
   cacheTtlSeconds: Int!
 
+  """
+  Whether project discovery only returns projects where the viewer is a member.
+  """
+  memberProjectsOnly: Boolean!
+
+  """Whether editable merge requests default to squashing commits."""
+  defaultSquash: Boolean!
+
+  """
+  Whether eligible linked Jira tickets default to moving to Done after merge.
+  """
+  defaultMoveTicketToDone: Boolean!
+
+  """Whether eligible linked worktrees default to deletion after merge."""
+  defaultDeleteWorktree: Boolean!
+
   """Verified at for GitLabSettings."""
   verifiedAt: String
 
@@ -14541,6 +14563,25 @@ input SaveGitLabSettingsInput {
 
   """Pipeline poll interval seconds for SaveGitLabSettingsInput."""
   pipelinePollIntervalSeconds: Int
+}
+
+"""Local project discovery and merge preferences for GitLab."""
+input SaveGitLabPreferencesInput {
+  """
+  Whether project discovery only returns projects where the viewer is a member.
+  """
+  memberProjectsOnly: Boolean
+
+  """Whether editable merge requests default to squashing commits."""
+  defaultSquash: Boolean
+
+  """
+  Whether eligible linked Jira tickets default to moving to Done after merge.
+  """
+  defaultMoveTicketToDone: Boolean
+
+  """Whether eligible linked worktrees default to deletion after merge."""
+  defaultDeleteWorktree: Boolean
 }
 
 """
@@ -23182,6 +23223,9 @@ type WorktreeAutoMerge {
 
   """The pull request number associated with this worktree auto merge."""
   pullRequestNumber: Int!
+
+  """The worktree branch associated with this worktree auto merge."""
+  branch: String!
 
   """The merge method associated with this worktree auto merge."""
   mergeMethod: GitHubMergeMethod!

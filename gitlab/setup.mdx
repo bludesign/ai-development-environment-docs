@@ -31,7 +31,7 @@ The token's actual GitLab role and subscription tier determine which projects an
   </Step>
 </Steps>
 
-After verification, the settings card shows the GitLab identity, server version, and managed projects. The GitLab section appears immediately in web and iOS navigation.
+After verification, the settings card shows the GitLab identity, server version, polling interval, and credential actions. The GitLab section appears immediately in web and iOS navigation. Project discovery, managed projects, webhooks, and merge defaults live in **Manage GitLab projects** on the **Merge Requests** page instead of Settings.
 
 <Frame>
   <img className="block dark:hidden" src="/images/light/gitlab-settings.png" alt="GitLab credentials card in Settings in light theme" />
@@ -44,7 +44,7 @@ After verification, the settings card shows the GitLab identity, server version,
 
 ## Clear the integration
 
-**Clear credentials** first tries to remove every project hook created by AIDE. If GitLab rejects cleanup, AIDE lists the affected projects and keeps the credentials so you can retry. **Force clear** removes the local credential after an explicit warning and can leave orphaned hooks in GitLab.
+**Clear credentials** first tries to remove every project hook created by AIDE. If GitLab rejects cleanup, AIDE lists the affected projects and keeps the credentials so you can retry. **Force clear** removes the local credential after an explicit warning and can leave orphaned hooks in GitLab. Clearing credentials removes managed-project records but preserves your discovery and merge-default preferences for the next connection.
 
 Removing GitLab does not affect GitHub. If GitLab is the current page, the navigation refreshes and moves to a valid destination.
 

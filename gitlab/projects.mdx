@@ -3,18 +3,28 @@ title: "Managed projects"
 description: "Select the GitLab projects AIDE can poll, link to worktrees, and configure with webhooks."
 ---
 
-Open **Settings → Integrations → GitLab** to manage projects visible to the configured token.
+Open **GitLab → Merge Requests**, then select **Manage GitLab projects**. On iPhone or iPad, use the **Manage Projects** toolbar action on the same screen. The web dialog and native sheet expose the same discovery preference, merge defaults, managed projects, and webhook actions.
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/gitlab-settings.png" alt="Managed GitLab projects in Settings in light theme" />
-  <img className="hidden dark:block" src="/images/dark/gitlab-settings.png" alt="Managed GitLab projects in Settings in dark theme" />
+  <img className="block dark:hidden" src="/images/light/gitlab-project-manager.png" alt="Manage GitLab projects dialog in light theme" />
+  <img className="hidden dark:block" src="/images/dark/gitlab-project-manager.png" alt="Manage GitLab projects dialog in dark theme" />
 </Frame>
 
 AIDE stores GitLab's numeric project ID as the canonical remote identifier. A project's path and web URL are display and link metadata, so a namespace rename does not create a second project record.
 
+## Control project discovery
+
+**Only discover projects where I am a member** is enabled by default. AIDE adds `membership=true` to the GitLab project queries used by both the manager's **Browse** tab and Merge Requests project pickers. This keeps GitLab.com from returning every public project.
+
+Turn the preference off when you intentionally need every project visible to the token. This can be useful on a self-hosted instance or when public projects outside the token user's memberships belong in the picker. The broader result can be large on GitLab.com, so use search and pagination.
+
+Preference changes are local to AIDE. Saving them does not reverify or replace the GitLab token.
+
 ## Add a project
 
-Search or enter a visible project, then click **Add**. Personal, project, and group tokens can all be used. The candidate list reflects only resources the token may access.
+Use **Browse** to search the paginated discovery results, then select **Add**. Personal, project, and group tokens can all be used. The candidate list reflects the configured token's access and the current member-only preference.
+
+Use **Enter manually** when discovery does not show the project. Enter either its numeric GitLab project ID, such as `12345`, or its full namespace path, such as `platform/mobile/app`. Manual entry bypasses the member-only discovery filter, but GitLab still rejects the addition unless the configured token can access that project.
 
 For each project, AIDE shows:
 
@@ -28,3 +38,15 @@ For each project, AIDE shows:
 AIDE can automatically create or update the project hook when the token has Maintainer or Owner access. With a lower role, the project remains usable and its hook state becomes **Manual required**. Follow the one-time instructions on the [Webhooks](/gitlab/webhooks) page.
 
 Removing a project deletes only a hook whose ID AIDE recorded as its own. Existing hooks created by people or other applications are never removed.
+
+## Set merge defaults
+
+The manager also stores three defaults for AIDE's merge controls:
+
+| Preference | Initial value |
+| --- | --- |
+| **Check Squash commits by default** | On |
+| **Move linked Jira tickets to Done by default** | Off |
+| **Delete eligible worktrees after merge by default** | Off |
+
+These settings only preselect controls when you open an AIDE merge dialog or sheet. They do not change a GitLab project's squash policy and do not affect the squash option when creating a merge request. Required or forbidden GitLab squash policy still wins, saved choices for an existing merge operation remain explicit, and unavailable Jira or worktree follow-ups remain disabled.

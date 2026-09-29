@@ -44,7 +44,13 @@ Open **Merge** to fetch current readiness and project policy. The dialog offers:
 
 **Merge now** submits an immediate merge. **Enable auto-merge** asks GitLab to merge when its requirements are met. The dialog explains why an action is unavailable. If auto-merge is already enabled, **Cancel auto-merge** cancels the pending request when your token permits it.
 
-Jira completion and local worktree deletion start unchecked unless saved for this request. Removing the remote source branch in GitLab is separate from deleting a local worktree.
+When GitLab allows squash to be changed, and when Jira or worktree follow-ups are eligible, AIDE resolves their initial selections in this order:
+
+1. GitLab's required or forbidden squash policy overrides every AIDE selection.
+2. A saved merge operation keeps its explicit selections.
+3. Otherwise, the defaults from **Manage GitLab projects** initialize squash, Jira completion, and eligible worktree deletion.
+
+Capability checks still disable Jira completion or worktree deletion when the action is unsupported. These defaults only preselect AIDE's merge controls. They do not modify GitLab project settings or the squash option used when creating a merge request. Removing the remote source branch in GitLab is separate from deleting a local worktree.
 
 The merge submission includes the source commit shown in the dialog. If the branch changes before submission, refresh the options and review the new commit before retrying.
 
