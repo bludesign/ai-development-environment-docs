@@ -1,19 +1,36 @@
 ---
 title: "Troubleshooting GitLab"
-description: "Resolve connection, permission, webhook, cache, and pipeline issues."
+description: "Resolve connection, permission, webhook, pipeline, and merge follow-up issues."
 ---
 
 ## Connection verification fails
 
-- Confirm the URL is HTTPS and points to the instance root, not `/api/v4`.
-- Remove embedded credentials, queries, and fragments.
+- Use an HTTPS instance root, not `/api/v4`, and remove embedded credentials, queries, and fragments.
 - Confirm the token has the `api` scope and has not expired.
 - For self-hosted GitLab, confirm the reported version is 19.2 or newer.
-- For a private CA, configure [`NODE_EXTRA_CA_CERTS`](/gitlab/self-hosting#private-certificate-authorities) on the AIDE server.
+- For a private CA, configure [`NODE_EXTRA_CA_CERTS`](/gitlab/self-hosting#private-certificate-authorities) on the control plane.
 
 ## A project or action is missing
 
-The token may not see the project or may lack the role required by the action. Personal, project, and group tokens expose different resources. GitLab subscription tiers can also limit review outcomes and auto-merge behavior. AIDE keeps available features enabled and shows the unavailable capability's reason.
+The **Project** filter on [Merge Requests](/gitlab/merge-requests) searches accessible projects, including projects not managed by AIDE. Discovery is member-only by default. Open **Manage GitLab projects** and turn off **Only discover projects where I am a member** when you intentionally need broader GitLab.com or self-hosted results.
+
+Use **Load more projects** to continue the search. If an accessible project still does not appear, open **Enter manually** and add its numeric project ID or full `namespace/project` path. Manual entry bypasses discovery filtering but cannot bypass the configured token's GitLab access. Choosing a project in the merge-request filter alone does not configure project hooks.
+
+The token may not see the project or may lack the role required by the action. Personal, project, and group tokens expose different resources. GitLab subscription tiers can also limit review outcomes. Inspect the action's displayed reason and verify the same operation in GitLab.
+
+An unavailable approval or discussion result is not proof that the request is ready to merge. Refresh [merge options](/gitlab/merge-request-detail#choose-merge-options) to retrieve current provider policy and blockers.
+
+## Merge requests time out
+
+**All accessible** requires a project to avoid an instance-wide merge-request query. On **Mine** or **Review requests**, choose a project to narrow the request, or choose **Retry** after a timeout. Your scope remains active when you choose a project.
+
+A GitLab HTTP 408 is an upstream API error. The control plane's browser request timeout is a separate failure. Inspect [API Cache](/gitlab/cache) for the failing operation and retry after checking GitLab availability and rate limits. A failed load does not mean that no merge requests match.
+
+## Comments are missing
+
+[Comments](/gitlab/comments) loads general comments and inline discussions from relevant open merge requests in batches. Use **Load more** when available and check the selected request, author filters, and **Unresolved** filter. System activity notes are omitted. Ordinary loads can use cached GitLab responses. If comments were posted recently, choose **Refresh** to fetch current GitLab data; subsequent **Load more** requests continue that fresh feed within the usual batch limits. A partial-load warning means some discussions could not be read; **Refresh** retries the feed. If a continuation expires after inactivity or a server restart, **Refresh** starts discovery again.
+
+Open a request's discussion-count link to load that request directly, including a request outside the currently loaded feed. GitLab access restrictions still apply.
 
 ## A webhook says Manual required
 
@@ -22,14 +39,30 @@ The token lacks Maintainer or Owner permission. Copy the one-time signing token 
 ## Webhook deliveries do not arrive
 
 - Confirm GitLab can reach the callback over public HTTPS.
-- Check that a proxy or access layer bypasses `/api/public/gitlab/webhook` without presenting an interactive login.
-- Keep the original request body and signature headers intact.
+- Let requests reach `/api/public/gitlab/webhook` without an interactive login.
+- Preserve the original body and signature headers.
 - Check for timestamp drift greater than five minutes.
 
 ## Credential clearing is blocked
 
-AIDE could not remove one or more hooks it created. Restore project-hook permission and retry. Use **Force clear** only when you accept that the listed hooks may be orphaned.
+The control plane could not remove one or more hooks it created. Restore project-hook permission and retry. Use **Force clear** only when you accept that the listed hooks may remain configured in GitLab.
 
 ## Pipeline data is delayed
 
-Check [Polling](/system/polling), the project hook state, GitLab rate limits, and the [API cache](/gitlab/cache). A stale cache response can keep the UI useful during a temporary GitLab outage.
+Use **Refresh** on the pipeline list or **Refresh jobs** in an expanded row. Visible active pipelines refresh at the configured interval; hidden tabs pause reads, and completed detail panels stop polling. Check the project hook, GitLab rate limits, [Polling](/system/polling), and [API cache](/gitlab/cache).
+
+An outage can cause the cache to serve stale data. A previous failed job may belong to retry history rather than the current execution; expand **Show retry history** to inspect it. **Manual action** indicates a job that must be started through GitLab's available controls.
+
+## A merge is blocked or the source commit changed
+
+Resolve the reported GitLab requirement, such as a draft, conflict, approval, discussion, pipeline, or rebase requirement. Project policy controls merge method and whether squash or source-branch removal can be changed. Refresh the dialog after the source branch advances; the control plane will not silently submit the old selection against a different commit.
+
+## Auto-merge is enabled but the request is still open
+
+GitLab is still waiting for its merge requirements. Inspect the request in GitLab and review the pending operation in **Merge**. You can cancel auto-merge when the token permits it. Jira completion and worktree deletion wait until the control plane confirms a merged state.
+
+## The request merged but a follow-up failed
+
+Open **Merge follow-ups** to inspect the failure. Restore Jira access or the configured Done transition, reconnect the worktree's agent, or address the reported worktree condition. Choose **Retry follow-ups** after resolving it; the control plane records completed steps and retries unfinished work.
+
+Cleanup requires the matching source repository, branch, commit, a non-primary worktree, and a clean working tree. It does not force deletion when those checks fail. A changed GitLab instance or source commit can require renewed review instead of automatic continuation.

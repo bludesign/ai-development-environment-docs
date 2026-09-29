@@ -124,7 +124,9 @@ Connect GitLab.com or one self-hosted GitLab 19.2+ instance. Enter the HTTPS ins
 
 The instance root may include a relative installation path such as `https://code.example.com/gitlab`. It must not include credentials, `/api/v4`, a query, or a fragment. Private network hosts are allowed. Private certificate authorities are configured for the server process with `NODE_EXTRA_CA_CERTS`; there is no insecure TLS setting.
 
-After verification, add the projects AIDE should manage. A Maintainer or Owner token can create the signed project hook automatically. Lower-permission tokens receive a manual callback URL, event checklist, and one-time signing token while the rest of the integration remains usable.
+After verification, go to **GitLab → Merge Requests → Manage GitLab projects** to change discovery and merge defaults, add managed projects, and configure their hooks. The native app exposes the same controls from its **Manage Projects** toolbar action. A Maintainer or Owner token can create the signed project hook automatically. Lower-permission tokens receive a manual callback URL, event checklist, and one-time signing token while the rest of the integration remains usable.
+
+GitLab preferences are stored separately from the credentials. Saving them does not verify the provider connection, and clearing credentials preserves them.
 
 See [Set up GitLab](/gitlab/setup) for the complete flow.
 

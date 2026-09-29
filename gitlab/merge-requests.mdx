@@ -1,40 +1,65 @@
 ---
-title: "Merge requests"
-description: "Browse, review, update, and merge GitLab merge requests."
+title: "Merge Requests"
+description: "Compare GitLab merge requests, review their readiness, and open the shared merge controls."
 ---
 
-The **Merge requests** page at `/gitlab/merge-requests` lists requests authored by you, requests awaiting your review, or all requests visible to the token. Filters can span managed projects or target one project.
-
 <Frame>
-  <img className="block dark:hidden" src="/images/light/gitlab-merge-requests.png" alt="GitLab merge requests page in light theme" />
-  <img className="hidden dark:block" src="/images/dark/gitlab-merge-requests.png" alt="GitLab merge requests page in dark theme" />
+  <img className="block dark:hidden" src="/images/light/gitlab-merge-requests.png" alt="GitLab merge requests table in light theme" />
+  <img className="hidden dark:block" src="/images/dark/gitlab-merge-requests.png" alt="GitLab merge requests table in dark theme" />
 </Frame>
 
-Open a merge request to inspect its description, commits, reviewers, labels, mergeability, source and target branches, conflicts, discussions, and related pipelines.
+The **Merge Requests** page at `/gitlab/merge-requests` lists requests authored by you, requests awaiting your review, or requests in a selected project. Use the tabs to choose the scope, then narrow the results by project and status.
 
-<Frame>
-  <img className="block dark:hidden" src="/images/light/gitlab-merge-request-detail.png" alt="GitLab merge request details page in light theme" />
-  <img className="hidden dark:block" src="/images/dark/gitlab-merge-request-detail.png" alt="GitLab merge request details page in dark theme" />
-</Frame>
+## Choose a scope and project
 
-## Actions
+- **Mine** shows merge requests authored by you. It is the default tab.
+- **Review requests** shows requests where GitLab assigns you as a reviewer.
+- **All accessible** requires a project. Choose one before the page loads its merge requests.
 
-Depending on your GitLab permissions, you can:
+The searchable **Project** filter includes projects visible to your GitLab token, even when they have not been added as managed projects. By default, discovery includes only projects where the token's user is a member. Search by project or namespace, then use **Load more projects** for another page of results. Discovery loads 25 projects at a time. Selecting a project does not add it as a managed project or create a webhook.
 
-- Create a merge request and set reviewers, labels, squash, and source-branch removal
-- Update the title, description, labels, reviewers, or open state
-- Reply to discussions and resolve or reopen resolvable threads
-- Approve, comment, or request changes
-- Merge immediately or enable auto-merge when the pipeline succeeds
-- Squash commits and remove the source branch during merge
+Select **Manage GitLab projects** to change member-only discovery, manage projects and their webhooks, or choose the default AIDE merge options. Turning member-only discovery off widens both this project picker and the manager's **Browse** results. An authorized numeric project ID or `namespace/project` path can always be entered manually in the manager, even when discovery remains member-only.
 
-Review outcomes use GitLab's supported review quick actions, including `/submit_review approve`, `reviewed`, and `requested_changes`. GitLab tier- or permission-dependent outcomes are disabled when the capability is known to be unavailable; an API rejection is shown as a capability message without disabling the rest of the merge request.
+Project and scope filters work together: choosing a project on **Mine** still shows only requests authored by you in that project. Clear the project selection to return to all projects for **Mine** or **Review requests**. **All accessible** always requires a selected project; it does not offer an all-projects selection.
 
-<Frame>
-  <img className="block dark:hidden" src="/images/light/gitlab-comments.png" alt="GitLab review discussions page in light theme" />
-  <img className="hidden dark:block" src="/images/dark/gitlab-comments.png" alt="GitLab review discussions page in dark theme" />
-</Frame>
+Choose **Open**, **Merged**, **Closed**, or **All** in the status filter. The selected scope, project, status, and page are kept in the URL. Filter changes reset pagination, and browser Back and Forward restore the previous filters. Use **Previous** and **Next** to browse requests.
+
+If GitLab times out, choose **Retry** or narrow the query by project. An error appears separately from an empty result.
+
+## Read the table
+
+Each row includes the merge request number, title, project, author, source and target branches, labels, linked Jira ticket, latest pipeline status, approval state, unresolved discussions, and age. Matching worktrees add their highlight color and a link to the worktree.
+
+Badges use readable labels such as **Draft**, **Approved**, **Success**, and **Auto-merge enabled**. A missing approval or discussion result appears as unavailable rather than implying approval or no unresolved threads.
+
+Select the title or number to open [merge request details](/gitlab/merge-request-detail). Select the open-discussion count to view that request in [Comments](/gitlab/comments). The row's actions menu also opens the request in your configured GitLab instance or opens the merge controls.
+
+## Use Merge Requests on iPhone and iPad
+
+Open **GitLab → Merge Requests** in the app navigation. **Mine**, **Review Requests**, and **All Accessible** use the same scope, discovery preference, and project filtering as the web app. **All Accessible** shows **Choose a Project** until you select one; it does not offer **All Projects**. The **State** control offers **Open**, **Merged**, **Closed**, and **All**.
+
+Use the **Manage Projects** toolbar action to open the native manager. It provides the same four preferences, managed-project and webhook actions, paginated **Browse** results, and numeric-ID-or-namespace manual entry as the web dialog.
+
+Tap **Project** to open the **Projects** search sheet. Search accessible project names and namespaces, select a result, or use **Load More** for the next 25 projects. Your selected project remains visible when it falls outside the current search results. Selecting it does not add a managed project or configure a webhook.
+
+On iPhone, tap a request to open its details. Wider iPad layouts keep the request list beside the selected detail. Pull to refresh and use **Load More** to continue the list. Changing a scope, project, or state starts the list again and ignores responses from older filters.
+
+Open **GitLab → Comments** for the native discussion dashboard. In request details, tap the open-discussion badge to view Comments for that request, including merged or closed requests.
+
+## Review and merge
+
+The detail page contains the description, reviewers, discussions, and expandable pipelines. You can submit a review, reply to a discussion, or resolve a resolvable thread. The **Merge** dialog shows the current project policy and any blocker before you submit a merge.
+
+Immediate merge and auto-merge use the same options in the web and iOS clients: squash policy, source-branch removal, optional commit messages, and available Jira or worktree follow-ups. GitLab still determines whether your token may perform each action.
 
 <Note>
-  GitLab calls pull requests “merge requests.” GitHub routes and stored pull-request data remain unchanged when GitLab is enabled.
+  Enabling auto-merge leaves the request open while GitLab waits for its requirements. The control plane runs selected follow-ups only after it confirms that GitLab merged the request.
 </Note>
+
+## Related pages
+
+- [Comments](/gitlab/comments)
+- [Merge request details](/gitlab/merge-request-detail)
+- [Pipelines](/gitlab/pipelines)
+- [GitLab worktrees](/gitlab/worktrees)
+- [Troubleshooting GitLab](/gitlab/troubleshooting)

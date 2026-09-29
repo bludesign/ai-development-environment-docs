@@ -129,6 +129,8 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
     Workflow and command quick actions share one row when space allows, separated by a divider. They wrap into separate rows on narrower cards.
 
     An active command adds a spinner menu beside its button. Open it to **Terminate**, **Restart**, or **View** each active run. The command button remains available, so you can start another run; its concurrency setting decides whether it starts or queues.
+
+    An active workflow adds its own spinner menu beside the quick-action button. The spinner shows a count when more than one run is active, and the menu identifies each run by number. Choose **View** to open a run. The workflow button remains available so you can start another run; the workflow's overlap and worktree-concurrency settings determine when it starts.
   </Accordion>
 </AccordionGroup>
 
