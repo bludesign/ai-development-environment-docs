@@ -32,7 +32,7 @@ The new run page at `/runs/new` is the single form for starting AI work: pick a 
     The catalog is fetched for the selected worktree, so it reflects what that agent can actually run. See below.
   </Step>
   <Step title="Grant MCP tool presets" icon="wrench">
-    Nothing is selected by default. Each preset you tick grants the run a named set of built-in tools, and only those.
+    Nothing is selected by default. Each preset you tick grants the run its selected built-in and external tools. Presets are filtered to the selected run kind.
   </Step>
   <Step title="Start or save" icon="play">
     **Start** creates the run and takes you straight to its detail page. **Save draft** stores the whole configuration under [Drafts](/ai/drafts) instead.
@@ -69,6 +69,8 @@ Models you use get remembered as **Recent**, and you can pin any tool-model-effo
 
 ## Notes
 
+- Tool selections are resolved when the run is created. The run keeps its own snapshot of names, schemas, and membership even if a preset is edited later. A selected external server must be reachable and still advertise the selected tools; otherwise creation fails until you fix the connection or change the selection. See [MCP presets](/system/tools#mcp-tool-presets).
+- MCP clients can call `get_mcp_tool_presets` with `kind: "PLAN"` or `kind: "SESSION"`, then pass the returned local IDs as `mcpPresetIds` to `create_agent_run` or `create_run_follow_up`.
 - Starting a run from a draft consumes the draft — it is removed once the run is created.
 - Attachments uploaded here are held against the draft or the run's first input; they appear on the prompt card of the detail page as downloadable files.
 - The control plane checks free disk space on the worktree before a run may start.

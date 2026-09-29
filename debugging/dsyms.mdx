@@ -189,6 +189,12 @@ The action records the repository as the **Project**, the run ID as the **Build 
   Bitcode is gone since Xcode 14, so the dSYMs in your archive are the ones that match App Store and TestFlight builds. You do not need to download dSYMs from App Store Connect.
 </Note>
 
+## Inspect dSYMs through MCP
+
+`get_dsyms` lists ready bundles with version, architecture, UUID, and build metadata. It accepts `first` (1–200, default 50), an `after` cursor, and a `filter` with `search`, `buildId`, `projectName`, or `uuid`. Use `get_dsym` with an `id` for one bundle; an unknown ID returns null.
+
+These tools return metadata, not binary contents, filesystem storage locations, upload ownership, or saved upload URLs. Pair them with [crash investigation tools](/debugging/crashes#investigate-through-mcp) in an MCP preset. Uploads continue to use the dashboard or the HTTP routes described above.
+
 ## What an upload keeps
 
 The control plane reads each zip without Xcode, so a Linux or Docker control plane can index dSYMs. It keeps only each bundle's DWARF file and `Info.plist`, stored under `CRASH_DATA_DIRECTORY`, and discards the zip. Resource forks, `__MACOSX` folders, and anything outside a `.dSYM` bundle are skipped. A zip whose entries are symbolic links or point outside the zip is refused.

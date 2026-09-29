@@ -31,6 +31,74 @@ Every query, mutation, and type is documented in the [GraphQL API](/graphql/over
 
 Build clients use `buildRunAgents(buildId:)` to discover eligible target Macs, optionally pass `agentId` to `inspectBuildRunDestinations`, and pass `targetAgentId` with `RunBuildInput`. Omitting either agent field preserves the original build-agent behavior. Deployment results expose the target agent and optional artifact-transfer status and progress.
 
+### MCP catalog and preset portability
+
+The web and iOS apps use the same GraphQL operations to export tool definitions, share presets, and review imports:
+
+| Operation | Purpose |
+| --- | --- |
+| `exportMcpToolCatalog(format:, source:, groupIds:)` | Export Markdown or JSON tool definitions plus a preset-generation contract. `source` is `ALL` (default), `BUILTIN`, or `EXTERNAL`; omit `groupIds` to include all groups from those sources. |
+| `exportMcpToolPresets(ids:)` | Export the selected presets in portable JSON. |
+| `previewMcpToolPresetImport(input:)` | Validate a document, per-preset decisions, and external-server mappings without saving. |
+| `importMcpToolPresets(input:, previewToken:)` | Revalidate and atomically apply a reviewed import. |
+| `mcpToolPresets(kind:)` | List local preset IDs and metadata, optionally filtered to `PLAN` or `SESSION`. |
+
+Exports return `filename`, `contentType`, and the document's `content`. Catalog exports can be partial when an external server cannot be discovered; check the exported availability information before using them as an inventory.
+
+```graphql
+query ExportMcpCatalog {
+  exportMcpToolCatalog(format: JSON, source: ALL) {
+    filename
+    contentType
+    content
+  }
+}
+```
+
+Preset membership is source-qualified. The authoritative `McpToolPreset.tools` field contains `{ source, name, serverId, serverName }`. Built-ins use `source: BUILTIN` and their ordinary name; external references use `source: EXTERNAL`, a local `serverId`, and the raw upstream tool name. The legacy `toolNames` output contains only built-in names.
+
+Use `McpToolPresetInput.tools` for complete mixed membership. Do not send it together with `toolNames`. Older clients can continue editing built-in-only presets with `toolNames`. A legacy update to a mixed preset is rejected with an upgrade message so external selections cannot be lost.
+
+Portable documents use `format: "aide.mcp-presets.export"`, `schemaVersion: 1`, and an array of `presets`. External selections use a document-local `serverKey`, not a local server ID or an advertised MCP alias. See the [portable JSON example](/system/tools#portable-json-example). Documents are limited to 2 MiB and 100 presets.
+
+`McpToolPresetImportInput.document` is the JSON document serialized as a string. Optional `decisions` contain an entry `index`, an `action` (`CREATE`, `REPLACE`, or `SKIP`), and optional `name` and `targetId`. Optional `serverMappings` associate `{ serverKey, serverId }` with an already configured external server. Import never creates servers or credentials.
+
+```graphql
+query ReviewMcpPresetImport($input: McpToolPresetImportInput!) {
+  previewMcpToolPresetImport(input: $input) {
+    token
+    canImport
+    errors
+    entries { index name action targetId toolCount errors warnings }
+    externalServers {
+      key
+      name
+      transport
+      selectedServerId
+      suggestedServerId
+      candidates { id name transport }
+    }
+  }
+}
+```
+
+After resolving errors and reviewing the choices, send the same `input` with the preview's `token` as `previewToken`:
+
+```graphql
+mutation ApplyMcpPresetImport(
+  $input: McpToolPresetImportInput!
+  $previewToken: String!
+) {
+  importMcpToolPresets(input: $input, previewToken: $previewToken) {
+    id
+    name
+    tools { source name serverId serverName }
+  }
+}
+```
+
+Changing the document or decisions requires a fresh preview. The server also rechecks referenced tools and replacement targets before writing; a changed or invalid review fails without a partial import. `REPLACE` keeps the target preset's ID.
+
 ### Agent build-transfer routes
 
 Cross-agent app deployment uses REST routes under `/api/agent/build-artifact-transfers/{transferId}`. They support transfer status and metadata, `HEAD` offset inspection, sequential `PATCH` upload chunks, completion, and ranged download. These endpoints accept only the enrolled source or target agent assigned to that transfer; browser sessions and general API keys cannot substitute for that identity. Their payloads are intentionally small or ranged so reverse proxies never receive a whole large `.app` archive in one request.
@@ -196,7 +264,7 @@ Everything under `/api/public/*` is intentionally unauthenticated: iOS enrollmen
 
 `/api/mcp` is a stateless Streamable HTTP MCP endpoint. Point Claude Code, Cursor, or any other MCP client at it and the server's built-in tools become callable directly.
 
-The catalog spans the whole product: agents, builds and build data, codebases and worktrees, commands and workflows, runs, GitHub and Jira (including their caches), skills, notifications and push notifications, signing assets, iOS devices, disk space, usage and costs, and debugging. Browse it, run tools by hand, and audit every call from the [Tools](/system/tools) page.
+The catalog spans agents, builds, codebases, worktrees, commands, workflows, runs, GitHub, GitLab, Jira, skills, notifications, signing, devices, disk space, usage, and debugging. Discovery tools include `global_search`, `get_action_center`, `get_apps`, `get_app`, `get_installation_status`, `get_agent_cli_health`, `get_crash_reports`, `get_crash_report`, `get_dsyms`, and `get_dsym`. Browse and export the catalog, run tools by hand, and inspect call history from [Tools](/system/tools).
 
 ### Scopes
 
@@ -205,12 +273,16 @@ The same endpoint serves three scopes, selected by query parameter:
 | URL                    | Exposes                                                                  | Authenticated by                   |
 | ---------------------- | ------------------------------------------------------------------------ | ---------------------------------- |
 | `/api/mcp`             | Every built-in tool                                                      | Better Auth session or `X-API-Key` |
-| `/api/mcp?preset=<id>` | Only the tools in that [MCP tool preset](/system/tools#mcp-tool-presets) | Better Auth session or `X-API-Key` |
-| `/api/mcp?run=<runId>` | Only the tools granted to that AI run                                    | An enrolled agent's credential     |
+| `/api/mcp?preset=<id>` | Selected built-in and external tools in that [MCP tool preset](/system/tools#mcp-tool-presets) | Better Auth session or `X-API-Key` |
+| `/api/mcp?run=<runId>` | The run's frozen built-in and external tool selections                 | An enrolled agent's credential     |
 
 Supplying both `preset` and `run`, or either one twice, is rejected with `400 INVALID_MCP_SCOPE`.
 
 Run scope applies argument-level containment as well as tool-name grants. `get_codebase_repository_preparations` and `save_codebase_repository_preparations` may access only the logical repository attached to the run; a preset cannot let a run read or replace another repository's rules.
+
+Run creation resolves selected tools and stores their membership, advertised names, and schemas. A selected external server must be reachable and must still advertise each selected tool. A later preset edit does not alter an existing run's snapshot. Legacy runs without mixed snapshots keep their built-in selections.
+
+MCP clients can discover preset IDs with `get_mcp_tool_presets` and pass `mcpPresetIds` to `create_agent_run`, `create_run_follow_up`, or `play_plan`. This discovery tool accepts an optional `kind` of `PLAN` or `SESSION`.
 
 ### Authentication
 
@@ -257,13 +329,17 @@ Both Tools routes require a signed-in user session. They do not accept API keys 
 
 ### External MCP servers
 
-The [Tools](/system/tools) page can also manage and test external Streamable HTTP or legacy SSE MCP servers, whose tools then appear in the same catalog and are callable everywhere built-in tools are. Saved custom header values stay server-side and are never returned to the browser.
+The [Tools](/system/tools) page manages and tests external Streamable HTTP or legacy SSE MCP servers. Their tools can be called from the Tools page, workflows, and scoped preset/run MCP connections. Saved custom header values stay server-side and are never returned to the browser.
 
 <Note>
-  External tools are reachable from the Tools page and from workflows and runs,
-  but they are not re-exported over this server's own `/api/mcp` endpoint. That
-  endpoint serves built-in tools only.
+  The bare `/api/mcp` endpoint remains built-in only. External tools are
+  re-exported only through `/api/mcp?preset=<id>` and `/api/mcp?run=<runId>` when
+  selected for that scope.
 </Note>
+
+External MCP aliases have the form `aide_ext_<identity-hash>_<tool-label>` and are derived from the local server ID and raw upstream name. The same raw name on two servers therefore receives distinct aliases. Renaming a server or changing its catalog prefix does not rename a frozen run's tools. Use the advertised alias for MCP `tools/call`; use the raw name with its server reference in preset documents.
+
+External calls resolve credentials at call time. Credential rotation is supported, but a changed endpoint URL or transport is rejected for an existing run. Upstream content, structured results, and MCP error results pass through the scoped connection; failed external calls are recorded in the same tool-call audit as built-ins.
 
 ## Related pages
 

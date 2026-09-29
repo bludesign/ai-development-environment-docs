@@ -139,6 +139,24 @@ Each crash has a **signature** — a hash of the exception and the first three a
 
 Select rows to delete several reports at once.
 
+## Investigate through MCP
+
+Use `get_crash_reports` to find reports, then `get_crash_report` with an `id` to read symbolicated threads, readable report text, and missing-dSYM information. List requests accept `first` (1–200, default 50), an `after` cursor, and a `filter` with `search`, `status`, `bundleId`, `appVersion`, or `signature`.
+
+For example, pass these arguments to `get_crash_reports`:
+
+```json
+{
+  "first": 20,
+  "filter": {
+    "bundleId": "com.example.app",
+    "status": "MISSING_DSYMS"
+  }
+}
+```
+
+The tools are read-only. They omit original upload data, internal storage paths, uploader IP addresses, and API key IDs. Report text can still contain the diagnostic file paths and application messages supplied by the app. Select the tools in an [MCP preset](/system/tools#mcp-tool-presets) to grant them to an AI run.
+
 ## Settings
 
 The gear icon opens **Crash settings**.

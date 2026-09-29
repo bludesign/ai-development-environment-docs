@@ -85,6 +85,8 @@ Answered batches stay on the page as history, and a managed run whose batch stil
   </Step>
 </Steps>
 
+MCP clients use the same preparation sequence: call `prepare_run_answer_revision` with `batchId`, read `get_run_questions` until the batch has `revisionPreparedAt`, inspect the prepared rollback information, then call `revise_run_answer`. Preparation queues work on the agent and reserves worktree capacity. Revision defaults to `rollback: true` and `stash: false`, so explicitly set the desired behavior before calling it.
+
 ## Steering
 
 While a managed run is in progress and its tool supports it, a **Steer** card sends extra guidance into the active turn, with attachments if needed. Guidance queues behind any pending question rather than jumping ahead of it.

@@ -1,6 +1,6 @@
 ---
 title: "Tools"
-description: "Browse, configure, and run built-in and external MCP tools."
+description: "Browse MCP tools, export a catalog for AI-assisted preset creation, and import or share presets."
 ---
 
 <Frame>
@@ -16,13 +16,13 @@ description: "Browse, configure, and run built-in and external MCP tools."
   />
 </Frame>
 
-The **Tools** page at `/tools` is the control surface for everything this server exposes over MCP. Every capability an agent can invoke — listing codebases, dispatching builds, querying Jira, sending push notifications — is a tool, and this page lets you browse them, run them by hand with real arguments, expose a restricted subset to outside clients, and audit every call that has been made.
-
-Running a tool here is the fastest way to answer "is the integration itself broken, or is the agent calling it wrong?".
+The **Tools** page at `/tools` lets you browse built-in and external MCP tools, run them with explicit arguments, select tools for presets, and inspect tool-call history. You can also export the catalog for an AI to design a preset, then review and import the returned JSON.
 
 ## Tool catalog
 
-Tools are grouped by source. Built-in tools ship with the server and cover agents, builds, codebases, commands, worktrees, GitHub, Jira, skills, runs, notifications, push notifications, signing assets, iOS devices, disk space, usage and costs, and debugging. Each external MCP server you add contributes its own group.
+Tools are grouped by source. Built-in tools ship with the server and cover agents, builds, codebases, commands, worktrees, GitHub, GitLab, Jira, skills, runs, workflows, notifications, signing assets, devices, disk space, usage, and debugging. Each external MCP server you add contributes its own group.
+
+Read tools also cover cross-product search (`global_search`), the Action Center (`get_action_center`), apps (`get_apps`, `get_app`), cached CLI health (`get_installation_status`, `get_agent_cli_health`), and crash investigation (`get_crash_reports`, `get_crash_report`, `get_dsyms`, `get_dsym`). These tools let an AI find the relevant resource before invoking a more specific tool.
 
 Expand a tool to see its description and a form generated from its input schema. Fill in the parameters and **Run tool** to execute it; the complete response — not a summary — appears underneath and can be copied.
 
@@ -53,23 +53,24 @@ Each tool carries MCP annotations that drive both its badge and whether running 
 
 ## External MCP servers
 
-The **External MCP servers** card registers third-party tool providers, whose tools then appear in the catalog and are callable everywhere built-in tools are.
+The **External MCP servers** card registers third-party tool providers. Their tools appear in the catalog and can be selected for presets, run from this page, or called by workflows.
 
 | Field                | Notes                                                                              |
 | -------------------- | ---------------------------------------------------------------------------------- |
 | **Name**             | How the server appears in the catalog                                              |
 | **URL**              | The server endpoint                                                                |
 | **Transport**        | **HTTP (Streamable)** or **SSE (legacy)**                                          |
-| **Tool name prefix** | Applied literally to every tool from this server, both in the UI and when invoking |
+| **Tool name prefix** | Applied to catalog display names and direct Tools-page calls; scoped MCP connections use stable aliases instead |
 | **Custom headers**   | Any headers the provider requires, such as an API key                              |
 
 <Tip>
-  Set a prefix on every external server. Two providers exposing a `search` tool
-  collide otherwise, and the prefix is applied verbatim — `acme_` gives you
-  `acme_search`, not `acme.search`.
+  A prefix makes providers easier to distinguish in the catalog. It is applied
+  verbatim: `acme_` displays an upstream `search` tool as `acme_search`. Presets
+  identify the tool by its server and raw upstream name, so changing the prefix
+  does not change which tool a preset selects.
 </Tip>
 
-Header values are saved server-side and never returned to the browser. When editing a server, leaving a header value blank keeps the stored value rather than clearing it. Deleting a server deletes its saved headers with it.
+Header values are saved server-side and never returned to the browser. When editing a server, leaving a header value blank keeps the stored value rather than clearing it. Remove a server's tools from presets before deleting the server. Deleting an unreferenced server also deletes its saved headers.
 
 If a server cannot be reached, its group appears in the catalog carrying the connection error instead of a tool list — the rest of the catalog keeps working.
 
@@ -77,7 +78,7 @@ If a server cannot be reached, its group appears in the catalog carrying the con
 
 The **Connect external clients** card gives you what any Streamable HTTP MCP client needs to call this server: Claude Code, Cursor, or anything else that speaks MCP.
 
-The endpoint is `/api/mcp` on this server's origin. Pick the **Server host** from the detected options, or enter a custom host when clients reach the server through a different address than your browser does. The card renders both the server URL and a ready-to-paste client configuration block.
+The endpoint is `/api/mcp` on this server's origin. The bare endpoint exposes built-in tools. A preset URL (`/api/mcp?preset=<id>`) exposes that preset's selected built-in and external tools. Pick the **Server host** from the detected options, or enter a custom host when clients reach the server through a different address than your browser does. The card renders both the server URL and a ready-to-paste client configuration block.
 
 ### Authentication
 
@@ -98,9 +99,14 @@ Run-scoped MCP uses an enrolled agent's bearer credential instead. User sessions
 
 ## MCP tool presets
 
-Presets are reusable least-privilege sets of built-in tools. Rather than handing a client the full catalog, you define exactly which tools it gets and share a preset-scoped URL: `/api/mcp?preset=<id>`.
+Presets are reusable sets of explicitly selected built-in and external tools. Define which tools a client receives, then share the preset-scoped URL: `/api/mcp?preset=<id>`.
 
 Each preset carries a name, an optional description, an icon, and flags for whether it is offered for [Plans](/ai/plans) and [Sessions](/ai/sessions). A preset marked for neither is **Direct URL only** — usable by clients that have the link, invisible in the run pickers.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/tools-preset-editor.png" alt="MCP preset editor with built-in and external tool selections in light theme" />
+  <img className="hidden dark:block" src="/images/dark/tools-preset-editor.png" alt="MCP preset editor with built-in and external tool selections in dark theme" />
+</Frame>
 
 <Note>
   Selecting a group when building a preset expands to that group's tools *at
@@ -111,6 +117,99 @@ Each preset carries a name, an optional description, an icon, and flags for whet
 
 Deleting a preset does not break existing drafts or workflows; references to it are simply ignored on future runs.
 
+### Export a catalog for an AI
+
+Select **Export tool catalog**, then choose **Markdown** or **JSON** and the sources to include: **All tools**, **Built-in tools**, or **External tools**. Leave categories unselected to include every group from those sources, or choose particular categories and servers. Select **Download**.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/tools-catalog-export.png" alt="Tool catalog export format and source selection in light theme" />
+  <img className="hidden dark:block" src="/images/dark/tools-catalog-export.png" alt="Tool catalog export format and source selection in dark theme" />
+</Frame>
+
+Both formats describe the available tools, their input and output schemas, and their risk annotations. They also include instructions, a preset JSON Schema, and an example that tells an AI how to return an importable preset document. The Markdown version is convenient to attach to a chat; JSON is useful for programmatic processing.
+
+Built-in provider tools that need credentials remain in the export with an unavailable label and a reason. You can import these selections, but the review warns that the provider must be configured before you can use them.
+
+If an external server cannot be discovered, the export reports an error on that group identifying the catalog as incomplete. It still includes the tools that could be loaded. Restore that connection and export again before asking an AI to select that server's tools. Do not treat a partial catalog as a complete inventory.
+
+<Steps>
+  <Step title="Export the relevant tools">
+    Keep the sources and categories relevant to the work. The catalog omits saved connection URLs, custom headers, credentials, and local external-server IDs.
+  </Step>
+  <Step title="Ask for a preset">
+    Give the file to an AI with a task such as: "Create a read-only crash-investigation preset. Use only references in this catalog and return JSON matching its preset schema." The AI should return the JSON document without Markdown fences.
+  </Step>
+  <Step title="Review and import the JSON">
+    Open **Import MCP presets**, choose the returned JSON file or paste its contents, and select **Review import**. Review the exact tool selections before saving.
+  </Step>
+</Steps>
+
+### Share and import presets
+
+Export an individual preset from its export action, or select several presets and export them together. Preset exports contain explicit selections and metadata. They do not include database IDs, timestamps, credentials, headers, or connection URLs.
+
+The web and native iOS preset management flows use the same portable JSON format and server validation. Files can contain up to **100 presets** and must be **2 MiB or smaller**. Each preset must have at least one tool.
+
+Import opens a review before changing saved presets:
+
+1. Choose a JSON file or paste the document, then select **Review import**.
+2. Map each external server used by the presets you will import to an already configured server. A matching name and transport can be suggested; confirm the actual destination. Import does not create external servers or install credentials.
+3. Choose **Create new preset**, **Replace existing preset**, or **Skip preset** for each entry. Creation is the default. Rename a conflicting entry or explicitly choose its replacement target.
+4. Review tools, settings, errors, and warnings. Unknown tools, missing servers, unavailable discovery, invalid fields, and unresolved name conflicts block the affected import.
+5. Review again after changing the document, names, actions, targets, or mappings. Select **Import reviewed presets** once the preview is valid.
+
+The server revalidates the reviewed import before saving and applies the selected changes in one transaction. Replacement preserves the existing preset's local ID. A stale preview or validation failure does not partially save the import.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/tools-preset-import.png" alt="MCP preset import review and server mapping in light theme" />
+  <img className="hidden dark:block" src="/images/dark/tools-preset-import.png" alt="MCP preset import review and server mapping in dark theme" />
+</Frame>
+
+### Portable JSON example
+
+This example selects a built-in crash reader and an external server's raw `search` tool. Replace the external server/tool reference with one from your exported catalog, then map `server-1` to an existing server during import.
+
+```json
+{
+  "format": "aide.mcp-presets.export",
+  "schemaVersion": 1,
+  "externalServers": [
+    {
+      "key": "server-1",
+      "name": "Example MCP",
+      "transport": "STREAMABLE_HTTP"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Crash investigation",
+      "description": "Read crash details and search supporting information.",
+      "iconKey": "bug",
+      "enabledForPlans": true,
+      "enabledForSessions": true,
+      "tools": [
+        { "source": "BUILTIN", "name": "get_crash_report" },
+        { "source": "EXTERNAL", "serverKey": "server-1", "name": "search" }
+      ]
+    }
+  ]
+}
+```
+
+Use `externalServers: []` for a document containing only built-in tools. Do not substitute a prefixed catalog name or an `aide_ext_...` MCP alias for the raw external name.
+
+### Run snapshots and external names
+
+When a plan or session is created, the control plane resolves the selected presets and saves the exact tool membership, advertised names, and schemas for that run. Changing or deleting a preset later does not add, remove, or rename the tools already granted to that run. Older runs created before mixed presets retain their built-in selections.
+
+Selected external tools must be available when the run starts. A missing tool or unreachable server blocks creation; reconnect the server or remove the selection and try again. If a server becomes unavailable during the run, its calls fail explicitly.
+
+External input and output schemas are validated using JSON Schema draft 7, 2019-09, or 2020-12; a schema without a declared dialect uses 2020-12. Unsupported dialects, unresolved references, unknown schema keywords, asynchronous validation, or mixed dialects block selection. Tools that require MCP task execution are also unavailable in a preset scope.
+
+Built-in MCP names stay unchanged. Scoped external tools receive an `aide_ext_...` alias derived from the local server identity and raw tool name, so equal upstream names from different servers remain distinct. The alias stays stable across server renames and prefix edits. Calls use the server's current credentials, allowing credential rotation, but changing its endpoint URL or transport causes existing run calls to fail rather than silently sending them to the new destination.
+
+For automation, call `get_mcp_tool_presets` with an optional `kind` of `PLAN` or `SESSION`, then pass the returned local preset IDs as `mcpPresetIds` to `create_agent_run`, `create_run_follow_up`, or `play_plan`.
+
 ## Audit
 
 The **Audit** tab lists tool calls in the order they were made, with enough detail to reconstruct what happened and nothing that would leak what was passed.
@@ -118,7 +217,7 @@ The **Audit** tab lists tool calls in the order they were made, with enough deta
 | Column                     | What it shows                                                                          |
 | -------------------------- | -------------------------------------------------------------------------------------- |
 | **Started** / **Finished** | Call timestamps                                                                        |
-| **Tool**                   | The tool name, prefix included                                                         |
+| **Tool**                   | The recorded tool name; proxied external calls use the raw upstream name alongside their server group |
 | **Status**                 | Succeeded, Failed, or Running                                                          |
 | **Source**                 | **Tools page**, **Workflow**, or an MCP client                                         |
 | **Caller**                 | `user:<userId>@<address>`, `api-key:<keyId>@<address>`, or `agent:<agentId>@<address>` |

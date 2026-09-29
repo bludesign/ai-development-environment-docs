@@ -59,6 +59,12 @@ Agents released before CLI health support continue to appear with **Update requi
 
 The same command list and cached output appear under **General information** on the [agent details page](/agents/agent-detail).
 
+## Read status through MCP
+
+`get_installation_status` returns installed versions and cached CLI health for registered agents. `get_agent_cli_health` accepts an `agentId` and reads that agent's latest health. Both are read-only: they do not execute a health sweep or change custom checks. Grant them through an [MCP preset](/system/tools#mcp-tool-presets).
+
+Cached health includes check commands and captured output. Keep inline secrets out of custom checks, as described in [CLI health checks](/system/cli-health-checks#shell-security), before sharing those results with an AI client.
+
 ## Related pages
 
 <Columns cols={2}>
