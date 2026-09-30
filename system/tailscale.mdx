@@ -4,13 +4,27 @@ description: "Manage node-level Tailscale Serve routes as shared fleet templates
 ---
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/tailscale.png" alt="Tailscale Serve fleet management in light theme" />
-  <img className="hidden dark:block" src="/images/dark/tailscale.png" alt="Tailscale Serve fleet management in dark theme" />
+  <img
+    className="block dark:hidden"
+    src="/images/light/tailscale.png"
+    alt="Tailscale Serve fleet management in light theme"
+  />
+  <img
+    className="hidden dark:block"
+    src="/images/dark/tailscale.png"
+    alt="Tailscale Serve fleet management in dark theme"
+  />
 </Frame>
 
 Open **System → Tailscale** to manage Tailscale Serve routes on every supported agent. A template holds the route settings shared by the fleet; each agent keeps its own enabled state, observed route, Tailscale identity, and most recent error.
 
 The control plane never connects to `tailscaled` directly. It queues typed jobs, and each macOS or Linux agent runs its local `tailscale` CLI. Older agents remain visible as **Unsupported** until they advertise the Tailscale job capabilities.
+
+## Use a Tailscale address as Proxy
+
+After serving the control plane at an HTTPS Tailscale hostname, set **Settings → Server URLs → Proxy URL** to its origin, for example `https://aide.example.ts.net`. Do not include a mount path. The Proxy choice then appears in endpoint help, agent enrollment, MCP configurations, build selection, and artifact links. Set it as the global or simulator default when appropriate; simulators otherwise inherit the global default.
+
+Saving a Proxy address records how clients reach the control plane. It does not create a Serve route, enable Funnel, or change the native app's Server Connection. Keep the route and client network access configured separately. Private Serve addresses require tailnet access; external webhook providers must be able to reach the chosen URL. Enrollment and OTA installs retain their HTTPS requirements.
 
 ## Inspect the fleet
 
@@ -27,12 +41,12 @@ Inspection also imports node-level Serve routes that were created outside AIDE. 
 
 Select **Create template**, then choose its protocol and incoming listener:
 
-| Protocol | Destination | Notes |
-| --- | --- | --- |
-| **HTTP** | `http`, `https`, or `https+insecure` on `127.0.0.1` | Private tailnet access only |
-| **HTTPS** | `http`, `https`, or `https+insecure` on `127.0.0.1` | Supports mount paths, app capabilities, and Funnel |
-| **TCP** | `tcp://127.0.0.1` | Supports PROXY protocol **None**, **V1**, or **V2** |
-| **TLS-terminated TCP** | `tcp://127.0.0.1` | Terminates TLS before forwarding; PROXY protocol is available only on plain TCP templates |
+| Protocol               | Destination                                         | Notes                                                                                     |
+| ---------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **HTTP**               | `http`, `https`, or `https+insecure` on `127.0.0.1` | Private tailnet access only                                                               |
+| **HTTPS**              | `http`, `https`, or `https+insecure` on `127.0.0.1` | Supports mount paths, app capabilities, and Funnel                                        |
+| **TCP**                | `tcp://127.0.0.1`                                   | Supports PROXY protocol **None**, **V1**, or **V2**                                       |
+| **TLS-terminated TCP** | `tcp://127.0.0.1`                                   | Terminates TLS before forwarding; PROXY protocol is available only on plain TCP templates |
 
 Incoming and destination ports must be from `1` through `65535`. Mount and destination paths are normalized to start with `/`. Multiple web routes can share a compatible listener when their mount paths differ, but one agent cannot have conflicting protocols, Funnel modes, or TCP forwarding definitions on the same port.
 
@@ -66,16 +80,32 @@ GraphQL clients can use `tailscaleServeOverview` and `tailscaleServeOperation`, 
 
 <AccordionGroup>
   <Accordion title="The agent says Unsupported" icon="ban">
-    Tailscale Serve jobs are advertised only by current macOS and Linux agents. Upgrade and restart the control agent, then inspect again. This feature does not install Tailscale or configure a tailnet for you.
+    Tailscale Serve jobs are advertised only by current macOS and Linux agents.
+    Upgrade and restart the control agent, then inspect again. This feature does
+    not install Tailscale or configure a tailnet for you.
   </Accordion>
   <Accordion title="The tailscale executable is missing" icon="terminal">
-    Install the Tailscale CLI and make it available on the agent's service `PATH`. The agent also checks standard Homebrew locations and the executable bundled with the macOS Tailscale app. For a custom installation, set `CONTROL_AGENT_TAILSCALE_EXECUTABLE` to the absolute executable path and restart the agent.
+    Install the Tailscale CLI and make it available on the agent's service
+    `PATH`. The agent also checks standard Homebrew locations and the executable
+    bundled with the macOS Tailscale app. For a custom installation, set
+    `CONTROL_AGENT_TAILSCALE_EXECUTABLE` to the absolute executable path and
+    restart the agent.
   </Accordion>
   <Accordion title="The daemon or permissions fail" icon="lock">
-    Run `tailscale status` as the same account that starts the control agent. Start `tailscaled` or the macOS Tailscale app, sign in, and grant that account whatever local permissions your installation requires. The agent invokes argument arrays without a shell and never accepts a free-form command.
+    Run `tailscale status` as the same account that starts the control agent.
+    Start `tailscaled` or the macOS Tailscale app, sign in, and grant that
+    account whatever local permissions your installation requires. The agent
+    invokes argument arrays without a shell and never accepts a free-form
+    command.
   </Accordion>
-  <Accordion title="A route conflicts or keeps drifting" icon="triangle-exclamation">
-    Inspect first to refresh observed state. Move or remove the conflicting listener, or edit the template so protocols and Funnel modes agree. A template edit includes its previous listener selector, so moving a port or path removes the old route instead of leaving it behind.
+  <Accordion
+    title="A route conflicts or keeps drifting"
+    icon="triangle-exclamation"
+  >
+    Inspect first to refresh observed state. Move or remove the conflicting
+    listener, or edit the template so protocols and Funnel modes agree. A
+    template edit includes its previous listener selector, so moving a port or
+    path removes the old route instead of leaving it behind.
   </Accordion>
 </AccordionGroup>
 

@@ -1742,7 +1742,10 @@ type Mutation {
     """Project id used by configureGitLabProjectWebhook."""
     projectId: ID!
 
-    """Callback url used by configureGitLabProjectWebhook."""
+    """Configured server address to use when callbackUrl is omitted."""
+    serverUrlKind: ServerUrlKind
+
+    """Explicit callback URL for older API clients."""
     callbackUrl: String
   ): GitLabWebhookSetup!
 
@@ -2607,6 +2610,17 @@ type Mutation {
     """The catalog used to filter or perform the operation."""
     catalog: JSON
   ): RunProviderImportStatus!
+
+  """Save origin-only settings and publish settings-change notifications."""
+  saveServerUrlSettings(
+    """Overrides and defaults to update."""
+    input: SaveServerUrlSettingsInput!
+
+    """
+    Optional client browsing origin used for detected values in the response.
+    """
+    requestOrigin: String
+  ): ServerUrlSettings!
 
   """Refreshes signing assets and returns agent jobs."""
   refreshSigningAssets(
@@ -3712,6 +3726,9 @@ type Subscription {
     runId: ID!
   ): RunQuestionBatch!
 
+  """Notify clients after shared server URL settings are saved."""
+  serverUrlSettingsChanged: ServerUrlSettingsChange!
+
   """Emits a change signal whenever signing assets changes."""
   signingAssetsChanged: Boolean!
 
@@ -4147,6 +4164,20 @@ type Query {
     """Identifier of the worktree."""
     worktreeId: ID!
   ): [BuildReport!]!
+
+  """
+  Temporary artifact download and install links at a configured server address.
+  """
+  buildArtifactLinks(
+    """Build that owns the artifact."""
+    buildId: ID!
+
+    """Artifact to download or install."""
+    artifactId: ID!
+
+    """Configured address to use. Omission uses the global default."""
+    serverUrlKind: ServerUrlKind
+  ): BuildArtifactLinks!
 
   """Returns cache server settings."""
   cacheServerSettings: CacheServerSettings!
@@ -5327,6 +5358,14 @@ type Query {
     """
     relatedFirst: Int = 3
   ): GlobalSearchPayload!
+
+  """Read detected origins, effective addresses, and shared defaults."""
+  serverUrlSettings(
+    """
+    Optional client browsing origin used for detection. It is not persisted.
+    """
+    requestOrigin: String
+  ): ServerUrlSettings!
 
   """Returns signing agent summaries."""
   signingAgents: [SigningAgentSummary!]!
@@ -7318,6 +7357,11 @@ input InspectBuildSourceInput {
 
 """Values used to start a build."""
 input StartBuildInput {
+  """
+  Server address to bake into this build. Omit to use the simulator or global default.
+  """
+  serverUrlKind: ServerUrlKind
+
   """Identifier of the worktree to use."""
   worktreeId: ID!
 
@@ -7584,6 +7628,15 @@ type BuildSigningOptions {
 
   """Bundles associated with this build signing options."""
   bundles: [ArchiveBundle!]!
+}
+
+"""Artifact links generated using a configured server address."""
+type BuildArtifactLinks {
+  """Signed artifact download link, valid for six hours."""
+  downloadUrl: String!
+
+  """OTA manifest link that carries the selected server URL kind."""
+  manifestUrl: String!
 }
 
 """How a cache entry was matched against the requested keys."""
@@ -18764,6 +18817,22 @@ input ImportedRunInput {
 
   """The raw metadata to use for the request."""
   rawMetadata: JSON
+
+  """
+  Complete stored activity snapshot; omitted when history is unavailable.
+  """
+  events: [RunEventInput!]
+
+  """
+  Token usage totals grouped by the model actually recorded in the transcript.
+  """
+  usage: [RunUsageInput!]
+
+  """Total cost reported by the provider for this session, when available."""
+  estimatedCost: Float
+
+  """Source of the reported session cost."""
+  pricingSource: String
 }
 
 """
@@ -18927,6 +18996,85 @@ type GlobalSearchItem {
 type GlobalSearchPayload {
   """Items associated with this global search payload."""
   items: [GlobalSearchItem!]!
+}
+
+"""A named, operator-configured address for reaching this control plane."""
+enum ServerUrlKind {
+  """The detected local origin or its saved override."""
+  LOCAL
+
+  """The detected remote origin or its saved override."""
+  REMOTE
+
+  """An optional custom proxy origin. Unavailable until configured."""
+  PROXY
+}
+
+"""
+Shared client-facing origins and selector defaults for this control plane.
+"""
+type ServerUrlSettings {
+  """Saved Local override, or null to use detection."""
+  localBaseUrlOverride: String
+
+  """Saved Remote override, or null to use detection."""
+  remoteBaseUrlOverride: String
+
+  """Optional HTTP(S) proxy origin, with no path or trailing slash."""
+  proxyBaseUrl: String
+
+  """
+  Local origin detected from the private request origin or server interfaces.
+  """
+  detectedLocalBaseUrl: String!
+
+  """Remote origin detected from PUBLIC_BASE_URL or the request origin."""
+  detectedRemoteBaseUrl: String!
+
+  """Local origin after applying its override."""
+  effectiveLocalBaseUrl: String!
+
+  """Remote origin after applying its override."""
+  effectiveRemoteBaseUrl: String!
+
+  """Default choice for selectors and builds. Initially LOCAL."""
+  defaultServerUrlKind: ServerUrlKind!
+
+  """Optional simulator build default. Null inherits the global default."""
+  simulatorDefaultServerUrlKind: ServerUrlKind
+
+  """ISO timestamp of the last saved settings change."""
+  updatedAt: String!
+}
+
+"""
+Partial update of shared origins and defaults. Omitted fields are retained.
+"""
+input SaveServerUrlSettingsInput {
+  """HTTP(S) Local origin override. Null or blank resumes detection."""
+  localBaseUrlOverride: String
+
+  """HTTP(S) Remote origin override. Null or blank resumes detection."""
+  remoteBaseUrlOverride: String
+
+  """
+  HTTP(S) proxy origin. Null clears it unless a default still selects PROXY.
+  """
+  proxyBaseUrl: String
+
+  """Global default. Selecting PROXY requires a configured proxy origin."""
+  defaultServerUrlKind: ServerUrlKind
+
+  """Simulator default. Null inherits the global default."""
+  simulatorDefaultServerUrlKind: ServerUrlKind
+}
+
+"""
+A notification that shared settings changed; refetch with the client's origin.
+"""
+type ServerUrlSettingsChange {
+  """ISO timestamp of the settings change."""
+  updatedAt: String!
 }
 
 """A summary of signing agent."""
@@ -19937,7 +20085,21 @@ type SseEndpoint {
   token: String!
 
   """public url field."""
-  publicUrl: String!
+  publicUrl: String! @deprecated(reason: "Use localUrl, remoteUrl, and proxyUrl")
+
+  """Opaque bearer route shared by every origin variant."""
+  endpointPath: String!
+
+  """Endpoint URL at the shared Local origin."""
+  localUrl: String!
+
+  """Endpoint URL at the shared Remote origin."""
+  remoteUrl: String!
+
+  """
+  Endpoint URL at the configured Proxy origin, or null when unconfigured.
+  """
+  proxyUrl: String
 
   """name field."""
   name: String!
@@ -21329,12 +21491,12 @@ type TelemetrySettings {
   """
   The local base URL override associated with this telemetry settings. May be null when unavailable or not applicable.
   """
-  localBaseUrlOverride: String
+  localBaseUrlOverride: String @deprecated(reason: "Use serverUrlSettings and saveServerUrlSettings")
 
   """
   The remote base URL override associated with this telemetry settings. May be null when unavailable or not applicable.
   """
-  remoteBaseUrlOverride: String
+  remoteBaseUrlOverride: String @deprecated(reason: "Use serverUrlSettings and saveServerUrlSettings")
 
   """
   Whether the console collection enabled condition is true for this telemetry settings.
@@ -21503,10 +21665,10 @@ input TelemetryTimelineInput {
 """Values used to save telemetry settings."""
 input SaveTelemetrySettingsInput {
   """The local base URL override to use for the request."""
-  localBaseUrlOverride: String
+  localBaseUrlOverride: String @deprecated(reason: "Use serverUrlSettings and saveServerUrlSettings")
 
   """The remote base URL override to use for the request."""
-  remoteBaseUrlOverride: String
+  remoteBaseUrlOverride: String @deprecated(reason: "Use serverUrlSettings and saveServerUrlSettings")
 
   """Whether console collection enabled applies to the request."""
   consoleCollectionEnabled: Boolean

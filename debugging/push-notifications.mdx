@@ -4,13 +4,25 @@ description: "Compose, validate, target, queue, and inspect Apple push notificat
 ---
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/push-notifications.png" alt="Push Notifications page in light theme" />
-  <img className="hidden dark:block" src="/images/dark/push-notifications.png" alt="Push Notifications page in dark theme" />
+  <img
+    className="block dark:hidden"
+    src="/images/light/push-notifications.png"
+    alt="Push Notifications page in light theme"
+  />
+  <img
+    className="hidden dark:block"
+    src="/images/dark/push-notifications.png"
+    alt="Push Notifications page in dark theme"
+  />
 </Frame>
 
 The **Push Notifications** page at `/push-notifications` sends real Apple Push Notification service (APNs) payloads to your own devices and keeps every send on record. It covers all eleven APNs push types, validates the payload and headers before anything leaves the control plane, and reports what APNs said about each individual recipient — status, reason, `apns-id`, attempts, and round-trip time.
 
-This console is for the apps *you* build here. The alerts the dashboard raises about its own work go out over a separate channel with its own device list — see [Notifications](/notifications). The two share the APNs token credential and nothing else.
+This console is for the apps _you_ build here. The alerts the dashboard raises about its own work go out over a separate channel with its own device list — see [Notifications](/notifications). The two share the APNs token credential and nothing else.
+
+## App registration URLs
+
+The APNs registration help in web and iOS shows Local, Remote, and configured Proxy variants of `/api/ios/apns-devices`. Configure the origins in [Settings → Server URLs](/system/settings#server-urls). Build scripts receive `endpointPaths.apnsRegistration` and compose it with `server.selectedBaseUrl`.
 
 ## Before you can send
 
@@ -22,6 +34,7 @@ This console is for the apps *you* build here. The alerts the dashboard raises a
     Your app posts its APNs token to `POST /api/ios/apns-devices` with the topic, environment, display name, and the push types it supports. Registrations show up as recipients here and on [Devices](/system/devices).
 
     Devices registered by the control plane's own iOS app use a different endpoint and are not recipients here. They are listed on [Notifications](/notifications#registered-devices).
+
   </Step>
   <Step title="Match the topic" icon="at">
     Recipients are matched by exact topic. The **APNs topic** you type in the editor must equal the topic the device registered with — including the suffix a specialized push type requires.
@@ -34,34 +47,48 @@ The editor is organized into four tabs, and its available fields, byte limit, an
 
 <AccordionGroup>
   <Accordion title="Content" icon="pen">
-    **Push type**, then the alert body itself: **Title**, **Subtitle**, **Body**, **Badge**, **Sound**, **Category**, **Thread ID**, and the toggles **Content available**, **Mutable content**, and **Critical sound** with its **Sound volume**.
+    **Push type**, then the alert body itself: **Title**, **Subtitle**,
+    **Body**, **Badge**, **Sound**, **Category**, **Thread ID**, and the toggles
+    **Content available**, **Mutable content**, and **Critical sound** with its
+    **Sound volume**.
   </Accordion>
   <Accordion title="Headers" icon="list">
-    **APNs topic**, **Priority** (1, 5, or 10), **APNs ID** (a UUID), **Expiration** (a Unix timestamp, or `0` to deliver once or not at all), and **Collapse ID**. When the push type is `mdm`, a **Certificate credential** selector appears here — every other push type authenticates with the token key.
+    **APNs topic**, **Priority** (1, 5, or 10), **APNs ID** (a UUID),
+    **Expiration** (a Unix timestamp, or `0` to deliver once or not at all), and
+    **Collapse ID**. When the push type is `mdm`, a **Certificate credential**
+    selector appears here — every other push type authenticates with the token
+    key.
   </Accordion>
   <Accordion title="Advanced aps" icon="sliders">
-    Localization keys and arguments for title, subtitle, and body; **Launch image**; **Summary argument** and count; **Target content ID**; **Interruption level** (`passive`, `active`, `time-sensitive`, `critical`); **Relevance score**; and **Custom root JSON** for keys that sit beside `aps`.
+    Localization keys and arguments for title, subtitle, and body; **Launch
+    image**; **Summary argument** and count; **Target content ID**;
+    **Interruption level** (`passive`, `active`, `time-sensitive`, `critical`);
+    **Relevance score**; and **Custom root JSON** for keys that sit beside
+    `aps`.
   </Accordion>
   <Accordion title="Specialized" icon="bolt">
-    Live Activity fields — **Timestamp**, **Event** (`start`, `update`, `end`), **Attributes type**, **Content state JSON**, **Attributes JSON**, **Stale date**, **Dismissal date**, and **Request an input push token** — plus contextual help for MDM and for framework-specific types.
+    Live Activity fields — **Timestamp**, **Event** (`start`, `update`, `end`),
+    **Attributes type**, **Content state JSON**, **Attributes JSON**, **Stale
+    date**, **Dismissal date**, and **Request an input push token** — plus
+    contextual help for MDM and for framework-specific types.
   </Accordion>
 </AccordionGroup>
 
 ### Push types and their rules
 
-| Push type | Required topic suffix | Priority |
-| --- | --- | --- |
-| `alert` | — | 5 or 10 |
-| `background` | — | 5 only |
-| `complication` | `.complication` | 5 or 10 |
-| `controls` | `.push-type.controls` | 5 or 10 |
-| `fileprovider` | `.pushkit.fileprovider` | 5 or 10 |
-| `liveactivity` | `.push-type.liveactivity` | 5 or 10 |
-| `location` | `.location-query` | 1, 5, or 10 |
-| `mdm` | — | 10 only |
-| `pushtotalk` | `.voip-ptt` | 10 only |
-| `voip` | `.voip` | 10 only |
-| `widgets` | `.push-type.widgets` | 5 or 10 |
+| Push type      | Required topic suffix     | Priority    |
+| -------------- | ------------------------- | ----------- |
+| `alert`        | —                         | 5 or 10     |
+| `background`   | —                         | 5 only      |
+| `complication` | `.complication`           | 5 or 10     |
+| `controls`     | `.push-type.controls`     | 5 or 10     |
+| `fileprovider` | `.pushkit.fileprovider`   | 5 or 10     |
+| `liveactivity` | `.push-type.liveactivity` | 5 or 10     |
+| `location`     | `.location-query`         | 1, 5, or 10 |
+| `mdm`          | —                         | 10 only     |
+| `pushtotalk`   | `.voip-ptt`               | 10 only     |
+| `voip`         | `.voip`                   | 10 only     |
+| `widgets`      | `.push-type.widgets`      | 5 or 10     |
 
 Priority 1 is accepted only for `location` notifications. Background pushes must omit `alert`, `badge`, and `sound`, and `content-available: 1` is set for you. Alert pushes require at least one `aps` field. MDM payloads contain only `mdm` — no `aps`, no custom root keys — and each recipient's own PushMagic is substituted at send time.
 
@@ -70,19 +97,21 @@ Priority 1 is accepted only for `location` notifications. Background pushes must
 The **Live JSON preview** shows the exact payload that will be sent, with a badge counting bytes against the limit: **4096 bytes**, or **5120** for `voip`. The badge turns red when you exceed it, and any validation problem — a bad topic suffix, an out-of-range relevance score, malformed custom JSON — replaces the preview with the specific error. **Send** stays disabled until the payload validates.
 
 <Note>
-  Validation is not just client-side courtesy. The server revalidates the editor on save, on send, and on resend, so a payload stored in a preset or in history is always one APNs would accept.
+  Validation is not just client-side courtesy. The server revalidates the editor
+  on save, on send, and on resend, so a payload stored in a preset or in history
+  is always one APNs would accept.
 </Note>
 
 ## Choosing recipients
 
 A device is **eligible** when its registration is active, its topic matches the topic in the editor, and its supported push types include the selected type. Anything else is hidden, which is usually why a device you expect is missing.
 
-| Mode | When it is offered | What it targets |
-| --- | --- | --- |
-| **Selected devices** | Always | The registrations you check in the picker |
-| **All eligible devices** | Always | Every eligible registration, resolved at send time |
+| Mode                            | When it is offered  | What it targets                                                           |
+| ------------------------------- | ------------------- | ------------------------------------------------------------------------- |
+| **Selected devices**            | Always              | The registrations you check in the picker                                 |
+| **All eligible devices**        | Always              | Every eligible registration, resolved at send time                        |
 | **One-off Live Activity token** | `liveactivity` only | A single token you paste, as HEX or Base64, against sandbox or production |
-| **Broadcast channel** | `liveactivity` only | A channel whose bundle ID matches the topic |
+| **Broadcast channel**           | `liveactivity` only | A channel whose bundle ID matches the topic                               |
 
 Tokens are validated as exactly 32 bytes. A one-off token is stored only for the duration of the send and deleted afterwards — which is why such a batch cannot be resent later.
 
@@ -105,44 +134,58 @@ The **Live Activity broadcast channels** card creates channels through APNs itse
 
 The 100 most recent sends and drafts are listed newest first, with **Created**, **Push type**, **Delivery** mode, **Recipients**, a **Success / failure** count, and **Status**.
 
-| Batch status | Meaning |
-| --- | --- |
-| `DRAFT` | Saved payload with no recipients |
-| `QUEUED` | Accepted, waiting to be delivered |
-| `SENDING` | Deliveries in flight |
-| `SUCCEEDED` | Every recipient succeeded |
-| `PARTIAL` | Some recipients succeeded, some failed |
-| `FAILED` | Every recipient failed |
+| Batch status | Meaning                                |
+| ------------ | -------------------------------------- |
+| `DRAFT`      | Saved payload with no recipients       |
+| `QUEUED`     | Accepted, waiting to be delivered      |
+| `SENDING`    | Deliveries in flight                   |
+| `SUCCEEDED`  | Every recipient succeeded              |
+| `PARTIAL`    | Some recipients succeeded, some failed |
+| `FAILED`     | Every recipient failed                 |
 
 Expanding a row shows the stored payload and headers as formatted JSON, then one card per recipient with the delivery status, HTTP code, APNs reason, attempt count, duration, and `apns-id`. A workflow panel on the same row lets you attach a batch to workflow automation.
 
 Row actions: **Load into editor**, **Save as preset**, **Resend**, and **Delete**. **Clear all history** removes every completed send and draft.
 
 <Warning>
-  Queued and sending batches cannot be deleted, and **Clear all history** skips them. Drafts cannot be resent — load one, choose recipients, and send it. One-off Live Activity token batches cannot be resent either, because the token was discarded after delivery.
+  Queued and sending batches cannot be deleted, and **Clear all history** skips
+  them. Drafts cannot be resent — load one, choose recipients, and send it.
+  One-off Live Activity token batches cannot be resent either, because the token
+  was discarded after delivery.
 </Warning>
 
 ## How delivery works
 
 <Steps>
   <Step title="Queue and claim" icon="inbox">
-    The batch is written with one delivery row per recipient and claimed for sending in a single step, so two workers can never process the same batch.
+    The batch is written with one delivery row per recipient and claimed for
+    sending in a single step, so two workers can never process the same batch.
   </Step>
   <Step title="Deliver in parallel" icon="rocket">
-    Up to 16 deliveries run concurrently over HTTP/2 to `api.sandbox.push.apple.com` or `api.push.apple.com`, chosen per recipient from that registration's environment. Token authentication reuses a signed JWT for its lifetime.
+    Up to 16 deliveries run concurrently over HTTP/2 to
+    `api.sandbox.push.apple.com` or `api.push.apple.com`, chosen per recipient
+    from that registration's environment. Token authentication reuses a signed
+    JWT for its lifetime.
   </Step>
   <Step title="Retry transient failures" icon="rotate">
-    HTTP 429, 500, and 503 are retried up to four attempts total, honoring `Retry-After` when APNs sends it and backing off exponentially otherwise. The final attempt count is recorded on the delivery.
+    HTTP 429, 500, and 503 are retried up to four attempts total, honoring
+    `Retry-After` when APNs sends it and backing off exponentially otherwise.
+    The final attempt count is recorded on the delivery.
   </Step>
   <Step title="Record the outcome" icon="clipboard-check">
-    Each delivery stores the HTTP status, APNs reason, timestamp, `apns-id`, attempts, and duration. The batch then settles as succeeded, partial, or failed.
+    Each delivery stores the HTTP status, APNs reason, timestamp, `apns-id`,
+    attempts, and duration. The batch then settles as succeeded, partial, or
+    failed.
   </Step>
 </Steps>
 
 Failures feed back into the rest of the system. A `410 Unregistered` — with a timestamp no older than the last registration — or a `400 BadDeviceToken` or `DeviceTokenNotForTopic` marks the registration **invalid**, so it stops appearing as an eligible recipient. Other failures record the reason against the registration without deactivating it. Token or certificate errors are written back to the credential, so [Settings](/system/settings) shows the last error and the last successful use.
 
 <Note>
-  If the control plane restarts mid-send, a recovery pass reclaims queued batches and any batch that has been sending for more than two minutes, requeues their unfinished deliveries, and continues. It also runs on a 30-second interval, so nothing is left stranded.
+  If the control plane restarts mid-send, a recovery pass reclaims queued
+  batches and any batch that has been sending for more than two minutes,
+  requeues their unfinished deliveries, and continues. It also runs on a
+  30-second interval, so nothing is left stranded.
 </Note>
 
 ## Live updates
@@ -162,6 +205,7 @@ The page subscribes to push notification changes: batch and delivery status, new
     The dashboard's own alerts — sidebar, browser, and Web Push.
   </Card>
   <Card title="GraphQL API" icon="diagram-project" href="/graphql/overview">
-    `sendPushNotification`, `pushNotificationHistory`, and the rest of the push graph.
+    `sendPushNotification`, `pushNotificationHistory`, and the rest of the push
+    graph.
   </Card>
 </Columns>

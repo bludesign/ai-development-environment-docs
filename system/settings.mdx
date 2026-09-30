@@ -1,11 +1,19 @@
 ---
 title: "Settings"
-description: "Configure development tools, Apple services, and external integrations."
+description: "Configure shared server URLs, development tools, Apple services, and external integrations."
 ---
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/settings.png" alt="Settings page in light theme" />
-  <img className="hidden dark:block" src="/images/dark/settings.png" alt="Settings page in dark theme" />
+  <img
+    className="block dark:hidden"
+    src="/images/light/settings.png"
+    alt="Settings page in light theme"
+  />
+  <img
+    className="hidden dark:block"
+    src="/images/dark/settings.png"
+    alt="Settings page in dark theme"
+  />
 </Frame>
 
 The **Settings** page at `/settings` is where the app is connected to everything outside itself: the editor it opens worktrees in, the Apple services it signs and pushes with, and the Jira, GitHub, GitLab, and cache accounts it reads from.
@@ -18,11 +26,31 @@ The page is organized into three groups.
 
 ## Development
 
+### Server URLs
+
+**Server URLs** is the single place to configure the control plane's client-facing addresses. Endpoint help, enrollment commands, MCP configurations, webhooks, and artifact links use these settings in both the web and iOS apps.
+
+| Setting                      | Behavior                                                                                               |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **Local base URL override**  | Optional override of the detected private browsing origin or server network address                    |
+| **Remote base URL override** | Optional override of `PUBLIC_BASE_URL`, falling back to the browsing origin                            |
+| **Proxy URL**                | Optional address such as `https://my-server.example.ts.net`; Proxy choices appear only when configured |
+| **Default server URL**       | Initializes address selectors and builds; initially **Local**                                          |
+| **Simulator default**        | Optional build default for simulators; **Use global default** inherits the global choice               |
+
+Enter an HTTP(S) origin only, for example `http://192.168.1.20:3000` or `https://aide.example.com`. Trailing slashes are removed. Paths, credentials, query strings, and fragments are rejected. Clear an override to resume detection. A Proxy default requires a configured Proxy URL; removing it requires choosing another default in the same save.
+
+Endpoint screens display **Local**, **Remote**, and configured **Proxy** with copy actions and a **Manage server URLs** link. Selectors show the name and address on separate lines. HTTPS and host restrictions still apply to enrollment, OTA installation, and webhook registration; choosing Local does not bypass them.
+
+Existing Local and Remote overrides move from observability settings into these shared settings during the database migration. Deprecated telemetry GraphQL override fields continue to read and write the shared values. New clients use `serverUrlSettings`, `saveServerUrlSettings`, and `serverUrlSettingsChanged`, or MCP `get_server_url_settings` and `update_server_url_settings`.
+
+In the iOS app, **Settings → Server URLs** edits these same server-side values. **Server Connection** still chooses the control plane the native app itself connects to. Updating Server URLs does not switch that connection. See [Tailscale Serve](/system/tailscale#use-a-tailscale-address-as-proxy) for a Proxy example.
+
 ### Worktree editor
 
 Choose which editor the **Open in editor** actions launch: **Visual Studio Code**, **Visual Studio Code - Insiders**, or **None**, which hides the editor buttons entirely.
 
-The chosen edition has to be installed on the machine that *hosts* the worktree, not on the machine running your browser — the action runs on the agent.
+The chosen edition has to be installed on the machine that _hosts_ the worktree, not on the machine running your browser — the action runs on the agent.
 
 ## Apple services
 
@@ -32,28 +60,34 @@ Two independent halves: the profile signer that makes enrollment work at all, an
 
 **Enrollment profile** controls what a tester sees when installing the profile:
 
-| Field | Notes |
-| --- | --- |
-| **Organization name** | Displayed by iOS while the enrollment profile is installed. Use a name a tester will recognize |
-| **Profile identifier** | A stable reverse-DNS identifier, such as `com.example.ai-development-environment.enrollment` |
+| Field                  | Notes                                                                                          |
+| ---------------------- | ---------------------------------------------------------------------------------------------- |
+| **Organization name**  | Displayed by iOS while the enrollment profile is installed. Use a name a tester will recognize |
+| **Profile identifier** | A stable reverse-DNS identifier, such as `com.example.ai-development-environment.enrollment`   |
 
 The card reports **Signer ready** or **Signer not generated**, with the certificate's creation and expiry dates. Because the certificate is self-signed, iOS shows the profile as **Unverified** — the organization name is what a tester should be checking.
 
 <Warning>
-  **Regenerate signer** issues future profiles under a new private key and certificate. Profiles already downloaded can still return their device response until their tokens expire, so an enrollment in flight survives — but the identity testers saw before will not match.
+  **Regenerate signer** issues future profiles under a new private key and
+  certificate. Profiles already downloaded can still return their device
+  response until their tokens expire, so an enrollment in flight survives — but
+  the identity testers saw before will not match.
 </Warning>
 
 **App Store Connect Devices API** enables registering enrolled devices with Apple:
 
 <Steps>
   <Step title="Create a Team API key" icon="key">
-    In App Store Connect, go to **Users and Access → Integrations** and create a Team API key with **Certificates, Identifiers & Profiles** access.
+    In App Store Connect, go to **Users and Access → Integrations** and create a
+    Team API key with **Certificates, Identifiers & Profiles** access.
   </Step>
   <Step title="Copy the identifiers and download the key" icon="download">
-    Copy the Issuer ID and Key ID, then download the `.p8` file. Apple offers it exactly once — retain it.
+    Copy the Issuer ID and Key ID, then download the `.p8` file. Apple offers it
+    exactly once — retain it.
   </Step>
   <Step title="Save and verify" icon="check">
-    Paste, drop, or choose the `.p8`. Only ES256 PKCS#8 keys are accepted. **Save and verify** tests the credentials against Apple before storing them.
+    Paste, drop, or choose the `.p8`. Only ES256 PKCS#8 keys are accepted.
+    **Save and verify** tests the credentials against Apple before storing them.
   </Step>
 </Steps>
 
@@ -66,17 +100,21 @@ Both APNs authentication mechanisms are supported, and they can coexist.
 **Token authentication (.p8)** is the recommended path for apps, Live Activities, and VoIP. Provide the **Team ID** from your Apple Developer membership details, the **Key ID**, and the `.p8` from a key created with APNs enabled. Dropping a new `.p8` rotates the key.
 
 <Note>
-  The token key does double duty. Besides the [push notification console](/debugging/push-notifications), it is what lets the control plane deliver its own alerts to the iOS app over the [native notification channel](/notifications#native-notifications). Until it is saved, that channel reports itself as unconfigured.
+  The token key does double duty. Besides the [push notification
+  console](/debugging/push-notifications), it is what lets the control plane
+  deliver its own alerts to the iOS app over the [native notification
+  channel](/notifications#native-notifications). Until it is saved, that channel
+  reports itself as unconfigured.
 </Note>
 
 **Certificate authentication (.p12)** is required for MDM wake-ups. Multiple topic-bound certificates are supported, each with:
 
-| Field | Notes |
-| --- | --- |
-| **Credential name** | How the certificate is labeled here |
-| **Topic** | The app bundle ID or MDM topic the certificate is bound to |
-| **Environment** | Sandbox or production |
-| **.p12 and passphrase** | Export the certificate *and* its private key from Keychain Access as a password-protected `.p12` |
+| Field                   | Notes                                                                                            |
+| ----------------------- | ------------------------------------------------------------------------------------------------ |
+| **Credential name**     | How the certificate is labeled here                                                              |
+| **Topic**               | The app bundle ID or MDM topic the certificate is bound to                                       |
+| **Environment**         | Sandbox or production                                                                            |
+| **.p12 and passphrase** | Export the certificate _and_ its private key from Keychain Access as a password-protected `.p12` |
 
 Each certificate shows its expiry and last test time and can be retested individually.
 
@@ -86,35 +124,36 @@ Each certificate shows its expiry and last test time and can be retested individ
 
 Connect the Jira Cloud account used for tickets, boards, and workflow triggers.
 
-| Field | Notes |
-| --- | --- |
-| **Jira Cloud site URL** | The base `*.atlassian.net` origin, with no path |
-| **Jira account email** | The Atlassian account that owns the token |
-| **Jira API token** | A standard Atlassian API token. Leave blank when saving to keep the stored one |
+| Field                   | Notes                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------ |
+| **Jira Cloud site URL** | The base `*.atlassian.net` origin, with no path                                |
+| **Jira account email**  | The Atlassian account that owns the token                                      |
+| **Jira API token**      | A standard Atlassian API token. Leave blank when saving to keep the stored one |
 
 **Test connection** verifies the credentials without saving. **Remove credentials** deletes the email and token and clears cached Jira data.
 
 <Warning>
-  Changing the Jira site removes all saved Jira projects, sources, and cached data — you are asked to confirm first. It also clears the webhook secret.
+  Changing the Jira site removes all saved Jira projects, sources, and cached
+  data — you are asked to confirm first. It also clears the webhook secret.
 </Warning>
 
 ### Jira webhook
 
 Once Jira credentials are saved, a **Jira webhook** card appears. The webhook is optional: it pushes Jira changes into workflow triggers and live ticket updates instead of waiting for something to fetch a ticket.
 
-| Field | Notes |
-| --- | --- |
-| **Webhook URL** | An address Jira can reach over public HTTPS. Edit it when this server is public at a different address than it sees itself at |
-| **JQL filter** | Optional scope, such as `project in (ABC, XYZ)`. Every issue event costs one Jira API call, so keep it tight |
-| **Signing secret** | Shown once when generated manually; nothing to copy when registered through Jira |
+| Field              | Notes                                                                                                        |
+| ------------------ | ------------------------------------------------------------------------------------------------------------ |
+| **Webhook URL**    | Choose Local, Remote, or configured Proxy; the generated address must be publicly reachable HTTPS            |
+| **JQL filter**     | Optional scope, such as `project in (ABC, XYZ)`. Every issue event costs one Jira API call, so keep it tight |
+| **Signing secret** | Shown once when generated manually; nothing to copy when registered through Jira                             |
 
-| Action | What it does |
-| --- | --- |
-| **Register in Jira** | Creates the webhook using the saved API token, subscribes it to the relevant events, and stores the secret on both sides |
-| **Update registration** | Registering again after editing the URL or filter updates the same webhook in place rather than creating a second one |
-| **Generate secret** | The fallback when the token's account is not a Jira admin: mints a secret to paste into **Settings → System → WebHooks** in Jira along with the URL |
-| **Rotate secret** | Replaces the secret — in Jira too, when the webhook is registered |
-| **Disable webhook** | Deletes the secret and, for a registered webhook, removes it from Jira |
+| Action                  | What it does                                                                                                                                        |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Register in Jira**    | Creates the webhook using the saved API token, subscribes it to the relevant events, and stores the secret on both sides                            |
+| **Update registration** | Registering again after selecting an address or editing the filter updates the same webhook in place rather than creating a second one              |
+| **Generate secret**     | The fallback when the token's account is not a Jira admin: mints a secret to paste into **Settings → System → WebHooks** in Jira along with the URL |
+| **Rotate secret**       | Replaces the secret — in Jira too, when the webhook is registered                                                                                   |
+| **Disable webhook**     | Deletes the secret and, for a registered webhook, removes it from Jira                                                                              |
 
 The card shows the time and outcome of the most recent delivery and links to [Jira Webhooks](/jira/webhooks) for the full log and the manual setup steps.
 
@@ -146,19 +185,26 @@ Rerunning GitHub Actions workflows needs more than a personal token, so this car
 
 <Steps>
   <Step title="Register a GitHub App" icon="github">
-    Give it a unique name. Use this deployment's URL as the Homepage URL and leave the callback URL empty.
+    Give it a unique name. Use this deployment's URL as the Homepage URL and
+    leave the callback URL empty.
   </Step>
   <Step title="Set permissions" icon="shield">
-    **Repository permissions → Actions** must be **Read and write**. For enhanced live updates, also grant **Checks** and **Commit statuses** read access.
+    **Repository permissions → Actions** must be **Read and write**. For
+    enhanced live updates, also grant **Checks** and **Commit statuses** read
+    access.
   </Step>
   <Step title="Enable webhooks" icon="webhook">
-    Enable webhooks and select the **Workflow run** event. Saving here generates the secret and configures the URL through GitHub for you.
+    Enable webhooks and select the **Workflow run** event. Saving here generates
+    the secret and configures the URL through GitHub for you.
   </Step>
   <Step title="Install it narrowly" icon="package">
-    Create the app, generate a private key, then install it on only the repositories this deployment should control.
+    Create the app, generate a private key, then install it on only the
+    repositories this deployment should control.
   </Step>
   <Step title="Copy the identifiers" icon="clipboard">
-    The **App ID** is on the app's settings page. The **installation ID** is the final number in the URL of the app's Configure page. Paste both here along with the downloaded PEM.
+    The **App ID** is on the app's settings page. The **installation ID** is the
+    final number in the URL of the app's Configure page. Paste both here along
+    with the downloaded PEM.
   </Step>
 </Steps>
 
@@ -175,11 +221,11 @@ Two states are worth recognizing:
 
 Connect a GitHub Actions Cache Server to manage its entries from the [Actions Cache](/github/actions-cache) page.
 
-| Field | Notes |
-| --- | --- |
-| **Base URL** | The management API base URL, including any path prefix |
-| **API key** | Sent as the `x-api-key` header on every request. Leave blank when saving to keep the current key |
-| **Custom headers** | Only needed when an authentication proxy requires them |
+| Field              | Notes                                                                                            |
+| ------------------ | ------------------------------------------------------------------------------------------------ |
+| **Base URL**       | The management API base URL, including any path prefix                                           |
+| **API key**        | Sent as the `x-api-key` header on every request. Leave blank when saving to keep the current key |
+| **Custom headers** | Only needed when an authentication proxy requires them                                           |
 
 Removing these settings hides the Actions Cache page until it is reconfigured.
 

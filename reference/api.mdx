@@ -5,11 +5,11 @@ description: "The GraphQL API, the REST endpoints, the OpenAPI contract, and the
 
 The control plane exposes three programmable surfaces, all of them thin adapters over the same server-side services. Anything the dashboard can do, a script can do too.
 
-| Surface                 | Endpoint                                                      | Use it for                                         |
-| ----------------------- | ------------------------------------------------------------- | -------------------------------------------------- |
-| [GraphQL](#graphql)     | `POST /api/graphql`, plus a WebSocket for subscriptions       | Everything. This is what the dashboard itself uses |
+| Surface                 | Endpoint                                                                                           | Use it for                                         |
+| ----------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| [GraphQL](#graphql)     | `POST /api/graphql`, plus a WebSocket for subscriptions                                            | Everything. This is what the dashboard itself uses |
 | [REST](#rest-endpoints) | `/api/codebases`, `/api/telemetry/*`, `/api/public/crashes`, `/api/dsyms`, `/api/ios/apns-devices` | Narrow integrations with route-specific security   |
-| [MCP](#mcp)             | `/api/mcp`                                                    | Giving an AI client a scoped set of tools          |
+| [MCP](#mcp)             | `/api/mcp`                                                                                         | Giving an AI client a scoped set of tools          |
 
 ## GraphQL
 
@@ -31,17 +31,25 @@ Every query, mutation, and type is documented in the [GraphQL API](/graphql/over
 
 Build clients use `buildRunAgents(buildId:)` to discover eligible target Macs, optionally pass `agentId` to `inspectBuildRunDestinations`, and pass `targetAgentId` with `RunBuildInput`. Omitting either agent field preserves the original build-agent behavior. Deployment results expose the target agent and optional artifact-transfer status and progress.
 
+### Shared server URLs
+
+`ServerUrlKind` is `LOCAL`, `REMOTE`, or `PROXY`. Use `serverUrlSettings` to read detected and effective origins, overrides, Proxy, and defaults; `saveServerUrlSettings` saves them; `serverUrlSettingsChanged` notifies clients to refetch. Telemetry override fields remain deprecated delegates to this shared service.
+
+`StartBuildInput.serverUrlKind` is optional. Builds and coverage builds snapshot the resolved bases and choice; rebuilds retain the kind and resolve current settings. `buildArtifactLinks` returns signed download and selected manifest URLs. Device enrollment and OTA routes carry `serverUrlKind` through follow-up URLs, resolved server-side against configured settings.
+
+SSE responses include `endpointPath`, `localUrl`, `remoteUrl`, and nullable `proxyUrl`; `publicUrl` remains for compatibility. See [Server URLs](/system/settings#server-urls) and the [script contract](/builds/builds#hook-server-and-endpoint-contract).
+
 ### MCP catalog and preset portability
 
 The web and iOS apps use the same GraphQL operations to export tool definitions, share presets, and review imports:
 
-| Operation | Purpose |
-| --- | --- |
+| Operation                                           | Purpose                                                                                                                                                                                      |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `exportMcpToolCatalog(format:, source:, groupIds:)` | Export Markdown or JSON tool definitions plus a preset-generation contract. `source` is `ALL` (default), `BUILTIN`, or `EXTERNAL`; omit `groupIds` to include all groups from those sources. |
-| `exportMcpToolPresets(ids:)` | Export the selected presets in portable JSON. |
-| `previewMcpToolPresetImport(input:)` | Validate a document, per-preset decisions, and external-server mappings without saving. |
-| `importMcpToolPresets(input:, previewToken:)` | Revalidate and atomically apply a reviewed import. |
-| `mcpToolPresets(kind:)` | List local preset IDs and metadata, optionally filtered to `PLAN` or `SESSION`. |
+| `exportMcpToolPresets(ids:)`                        | Export the selected presets in portable JSON.                                                                                                                                                |
+| `previewMcpToolPresetImport(input:)`                | Validate a document, per-preset decisions, and external-server mappings without saving.                                                                                                      |
+| `importMcpToolPresets(input:, previewToken:)`       | Revalidate and atomically apply a reviewed import.                                                                                                                                           |
+| `mcpToolPresets(kind:)`                             | List local preset IDs and metadata, optionally filtered to `PLAN` or `SESSION`.                                                                                                              |
 
 Exports return `filename`, `contentType`, and the document's `content`. Catalog exports can be partial when an external server cannot be discovered; check the exported availability information before using them as an inventory.
 
@@ -69,14 +77,26 @@ query ReviewMcpPresetImport($input: McpToolPresetImportInput!) {
     token
     canImport
     errors
-    entries { index name action targetId toolCount errors warnings }
+    entries {
+      index
+      name
+      action
+      targetId
+      toolCount
+      errors
+      warnings
+    }
     externalServers {
       key
       name
       transport
       selectedServerId
       suggestedServerId
-      candidates { id name transport }
+      candidates {
+        id
+        name
+        transport
+      }
     }
   }
 }
@@ -92,7 +112,12 @@ mutation ApplyMcpPresetImport(
   importMcpToolPresets(input: $input, previewToken: $previewToken) {
     id
     name
-    tools { source name serverId serverName }
+    tools {
+      source
+      name
+      serverId
+      serverName
+    }
   }
 }
 ```
@@ -190,15 +215,15 @@ Direct export calls may omit `locale` and `timeZone`. When supplied, `locale` mu
 
 Apps post crash reports and CI posts debug symbols here. See [Crashes](/debugging/crashes#send-crashes-from-your-app) and [dSYMs](/debugging/dsyms#upload-from-ci) for full examples. GitHub Actions workflows can use the [Upload dSYMs action](/debugging/upload-dsyms-action), which runs the resumable upload.
 
-| Endpoint | Credential | Accepts |
-| --- | --- | --- |
-| `POST /api/public/crashes` | None required; `X-API-Key` or a session is recorded when sent | One `.ips`, `.crash`, or MetricKit JSON report as the raw body, up to 5 MiB after optional gzip decoding |
-| `POST /api/dsyms` | `X-API-Key` or a session | A zip of `.dSYM` bundles as the `file` part of `multipart/form-data`, or a raw `application/zip` body, with optional `projectName`, `buildId`, and `url`; up to `DSYM_UPLOAD_MAX_BYTES` (2 GiB by default) |
-| `POST /api/dsyms/uploads` | `X-API-Key` or a session | Starts a resumable upload of up to 20 GiB |
-| `HEAD` / `PATCH /api/dsyms/uploads/{id}` | The credential that started it | Reports or appends at `Upload-Offset`, 16 MiB per chunk |
-| `POST /api/dsyms/uploads/{id}/complete` | The credential that started it | Verifies the optional `sha256` and indexes the zip |
-| `GET /api/crash-files/reports/{id}` | `X-API-Key` or a session | The original report, or `?variant=symbolicated` for the symbolicated text |
-| `GET /api/crash-files/dsyms/{id}` | `X-API-Key` or a session | One dSYM bundle as a zip |
+| Endpoint                                 | Credential                                                    | Accepts                                                                                                                                                                                                    |
+| ---------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/public/crashes`               | None required; `X-API-Key` or a session is recorded when sent | One `.ips`, `.crash`, or MetricKit JSON report as the raw body, up to 5 MiB after optional gzip decoding                                                                                                   |
+| `POST /api/dsyms`                        | `X-API-Key` or a session                                      | A zip of `.dSYM` bundles as the `file` part of `multipart/form-data`, or a raw `application/zip` body, with optional `projectName`, `buildId`, and `url`; up to `DSYM_UPLOAD_MAX_BYTES` (2 GiB by default) |
+| `POST /api/dsyms/uploads`                | `X-API-Key` or a session                                      | Starts a resumable upload of up to 20 GiB                                                                                                                                                                  |
+| `HEAD` / `PATCH /api/dsyms/uploads/{id}` | The credential that started it                                | Reports or appends at `Upload-Offset`, 16 MiB per chunk                                                                                                                                                    |
+| `POST /api/dsyms/uploads/{id}/complete`  | The credential that started it                                | Verifies the optional `sha256` and indexes the zip                                                                                                                                                         |
+| `GET /api/crash-files/reports/{id}`      | `X-API-Key` or a session                                      | The original report, or `?variant=symbolicated` for the symbolicated text                                                                                                                                  |
+| `GET /api/crash-files/dsyms/{id}`        | `X-API-Key` or a session                                      | One dSYM bundle as a zip                                                                                                                                                                                   |
 
 Anonymous crash uploads are limited to 30 a minute per address and answer `202` without storing anything while crash collection is off. A bad credential is refused with `401` rather than treated as anonymous.
 
@@ -228,8 +253,8 @@ The same 32 KiB body cap and 120-requests-per-minute-per-IP limit apply, counted
 
 ### OpenAPI contract
 
-| Endpoint                | Returns                                                                      |
-| ----------------------- | ---------------------------------------------------------------------------- |
+| Endpoint                | Returns                                                                                   |
+| ----------------------- | ----------------------------------------------------------------------------------------- |
 | `GET /api/openapi.json` | An OpenAPI 3.1 document covering the codebase, telemetry, APNs, crash, and dSYM endpoints |
 
 The document is assembled at request time from the same Zod schemas the handlers validate against, so it cannot drift from the implementation. It describes the cookie and bearer security used by protected operations while leaving integration endpoints explicitly public. The document itself is served with `cache-control: public, max-age=300` and is the right thing to point a client generator at.
@@ -238,17 +263,17 @@ The document is assembled at request time from the same Zod schemas the handlers
 
 The dashboard and the control agents use a handful of further routes. They are part of the application's own plumbing rather than an integration surface, but they are worth knowing when reading logs:
 
-| Endpoint                                                             | Used by                                                    |
-| -------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `POST` / `GET /api/run-attachments`, `GET /api/run-attachments/{id}` | Uploading and fetching files attached to an AI run         |
-| `GET /api/agent/run-attachments/{id}`                                | An agent fetching an attachment for a run it is executing  |
+| Endpoint                                                             | Used by                                                             |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `POST` / `GET /api/run-attachments`, `GET /api/run-attachments/{id}` | Uploading and fetching files attached to an AI run                  |
+| `GET /api/agent/run-attachments/{id}`                                | An agent fetching an attachment for a run it is executing           |
 | `GET /api/agent/dsyms/{id}/dwarf`                                    | A macOS agent fetching a DWARF file for a crash it is symbolicating |
-| `POST /api/build-artifact-uploads/{uploadId}`                        | An agent streaming a finished build artifact to the server |
-| `GET /api/worktrees/{worktreeId}/diff-image`                         | Rendering an image diff for a worktree change              |
-| `POST /api/ios/enrollment/start`                                     | Starting a signed iOS device enrollment                    |
-| `GET /api/ios/devices/export.tsv`                                    | Exporting device UDIDs for the Apple Developer portal      |
-| `GET /{locale}/builds/{buildId}/output`                              | Opening a build's authenticated raw terminal output        |
-| `GET /{locale}/commands/runs/{runId}/output`                         | Opening a command run's authenticated raw terminal output  |
+| `POST /api/build-artifact-uploads/{uploadId}`                        | An agent streaming a finished build artifact to the server          |
+| `GET /api/worktrees/{worktreeId}/diff-image`                         | Rendering an image diff for a worktree change                       |
+| `POST /api/ios/enrollment/start`                                     | Starting a signed iOS device enrollment                             |
+| `GET /api/ios/devices/export.tsv`                                    | Exporting device UDIDs for the Apple Developer portal               |
+| `GET /{locale}/builds/{buildId}/output`                              | Opening a build's authenticated raw terminal output                 |
+| `GET /{locale}/commands/runs/{runId}/output`                         | Opening a command run's authenticated raw terminal output           |
 
 <Warning>
   These stay behind whatever authentication protects the dashboard.
@@ -270,11 +295,11 @@ The catalog spans agents, builds, codebases, worktrees, commands, workflows, run
 
 The same endpoint serves three scopes, selected by query parameter:
 
-| URL                    | Exposes                                                                  | Authenticated by                   |
-| ---------------------- | ------------------------------------------------------------------------ | ---------------------------------- |
-| `/api/mcp`             | Every built-in tool                                                      | Better Auth session or `X-API-Key` |
+| URL                    | Exposes                                                                                        | Authenticated by                   |
+| ---------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `/api/mcp`             | Every built-in tool                                                                            | Better Auth session or `X-API-Key` |
 | `/api/mcp?preset=<id>` | Selected built-in and external tools in that [MCP tool preset](/system/tools#mcp-tool-presets) | Better Auth session or `X-API-Key` |
-| `/api/mcp?run=<runId>` | The run's frozen built-in and external tool selections                 | An enrolled agent's credential     |
+| `/api/mcp?run=<runId>` | The run's frozen built-in and external tool selections                                         | An enrolled agent's credential     |
 
 Supplying both `preset` and `run`, or either one twice, is rejected with `400 INVALID_MCP_SCOPE`.
 
