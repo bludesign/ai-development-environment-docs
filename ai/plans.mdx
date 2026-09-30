@@ -59,12 +59,14 @@ The list loads 200 runs at a time and pulls in the next page as you scroll, with
     The action is enabled only once the Plan is **Completed**, has a final output, and has not already been run. A Plan can be played exactly once.
   </Step>
   <Step title="Choose MCP tool presets" icon="wrench">
-    The dialog lists the presets marked Session-enabled. Nothing is selected by default — grant the new Session only the built-in tools the work needs.
+    The dialog lists the presets marked Session-enabled. Nothing is selected by default. Grant the new Session the built-in and external tools the work needs.
   </Step>
   <Step title="Confirm" icon="circle-check">
     A new Session is created against the same worktree with the Plan's proposal as its context, linked back to the Plan as its source. The Plan is stamped with the Session's number and the **Run** badge appears.
   </Step>
 </Steps>
+
+The new Session receives its own tool snapshot. Later preset edits do not change its grants. A selected external tool must be discoverable before the Session can be created. MCP clients can use `get_mcp_tool_presets({"kind":"SESSION"})` to find local IDs, then call `play_plan` with `planId` and `mcpPresetIds`. See [portable presets and snapshots](/system/tools#run-snapshots-and-external-names).
 
 ## Bulk edits
 

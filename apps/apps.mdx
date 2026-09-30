@@ -51,6 +51,7 @@ A shared repository contributes its resources to every app that includes it. For
 
 ## Notes
 
+- MCP clients can use `get_apps` and `get_app` to read app names, descriptions, selected agent IDs, repository IDs, and resource counts. These read-only tools omit nested agent configuration. Add them to an [MCP preset](/system/tools#mcp-tool-presets) to make app discovery available to a run.
 - App assignments are many-to-many. An app can contain many repositories, and a repository can belong to many apps.
 - Counts exclude hidden worktrees and archived Plans or Sessions where the corresponding global view excludes them.
 - **Create app** only groups existing repositories. **Import** and the app's **Sync** view can create missing checkouts on selected agents.

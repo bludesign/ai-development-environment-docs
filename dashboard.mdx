@@ -123,6 +123,12 @@ The queue subscribes to an `actionCenterChanged` subscription and refetches when
   When a Plan, Session, build, or workflow run is tied to a worktree, the card shows the worktree's folder and branch and inherits its highlight color as a left border stripe — useful for telling parallel work on the same repository apart at a glance.
 </Tip>
 
+## Discovery through MCP
+
+`get_action_center` reads this queue with `first` (1–200, default 50) and an optional `after` cursor. It returns active work, pending questions, blocked or failed resources, and builds awaiting action. It does not acknowledge or dismiss items.
+
+Use `global_search` to locate resources across the development environment. Its `query` is required and limited to 200 characters; `firstPerGroup` is 1–10 (default 5) and `relatedFirst` is 0–5 (default 3). Add these read-only tools to an [MCP preset](/system/tools#mcp-tool-presets) to help an AI find the resource it needs.
+
 ## Related pages
 
 <Columns cols={2}>
