@@ -18,6 +18,12 @@ description: "Browse MCP tools, export a catalog for AI-assisted preset creation
 
 The **Tools** page at `/tools` lets you browse built-in and external MCP tools, run them with explicit arguments, select tools for presets, and inspect tool-call history. You can also export the catalog for an AI to design a preset, then review and import the returned JSON.
 
+## Client addresses
+
+Choose **Local**, **Remote**, or configured **Proxy** when copying an MCP client configuration or preset URL. The selector starts with the global default; every configured `/api/mcp` variant is copyable. Base addresses are edited in [Settings → Server URLs](/system/settings#server-urls), shared with the native iOS endpoint display.
+
+MCP `get_server_url_settings` reads these settings, and `update_server_url_settings` saves overrides, Proxy, and defaults with the same origin validation as Settings. Build tools accept optional `serverUrlKind`; omitted simulator choices inherit the simulator or global default.
+
 ## Tool catalog
 
 Tools are grouped by source. Built-in tools ship with the server and cover agents, builds, codebases, commands, worktrees, GitHub, GitLab, Jira, skills, runs, workflows, notifications, signing assets, devices, disk space, usage, and debugging. Each external MCP server you add contributes its own group.
@@ -55,13 +61,13 @@ Each tool carries MCP annotations that drive both its badge and whether running 
 
 The **External MCP servers** card registers third-party tool providers. Their tools appear in the catalog and can be selected for presets, run from this page, or called by workflows.
 
-| Field                | Notes                                                                              |
-| -------------------- | ---------------------------------------------------------------------------------- |
-| **Name**             | How the server appears in the catalog                                              |
-| **URL**              | The server endpoint                                                                |
-| **Transport**        | **HTTP (Streamable)** or **SSE (legacy)**                                          |
+| Field                | Notes                                                                                                           |
+| -------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **Name**             | How the server appears in the catalog                                                                           |
+| **URL**              | The server endpoint                                                                                             |
+| **Transport**        | **HTTP (Streamable)** or **SSE (legacy)**                                                                       |
 | **Tool name prefix** | Applied to catalog display names and direct Tools-page calls; scoped MCP connections use stable aliases instead |
-| **Custom headers**   | Any headers the provider requires, such as an API key                              |
+| **Custom headers**   | Any headers the provider requires, such as an API key                                                           |
 
 <Tip>
   A prefix makes providers easier to distinguish in the catalog. It is applied
@@ -104,8 +110,16 @@ Presets are reusable sets of explicitly selected built-in and external tools. De
 Each preset carries a name, an optional description, an icon, and flags for whether it is offered for [Plans](/ai/plans) and [Sessions](/ai/sessions). A preset marked for neither is **Direct URL only** — usable by clients that have the link, invisible in the run pickers.
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/tools-preset-editor.png" alt="MCP preset editor with built-in and external tool selections in light theme" />
-  <img className="hidden dark:block" src="/images/dark/tools-preset-editor.png" alt="MCP preset editor with built-in and external tool selections in dark theme" />
+  <img
+    className="block dark:hidden"
+    src="/images/light/tools-preset-editor.png"
+    alt="MCP preset editor with built-in and external tool selections in light theme"
+  />
+  <img
+    className="hidden dark:block"
+    src="/images/dark/tools-preset-editor.png"
+    alt="MCP preset editor with built-in and external tool selections in dark theme"
+  />
 </Frame>
 
 <Note>
@@ -122,8 +136,16 @@ Deleting a preset does not break existing drafts or workflows; references to it 
 Select **Export tool catalog**, then choose **Markdown** or **JSON** and the sources to include: **All tools**, **Built-in tools**, or **External tools**. Leave categories unselected to include every group from those sources, or choose particular categories and servers. Select **Download**.
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/tools-catalog-export.png" alt="Tool catalog export format and source selection in light theme" />
-  <img className="hidden dark:block" src="/images/dark/tools-catalog-export.png" alt="Tool catalog export format and source selection in dark theme" />
+  <img
+    className="block dark:hidden"
+    src="/images/light/tools-catalog-export.png"
+    alt="Tool catalog export format and source selection in light theme"
+  />
+  <img
+    className="hidden dark:block"
+    src="/images/dark/tools-catalog-export.png"
+    alt="Tool catalog export format and source selection in dark theme"
+  />
 </Frame>
 
 Both formats describe the available tools, their input and output schemas, and their risk annotations. They also include instructions, a preset JSON Schema, and an example that tells an AI how to return an importable preset document. The Markdown version is convenient to attach to a chat; JSON is useful for programmatic processing.
@@ -140,6 +162,7 @@ If an external server cannot be discovered, the export reports an error on that 
     Give the file to an AI with a task such as: "Create a read-only crash-investigation preset. Use only references in this catalog and return JSON matching its preset schema." The AI should return the JSON document without Markdown fences.
 
     In the web import dialog, expand **Prompt for an AI to create presets** and select **Copy AI prompt**. Replace the goal placeholder and attach the exported catalog. The prompt includes a valid example and the current import JSON Schema.
+
   </Step>
   <Step title="Review and import the JSON">
     Open **Import MCP presets**. Drop the returned JSON file into the web upload area, click it to browse, or paste the file's contents. Select **Review import** and review the exact tool selections before saving.
@@ -147,8 +170,16 @@ If an external server cannot be discovered, the export reports an error on that 
 </Steps>
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/tools-preset-ai-prompt.png" alt="Expandable AI preset prompt with copy action in light theme" />
-  <img className="hidden dark:block" src="/images/dark/tools-preset-ai-prompt.png" alt="Expandable AI preset prompt with copy action in dark theme" />
+  <img
+    className="block dark:hidden"
+    src="/images/light/tools-preset-ai-prompt.png"
+    alt="Expandable AI preset prompt with copy action in light theme"
+  />
+  <img
+    className="hidden dark:block"
+    src="/images/dark/tools-preset-ai-prompt.png"
+    alt="Expandable AI preset prompt with copy action in dark theme"
+  />
 </Frame>
 
 ### Share and import presets
@@ -168,8 +199,16 @@ Import opens a review before changing saved presets:
 The server revalidates the reviewed import before saving and applies the selected changes in one transaction. Replacement preserves the existing preset's local ID. A stale preview or validation failure does not partially save the import.
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/tools-preset-import.png" alt="MCP preset import review and server mapping in light theme" />
-  <img className="hidden dark:block" src="/images/dark/tools-preset-import.png" alt="MCP preset import review and server mapping in dark theme" />
+  <img
+    className="block dark:hidden"
+    src="/images/light/tools-preset-import.png"
+    alt="MCP preset import review and server mapping in light theme"
+  />
+  <img
+    className="hidden dark:block"
+    src="/images/dark/tools-preset-import.png"
+    alt="MCP preset import review and server mapping in dark theme"
+  />
 </Frame>
 
 ### Portable JSON example
@@ -221,17 +260,17 @@ For automation, call `get_mcp_tool_presets` with an optional `kind` of `PLAN` or
 
 The **Audit** tab lists tool calls in the order they were made, with enough detail to reconstruct what happened and nothing that would leak what was passed.
 
-| Column                     | What it shows                                                                          |
-| -------------------------- | -------------------------------------------------------------------------------------- |
-| **Started** / **Finished** | Call timestamps                                                                        |
+| Column                     | What it shows                                                                                         |
+| -------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Started** / **Finished** | Call timestamps                                                                                       |
 | **Tool**                   | The recorded tool name; proxied external calls use the raw upstream name alongside their server group |
-| **Status**                 | Succeeded, Failed, or Running                                                          |
-| **Source**                 | **Tools page**, **Workflow**, or an MCP client                                         |
-| **Caller**                 | `user:<userId>@<address>`, `api-key:<keyId>@<address>`, or `agent:<agentId>@<address>` |
-| **Group**                  | The catalog group the tool came from                                                   |
-| **Duration**               | How long the call took                                                                 |
-| **Correlation ID**         | Supplied by the client via `x-request-id`, or generated                                |
-| **Arguments SHA-256**      | A hash of the arguments — never the arguments themselves                               |
+| **Status**                 | Succeeded, Failed, or Running                                                                         |
+| **Source**                 | **Tools page**, **Workflow**, or an MCP client                                                        |
+| **Caller**                 | `user:<userId>@<address>`, `api-key:<keyId>@<address>`, or `agent:<agentId>@<address>`                |
+| **Group**                  | The catalog group the tool came from                                                                  |
+| **Duration**               | How long the call took                                                                                |
+| **Correlation ID**         | Supplied by the client via `x-request-id`, or generated                                               |
+| **Arguments SHA-256**      | A hash of the arguments — never the arguments themselves                                              |
 
 Search matches tool names, callers, sources, IDs, and hashes. **Clear audit** deletes completed records while preserving calls still in flight.
 

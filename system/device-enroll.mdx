@@ -4,28 +4,49 @@ description: "Install a temporary signed profile to send a device's development 
 ---
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/device-enroll.png" alt="Enroll device page in light theme" />
-  <img className="hidden dark:block" src="/images/dark/device-enroll.png" alt="Enroll device page in dark theme" />
+  <img
+    className="block dark:hidden"
+    src="/images/light/device-enroll.png"
+    alt="Enroll device page in light theme"
+  />
+  <img
+    className="hidden dark:block"
+    src="/images/dark/device-enroll.png"
+    alt="Enroll device page in dark theme"
+  />
 </Frame>
 
 The enroll device page at `/devices/enroll` collects an iPhone or iPad's development identifier without anyone having to read a UDID off a screen. You give the device a label, download a temporary signed profile, and install it — iOS reports the identifier back to the server itself.
 
 The profile uses Apple's Profile Service payload, the same mechanism that over-the-air enrollment sites use. It is temporary, single-purpose, and requests three attributes and nothing else.
 
+Choose **Local**, **Remote**, or configured **Proxy** before starting. The selector initially uses the global default. The selected `serverUrlKind` travels through the profile-download redirect, signed profile callback, and completion redirect, so those URLs use that configured address even when your browsing address differs. The server resolves the enum against saved settings; callers cannot supply an arbitrary origin.
+
+In the native iOS app, choose **Devices → Device Actions → Enroll a Device**. Select an address, then open, copy, or share the enrollment link. Opening enrollment requires an eligible HTTPS address. Safari handles the profile download and iOS Settings handles installation; the app's **Server Connection** setting continues to control its own API connection.
+
 ## Using the page
 
 <Steps>
   <Step title="Give the device a recognizable label" icon="tag">
-    Apple's profile service cannot read the name set in iOS Settings, so this label is the only human-readable name the device will ever have here. *iPhone* is a poor choice once you have three of them; *Dana's iPhone 15* is not.
+    Apple's profile service cannot read the name set in iOS Settings, so this
+    label is the only human-readable name the device will ever have here.
+    *iPhone* is a poor choice once you have three of them; *Dana's iPhone 15* is
+    not.
   </Step>
   <Step title="Consent to the collection" icon="check">
-    The checkbox covers the device identifier, product, software version, and observed IP addresses. The page lists each item and why it is collected before you agree.
+    The checkbox covers the device identifier, product, software version, and
+    observed IP addresses. The page lists each item and why it is collected
+    before you agree.
   </Step>
   <Step title="Download the enrollment profile" icon="download">
-    **Download enrollment profile** produces a signed `.mobileconfig`. Get it onto the target device — AirDrop, or opening the same page on the device itself, both work.
+    **Download enrollment profile** produces a signed `.mobileconfig`. Get it
+    onto the target device — AirDrop, or opening the same page on the device
+    itself, both work.
   </Step>
   <Step title="Install it on the device" icon="smartphone">
-    In iOS, open **Settings → Profile Downloaded** and install. The device posts its response, and it appears on the [Devices](/system/devices) page within seconds.
+    In iOS, open **Settings → Profile Downloaded** and install. The device posts
+    its response, and it appears on the [Devices](/system/devices) page within
+    seconds.
   </Step>
 </Steps>
 
@@ -41,26 +62,29 @@ The IP address is captured at two points — when the profile is downloaded and 
 
 Enrollment is disabled unless the server is reachable at a public HTTPS address, because iOS posts the device response directly to it and refuses to install a profile whose callback it cannot trust.
 
-If the page reports *Enrollment is disabled because this address is not public HTTPS*, put the server behind a publicly trusted HTTPS reverse proxy, or set `PUBLIC_BASE_URL` to the address iOS should call back.
+If the selected address is HTTP, loopback, or a private IP address, enrollment remains disabled. Choose a publicly trusted HTTPS Remote or Proxy address, or configure one in [Settings → Server URLs](/system/settings#server-urls). The device must be able to reach it.
 
 <Note>
-  The enrollment profile is signed with a self-signed certificate, so iOS displays it as **Unverified**. That is expected. What matters is the organization name shown on the install screen — confirm it matches the name configured in [Settings](/system/settings) before installing.
+  The enrollment profile is signed with a self-signed certificate, so iOS
+  displays it as **Unverified**. That is expected. What matters is the
+  organization name shown on the install screen — confirm it matches the name
+  configured in [Settings](/system/settings) before installing.
 </Note>
 
 ## Security properties
 
 The enrollment endpoints are public by necessity, so the token is the whole security boundary and is treated accordingly.
 
-| Property | Detail |
-| --- | --- |
-| **Token strength** | 256 bits of randomness per enrollment |
-| **Lifetime** | 30 minutes from issue |
-| **Storage** | Only a SHA-256 hash is stored — the token itself is never persisted |
-| **Single use** | Consumed atomically, so two simultaneous responses cannot both succeed |
-| **Challenge binding** | The response is rejected unless the challenge it returns matches the token it was issued with |
-| **Signature verification** | The CMS response must verify against Apple's device certificate chain |
-| **Replay handling** | An identical retry returns the same device (iOS does retry). A *different* response against a consumed token is rejected with a conflict |
-| **Retention** | Expired enrollments never attached to a device are deleted after seven days |
+| Property                   | Detail                                                                                                                                   |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Token strength**         | 256 bits of randomness per enrollment                                                                                                    |
+| **Lifetime**               | 30 minutes from issue                                                                                                                    |
+| **Storage**                | Only a SHA-256 hash is stored — the token itself is never persisted                                                                      |
+| **Single use**             | Consumed atomically, so two simultaneous responses cannot both succeed                                                                   |
+| **Challenge binding**      | The response is rejected unless the challenge it returns matches the token it was issued with                                            |
+| **Signature verification** | The CMS response must verify against Apple's device certificate chain                                                                    |
+| **Replay handling**        | An identical retry returns the same device (iOS does retry). A _different_ response against a consumed token is rejected with a conflict |
+| **Retention**              | Expired enrollments never attached to a device are deleted after seven days                                                              |
 
 ## The profile signer
 
@@ -69,7 +93,10 @@ The first enrollment automatically generates a ten-year RSA-2048/SHA-256 self-si
 The organization name and reverse-DNS profile identifier shown in iOS are configured in [Settings](/system/settings), where the signer can also be regenerated.
 
 <Warning>
-  Regenerating the signer issues future profiles under a new key and certificate. Profiles already downloaded keep working until their tokens expire, so an enrollment in progress is not broken — but the fingerprint testers saw previously will no longer match.
+  Regenerating the signer issues future profiles under a new key and
+  certificate. Profiles already downloaded keep working until their tokens
+  expire, so an enrollment in progress is not broken — but the fingerprint
+  testers saw previously will no longer match.
 </Warning>
 
 ## Notes

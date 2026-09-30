@@ -26,7 +26,11 @@ The **SSE Endpoints** area at `/sse` creates hosted Server-Sent Events routes th
 
 ## Create and call an endpoint
 
-Click **Create endpoint**, enter a name and an HTTP(S) forwarding URL, then save. New endpoints start in **Forward** mode. Copy the generated public URL from the endpoint detail page.
+Click **Create endpoint**, enter a name and an HTTP(S) forwarding URL, then save. New endpoints start in **Forward** mode. Copy the Local, Remote, or configured Proxy endpoint URL from a card or the endpoint detail page. The web and native screens show all configured variants with copy/share actions. Edit the base addresses in [Settings → Server URLs](/system/settings#server-urls).
+
+Every variant uses the same opaque endpoint path and token. GraphQL exposes `endpointPath`, `localUrl`, `remoteUrl`, and nullable `proxyUrl`; deprecated `publicUrl` remains available for older clients. SSE addresses are not included in build script endpoint paths.
+
+Cards follow the available content width: one column below 45rem, two from 45rem, and three from 68rem. Long URLs wrap inside cards, including narrow desktop panels.
 
 The public route accepts `GET`, `POST`, and CORS preflight `OPTIONS` requests:
 
@@ -77,11 +81,11 @@ Reusable templates can declare ordered, typed fields. Give each field a placehol
 
 Use either placeholder form in the event name, data, ID, or templated retry value:
 
-| Syntax              | Result                                                                                        |
-| ------------------- | --------------------------------------------------------------------------------------------- |
-| `{{fieldKey}}`      | Inserts the field's serialized value directly.                                                |
+| Syntax              | Result                                                                                         |
+| ------------------- | ---------------------------------------------------------------------------------------------- |
+| `{{fieldKey}}`      | Inserts the field's serialized value directly.                                                 |
 | `{{json:fieldKey}}` | Inserts a JSON-safe value. Text is quoted and escaped; JSON, numbers, and booleans stay typed. |
-| `\{{`               | Emits a literal `{{` instead of opening a placeholder.                                        |
+| `\{{`               | Emits a literal `{{` instead of opening a placeholder.                                         |
 
 For example, this template declares required text field `customerName`, optional number field `sequence` with default `1`, and JSON field `details`:
 

@@ -4,13 +4,25 @@ description: "Upload debug symbols from the dashboard, builds, or GitHub Actions
 ---
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/crashes-dsyms.png" alt="dSYMs table in light theme" />
-  <img className="hidden dark:block" src="/images/dark/crashes-dsyms.png" alt="dSYMs table in dark theme" />
+  <img
+    className="block dark:hidden"
+    src="/images/light/crashes-dsyms.png"
+    alt="dSYMs table in light theme"
+  />
+  <img
+    className="hidden dark:block"
+    src="/images/dark/crashes-dsyms.png"
+    alt="dSYMs table in dark theme"
+  />
 </Frame>
 
 The **dSYMs** tab at `/crashes/dsyms` lists the debug symbols [crash reports](/debugging/crashes) are symbolicated with. A dSYM is the `.dSYM` bundle Xcode writes next to a build; its DWARF file maps every address in the app binary back to a function, file, and line. Each dSYM is identified by the UUID of the binary it belongs to, which is also the UUID a crash report cites.
 
 dSYMs arrive three ways: uploaded in the dashboard, collected from builds this server runs, and posted by CI through the upload API or the [Upload dSYMs action](/debugging/upload-dsyms-action). Each upload can carry a **Project**, **Build ID**, and **Link**. The iOS app lists dSYMs and their details, and shows which crashes each one symbolicated.
+
+## Shared upload addresses
+
+The web and iOS API help displays shared Local, Remote, and configured Proxy addresses. [Server URLs](/system/settings#server-urls) controls these origins. Build hooks receive direct and chunked dSYM paths through `endpointPaths`; replace `{uploadId}` with `encodeURIComponent(uploadId)` before composing a URL. See the [hook contract](/builds/builds#hook-server-and-endpoint-contract).
 
 ## The dSYMs table
 
@@ -23,17 +35,25 @@ Search matches names, bundle IDs, versions, UUIDs with or without dashes, projec
 ## dSYM details
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/dsym-detail.png" alt="dSYM details page in light theme" />
-  <img className="hidden dark:block" src="/images/dark/dsym-detail.png" alt="dSYM details page in dark theme" />
+  <img
+    className="block dark:hidden"
+    src="/images/light/dsym-detail.png"
+    alt="dSYM details page in light theme"
+  />
+  <img
+    className="hidden dark:block"
+    src="/images/dark/dsym-detail.png"
+    alt="dSYM details page in dark theme"
+  />
 </Frame>
 
 The dSYM details page at `/crashes/dsyms/{id}` shows the bundle's binary, version, project, build ID, link, uploader, size, and the SHA-256 of its DWARF file; the UUID, architecture, and `__TEXT` address of each slice; the crashes it symbolicated; and the other dSYMs from the same upload.
 
-| Action | What it does |
-| --- | --- |
+| Action           | What it does                                                                                                                                        |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Edit details** | Changes the project, build ID, and link. They belong to the upload, so the change applies to every dSYM in it. A build's own dSYMs keep their build |
-| **Download** | Downloads the bundle as a zip that Xcode and `atos` can open |
-| Delete | Deletes the dSYM. Crashes keep the names it already added |
+| **Download**     | Downloads the bundle as a zip that Xcode and `atos` can open                                                                                        |
+| Delete           | Deletes the dSYM. Crashes keep the names it already added                                                                                           |
 
 ## Upload dSYMs in the dashboard
 
@@ -49,11 +69,11 @@ Folders are zipped in the browser. Uploads use the resumable protocol in 16 MiB 
 
 Builds keep their dSYMs according to **Collect dSYMs**, under **Advanced settings** in **Start build** and in a build configuration.
 
-| Setting | Behavior |
-| --- | --- |
+| Setting                  | Behavior                                                 |
+| ------------------------ | -------------------------------------------------------- |
 | **Automatic (archives)** | Default. Archives keep their dSYMs; other actions do not |
-| **Always** | Every build keeps its dSYMs |
-| **Never** | No dSYMs are kept |
+| **Always**               | Every build keeps its dSYMs                              |
+| **Never**                | No dSYMs are kept                                        |
 
 When dSYMs are collected, the build passes `DEBUG_INFORMATION_FORMAT=dwarf-with-dsym` to `xcodebuild` unless you set `DEBUG_INFORMATION_FORMAT` yourself in **Build setting overrides**. An archive keeps everything in `archive.xcarchive/dSYMs`. Other builds keep only the dSYMs whose UUIDs match a binary the build just produced, so older dSYMs left in DerivedData are not picked up.
 
@@ -84,7 +104,13 @@ The response lists every dSYM and its UUIDs, which match `xcrun dwarfdump --uuid
 ```json
 {
   "duplicate": false,
-  "upload": { "id": "6e6a…", "status": "READY", "buildId": "1234", "url": "https://ci.example.com/runs/1234", "projectName": "MyApp" },
+  "upload": {
+    "id": "6e6a…",
+    "status": "READY",
+    "buildId": "1234",
+    "url": "https://ci.example.com/runs/1234",
+    "projectName": "MyApp"
+  },
   "dsyms": [
     {
       "id": "9da5…",
@@ -92,20 +118,22 @@ The response lists every dSYM and its UUIDs, which match `xcrun dwarfdump --uuid
       "version": "3.2.0",
       "build": "412",
       "url": "/crashes/dsyms/9da5…",
-      "slices": [{ "uuid": "776386D0-4386-3F24-9B21-5F7C02EB2873", "arch": "arm64" }]
+      "slices": [
+        { "uuid": "776386D0-4386-3F24-9B21-5F7C02EB2873", "arch": "arm64" }
+      ]
     }
   ]
 }
 ```
 
-| Status | Meaning |
-| --- | --- |
-| `201` | Indexed. Crashes waiting on these UUIDs are symbolicated again |
-| `200` | The same zip was already uploaded; its upload is returned, with any new project, build ID, or link applied |
-| `400` | The zip is unreadable, holds no `.dSYM` bundles, contains symbolic links or paths outside the zip, or none of its DWARF files are Mach-O |
-| `401` | No valid API key or session |
-| `413` | The zip is larger than one request allows; use the resumable upload |
-| `415` | The body is neither multipart nor a zip |
+| Status | Meaning                                                                                                                                  |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `201`  | Indexed. Crashes waiting on these UUIDs are symbolicated again                                                                           |
+| `200`  | The same zip was already uploaded; its upload is returned, with any new project, build ID, or link applied                               |
+| `400`  | The zip is unreadable, holds no `.dSYM` bundles, contains symbolic links or paths outside the zip, or none of its DWARF files are Mach-O |
+| `401`  | No valid API key or session                                                                                                              |
+| `413`  | The zip is larger than one request allows; use the resumable upload                                                                      |
+| `415`  | The body is neither multipart nor a zip                                                                                                  |
 
 ### Large zips
 
@@ -186,7 +214,9 @@ The [Upload dSYMs action](/debugging/upload-dsyms-action) runs the resumable pro
 The action records the repository as the **Project**, the run ID as the **Build ID**, and the workflow run as the **Link**. Other CI systems can run the script above.
 
 <Note>
-  Bitcode is gone since Xcode 14, so the dSYMs in your archive are the ones that match App Store and TestFlight builds. You do not need to download dSYMs from App Store Connect.
+  Bitcode is gone since Xcode 14, so the dSYMs in your archive are the ones that
+  match App Store and TestFlight builds. You do not need to download dSYMs from
+  App Store Connect.
 </Note>
 
 ## Inspect dSYMs through MCP

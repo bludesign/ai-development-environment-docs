@@ -4,22 +4,30 @@ description: "Inspect a build's logs, artifacts, tests, and export or install it
 ---
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/build-detail.png" alt="Build details page in light theme" />
-  <img className="hidden dark:block" src="/images/dark/build-detail.png" alt="Build details page in dark theme" />
+  <img
+    className="block dark:hidden"
+    src="/images/light/build-detail.png"
+    alt="Build details page in light theme"
+  />
+  <img
+    className="hidden dark:block"
+    src="/images/dark/build-detail.png"
+    alt="Build details page in dark theme"
+  />
 </Frame>
 
 The build details page at `/builds/{id}` covers one immutable build from end to end: what was run, what it printed, what it produced, whether the tests passed, and how to get it onto a device.
 
 ## Header actions
 
-| Action | Available when |
-| --- | --- |
-| **Cancel build** | The build is queued, preparing, or running |
-| **Rebuild** | Always — starts a fresh build from the same configuration |
-| **Run** | The build produced a runnable app and a compatible destination is connected |
-| **Install** | An archive has been exported for over-the-air installation |
-| **Export archive** | The build captured an `.xcarchive` |
-| **Delete build** | Always |
+| Action             | Available when                                                              |
+| ------------------ | --------------------------------------------------------------------------- |
+| **Cancel build**   | The build is queued, preparing, or running                                  |
+| **Rebuild**        | Always — starts a fresh build from the same configuration                   |
+| **Run**            | The build produced a runnable app and a compatible destination is connected |
+| **Install**        | An archive has been exported for over-the-air installation                  |
+| **Export archive** | The build captured an `.xcarchive`                                          |
+| **Delete build**   | Always                                                                      |
 
 An **Out of date** badge appears when the worktree has moved on since this build was made. Select it for a **Rebuild** menu; the current surface refreshes and shows any queuing error. The header shows **Custom** or the captured configuration name, with a link when the saved configuration still exists.
 
@@ -50,7 +58,7 @@ Selected build scripts appear in the log flow; if none were chosen the page says
 
 ## Artifacts
 
-Everything the build captured — the archive, the runnable app, test products, the `xctestrun`, the result bundle, and the dSYMs — each with a **Download**.
+Everything the build captured — the archive, the runnable app, test products, the `xctestrun`, the result bundle, and the dSYMs — each with a **Download**. Choose a shared Local, Remote, or configured Proxy address before downloading. The server produces a signed link for that address, so a different hostname does not require your browser cookie. Download links expire after six hours; treat a shared signed link as access to the artifact. The native artifact link sheet offers copy, share, and download actions.
 
 When the build kept its dSYMs, a **dSYMs** artifact holds them as `dSYMs.zip` with the number of bundles, and **View dSYMs** opens the [dSYMs](/debugging/dsyms) table filtered to this build. After a successful build the control plane imports that zip automatically, so crashes from this build can be symbolicated. **Collect dSYMs** in the advanced settings decides whether a build keeps them; archives do by default.
 
@@ -76,6 +84,7 @@ Once parsed you get totals — tests, passed, failed, skipped — and a browsabl
     Pick a development team from those installed on the build agent, then a signing certificate — chosen automatically or named explicitly. **Parse project** reads the scheme's signable targets and matches installed provisioning profiles, giving you one profile selector per app and extension.
 
     Toggle between **Show matching** and **Show all** profiles, and add a bundle identifier by hand if parsing missed one. Expired profiles and profiles that may not match a bundle are flagged.
+
   </Step>
   <Step title="Set export options" icon="sliders">
     Upload symbols, manage app version and build number, internal TestFlight only, strip Swift symbols, app thinning, iCloud container environment, and a distribution bundle identifier — as applicable to the chosen method.
@@ -83,25 +92,28 @@ Once parsed you get totals — tests, passed, failed, skipped — and a browsabl
 </Steps>
 
 <Note>
-  Exports are written locally as an IPA. These settings never upload to App Store Connect.
+  Exports are written locally as an IPA. These settings never upload to App
+  Store Connect.
 </Note>
 
 <Warning>
-  When a signing identity is installed on only some of your signing-capable agents, the page warns you — builds assigned to a machine without it will fail to export.
+  When a signing identity is installed on only some of your signing-capable
+  agents, the page warns you — builds assigned to a machine without it will fail
+  to export.
 </Warning>
 
 ## Installing over the air
 
-**Install** serves the exported IPA for direct installation, with **Copy install link** to send it elsewhere. The page reports the bundle identifier and version being installed.
+**Install** serves the exported IPA for direct installation. Choose Local, Remote, or configured Proxy using the address picker; **Copy install link** includes that choice in the build page URL. The OTA manifest resolves `serverUrlKind` against shared settings and signs the package URL at the same address. The page reports the bundle identifier and version being installed.
 
 Requirements and limits:
 
-| Condition | Result |
-| --- | --- |
-| No public HTTPS address | Installation is blocked — open the page over HTTPS or set `PUBLIC_BASE_URL` |
-| Opened on a Mac | You are told to open the page on an iPhone or iPad |
-| App Store Connect export | Cannot be installed over the air — export with Debugging, Release Testing, or Enterprise instead |
-| Missing bundle identifier | Export the archive again to enable installation |
+| Condition                 | Result                                                                                                    |
+| ------------------------- | --------------------------------------------------------------------------------------------------------- |
+| No public HTTPS address   | Installation is blocked — choose a reachable HTTPS address in [Server URLs](/system/settings#server-urls) |
+| Opened on a Mac           | You are told to open the page on an iPhone or iPad                                                        |
+| App Store Connect export  | Cannot be installed over the air — export with Debugging, Release Testing, or Enterprise instead          |
+| Missing bundle identifier | Export the archive again to enable installation                                                           |
 
 ## Runs and exports
 

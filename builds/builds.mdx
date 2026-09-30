@@ -4,8 +4,16 @@ description: "Configure, run, inspect, deploy, and export iOS builds, and track 
 ---
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/builds.png" alt="Builds page in light theme" />
-  <img className="hidden dark:block" src="/images/dark/builds.png" alt="Builds page in dark theme" />
+  <img
+    className="block dark:hidden"
+    src="/images/light/builds.png"
+    alt="Builds page in light theme"
+  />
+  <img
+    className="hidden dark:block"
+    src="/images/dark/builds.png"
+    alt="Builds page in dark theme"
+  />
 </Frame>
 
 The **Builds** page at `/builds` holds build and imported-coverage history, plus the reusable JavaScript hooks that run around each iOS build. It has **History**, **Configurations**, and **Build Scripts** tabs.
@@ -16,7 +24,8 @@ Start a build from a [worktree](/worktrees/worktrees) or the repository Build ca
 
 <Columns cols={3}>
   <Card title="Repository" icon="code-fork" href="/codebases/repository-detail">
-    The iOS App project, saved build configurations, and which build scripts are allowed.
+    The iOS App project, saved build configurations, and which build scripts are
+    allowed.
   </Card>
   <Card title="Worktree" icon="code-branch" href="/worktrees/worktrees">
     Where a build is started: pick a configuration and a destination.
@@ -32,14 +41,14 @@ Every build record appears newest first, with its status, captured configuration
 
 An LCOV or Istanbul [coverage import](/builds/build-coverage#importing-coverage-from-other-test-runners) appears here as a `HOST` destination. That record ran no simulator or device build; it exists to hold the worktree snapshot, import status, logs, and coverage report.
 
-| Status | Meaning |
-| --- | --- |
-| Queued | Accepted, waiting for the agent |
+| Status    | Meaning                                     |
+| --------- | ------------------------------------------- |
+| Queued    | Accepted, waiting for the agent             |
 | Preparing | Setting up the build folder and environment |
-| Running | `xcodebuild` is executing |
-| Succeeded | Completed with no failure |
-| Failed | The build or a script failed |
-| Canceled | Stopped by hand |
+| Running   | `xcodebuild` is executing                   |
+| Succeeded | Completed with no failure                   |
+| Failed    | The build or a script failed                |
+| Canceled  | Stopped by hand                             |
 
 Filter by status, select builds individually or a whole day at once, and **Delete selected**. The list pages with **Load more**.
 
@@ -48,7 +57,8 @@ Starting a build or coverage build closes its dialog and refreshes the surface w
 The build dialog offers **Any iOS Simulator** or **Any Physical iOS Device** immediately, then refreshes the live destination list in the background. You can start with the generic destination without waiting. If the refresh fails, the dialog shows a warning and keeps the generic destination available. Scheme and configuration validation runs when the build is queued, before any pre-build script, so an invalid configuration fails without triggering script side effects.
 
 <Warning>
-  Deleting a build permanently removes the build record *and* its build folder — logs, products, archives, and exports. There is no undo.
+  Deleting a build permanently removes the build record *and* its build folder —
+  logs, products, archives, and exports. There is no undo.
 </Warning>
 
 ## Saved and Custom configurations
@@ -58,6 +68,14 @@ Select **Custom** after the saved configuration cards to configure one build wit
 For a selected configuration, **Physical Device** and **Simulator** tabs, the device picker, and build scripts stay visible. Expand **Details** for the source summary, action, advanced settings, export settings, and command preview. Archive requires a generic physical-device destination. Test Without Building requires compatible prior test products, including matching Custom source settings.
 
 The **Configurations** tab lists reusable configurations with their repositories, icons, and settings. Open a card to inspect or edit it and review its paginated history.
+
+## Choose the server URL for a build
+
+The web and native **Start Build** sheets offer a **Server URL** selector with the name and URL on separate lines. It starts with the global default from [Settings](/system/settings#server-urls). Simulator destinations use the simulator default when configured, otherwise they inherit the global default. Switching destination type updates this suggestion until you explicitly choose Local, Remote, or Proxy.
+
+The control plane snapshots all three base addresses, the selected kind, and the selected base address when it queues a build. Later settings changes do not change that queued build or its hooks. **Rebuild** retains the original kind and resolves its current configured address. Older builds without a recorded choice use current defaults. Rebuilding a Proxy build after removing Proxy fails with an actionable configuration error.
+
+GraphQL `StartBuildInput.serverUrlKind` and MCP build inputs accept `LOCAL`, `REMOTE`, or `PROXY`. Omit the field to use the destination's default. Worktree coverage builds use the same selection and contract.
 
 ## Running on devices
 
@@ -86,24 +104,73 @@ Every **Out of date** badge opens a menu with **Rebuild**. Queuing a rebuild ref
 
 Reusable pre-build and post-build hooks that run around every build that selects them.
 
-| Field | Notes |
-| --- | --- |
-| **Icon** | The same icon picker used by build configurations |
-| **Repositories** | Search and select the repositories where the script is allowed |
-| **Name** | How the script appears when selecting scripts for a build |
-| **Pre-build JavaScript** | Default-export a function receiving `buildId`, `branch`, `destination`, `action`, and the telemetry URL snapshot |
-| **Post-build JavaScript** | The same, plus `buildFolder`, `failed`, `cancelled`, `errorCode`, and `error` |
-| **Timeout in seconds** | How long a hook may run |
-| **Failure behavior** | **Fail the build** or **Continue with a warning** |
-| **Preselect this script for builds** | Marks it enabled by default when starting a build |
+| Field                                | Notes                                                                                                                                          |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Icon**                             | The same icon picker used by build configurations                                                                                              |
+| **Repositories**                     | Search and select the repositories where the script is allowed                                                                                 |
+| **Name**                             | How the script appears when selecting scripts for a build                                                                                      |
+| **Pre-build JavaScript**             | Default-export a function receiving `buildId`, `branch`, `destination`, `action`, and the `server`, `endpointPaths`, and `telemetry` snapshots |
+| **Post-build JavaScript**            | The same, plus `buildFolder`, `failed`, `cancelled`, `errorCode`, and `error`                                                                  |
+| **Timeout in seconds**               | How long a hook may run                                                                                                                        |
+| **Failure behavior**                 | **Fail the build** or **Continue with a warning**                                                                                              |
+| **Preselect this script for builds** | Marks it enabled by default when starting a build                                                                                              |
 
 <Warning>
-  Build scripts are trusted Node.js ESM code. They run from the selected worktree root with a minimal environment, with the permissions of the agent account — treat them like any other code you would run on that machine.
+  Build scripts are trusted Node.js ESM code. They run from the selected
+  worktree root with a minimal environment, with the permissions of the agent
+  account — treat them like any other code you would run on that machine.
 </Warning>
 
 <Note>
-  Assign repositories directly in the script editor, or allow scripts from a repository’s [details page](/codebases/repository-detail). Clearing the repository selection removes this script’s assignments. Other scripts keep their order. Scripts run only when selected for a build.
+  Assign repositories directly in the script editor, or allow scripts from a
+  repository’s [details page](/codebases/repository-detail). Clearing the
+  repository selection removes this script’s assignments. Other scripts keep
+  their order. Scripts run only when selected for a build.
 </Note>
+
+### Hook server and endpoint contract
+
+Both pre-build and post-build hooks receive these objects:
+
+```js
+export default async function preBuild({ server, endpointPaths, telemetry }) {
+  const consoleUrl = new URL(endpointPaths.consoleLogs, server.selectedBaseUrl)
+    .href;
+  const analyticsUrl = new URL(
+    endpointPaths.analyticsEvents,
+    server.selectedBaseUrl,
+  ).href;
+  console.log("Selected server", server.selectedUrlKind);
+  // Write these values and the collection flags into your app's build configuration.
+}
+```
+
+`server` contains `localBaseUrl`, `remoteBaseUrl`, nullable `proxyBaseUrl`, `selectedUrlKind`, and `selectedBaseUrl`. `telemetry` contains `consoleCollectionEnabled` and `analyticsCollectionEnabled`.
+
+| `endpointPaths` key  | Path                                     | Environment variable        |
+| -------------------- | ---------------------------------------- | --------------------------- |
+| `consoleLogs`        | `/api/telemetry/console-logs`            | `CONSOLE_LOGS_PATH`         |
+| `analyticsEvents`    | `/api/telemetry/analytics-events`        | `ANALYTICS_EVENTS_PATH`     |
+| `apnsRegistration`   | `/api/ios/apns-devices`                  | `APNS_REGISTRATION_PATH`    |
+| `crashReports`       | `/api/public/crashes`                    | `CRASH_REPORTS_PATH`        |
+| `dsyms`              | `/api/dsyms`                             | `DSYMS_PATH`                |
+| `dsymUploads`        | `/api/dsyms/uploads`                     | `DSYM_UPLOADS_PATH`         |
+| `dsymUpload`         | `/api/dsyms/uploads/{uploadId}`          | `DSYM_UPLOAD_PATH`          |
+| `dsymUploadComplete` | `/api/dsyms/uploads/{uploadId}/complete` | `DSYM_UPLOAD_COMPLETE_PATH` |
+
+Encode the upload identifier before replacing a dynamic placeholder:
+
+```js
+const path = endpointPaths.dsymUploadComplete.replace(
+  "{uploadId}",
+  encodeURIComponent(uploadId),
+);
+const url = new URL(path, server.selectedBaseUrl).href;
+```
+
+Matching environment variables are `SERVER_LOCAL_BASE_URL`, `SERVER_REMOTE_BASE_URL`, `SERVER_PROXY_BASE_URL`, `SERVER_URL_KIND`, and `SERVER_BASE_URL` (the selected base). An unconfigured Proxy is `null` in context and an empty environment value. Collection flags remain available as `CONSOLE_LOG_COLLECTION_ENABLED` and `ANALYTICS_EVENT_COLLECTION_ENABLED`.
+
+These paths cover app ingestion and symbol uploads. SSE, MCP, device enrollment, webhook, and other integration or administrative routes are excluded. Endpoint authentication and upload limits still apply. The old telemetry URL fields and full-URL environment variables are replaced; script migration and compatibility aliases are not provided.
 
 ## Worktree coverage
 
@@ -142,7 +209,11 @@ build history, artifacts, repository files, and script assignments.
   <Card title="Build details" icon="file-lines" href="/builds/build-detail">
     Logs, artifacts, test results, exports, and device installs.
   </Card>
-  <Card title="Build coverage report" icon="chart-bar" href="/builds/build-coverage">
+  <Card
+    title="Build coverage report"
+    icon="chart-bar"
+    href="/builds/build-coverage"
+  >
     Overall and changed coverage for one build.
   </Card>
 </Columns>
@@ -150,16 +221,40 @@ build history, artifacts, repository files, and script assignments.
 ## Start Build and script editing
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/build-start.png" alt="Start Build with destination tabs, scripts, and collapsed Details" />
-  <img className="hidden dark:block" src="/images/dark/build-start.png" alt="Start Build in dark theme" />
+  <img
+    className="block dark:hidden"
+    src="/images/light/build-start.png"
+    alt="Start Build with destination tabs, scripts, and collapsed Details"
+  />
+  <img
+    className="hidden dark:block"
+    src="/images/dark/build-start.png"
+    alt="Start Build in dark theme"
+  />
 </Frame>
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/build-custom.png" alt="Custom build source inspection and green Valid badge" />
-  <img className="hidden dark:block" src="/images/dark/build-custom.png" alt="Custom build editor in dark theme" />
+  <img
+    className="block dark:hidden"
+    src="/images/light/build-custom.png"
+    alt="Custom build source inspection and green Valid badge"
+  />
+  <img
+    className="hidden dark:block"
+    src="/images/dark/build-custom.png"
+    alt="Custom build editor in dark theme"
+  />
 </Frame>
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/build-script-editor.png" alt="Build script icon and searchable repository assignments" />
-  <img className="hidden dark:block" src="/images/dark/build-script-editor.png" alt="Build script editor in dark theme" />
+  <img
+    className="block dark:hidden"
+    src="/images/light/build-script-editor.png"
+    alt="Build script icon and searchable repository assignments"
+  />
+  <img
+    className="hidden dark:block"
+    src="/images/dark/build-script-editor.png"
+    alt="Build script editor in dark theme"
+  />
 </Frame>

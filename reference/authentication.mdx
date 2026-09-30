@@ -21,7 +21,7 @@ Generate `APP_SECRET` once and back it up. It must be base64 or hex encoding of 
 
 Leaving it unset is supported: the server then trusts whatever host each request arrived on, sign-in works on any hostname, and cross-site requests are still rejected. What you give up is control over the absolute URLs the server generates — the OAuth `redirect_uri` among them — which a forged `Host` header can otherwise steer. Set it in production whenever you know the hostname. See [Environment variables](/reference/environment-variables).
 
-When external systems reach this server at a different address than the dashboard — the iOS enrollment flow, over-the-air installs, the GitHub App webhook — set `PUBLIC_BASE_URL` to that public origin as well. It is trusted automatically without being repeated in `APP_ORIGINS`.
+When external systems reach this server at a different address than the dashboard — the iOS enrollment flow, over-the-air installs, the GitHub App webhook — configure the client-facing address in [Server URLs](/system/settings#server-urls) and select it for the action. `PUBLIC_BASE_URL` remains a detected Remote origin and is trusted automatically without being repeated in `APP_ORIGINS`. An override or Proxy setting does not automatically change browser authentication origin configuration.
 
 `AUTH_MODE` accepts:
 
@@ -38,15 +38,31 @@ The default is `password`. The server enforces the mode on its routes. Hiding a 
 On an empty database, open `/register`. The first successful account creation closes self-registration automatically. A short-lived database lease makes this atomic when two people submit the setup form at the same time.
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/register.png" alt="Registration page in light theme" />
-  <img className="hidden dark:block" src="/images/dark/register.png" alt="Registration page in dark theme" />
+  <img
+    className="block dark:hidden"
+    src="/images/light/register.png"
+    alt="Registration page in light theme"
+  />
+  <img
+    className="hidden dark:block"
+    src="/images/dark/register.png"
+    alt="Registration page in dark theme"
+  />
 </Frame>
 
 Afterwards, `/sign-in` offers whichever methods `AUTH_MODE` enables.
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/sign-in.png" alt="Sign-in page in light theme" />
-  <img className="hidden dark:block" src="/images/dark/sign-in.png" alt="Sign-in page in dark theme" />
+  <img
+    className="block dark:hidden"
+    src="/images/light/sign-in.png"
+    alt="Sign-in page in light theme"
+  />
+  <img
+    className="hidden dark:block"
+    src="/images/dark/sign-in.png"
+    alt="Sign-in page in dark theme"
+  />
 </Frame>
 
 After setup, any signed-in user can open [Users](/system/users) to create accounts or turn self-registration back on. A manually enabled setting stays enabled until a user turns it off.
@@ -108,16 +124,16 @@ The server does not link a new OIDC identity to a password account solely becaus
 
 ## Credential behavior
 
-| Surface                          | Browser/mobile session | `X-API-Key`  | `agent_` token        | Anonymous                                  |
-| -------------------------------- | ---------------------- | ------------ | --------------------- | ------------------------------------------ |
-| Dashboard and control-plane REST | Full                   | No           | Agent routes only     | No                                         |
-| GraphQL HTTP and WebSocket       | Full                   | Full         | Agent operations only | Only `enrollAgent` with an `enroll_` token |
-| MCP unscoped or preset           | Full                   | Full         | No                    | No                                         |
-| Run-scoped MCP                   | No                     | No           | Matching run only     | No                                         |
-| dSYM uploads (`/api/dsyms`)      | Full                   | Full         | No                    | No                                         |
-| Crash downloads (`/api/crash-files/*`) | Full             | Full         | No                    | No                                         |
-| Crash uploads (`/api/public/crashes`) | Recorded         | Recorded     | No                    | Yes, rate limited                          |
-| Integration endpoints            | Not required           | Not required | Not required          | Yes                                        |
+| Surface                                | Browser/mobile session | `X-API-Key`  | `agent_` token        | Anonymous                                  |
+| -------------------------------------- | ---------------------- | ------------ | --------------------- | ------------------------------------------ |
+| Dashboard and control-plane REST       | Full                   | No           | Agent routes only     | No                                         |
+| GraphQL HTTP and WebSocket             | Full                   | Full         | Agent operations only | Only `enrollAgent` with an `enroll_` token |
+| MCP unscoped or preset                 | Full                   | Full         | No                    | No                                         |
+| Run-scoped MCP                         | No                     | No           | Matching run only     | No                                         |
+| dSYM uploads (`/api/dsyms`)            | Full                   | Full         | No                    | No                                         |
+| Crash downloads (`/api/crash-files/*`) | Full                   | Full         | No                    | No                                         |
+| Crash uploads (`/api/public/crashes`)  | Recorded               | Recorded     | No                    | Yes, rate limited                          |
+| Integration endpoints                  | Not required           | Not required | Not required          | Yes                                        |
 
 Browser sessions use the Better Auth cookie. Native clients send the Better Auth session in `Authorization: Bearer <session-token>`. Existing agents use that same header with their `agent_` token. API keys use only `X-API-Key` and begin with `aide_`.
 

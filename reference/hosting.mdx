@@ -5,7 +5,7 @@ description: "Ports, public HTTPS, reverse proxies, Cloudflare Access paths, art
 
 Most of the app works fine on `http://127.0.0.1`. iOS device enrollment, over-the-air installs, and the GitHub, GitLab, and Jira webhooks do not: they need a publicly trusted HTTPS origin, because iOS requires a trusted HTTPS callback and the webhook senders have to reach you from the internet.
 
-Give the app that origin either by running behind a reverse proxy that sends correct `X-Forwarded-Proto` and `X-Forwarded-Host` values, or by setting `PUBLIC_BASE_URL` to the public HTTPS origin. Direct HTTP localhost and LAN dashboard access stays available, but the enrollment form and profile download are disabled.
+Set a reachable origin in [Settings → Server URLs](/system/settings#server-urls), then select it when enrolling a device or installing an IPA. `PUBLIC_BASE_URL` and trusted reverse-proxy headers still supply detected Remote values. Direct HTTP localhost and LAN dashboard access stays available; device enrollment requires a selected public HTTPS address.
 
 ## Listeners
 
@@ -134,7 +134,12 @@ All webhook routes authenticate the raw body before doing any work. GitHub uses 
 Access applications are path-scoped rather than method-scoped; the route handlers themselves expose only the methods listed above. Avoid JavaScript or CAPTCHA challenges on the callback. Add a WAF skip for the exact `/api/public/ios/profile-response` path only if production logs show that a managed rule blocks genuine iOS callbacks.
 
 <Tip>
-  To keep `/api/dsyms` and `/api/dsyms/uploads/*` behind Access instead of bypassing them, give the Access application a **Service Auth** policy for a service token, and send the token's `CF-Access-Client-Id` and `CF-Access-Client-Secret` headers from CI. The [Upload dSYMs action](/debugging/upload-dsyms-action#cloudflare-access) takes them in its `headers` input.
+  To keep `/api/dsyms` and `/api/dsyms/uploads/*` behind Access instead of
+  bypassing them, give the Access application a **Service Auth** policy for a
+  service token, and send the token's `CF-Access-Client-Id` and
+  `CF-Access-Client-Secret` headers from CI. The [Upload dSYMs
+  action](/debugging/upload-dsyms-action#cloudflare-access) takes them in its
+  `headers` input.
 </Tip>
 
 ## Artifact downloads
@@ -143,12 +148,12 @@ Over-the-air installs are the reason the artifact routes are public. iOS fetches
 
 Install manifests mint expiring links: the artifact ID and an expiry are signed with HMAC-SHA256 and travel as `token` and `expires` query parameters, valid for six hours. A link is only rejected when a token is supplied and fails verification — the plain links the dashboard renders carry none and are protected by the dashboard's own authentication instead.
 
-| Variable                      | Effect                                                                                                       |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `ARTIFACT_CACHE_DIRECTORY`    | Where artifacts fetched from an agent are cached locally. Defaults to the system temporary directory         |
-| `ARTIFACT_CACHE_MAX_BYTES`    | Cache ceiling. Defaults to 5 GiB                                                                             |
-| `ARTIFACT_TRANSFER_DIRECTORY` | Durable staging for resumable cross-agent uploads. Defaults to the system temporary directory                |
-| `ARTIFACT_TRANSFER_MAX_BYTES` | Maximum accepted transfer package size. Defaults to 20 GiB                                                   |
+| Variable                      | Effect                                                                                               |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `ARTIFACT_CACHE_DIRECTORY`    | Where artifacts fetched from an agent are cached locally. Defaults to the system temporary directory |
+| `ARTIFACT_CACHE_MAX_BYTES`    | Cache ceiling. Defaults to 5 GiB                                                                     |
+| `ARTIFACT_TRANSFER_DIRECTORY` | Durable staging for resumable cross-agent uploads. Defaults to the system temporary directory        |
+| `ARTIFACT_TRANSFER_MAX_BYTES` | Maximum accepted transfer package size. Defaults to 20 GiB                                           |
 
 The signing key is derived from `APP_SECRET`, so outstanding links survive a restart. Rotating `APP_SECRET` invalidates them; they expire in six hours regardless.
 
@@ -212,3 +217,5 @@ Each candidate is parsed and validated as an IP address — bracketed IPv6, an a
     enrollment.
   </Card>
 </Columns>
+
+Shared Local/Remote overrides and Proxy are resolved after origin detection. Generated enrollment and OTA URLs carry `serverUrlKind`, so the server uses the saved address for each follow-up. Request hosts still go through the trust checks above; a query parameter cannot supply an arbitrary origin.
