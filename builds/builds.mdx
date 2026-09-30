@@ -54,7 +54,7 @@ Filter by status, select builds individually or a whole day at once, and **Delet
 
 Starting a build or coverage build closes its dialog and refreshes the surface where you started it. Rebuild behaves the same way. None of these actions automatically navigate to this page.
 
-The build dialog offers **Any iOS Simulator** or **Any Physical iOS Device** immediately, then refreshes the live destination list in the background. You can start with the generic destination without waiting. If the refresh fails, the dialog shows a warning and keeps the generic destination available. Scheme and configuration validation runs when the build is queued, before any pre-build script, so an invalid configuration fails without triggering script side effects.
+The build dialog offers **Any iOS Simulator** or **Any Physical iOS Device** immediately, then refreshes the live destination list in the background. You can start with the generic destination without waiting. If the refresh fails, the dialog shows a warning and keeps the generic destination available. The agent validates the scheme, configuration, and destination before running pre-build scripts. A failed Xcode preflight skips pre-build scripts and `xcodebuild`, but selected post-build scripts still run for cleanup. See [Execution and failures](#execution-and-failures).
 
 <Warning>
   Deleting a build permanently removes the build record *and* its build folder —
@@ -100,20 +100,22 @@ Build rows containing an IPA also show **Install**. The action uses the newest e
 
 Every **Out of date** badge opens a menu with **Rebuild**. Queuing a rebuild refreshes the current page and displays any failure there.
 
-## Build Scripts
+## Build scripts
 
-Reusable pre-build and post-build hooks that run around every build that selects them.
+Open **Builds → Build Scripts** to create or edit reusable JavaScript hooks. On iPhone or iPad, open **Build Scripts**, tap **New Script** to create one, or select a script to edit it. Swipe a script to delete it. Both clients save the same definitions and repository assignments.
 
-| Field                                | Notes                                                                                                                                          |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Icon**                             | The same icon picker used by build configurations                                                                                              |
-| **Repositories**                     | Search and select the repositories where the script is allowed                                                                                 |
-| **Name**                             | How the script appears when selecting scripts for a build                                                                                      |
-| **Pre-build JavaScript**             | Default-export a function receiving `buildId`, `branch`, `destination`, `action`, and the `server`, `endpointPaths`, and `telemetry` snapshots |
-| **Post-build JavaScript**            | The same, plus `buildFolder`, `failed`, `cancelled`, `errorCode`, and `error`                                                                  |
-| **Timeout in seconds**               | How long a hook may run                                                                                                                        |
-| **Failure behavior**                 | **Fail the build** or **Continue with a warning**                                                                                              |
-| **Preselect this script for builds** | Marks it enabled by default when starting a build                                                                                              |
+| Field | Notes |
+| --- | --- |
+| **Icon** | The same icon picker used by build configurations |
+| **Repositories** | Search and select the repositories where the script is allowed |
+| **Name** | Required, up to 80 characters after trimming; shown when selecting scripts for a build |
+| **Pre-build JavaScript** | Code to run before `xcodebuild`; a default-exported function receives the [hook context](#hook-context) |
+| **Post-build JavaScript** | Code to run after `xcodebuild` or during failure and cancellation cleanup; receives additional outcome fields |
+| **Timeout in seconds** | A separate timeout for each hook, from 1 to 3600 seconds; defaults to 300 seconds |
+| **Failure behavior** | **Fail the build** (`FAIL_BUILD`) or **Continue with a warning** (`CONTINUE`) |
+| **Preselect this script for builds** | Initially selects it in Start Build; the native editor calls this **Enabled by default** |
+
+Provide at least one non-empty pre-build or post-build script. Select the allowed scripts you want to run in **Start Build**. The preselection setting initializes the dialog; it does not make a script mandatory or select it for API callers.
 
 <Warning>
   Build scripts are trusted Node.js ESM code. They run from the selected
@@ -123,10 +125,64 @@ Reusable pre-build and post-build hooks that run around every build that selects
 
 <Note>
   Assign repositories directly in the script editor, or allow scripts from a
-  repository’s [details page](/codebases/repository-detail). Clearing the
-  repository selection removes this script’s assignments. Other scripts keep
-  their order. Scripts run only when selected for a build.
+  repository's [details page](/codebases/repository-detail). Clearing the
+  repository selection removes this script's assignments. New assignments from
+  the script editor append to each repository's existing order. Other scripts
+  keep their order. Scripts run only when selected for a build.
 </Note>
+
+### Author a hook
+
+Each hook runs in its own Node.js process using the agent's Node.js executable. The agent saves the source as an `.mjs` file and imports it as an ES module. Top-level code runs when the module is imported. If you export a default function, the runner calls it with the context and awaits its result. A default export with any other type fails the hook.
+
+Use `console.log` and `console.error` for output in the build log. A thrown error, rejected promise, non-zero process exit, or timeout fails the hook according to its **Failure behavior**. Each phase starts a new process, so in-memory state does not carry from the pre-build hook to the post-build hook.
+
+The working directory is the worktree root, while the module itself lives under the build folder's `hooks/pre/` or `hooks/post/` directory. Relative filesystem paths resolve from the worktree root. Relative imports resolve from the generated module, and bare package imports search from that module's location rather than the worktree's `node_modules`.
+
+To import a module from your checkout, construct an absolute file URL:
+
+```js
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+
+export default async function preBuild({ worktree }) {
+  const moduleUrl = pathToFileURL(
+    resolve(worktree.folder, "scripts", "configure-build.mjs"),
+  );
+  const { configureBuild } = await import(moduleUrl.href);
+  await configureBuild();
+}
+```
+
+### Hook context
+
+Both phases receive the following fields. `BUILD_CONTEXT_PATH` points to a JSON file containing the same context; the runner rewrites it before each hook.
+
+| Field | Value |
+| --- | --- |
+| `buildId` | Identifier of this build |
+| `branch` | Captured branch name, or `null` |
+| `destination` | `type` (`SIMULATOR` or `PHYSICAL_DEVICE`), `id`, `name`, `platform`, nullable `osVersion` and `state`, and optional `generic` and `available` flags |
+| `action` | `BUILD`, `TEST`, `ANALYZE`, `ARCHIVE`, `BUILD_FOR_TESTING`, or `TEST_WITHOUT_BUILDING` |
+| `worktree` | `id`, absolute `folder`, nullable `branch`, and nullable captured `headSha` |
+| `source` | Xcode source `kind` (`PROJECT`, `WORKSPACE`, or `PACKAGE`) and worktree-relative `relativePath` |
+| `scheme` | Xcode scheme name |
+| `configuration` | Xcode configuration name, such as `Debug` or `Release` |
+| `server` | Captured Local, Remote, and Proxy bases, selected kind, and selected base; see the [server contract](#hook-server-and-endpoint-contract) |
+| `endpointPaths` | Paths for app ingestion and symbol uploads, listed below |
+| `telemetry` | Captured `consoleCollectionEnabled` and `analyticsCollectionEnabled` booleans |
+
+Post-build hooks also receive these fields:
+
+| Field | Value |
+| --- | --- |
+| `buildFolder` | Absolute path to this build's artifact directory on the agent |
+| `failed` | Whether a build failure has been recorded before this hook runs |
+| `cancelled` | Whether the build was cancelled |
+| `errorCode` | Recorded failure code, or `null`; hook failures that fail the build use `SCRIPT_FAILED` |
+| `error` | Recorded failure message, or `null` |
+
+Check `failed` and `cancelled` independently. Cancellation can set `cancelled: true` while `failed` remains false. Outcome fields are evaluated before each post-build hook, so a failure in an earlier cleanup hook can affect later hooks.
 
 ### Hook server and endpoint contract
 
@@ -168,9 +224,64 @@ const path = endpointPaths.dsymUploadComplete.replace(
 const url = new URL(path, server.selectedBaseUrl).href;
 ```
 
-Matching environment variables are `SERVER_LOCAL_BASE_URL`, `SERVER_REMOTE_BASE_URL`, `SERVER_PROXY_BASE_URL`, `SERVER_URL_KIND`, and `SERVER_BASE_URL` (the selected base). An unconfigured Proxy is `null` in context and an empty environment value. Collection flags remain available as `CONSOLE_LOG_COLLECTION_ENABLED` and `ANALYTICS_EVENT_COLLECTION_ENABLED`.
+These paths cover app ingestion and symbol uploads. SSE, MCP, device enrollment, webhook, and other integration or administrative routes are excluded. Endpoint authentication and upload limits still apply.
 
-These paths cover app ingestion and symbol uploads. SSE, MCP, device enrollment, webhook, and other integration or administrative routes are excluded. Endpoint authentication and upload limits still apply. The old telemetry URL fields and full-URL environment variables are replaced; script migration and compatibility aliases are not provided.
+### Environment variables
+
+Both phases receive the following environment variables, alongside the path variables in the table above:
+
+| Variable | Value |
+| --- | --- |
+| `BUILD_ID` | Current build identifier |
+| `BUILD_PHASE` | `PRE_BUILD` or `POST_BUILD` |
+| `BUILD_CONTEXT_PATH` | Absolute path to the current hook's JSON context |
+| `BUILD_ARTIFACT_DIRECTORY` | Absolute path to this build's folder on the agent |
+| `SERVER_LOCAL_BASE_URL` | Captured Local base address |
+| `SERVER_REMOTE_BASE_URL` | Captured Remote base address |
+| `SERVER_PROXY_BASE_URL` | Captured Proxy base address, or an empty string when unconfigured |
+| `SERVER_URL_KIND` | `LOCAL`, `REMOTE`, or `PROXY` |
+| `SERVER_BASE_URL` | Selected base address |
+| `CONSOLE_LOG_COLLECTION_ENABLED` | String `"true"` or `"false"` |
+| `ANALYTICS_EVENT_COLLECTION_ENABLED` | String `"true"` or `"false"` |
+
+An unconfigured Proxy is `null` in the context and an empty string in the environment. Compare collection flags with `"true"` rather than testing the string's truthiness.
+
+The runner inherits only these agent environment values when present: `PATH`, `HOME`, `TMPDIR`, `DEVELOPER_DIR`, `LANG`, `LC_ALL`, `USER`, `LOGNAME`, `SHELL`, and `SSH_AUTH_SOCK`. It also sets `TERM=xterm-256color`, `COLORTERM=truecolor`, `FORCE_COLOR=1`, and `CLICOLOR_FORCE=1` for terminal output. Other agent environment values are not inherited, and the runner does not automatically load a repository `.env` file.
+
+### Execution and failures
+
+Hooks run sequentially in the repository's assignment order, rather than the order of IDs submitted in `scriptIds`. Pre-build hooks run in ascending position; post-build hooks run in reverse position.
+
+1. The agent validates the worktree and Xcode source. If these initial checks fail, no hooks start.
+2. Xcode preflight validates the scheme, configuration, and destination. A failed preflight skips all pre-build hooks and the main `xcodebuild` invocation.
+3. Selected pre-build hooks run one at a time. A failure with `FAIL_BUILD` stops the remaining pre-build hooks and prevents `xcodebuild`. With `CONTINUE`, the failure is recorded and the build proceeds.
+4. `xcodebuild` runs if preflight and pre-build hooks allow it and the build has not been cancelled.
+5. All selected post-build hooks run in reverse order for cleanup, including after a failed preflight, failed pre-build hook, failed `xcodebuild`, or cancellation. A script's post-build hook can run even when its pre-build hook was skipped. Failure in one post-build hook does not skip the remaining post-build hooks.
+
+The timeout applies independently to each pre-build and post-build invocation. A timeout terminates that hook process and records `TIMED_OUT`. `FAIL_BUILD` turns a hook failure into a build failure; `CONTINUE` preserves the recorded hook failure while allowing the remaining work to proceed. A post-build failure can change an otherwise successful build to failed.
+
+Cancelling the build stops the active pre-build hook or `xcodebuild`. Post-build hooks use a separate cancellation signal, so they still run with their own timeouts. Cancellation can therefore take longer than stopping the build command alone. A failure in cleanup does not replace a cancelled build's final cancelled status.
+
+### Edit, delete, and rebuild
+
+When you queue a build, the control plane captures each selected script's source, name, order, timeout, and failure behavior. Editing or deleting the library script, or changing its repository assignments, does not change hooks already captured for that build.
+
+**Rebuild** selects the original script IDs but reads their current library definitions, limits, and repository order. It does not replay the old source text. If a selected script has been deleted or is no longer allowed for the repository, rebuilding fails validation. Start a new build with an allowed selection instead.
+
+Deleting a script removes it from the library and clears its repository assignments. The control plane retains its stored definition as a deleted record, and existing builds keep their execution snapshots.
+
+### Stored source, context, and logs
+
+The control plane stores library source, each build's script snapshot, and per-phase execution records. On the agent, the build folder contains `context.json`, generated `.mjs` sources and runners under `hooks/pre/` and `hooks/post/`, per-hook `.log` files, and the combined `build.log`. These files remain with the build folder after execution. Use **Delete build** to remove that build's history and folder.
+
+<Warning>
+  Script text, context files, generated files, and logs can contain sensitive
+  values. Avoid embedding credentials in source or printing secrets. Deleting
+  a library script does not erase its stored definition or historical copies.
+  Review script text before including it in an [app export](/apps/import-export).
+</Warning>
+
+Inspect phase status and errors in the **Scripts** section of [Build Details](/builds/build-detail#script-executions), and use the build log to investigate output.
 
 ## Worktree coverage
 
@@ -190,9 +301,11 @@ Use `buildConfigurations` and `buildConfiguration(id:)` for saved settings. Buil
 accepts `configurationId` and `repositoryId` filters. Repository `latestBuild` is the newest
 record across all worktrees and agents, including failed and running builds.
 
-Script saves accept nullable `iconKey` and optional `repositoryIds`. Omitting either field
-preserves its existing value for older clients. An empty repository array clears this script's
-assignments; saving the script and its assignments is transactional.
+Use `buildScripts` to list active scripts, `saveBuildScript(input:)` to create or update one, and `deleteBuildScript(id:)` to remove it. `setCodebaseBuildScripts(codebaseId:, scriptIds:)` replaces the shared repository's allowed list in the supplied order; it applies across that repository's checkouts. Subscribe to `buildScriptsChanged` to refresh after saves, deletions, or assignment changes. MCP exposes `get_build_scripts`, `save_build_script`, and `delete_build_script`.
+
+Script saves accept nullable `iconKey` and optional `repositoryIds`. Omit a field to preserve its value; `iconKey: null` clears the icon, and an empty repository array clears this script's assignments. Saving the script and its assignments is transactional.
+
+Pass `scriptIds` explicitly to `startBuild`, `startWorktreeCoverage`, or their MCP equivalents. Omitting the field or supplying an empty list runs no scripts, including those marked `enabledByDefault`. The control plane validates that every requested script is active and allowed for the worktree's repository, ignores duplicate IDs, and uses the repository's saved execution order.
 
 `deleteIosAppProject(id:)` removes project settings, sources, and observations after the UI
 confirmation. It rejects repositories with an active build, including Custom runs, and keeps

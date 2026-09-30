@@ -54,7 +54,23 @@ Live streaming output with the same terminal controls used elsewhere in the app:
 - **Fit terminal**, **View raw output**, and scroll to top or bottom.
 - **Expand logs** / **Collapse logs** for a full-height view.
 
-Selected build scripts appear in the log flow; if none were chosen the page says so.
+Hook output appears in the combined build log, tagged with its pre-build or post-build phase. See [Script executions](#script-executions) for individual hook outcomes.
+
+## Script executions
+
+The **Scripts** section lists the captured script name, phase, status, and any error for each hook. If no scripts were selected, it shows an empty state. The native Build Details screen also lists script execution outcomes.
+
+| Status | Meaning |
+| --- | --- |
+| `PENDING` | The hook was captured when the build was queued; it has no completed execution result |
+| `SUCCEEDED` | The hook completed successfully |
+| `FAILED` | The hook threw an error or exited unsuccessfully |
+| `TIMED_OUT` | The hook exceeded its configured timeout |
+| `CANCELLED` | The hook was interrupted by cancellation |
+
+A skipped pre-build hook can remain `PENDING` because no execution result was produced. Post-build hooks still run after Xcode preflight failures, pre-build failures, and cancellation once the agent reaches the build's cleanup phase.
+
+GraphQL `Build.scriptExecutions` also exposes `position`, `nameSnapshot`, `sourceSnapshot`, `timeoutSeconds`, `failureBehavior`, `exitCode`, `durationMs`, `causedBuildFailure`, `outputRelativePath`, and `error`. A failed hook does not necessarily mean a failed build: **Continue with a warning** records the failure while allowing execution to proceed. See [Build script execution and failures](/builds/builds#execution-and-failures) for ordering, timeout, and cancellation rules.
 
 ## Artifacts
 
