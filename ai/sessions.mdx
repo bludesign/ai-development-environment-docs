@@ -48,11 +48,14 @@ The **Plan** column is the one structural difference from the Plans list — it 
 | Control | Options |
 | --- | --- |
 | Search | Matches across the run's text |
+| Agent | **All agents** or one enrolled agent; search by name or hostname |
 | Archive | **Active**, **Archived**, **All** |
 | Tool | **All tools**, **Codex**, **Claude**, **OpenCode** |
 | Origin | **All origins**, **Managed**, **Imported** |
 
-Filter choices persist in a cookie scoped to Sessions, separately from the Plans list. The table loads 200 rows at a time and extends as you scroll, and an `agentRunsChanged` subscription keeps statuses and costs current without a reload.
+Archive, Tool, and Origin choices persist in a cookie scoped to Sessions. The web browser saves your Agent choice separately for your account, independently of Plans and other pages. The [Active Agent selector](/index#focus-on-an-agent) overrides it and disables the page filter with **Controlled by Active Agent**. Select **None** globally to restore your saved Sessions agent choice.
+
+The table loads 200 rows at a time and extends as you scroll, and an `agentRunsChanged` subscription keeps statuses and costs current without a reload.
 
 <Note>
   **Imported** Sessions are ones the agent discovered on disk rather than started here. They cannot be paused, steered, or cancelled. If an imported Session is active in a worktree a managed Session already leases, its detail page carries an **Imported worktree conflict** warning — the app cannot apply concurrency control to a run it does not own.

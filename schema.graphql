@@ -5217,6 +5217,9 @@ type Query {
     """
     origin: RunOrigin
 
+    """Identifier of the agent. Omit it to leave this dimension unfiltered."""
+    agentId: ID
+
     """
     Identifier of an app whose assigned repositories should scope the results.
     """
@@ -5749,6 +5752,9 @@ type Query {
     Identifier of the workflow. Omit it to leave this dimension unfiltered.
     """
     workflowId: ID
+
+    """Identifier of the agent. Omit it to leave this dimension unfiltered."""
+    agentId: ID
 
     """
     The status used to filter or perform the operation. Omit it to leave this dimension unfiltered.

@@ -37,14 +37,17 @@ Extra badges appear on the status cell: **Imported** for a run this app discover
 
 ## Filtering
 
-Four controls sit above the table, and your choices are stored in a cookie per run kind, so the list comes back the way you left it.
+Search and four filters sit above the table.
 
 | Control | Options |
 | --- | --- |
 | Search | Matches across the run's text |
+| Agent | **All agents** or one enrolled agent; search by name or hostname |
 | Archive | **Active**, **Archived**, **All** |
 | Tool | **All tools**, **Codex**, **Claude**, **OpenCode** |
 | Origin | **All origins**, **Managed**, **Imported** |
+
+Archive, Tool, and Origin choices persist in a cookie scoped to Plans. The web browser saves your Agent choice separately for your account, independently of Sessions and other pages. The [Active Agent selector](/index#focus-on-an-agent) overrides it and disables the page filter with **Controlled by Active Agent**. Select **None** globally to restore your saved Plans agent choice.
 
 <Note>
   **Managed** runs were started from this control plane and can be paused, steered, and cancelled. **Imported** runs were found on an agent's disk and are read-only records — the app can display and archive them, but not drive them.
