@@ -34,6 +34,8 @@ Use **Agents** to see what each machine hosts, **Repositories** to see where a r
 
 The **Branches** tab lists local branches from every registered checkout. Each row identifies the repository, agent, folder, last local commit, age, and last successful scan. The same branch name on two agents represents two separate local branches.
 
+On the web, the **Repository** column shows the folder relative to that agent's **Base repository directory**. Hover over the folder to see its full path. Folders outside the base directory, or on agents without a configured base, show their full paths. Long column text wraps; narrower screens let you scroll the table horizontally.
+
 Both clients start with all agents, all repositories, and no age restriction, sorted oldest first with unknown ages last. The web shows 50 branches per page; iOS uses a native scrolling list. Configure the codebase's default branch before cleanup if it is unknown.
 
 1. Filter by **Agent** and **Repository**. A repository filter includes its checkouts across agents.
