@@ -10,7 +10,7 @@ description: "Manage settings shared by every registered checkout of a repositor
 
 The repository details page at `/codebases/repositories/{id}` manages settings that belong to the *logical* repository rather than to any one checkout. Everything here applies across every agent checkout and every worktree that shares the origin.
 
-The page has five tabs.
+The page has six tabs.
 
 <Tabs>
   <Tab title="Repository details">
@@ -30,6 +30,11 @@ The page has five tabs.
     Upload files to write or override, list exact paths to delete, and select tracked paths that should always be assume-unchanged. Saving updates the repository definition without modifying existing worktrees.
 
     See [Repository preparations](/codebases/repository-preparations) for path rules, upload limits, Git behavior, and force-aware Sync and Rebase handling.
+  </Tab>
+  <Tab title="External pipeline actions">
+    Enable repository JavaScript scripts for retrying and canceling external GitLab CI work. Add write-only named secrets using the configured credential backend. All checkouts share the scripts and secret names.
+
+    In iOS, open **Edit Repository → External pipeline actions**. See [External pipeline actions](/gitlab/external-pipeline-actions) for the context contract, runtime limits, and provider recipes.
   </Tab>
   <Tab title="iOS App">
     Enables reusable Xcode build configurations for every checkout and worktree of this repository.

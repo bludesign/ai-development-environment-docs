@@ -66,3 +66,13 @@ GitLab is still waiting for its merge requirements. Inspect the request in GitLa
 Open **Merge follow-ups** to inspect the failure. Restore Jira access or the configured Done transition, reconnect the worktree's agent, or address the reported worktree condition. Choose **Retry follow-ups** after resolving it; the control plane records completed steps and retries unfinished work.
 
 Cleanup requires the matching source repository, branch, commit, a non-primary worktree, and a clean working tree. It does not force deletion when those checks fail. A changed GitLab instance or source commit can require renewed review instead of automatic continuation.
+
+## External pipeline actions
+
+If external jobs are missing, confirm their commit statuses include the selected GitLab pipeline ID. They are separate from the jobs endpoint. Missing target URLs require a provider lookup in your script.
+
+For configuration errors, enable **External pipeline actions** on the matching canonical repository and save the required script. Verify that the configured credential backend can read every named secret. A missing script or unavailable secret stops a combined action before native GitLab requests are sent.
+
+Inspect **External action results** for sanitized syntax/runtime errors, HTTP rejection, and partial completion. A request marked accepted can still be waiting for a provider callback. For an uncertain timeout, inspect the provider run and wait for updated statuses; repeating an unchanged observed failure remains suppressed. Unknown states and retry history are unavailable by design.
+
+For Bitrise, distinguish pipeline run IDs from standalone build slugs and keep Git status reporting enabled. See [recipes](/gitlab/bitrise-recipes).

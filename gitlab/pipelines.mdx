@@ -27,7 +27,9 @@ GitLab stages and job retries have their own structure. The app does not fabrica
 
 ## Run, retry, or cancel
 
-Enter a branch or tag in the run field and select **Run pipeline**. The pipeline menu offers **Retry** for a failed or canceled pipeline and **Cancel** for an active pipeline that is not already canceling. Job retry is available for completed successful, failed, or canceled current jobs.
+Enter a branch or tag in the run field and select **Run pipeline**. The server computes action availability for both clients. **Retry** requests failed/canceled native jobs and eligible external work. Current external statuses can be retried after success, failure, cancellation, or skipping; successful native jobs are not rerun by a pipeline retry. **Cancel** requests active or queued work, excluding already-canceling statuses. Individual external jobs offer retry and cancel controls. Unknown and superseded statuses cannot be acted on.
+
+External statuses appear in the **external** stage with an **External** badge and their provider target URL. The control plane combines commit statuses with native jobs and bridges, filters to the selected pipeline, deduplicates IDs, and preserves retry history. Configure [External pipeline actions](/gitlab/external-pipeline-actions) before dispatching external work. A combined action with a missing script fails before sending either request. **External action results** shows accepted, failed, uncertain, and partial requests on web and iOS.
 
 Actions stay disabled while their request is running. After an action succeeds, the pipeline and job details refresh. Use **Refresh jobs** to retry a failed detail request. Pipeline variables are supported by `createGitLabPipeline` in the API; the web run field accepts a ref.
 
@@ -40,6 +42,8 @@ The pipeline cards in [merge request details](/gitlab/merge-request-detail) and 
 ## Configure auto retry
 
 Auto-retry rules are scoped to a GitLab project, optionally to one pipeline. Choose a maximum of 1 to 100 attempts and enable the rule; delete it to stop future automatic retries. The page shows attempts and the most recent error.
+
+External auto retry applies to failed/canceled current statuses using the repository retry script. Attempts are tracked by rule, canonical repository, project, commit, resolved branch, and external status name/author, across replacement IDs and GitLab pipeline IDs. Accepted requests and uncertain timeouts do not repeat the same observed failure while awaiting callbacks. Definitive failures consume attempts and stay bounded by the rule's limit. Manual cancellation suppresses auto retry of the canceled run. An accepted or uncertain manual retry permits automatic retry of subsequent failures. Pipeline-specific rules follow known external run identities into replacement GitLab pipelines; native retries keep the original pipeline scope.
 
 Signed webhook events trigger retry processing. Server polling also reconciles enabled rules using the configured interval, and its activity appears on [Polling](/system/polling). GitHub and GitLab retry rules keep separate counters and pipeline records.
 
