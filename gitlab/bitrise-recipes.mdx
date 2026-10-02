@@ -1,0 +1,189 @@
+---
+title: "Bitrise recipes"
+description: "Use the generic external pipeline scripts with Bitrise pipeline runs and standalone builds."
+---
+
+Configure these examples in [External pipeline actions](/gitlab/external-pipeline-actions). Add `API_TOKEN` and `APP_SLUG` secrets. Paste the appropriate script into both editors: `context.action` chooses the operation. Keep Bitrise's Git status reporting enabled so GitLab receives the eventual build outcome.
+
+## Pipeline runs
+
+Bitrise provides [pipeline abort](https://docs.bitrise.io/en/bitrise-api/api-reference/pipeline-abort) and [pipeline rebuild](https://docs.bitrise.io/en/bitrise-api/api-reference/pipeline-rebuild). The example rebuilds with `partial: false`, validates the original SHA, and groups statuses referring to one run. It accepts the Bitrise app pipeline target URL or looks up a unique matching run. Run IDs are distinct from pipeline definition IDs.
+
+```javascript
+// Use this body as both repository scripts. Add API_TOKEN and APP_SLUG secrets.
+const app = encodeURIComponent(context.secrets.APP_SLUG);
+const base = "https://api.bitrise.io/v0.1/apps/" + app;
+async function api(path, body) {
+  const response = await fetch(base + path, {
+    method: body === undefined ? "GET" : "POST",
+    headers: {
+      Authorization: context.secrets.API_TOKEN,
+      "Content-Type": "application/json",
+    },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+  if (!response.ok) throw new Error("Provider HTTP " + response.status);
+  return response.json();
+}
+const ids = new Set();
+let needsLookup = false;
+for (const job of context.externalJobs) {
+  const match = (job.targetUrl || "").match(
+    /^https:\/\/(?:app\.)?bitrise\.io\/app\/([^/?#]+)\/pipelines?\/([^/?#]+)/,
+  );
+  if (match) {
+    if (decodeURIComponent(match[1]) !== context.secrets.APP_SLUG)
+      throw new Error("Unexpected provider app");
+    ids.add(decodeURIComponent(match[2]));
+  } else needsLookup = true;
+}
+if (needsLookup || !ids.size) {
+  // A lookup must identify one run. Follow provider paging if the run is older.
+  const listing = await api("/pipelines?limit=100");
+  const matches = listing.data.filter(
+    (run) =>
+      run.is_pipeline &&
+      run.trigger_params?.commit_hash === context.pipeline.sha &&
+      run.trigger_params?.branch === context.pipeline.branch,
+  );
+  if (matches.length !== 1)
+    throw new Error(
+      "No unique provider pipeline; check target URLs or extend the lookup",
+    );
+  ids.add(matches[0].slug);
+}
+for (const id of ids) {
+  const path = "/pipelines/" + encodeURIComponent(id);
+  const original = await api(path);
+  if (original.trigger_params?.commit_hash !== context.pipeline.sha)
+    throw new Error(
+      "Provider pipeline does not match the original GitLab commit",
+    );
+  await api(
+    path + (context.action === "cancel" ? "/abort" : "/rebuild"),
+    context.action === "cancel"
+      ? {
+          abort_reason: "Requested from repository pipeline controls",
+          abort_with_success: false,
+        }
+      : { partial: false },
+  );
+}
+return { requested: ids.size };
+```
+
+## Standalone builds
+
+Use the [build trigger and abort API](https://docs.bitrise.io/en/bitrise-ci/api/triggering-and-aborting-builds). A retry creates a new build from the original SHA and workflow, retaining original MR and fork parameters and filling missing MR information from GitLab context. The original build remains in history. Check the trigger response's `results` array rather than deprecated top-level build fields.
+
+```javascript
+// Use this body as both repository scripts for standalone builds.
+// Add API_TOKEN and APP_SLUG secrets. Keep Git status reporting enabled.
+const base =
+  "https://api.bitrise.io/v0.1/apps/" +
+  encodeURIComponent(context.secrets.APP_SLUG);
+async function api(path, body) {
+  const response = await fetch(base + path, {
+    method: body === undefined ? "GET" : "POST",
+    headers: {
+      Authorization: context.secrets.API_TOKEN,
+      "Content-Type": "application/json",
+    },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+  if (!response.ok) throw new Error("Provider HTTP " + response.status);
+  return response.json();
+}
+const slugs = new Set();
+let needsLookup = false;
+for (const job of context.externalJobs) {
+  const match = (job.targetUrl || "").match(
+    /^https:\/\/(?:app\.)?bitrise\.io\/build\/([^/?#]+)/,
+  );
+  if (match) slugs.add(decodeURIComponent(match[1]));
+  else needsLookup = true;
+}
+if (needsLookup || !slugs.size) {
+  const listing = await api("/builds?limit=100");
+  const matches = listing.data.filter(
+    (build) =>
+      build.commit_hash === context.pipeline.sha &&
+      build.branch === context.pipeline.branch,
+  );
+  if (matches.length !== 1)
+    throw new Error(
+      "No unique provider build; check target URLs or extend the lookup",
+    );
+  slugs.add(matches[0].slug);
+}
+for (const slug of slugs) {
+  const original = (await api("/builds/" + encodeURIComponent(slug))).data;
+  const params = original.original_build_params || {};
+  if ((original.commit_hash || params.commit_hash) !== context.pipeline.sha)
+    throw new Error("Provider build does not match the original GitLab commit");
+  if (context.action === "cancel") {
+    await api("/builds/" + encodeURIComponent(slug) + "/abort", {
+      abort_reason: "Requested from repository pipeline controls",
+      abort_with_success: false,
+      skip_git_status_report: false,
+    });
+  } else {
+    const workflow = original.triggered_workflow || params.workflow_id;
+    if (!workflow) throw new Error("Original workflow is unavailable");
+    const mr = context.mergeRequest;
+    const buildParams = {
+      branch: original.branch || params.branch || context.pipeline.branch,
+      commit_hash: context.pipeline.sha,
+      workflow_id: workflow,
+      skip_git_status_report: false,
+    };
+    // Preserve the original fork/PR parameters without copying signing envs or overrides.
+    for (const key of [
+      "branch_dest",
+      "branch_repo_owner",
+      "branch_dest_repo_owner",
+      "pull_request_id",
+      "pull_request_author",
+      "pull_request_head_branch",
+      "pull_request_merge_branch",
+      "pull_request_repository_url",
+      "base_repository_url",
+      "head_repository_url",
+    ]) {
+      if (params[key] != null) buildParams[key] = params[key];
+    }
+    if (original.pull_request_id > 0)
+      buildParams.pull_request_id =
+        params.pull_request_id ?? original.pull_request_id;
+    if (original.pull_request_target_branch)
+      buildParams.branch_dest =
+        params.branch_dest ?? original.pull_request_target_branch;
+    if (mr) {
+      const originalPullRequest =
+        params.pull_request_id ?? original.pull_request_id;
+      buildParams.pull_request_id =
+        Number(originalPullRequest) > 0 ? originalPullRequest : mr.iid;
+      buildParams.branch_dest =
+        params.branch_dest ??
+        original.pull_request_target_branch ??
+        mr.targetBranch;
+      buildParams.pull_request_head_branch =
+        params.pull_request_head_branch ?? mr.sourceBranch;
+    }
+    const result = await api("/builds", {
+      hook_info: { type: "bitrise" },
+      build_params: buildParams,
+    });
+    if (
+      !result.results?.length ||
+      result.results.some((item) => item.status && item.status !== "ok")
+    )
+      throw new Error("Provider did not accept the new build");
+  }
+}
+return { requested: slugs.size };
+```
+
+Both lookup examples inspect the latest 100 runs and fail when no unique match exists. Extend provider pagination when a run is older, or ensure each GitLab status links to its exact run. Verify which target URL format your workflows report before enabling automatic retries.
+
+Provider permissions, precondition failures, and rate limits can reject an action. Scripts check HTTP failures and preserve Git status reporting. The implementation tests use mocked HTTP responses; they do not start real Bitrise builds.

@@ -1933,6 +1933,53 @@ type Mutation {
     iid: Int!
   ): GitLabMergeResult!
 
+  """Save external pipeline actions."""
+  saveExternalPipelineActions(
+    """Repository id."""
+    repositoryId: ID!
+
+    """Input."""
+    input: ExternalPipelineActionsInput!
+  ): ExternalPipelineActions!
+
+  """Set external pipeline secret."""
+  setExternalPipelineSecret(
+    """Repository id."""
+    repositoryId: ID!
+
+    """Name."""
+    name: String!
+
+    """Value."""
+    value: String!
+  ): ExternalPipelineActions!
+
+  """Delete external pipeline secret."""
+  deleteExternalPipelineSecret(
+    """Repository id."""
+    repositoryId: ID!
+
+    """Name."""
+    name: String!
+  ): ExternalPipelineActions!
+
+  """
+  Retry or cancel eligible native and external work. jobId selects one external status.
+  """
+  runGitLabPipelineAction(
+    """Project id."""
+    projectId: ID!
+
+    """Pipeline id."""
+    pipelineId: ID!
+
+    """Action."""
+    action: ExternalPipelineAction!
+
+    """Job id."""
+    jobId: ID
+  ): GitLabPipelineActionResult!
+
   """Saves Jira settings and returns the updated Jira settings."""
   saveJiraSettings(
     """Values for the requested operation."""
@@ -4938,6 +4985,21 @@ type Query {
     """Explicit source checkout to validate, when one exists."""
     worktreeId: ID
   ): GitLabMergeOptions!
+
+  """External pipeline actions."""
+  externalPipelineActions(
+    """Repository id."""
+    repositoryId: ID!
+  ): ExternalPipelineActions!
+
+  """External pipeline executions."""
+  externalPipelineExecutions(
+    """Project id."""
+    projectId: ID!
+
+    """Pipeline id."""
+    pipelineId: ID!
+  ): [ExternalPipelineExecution!]!
 
   """Returns Jira settings."""
   jiraSettings: JiraSettings!
@@ -14493,6 +14555,15 @@ type GitLabPipeline {
 
   """Queued duration for GitLabPipeline."""
   queuedDuration: Float
+
+  """Can retry."""
+  canRetry: Boolean!
+
+  """Can cancel."""
+  canCancel: Boolean!
+
+  """External executions."""
+  externalExecutions: [ExternalPipelineExecution!]!
 }
 
 """GitLabPipelinePage values exposed by the GitLab integration."""
@@ -14556,6 +14627,21 @@ type GitLabJob {
 
   """Retried for GitLabJob."""
   retried: Boolean!
+
+  """Kind."""
+  kind: GitLabJobKind!
+
+  """Target url."""
+  targetUrl: String
+
+  """Author."""
+  author: GitLabUser
+
+  """Can retry."""
+  canRetry: Boolean!
+
+  """Can cancel."""
+  canCancel: Boolean!
 }
 
 """GitLabCacheEntry values exposed by the GitLab integration."""
@@ -15198,6 +15284,151 @@ input SubmitGitLabMergeRequestMergeInput {
   Move the linked Jira issue to its configured done status after confirmed merge.
   """
   moveTicketToDone: Boolean
+}
+
+"""
+Repository scripts used to request actions from an external CI provider. Secrets are write-only.
+"""
+type ExternalPipelineActions {
+  """Repository id."""
+  repositoryId: ID!
+
+  """Enabled."""
+  enabled: Boolean!
+
+  """Retry script."""
+  retryScript: String!
+
+  """Cancel script."""
+  cancelScript: String!
+
+  """Secret names."""
+  secretNames: [String!]!
+
+  """Updated at."""
+  updatedAt: String
+}
+
+"""External pipeline actions input."""
+input ExternalPipelineActionsInput {
+  """Enabled."""
+  enabled: Boolean!
+
+  """Retry script."""
+  retryScript: String!
+
+  """Cancel script."""
+  cancelScript: String!
+}
+
+"""External pipeline action."""
+enum ExternalPipelineAction {
+  """Retry."""
+  RETRY
+
+  """Cancel."""
+  CANCEL
+}
+
+"""Pipeline action origin."""
+enum PipelineActionOrigin {
+  """Manual."""
+  MANUAL
+
+  """Automatic."""
+  AUTOMATIC
+
+  """Workflow."""
+  WORKFLOW
+
+  """Mcp."""
+  MCP
+}
+
+"""Git lab job kind."""
+enum GitLabJobKind {
+  """Native."""
+  NATIVE
+
+  """Bridge."""
+  BRIDGE
+
+  """External."""
+  EXTERNAL
+}
+
+"""Pipeline action status."""
+enum PipelineActionStatus {
+  """Running."""
+  RUNNING
+
+  """Accepted."""
+  ACCEPTED
+
+  """Failed."""
+  FAILED
+
+  """Uncertain."""
+  UNCERTAIN
+
+  """Partial."""
+  PARTIAL
+}
+
+"""
+A completed script confirms the request, not the eventual provider build outcome.
+"""
+type ExternalPipelineExecution {
+  """Id."""
+  id: ID!
+
+  """Repository id."""
+  repositoryId: ID!
+
+  """Project id."""
+  projectId: ID!
+
+  """Pipeline id."""
+  pipelineId: ID!
+
+  """Action."""
+  action: ExternalPipelineAction!
+
+  """Origin."""
+  origin: PipelineActionOrigin!
+
+  """Status."""
+  status: PipelineActionStatus!
+
+  """Targeted status ids."""
+  targetedStatusIds: [ID!]!
+
+  """Native status."""
+  nativeStatus: String!
+
+  """External status."""
+  externalStatus: String!
+
+  """Message."""
+  message: String
+
+  """Output."""
+  output: String
+
+  """Started at."""
+  startedAt: String!
+
+  """Completed at."""
+  completedAt: String
+}
+
+"""Git lab pipeline action result."""
+type GitLabPipelineActionResult {
+  """Pipeline."""
+  pipeline: GitLabPipeline!
+
+  """Execution."""
+  execution: ExternalPipelineExecution
 }
 
 """Values supported for Jira source."""

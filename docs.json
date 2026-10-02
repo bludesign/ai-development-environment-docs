@@ -156,6 +156,8 @@
               "gitlab/merge-request-detail",
               "gitlab/comments",
               "gitlab/pipelines",
+              "gitlab/external-pipeline-actions",
+              "gitlab/bitrise-recipes",
               "gitlab/webhooks",
               "gitlab/cache",
               "gitlab/workflows-tools",

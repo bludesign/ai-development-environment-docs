@@ -382,3 +382,20 @@ External calls resolve credentials at call time. Credential rotation is supporte
     Regenerating the schema and resolver types.
   </Card>
 </Columns>
+
+## External pipeline actions
+
+`externalPipelineActions(repositoryId:)` returns the enabled flag, retry/cancel sources, and secret names. Use `saveExternalPipelineActions`, `setExternalPipelineSecret`, and `deleteExternalPipelineSecret` to configure a canonical repository. Existing secret values are never readable.
+
+`GitLabPipeline.canRetry/canCancel` and `GitLabJob.kind/targetUrl/canRetry/canCancel` describe server-computed capabilities. Use `runGitLabPipelineAction(projectId:, pipelineId:, action:, jobId:)` for combined pipeline actions or one external status. Its optional execution reports component outcomes; `externalPipelineExecutions` returns the latest 20 sanitized records. Legacy pipeline mutations, MCP pipeline tools, and workflow actions use the same dispatch service. Agent credentials cannot manage this control-plane configuration.
+
+```graphql
+mutation RequestExternalRetry($projectId: ID!, $pipelineId: ID!, $jobId: ID) {
+  runGitLabPipelineAction(projectId: $projectId, pipelineId: $pipelineId, action: RETRY, jobId: $jobId) {
+    pipeline { id status }
+    execution { id status nativeStatus externalStatus message targetedStatusIds startedAt completedAt }
+  }
+}
+```
+
+See the [versioned context and failure contract](/gitlab/external-pipeline-actions).
