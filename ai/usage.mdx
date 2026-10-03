@@ -8,7 +8,7 @@ description: "Review token usage and cost across every enrolled machine."
   <img className="hidden dark:block" src="/images/dark/usage.png" alt="Usage page in dark theme" />
 </Frame>
 
-The **Usage** page at `/usage` answers "what have my AI tools actually cost?" across every machine you manage. Each visit shows durable usage history immediately, fans a fresh collection job out to your online agents, runs `ccusage --json` on each of them, and aggregates the reports into one view broken down by day, model, and agent.
+The **Usage** page at `/ai/usage` answers "what have my AI tools actually cost?" across every machine you manage. Each visit shows durable usage history immediately, fans a fresh collection job out to your online agents, runs `ccusage --json` on each of them, and aggregates the reports into one view broken down by day, model, and agent.
 
 <Note>
   This page reports what the AI tools themselves recorded on disk, covering all local usage including work you did outside this control plane. The per-run figures on a [Plan](/ai/plan-detail) or [Session](/ai/session-detail) come from the run's own token counts instead — the two answer different questions.

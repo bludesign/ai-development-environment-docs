@@ -8,7 +8,7 @@ description: "Create reusable shell commands and inspect their durable runs."
   <img className="hidden dark:block" src="/images/dark/commands.png" alt="Commands page in dark theme" />
 </Frame>
 
-The **Commands** page at `/commands` is where you save shell commands you run often and review every execution of them. It has two tabs: **Runs**, the durable history, and **Definitions**, the saved commands themselves.
+The **Commands** page at `/dashboard/commands` is where you save shell commands you run often and review every execution of them. It has two tabs: **Runs**, the durable history, and **Definitions**, the saved commands themselves.
 
 A command run is durable. The script executes as an agent job, output is retained, restarts are handled by policy, and the run keeps an immutable snapshot of exactly what was executed — so history stays accurate even after you edit the definition. A concurrency mode decides whether it starts immediately or waits for other command runs on the same target.
 

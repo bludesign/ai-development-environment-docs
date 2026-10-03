@@ -16,7 +16,7 @@ description: "Collect iOS crash reports from apps, CI, and uploads, and symbolic
   />
 </Frame>
 
-The **Crashes** page at `/crashes` collects iOS crash reports and turns the app's unnamed frames back into function names, files, and line numbers. Reports arrive from your apps through the upload API, from the dashboard and the iOS app as uploaded files, and in any of the three formats Apple platforms produce. The **dSYMs** tab at `/crashes/dsyms` holds the debug symbols they are symbolicated with — see [dSYMs](/debugging/dsyms).
+The **Crashes** page at `/debugging/crashes` collects iOS crash reports and turns the app's unnamed frames back into function names, files, and line numbers. Reports arrive from your apps through the upload API, from the dashboard and the iOS app as uploaded files, and in any of the three formats Apple platforms produce. The **dSYMs** tab at `/debugging/crashes/dsyms` holds the debug symbols they are symbolicated with — see [dSYMs](/debugging/dsyms).
 
 The iOS app shows the same crash and dSYM lists and detail screens under **Debugging → Crashes**, and can import `.crash`, `.ips`, and MetricKit `.json` files from the Files app.
 

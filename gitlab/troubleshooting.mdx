@@ -24,7 +24,7 @@ An unavailable approval or discussion result is not proof that the request is re
 
 **All accessible** requires a project to avoid an instance-wide merge-request query. On **Mine** or **Review requests**, choose a project to narrow the request, or choose **Retry** after a timeout. Your scope remains active when you choose a project.
 
-A GitLab HTTP 408 is an upstream API error. The control plane's browser request timeout is a separate failure. Inspect [API Cache](/gitlab/cache) for the failing operation and retry after checking GitLab availability and rate limits. A failed load does not mean that no merge requests match.
+A GitLab HTTP 408 is an upstream API error. The control plane's browser request timeout is a separate failure. Inspect [GitLab Cache](/gitlab/cache) for the failing operation and retry after checking GitLab availability and rate limits. A failed load does not mean that no merge requests match.
 
 ## Comments are missing
 

@@ -8,7 +8,7 @@ description: "Inspect and clean up Xcode DerivedData across enrolled agents."
   <img className="hidden dark:block" src="/images/dark/build-data.png" alt="Build Data page in dark theme" />
 </Frame>
 
-The **Build Data** page at `/build-data` is a fleet-wide view of the disk that Xcode consumes but never reclaims: per-project DerivedData folders, shared Xcode caches, and the iOS Device Support symbols kept for every iOS version that has ever been connected to one of your Macs.
+The **Build Data** page at `/system/build-data` is a fleet-wide view of the disk that Xcode consumes but never reclaims: per-project DerivedData folders, shared Xcode caches, and the iOS Device Support symbols kept for every iOS version that has ever been connected to one of your Macs.
 
 Instead of visiting each machine and deleting folders by hand, you scan every enrolled agent at once, see which folders still belong to a live worktree and which are orphans, and delete across machines in a single action.
 

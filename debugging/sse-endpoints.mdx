@@ -16,7 +16,7 @@ description: "Host SSE proxy endpoints that can forward streams, compose mocks, 
   />
 </Frame>
 
-The **SSE Endpoints** area at `/sse` creates hosted Server-Sent Events routes that can proxy an upstream server, return a composed mock, or wait for an operator at a breakpoint. The web control plane runs every stream. The iOS app provides the same endpoint, script, mock, breakpoint, shared-storage, and history controls through native screens.
+The **SSE Endpoints** area at `/debugging/sse` creates hosted Server-Sent Events routes that can proxy an upstream server, return a composed mock, or wait for an operator at a breakpoint. The web control plane runs every stream. The iOS app provides the same endpoint, script, mock, breakpoint, shared-storage, and history controls through native screens.
 
 <Warning>
   A public SSE URL is a 256-bit opaque bearer secret, not an authentication
@@ -138,7 +138,7 @@ return { event: "display_card", data: JSON.stringify(card) };
 
 ## Pause on a breakpoint
 
-Requests to a **Breakpoint** endpoint appear under `/sse/breakpoints` and in the iOS breakpoint list. Open a row to inspect its method, URL, headers, and body, then choose **Forward**, **Saved mock**, or **Ad hoc response**. The ad hoc editor uses the same composition builder as saved mocks.
+Requests to a **Breakpoint** endpoint appear under `/debugging/sse/breakpoints` and in the iOS breakpoint list. Open a row to inspect its method, URL, headers, and body, then choose **Forward**, **Saved mock**, or **Ad hoc response**. The ad hoc editor uses the same composition builder as saved mocks.
 
 Each pending breakpoint has a version. The first matching resolution wins; a concurrent second decision receives a version conflict instead of replacing it. An unresolved breakpoint returns `504` when its timeout expires before response headers are sent. Client disconnects and server-orphaned waits are retained as cancelled or failed history.
 
@@ -196,7 +196,7 @@ An oversized event fails the stream. After a stream reaches its persisted-data l
 
 ## Use global script storage
 
-Open `/sse/storage` to inspect and manage the JSON values shared by every SSE endpoint and every script location. Each entry has a monotonically increasing version. Storage supports `get`, `set`, `delete`, `compareAndSet`, `increment`, and transactional `update`; `update` retries version conflicts a bounded number of times.
+Open `/debugging/sse/storage` to inspect and manage the JSON values shared by every SSE endpoint and every script location. Each entry has a monotonically increasing version. Storage supports `get`, `set`, `delete`, `compareAndSet`, `increment`, and transactional `update`; `update` retries version conflicts a bounded number of times.
 
 ```js
 const count = await storage.increment("events-seen", 1);
@@ -247,7 +247,7 @@ A non-empty `id:` becomes the inherited stream ID. It also backfills every earli
 
 ## Search and export history
 
-Endpoint detail shows history scoped to that endpoint. `/sse/history` combines all endpoints and adds a prominent endpoint filter and endpoint-name column. History opens in **Events** with the **Source** stage selected. Both table views group records under local-date separators and support 12-hour or 24-hour times. Switch between **Streams** and **Events**, then use text, glob, or regular-expression search; quick and advanced filters; saved filters; pagination; live updates; and export.
+Endpoint detail shows history scoped to that endpoint. `/debugging/sse/history` combines all endpoints and adds a prominent endpoint filter and endpoint-name column. History opens in **Events** with the **Source** stage selected. Both table views group records under local-date separators and support 12-hour or 24-hour times. Switch between **Streams** and **Events**, then use text, glob, or regular-expression search; quick and advanced filters; saved filters; pagination; live updates; and export.
 
 Select **Columns** to show, hide, and reorder columns or manage reusable presets. You can also remove a column directly from its table heading. Select **Edit** to reveal row and date-group checkboxes, then delete selected history. **Load More** appends the next history page without replacing the records already displayed.
 

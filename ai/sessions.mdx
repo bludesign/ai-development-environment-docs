@@ -8,7 +8,7 @@ description: "Managed provider Sessions that run against a worktree."
   <img className="hidden dark:block" src="/images/dark/sessions.png" alt="Sessions page in dark theme" />
 </Frame>
 
-The **Sessions** page at `/sessions` lists implementation runs. A Session drives an AI tool against one worktree with write access and no approval prompts. Managed Sessions join that worktree's durable FIFO Session lane before they start. It is the half of the pairing that changes code — the surveying half is a [Plan](/ai/plans).
+The **Sessions** page at `/ai/sessions` lists implementation runs. A Session drives an AI tool against one worktree with write access and no approval prompts. Managed Sessions join that worktree's durable FIFO Session lane before they start. It is the half of the pairing that changes code — the surveying half is a [Plan](/ai/plans).
 
 <Warning>
   Sessions run without approval prompts and with unrestricted access. Point one at a worktree you are willing to have rewritten, not at your main checkout. Raising or removing the concurrency limit allows multiple Sessions to write to it at once.
