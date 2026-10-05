@@ -16,7 +16,7 @@ description: "Upload debug symbols from the dashboard, builds, or GitHub Actions
   />
 </Frame>
 
-The **dSYMs** tab at `/crashes/dsyms` lists the debug symbols [crash reports](/debugging/crashes) are symbolicated with. A dSYM is the `.dSYM` bundle Xcode writes next to a build; its DWARF file maps every address in the app binary back to a function, file, and line. Each dSYM is identified by the UUID of the binary it belongs to, which is also the UUID a crash report cites.
+The **dSYMs** tab at `/debugging/crashes/dsyms` lists the debug symbols [crash reports](/debugging/crashes) are symbolicated with. A dSYM is the `.dSYM` bundle Xcode writes next to a build; its DWARF file maps every address in the app binary back to a function, file, and line. Each dSYM is identified by the UUID of the binary it belongs to, which is also the UUID a crash report cites.
 
 dSYMs arrive three ways: uploaded in the dashboard, collected from builds this server runs, and posted by CI through the upload API or the [Upload dSYMs action](/debugging/upload-dsyms-action). Each upload can carry a **Project**, **Build ID**, and **Link**. The iOS app lists dSYMs and their details, and shows which crashes each one symbolicated.
 
@@ -28,7 +28,7 @@ The web and iOS API help displays shared Local, Remote, and configured Proxy add
 
 Each row is one `.dSYM` bundle: its name and bundle ID, the UUID and architecture of every slice, the version and build number from its `Info.plist`, the project, build ID, and source of its upload, its size, and how many crashes it symbolicated. A build ID that matches a build on this server links to it.
 
-Search matches names, bundle IDs, versions, UUIDs with or without dashes, projects, and build IDs. The **Project** filter lists the projects dSYMs were uploaded with. Open `/crashes/dsyms?buildId=<build>` — or **View dSYMs** on a build — to list only one build's dSYMs.
+Search matches names, bundle IDs, versions, UUIDs with or without dashes, projects, and build IDs. The **Project** filter lists the projects dSYMs were uploaded with. Open `/debugging/crashes/dsyms?buildId=<build>` — or **View dSYMs** on a build — to list only one build's dSYMs.
 
 **Uploads in progress** above the table lists uploads that are still arriving, build dSYMs waiting to be copied from their agent, and uploads that failed, with the reason. A failed build import has **Retry**.
 
@@ -47,7 +47,7 @@ Search matches names, bundle IDs, versions, UUIDs with or without dashes, projec
   />
 </Frame>
 
-The dSYM details page at `/crashes/dsyms/{id}` shows the bundle's binary, version, project, build ID, link, uploader, size, and the SHA-256 of its DWARF file; the UUID, architecture, and `__TEXT` address of each slice; the crashes it symbolicated; and the other dSYMs from the same upload.
+The dSYM details page at `/debugging/crashes/dsyms/{id}` shows the bundle's binary, version, project, build ID, link, uploader, size, and the SHA-256 of its DWARF file; the UUID, architecture, and `__TEXT` address of each slice; the crashes it symbolicated; and the other dSYMs from the same upload.
 
 | Action           | What it does                                                                                                                                        |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |

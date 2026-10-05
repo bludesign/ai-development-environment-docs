@@ -8,7 +8,7 @@ description: "Enroll iPhones and iPads, review connection history, and register 
   <img className="hidden dark:block" src="/images/dark/devices.png" alt="Devices page in dark theme" />
 </Frame>
 
-The **Devices** page at `/devices` is the register of iPhones and iPads that are allowed to run your development builds. Getting a device onto that register normally means asking someone to find their UDID in Xcode or Finder and paste it into a chat — error-prone, and unpleasant to ask of a tester outside your team.
+The **Devices** page at `/system/devices` is the register of iPhones and iPads that are allowed to run your development builds. Getting a device onto that register normally means asking someone to find their UDID in Xcode or Finder and paste it into a chat — error-prone, and unpleasant to ask of a tester outside your team.
 
 Instead, this page issues a one-time signed enrollment profile. The tester installs it, iOS returns the identifier directly to the server, and the device appears here with its product and iOS version already filled in. Registering it with Apple afterwards is a single button.
 

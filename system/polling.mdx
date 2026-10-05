@@ -8,7 +8,7 @@ description: "Inspect background server and agent operations, their cadence, fre
   <img className="hidden dark:block" src="/images/dark/polling.png" alt="Polling page in dark theme" />
 </Frame>
 
-The **Polling** page at `/polling` is the single place to see every recurring background operation that keeps the control plane and its agents in sync — how often each one runs, when it last ran, when it runs next, and why it last failed.
+The **Polling** page at `/system/polling` is the single place to see every recurring background operation that keeps the control plane and its agents in sync — how often each one runs, when it last ran, when it runs next, and why it last failed.
 
 Almost everything on the dashboard that appears to update on its own is driven by one of these operations. When a codebase looks stale, a build never starts, or a GitHub or GitLab notification never arrives, this page tells you whether the responsible loop is running, disabled, or erroring.
 

@@ -72,7 +72,7 @@ The built-in `builtin:tailscale` MCP group exposes:
 - `set_tailscale_serve_agent_enabled`
 - `delete_tailscale_serve_template`
 
-The workflow palette provides **Inspect Tailscale Serve**, **Upsert Tailscale Serve template**, **Set Tailscale Serve agent enabled**, and **Delete Tailscale Serve template**. These steps wait for the durable fleet operation, add a link back to `/tailscale`, and write operation data under `tailscale.*`. A partial fleet result follows the workflow's failure handle, where your existing retry or error-handling branch can catch it.
+The workflow palette provides **Inspect Tailscale Serve**, **Upsert Tailscale Serve template**, **Set Tailscale Serve agent enabled**, and **Delete Tailscale Serve template**. These steps wait for the durable fleet operation, add a link back to `/system/tailscale`, and write operation data under `tailscale.*`. A partial fleet result follows the workflow's failure handle, where your existing retry or error-handling branch can catch it.
 
 GraphQL clients can use `tailscaleServeOverview` and `tailscaleServeOperation`, the corresponding inspect, upsert, toggle, and delete mutations, and the two live subscriptions. Updates use `expectedRevision`; assignment inputs always send explicit `{agentId, enabled}` values.
 

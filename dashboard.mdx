@@ -8,9 +8,17 @@ description: "Live work, decisions, failures, and builds waiting to run."
   <img className="hidden dark:block" src="/images/dark/dashboard.png" alt="Action Center in dark theme" />
 </Frame>
 
-The **Action Center** is the home screen at `/`. It is a single queue built from four different resource types — AI Plans, AI Sessions, iOS builds, and workflow runs — so anything that is running, stuck, failed, or waiting on you shows up in one list instead of five separate pages.
+The **Action Center** is the home screen at `/dashboard/action-center`. It is a single queue built from four different resource types — AI Plans, AI Sessions, iOS builds, and workflow runs — so anything that is running, stuck, failed, or waiting on you shows up in one list instead of five separate pages.
 
 Nothing is added by hand. The control plane derives the list from the current state of each resource, so an item disappears on its own as soon as the underlying work moves on.
+
+## Page URLs and breadcrumbs
+
+Web page URLs follow the sidebar section: `/dashboard/...`, `/ai/...`, `/debugging/...`, `/github/...`, `/gitlab/...`, `/jira/...`, and `/system/...`. For example, open `/github/pull-requests` for **GitHub Pull Requests** or `/system/settings` for **Settings**.
+
+These paths omit the locale prefix. An English URL starts with `/en`, such as `/en/dashboard/action-center`. Opening the site root or a locale root takes you to the Action Center. Previous URLs for moved pages have no redirects; update saved bookmarks and shared links.
+
+The title-bar breadcrumb shows the section and page, such as **GitHub → Pull Requests** or **GitLab → Cache**. GitHub and GitLab page headings include the provider name, while the sidebar and breadcrumbs keep their shorter labels. The `/api/...` endpoints and `/graphql` subscription URL keep their existing paths.
 
 ## What appears here
 

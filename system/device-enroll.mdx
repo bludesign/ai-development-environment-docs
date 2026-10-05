@@ -16,7 +16,7 @@ description: "Install a temporary signed profile to send a device's development 
   />
 </Frame>
 
-The enroll device page at `/devices/enroll` collects an iPhone or iPad's development identifier without anyone having to read a UDID off a screen. You give the device a label, download a temporary signed profile, and install it — iOS reports the identifier back to the server itself.
+The enroll device page at `/system/devices/enroll` collects an iPhone or iPad's development identifier without anyone having to read a UDID off a screen. You give the device a label, download a temporary signed profile, and install it — iOS reports the identifier back to the server itself.
 
 The profile uses Apple's Profile Service payload, the same mechanism that over-the-air enrollment sites use. It is temporary, single-purpose, and requests three attributes and nothing else.
 
@@ -52,7 +52,7 @@ In the native iOS app, choose **Devices → Device Actions → Enroll a Device**
 
 ## How the flow works
 
-1. You open the authenticated `/devices/enroll` page, supply a device label, and consent to the disclosed collection. The server mints an enrollment token and issues a profile signed with the enrollment signer.
+1. You open the authenticated `/system/devices/enroll` page, supply a device label, and consent to the disclosed collection. The server mints an enrollment token and issues a profile signed with the enrollment signer.
 2. iOS installs the profile, which requests exactly `UDID`, `PRODUCT`, and `VERSION`, and carries the token as its challenge.
 3. iOS posts a CMS-signed response to `/api/public/ios/profile-response`. The server verifies Apple's signature, checks that the returned challenge matches the token, consumes the token, and records the device.
 

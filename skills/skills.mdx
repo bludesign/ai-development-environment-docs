@@ -8,7 +8,7 @@ description: "Manage reusable AI skill packages across the database, clients, ag
   <img className="hidden dark:block" src="/images/dark/skills.png" alt="Skills page in dark theme" />
 </Frame>
 
-The **Skills** page at `/skills` is the control plane for reusable AI skill packages. A skill is a folder with a `SKILL.md` and any supporting files, and AI clients read those folders from well-known locations on disk. This page keeps one canonical copy of each skill in the database and reconciles it against every copy sitting on every enrolled machine.
+The **Skills** page at `/ai/skills` is the control plane for reusable AI skill packages. A skill is a folder with a `SKILL.md` and any supporting files, and AI clients read those folders from well-known locations on disk. This page keeps one canonical copy of each skill in the database and reconciles it against every copy sitting on every enrolled machine.
 
 ## The model
 
@@ -60,7 +60,7 @@ A client that is disabled here is excluded from scanning and deployment entirely
 
 **Sync all** prepares a reconciliation across every enabled client on every agent and takes you to the [sync run](/skills/skill-sync-run) page, where you review proposed changes and resolve conflicts before anything is written. To reconcile one group instead, use **Sync group** on a [skill group](/skills/skill-group-detail).
 
-**Add skill** opens the editor on a new package at `/skills/new`, prefilled with a `SKILL.md` skeleton.
+**Add skill** opens the editor on a new package at `/ai/skills/new`, prefilled with a `SKILL.md` skeleton.
 
 ## Notes
 

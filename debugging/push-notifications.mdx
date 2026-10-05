@@ -16,7 +16,7 @@ description: "Compose, validate, target, queue, and inspect Apple push notificat
   />
 </Frame>
 
-The **Push Notifications** page at `/push-notifications` sends real Apple Push Notification service (APNs) payloads to your own devices and keeps every send on record. It covers all eleven APNs push types, validates the payload and headers before anything leaves the control plane, and reports what APNs said about each individual recipient — status, reason, `apns-id`, attempts, and round-trip time.
+The **Push Notifications** page at `/debugging/push-notifications` sends real Apple Push Notification service (APNs) payloads to your own devices and keeps every send on record. It covers all eleven APNs push types, validates the payload and headers before anything leaves the control plane, and reports what APNs said about each individual recipient — status, reason, `apns-id`, attempts, and round-trip time.
 
 This console is for the apps _you_ build here. The alerts the dashboard raises about its own work go out over a separate channel with its own device list — see [Notifications](/notifications). The two share the APNs token credential and nothing else.
 

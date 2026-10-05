@@ -8,7 +8,7 @@ description: "Design, publish, and monitor durable development automations."
   <img className="hidden dark:block" src="/images/dark/workflows.png" alt="Workflows page in dark theme" />
 </Frame>
 
-The **Workflows** page at `/workflows` is the index for durable development automations. It has two tabs: **Workflows**, the definitions you have authored, and **All runs**, every execution across every workflow.
+The **Workflows** page at `/dashboard/workflows` is the index for durable development automations. It has two tabs: **Workflows**, the definitions you have authored, and **All runs**, every execution across every workflow.
 
 A workflow is a typed graph — one trigger, then steps connected by handles — that the control plane executes durably. A run survives a control plane restart, an agent restart, and a dropped connection, picking up from the last completed step rather than starting over.
 

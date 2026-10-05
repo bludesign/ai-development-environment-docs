@@ -8,7 +8,7 @@ description: "Saved prompts you can start as a Plan or Session later."
   <img className="hidden dark:block" src="/images/dark/drafts.png" alt="Drafts page in dark theme" />
 </Frame>
 
-The **Drafts** page at `/drafts` holds run configurations you have written but not started. A draft is not just a prompt — it stores the whole form from the [new run](/ai/run-new) page: the mode, the worktree, the Jira ticket, the tool, model and effort, the web-search and MCP tool choices, and any attachments. Opening one reopens that form exactly as you left it.
+The **Drafts** page at `/ai/drafts` holds run configurations you have written but not started. A draft is not just a prompt — it stores the whole form from the [new run](/ai/run-new) page: the mode, the worktree, the Jira ticket, the tool, model and effort, the web-search and MCP tool choices, and any attachments. Opening one reopens that form exactly as you left it.
 
 ## The draft list
 
@@ -24,7 +24,7 @@ Rows are grouped by the day they were last updated, newest first.
 | Attachments | How many files are attached |
 | Age | Relative time since the draft was last updated |
 
-Clicking a row opens `/runs/new?draft={id}`, which is the same editor prefilled from the draft. **New draft** opens the editor empty.
+Clicking a row opens `/ai/drafts/new?draft={id}`, which is the same editor prefilled from the draft. **New draft** opens the editor empty.
 
 ## Filtering and bulk edits
 

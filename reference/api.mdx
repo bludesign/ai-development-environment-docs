@@ -272,8 +272,8 @@ The dashboard and the control agents use a handful of further routes. They are p
 | `GET /api/worktrees/{worktreeId}/diff-image`                         | Rendering an image diff for a worktree change                       |
 | `POST /api/ios/enrollment/start`                                     | Starting a signed iOS device enrollment                             |
 | `GET /api/ios/devices/export.tsv`                                    | Exporting device UDIDs for the Apple Developer portal               |
-| `GET /{locale}/builds/{buildId}/output`                              | Opening a build's authenticated raw terminal output                 |
-| `GET /{locale}/commands/runs/{runId}/output`                         | Opening a command run's authenticated raw terminal output           |
+| `GET /{locale}/dashboard/builds/{buildId}/output`                    | Opening a build's authenticated raw terminal output                 |
+| `GET /{locale}/dashboard/commands/runs/{runId}/output`               | Opening a command run's authenticated raw terminal output           |
 
 <Warning>
   These stay behind whatever authentication protects the dashboard.

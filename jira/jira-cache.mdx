@@ -8,7 +8,7 @@ description: "Inspect cached Jira data, API usage, latency, and errors."
   <img className="hidden dark:block" src="/images/dark/jira-cache.png" alt="Jira Cache page in dark theme" />
 </Frame>
 
-Every Jira read in this product goes through one persistent cache. The **Jira Cache** page at `/jira-cache` is where that cache is tuned and audited: how long responses stay fresh, how many calls each operation made, how many were answered without contacting Jira, how long they took, what failed, and which issues are materialized right now.
+Every Jira read in this product goes through one persistent cache. The **Jira Cache** page at `/jira/cache` is where that cache is tuned and audited: how long responses stay fresh, how many calls each operation made, how many were answered without contacting Jira, how long they took, what failed, and which issues are materialized right now.
 
 Open it when Jira feels slow, when a page is showing data you know is out of date, or when you want to see how much API traffic a board or a JQL query is actually generating.
 
