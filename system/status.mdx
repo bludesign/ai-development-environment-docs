@@ -17,9 +17,11 @@ The **Installed versions** card reports the version of the running server packag
 - Next.js
 - Claude Agent SDK
 - Codex SDK
-- OpenCode SDK
+- OpenCode client
 
 The server reads its version from the installed package at runtime. A source checkout falls back to the version in its package manifest.
+
+OpenCode runs require a compatible OpenCode 2 CLI on the agent. The client package version does not replace the CLI compatibility check; see [OpenCode 2](/reference/opencode).
 
 Each agent card shows that agent's reported version beside its connection state. Versions can differ during a rolling upgrade.
 

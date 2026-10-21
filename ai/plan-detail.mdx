@@ -66,7 +66,7 @@ Which actions appear depends on the run's state and on what the AI tool supports
 
 ## Questions and answer revisions
 
-When a run needs a decision it posts a question batch, which appears inline as an **Answer needed** card: each question with its options, optional multi-select, and a free-text field where the run allows a custom answer. Submitting the answers resumes the run.
+When a run needs a decision it posts a question batch, which appears inline as an **Answer needed** card. OpenCode 2 forms support typed text, number, integer, boolean, multiselect, and external-step controls in web and iOS run details. Defaults, constraints, and conditional visibility come from the native form. Opening an external link does not complete the field; acknowledge completion separately. **Cancel form** cancels the native request without cancelling the Plan. Rejected submissions remain editable with their delivery error. Other providers keep their existing choice and free-text controls. See [native forms](/reference/opencode#answer-native-forms).
 
 Answered batches stay on the page as history, and a managed run whose batch still has its checkpoint can be revised:
 

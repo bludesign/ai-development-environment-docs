@@ -16,7 +16,7 @@ The server binds two ports, not one.
 | HTTP (dashboard, GraphQL, REST, MCP) | `PORT`, `HOSTNAME`                   | `3090`                            | `3000`                         |
 | Agent GraphQL WebSocket              | `AGENT_WS_PORT`, `AGENT_WS_HOSTNAME` | `3091`                            | `3092` under `npm run dev:all` |
 
-The WebSocket listener carries GraphQL subscriptions: agent job traffic, live build and run output, and the dashboard's own streaming updates. Control agents dial it outbound, so managed machines and agent containers never expose a listening port of their own.
+The WebSocket listener carries GraphQL subscriptions: agent job traffic, live build and run output, and the dashboard's own streaming updates. Control agents dial it outbound, so agents require no published inbound port. OpenCode services use authenticated loopback connections on the managed machine; see [OpenCode 2](/reference/opencode).
 
 The app also rewrites `/graphql` on the HTTP origin to the WebSocket listener, and the browser defaults to `wss://<page host>/graphql` when `NEXT_PUBLIC_AGENT_WS_URL` is unset. That is what makes a single-origin deployment possible.
 
@@ -190,7 +190,7 @@ Each candidate is parsed and validated as an IP address — bracketed IPv6, an a
 </Warning>
 
 - Use only the documented Better Auth and integration [public-route allowlist](#cloudflare-access-paths).
-- Set and back up a stable `APP_SECRET`. It signs sessions, encrypts stored credentials, and signs install links.
+- Keep and back up a stable app-secret root. Configure `APP_SECRET` explicitly, or use [automatic Keychain storage](/reference/environment-variables#automatic-app-secret-storage) on macOS and back up that entry. It signs sessions and install links; database credential storage also uses its derived encryption key.
 - List every hostname this server is reached at in `APP_ORIGINS`, and use exact hosts — wildcards are rejected in production because they widen both the CSRF check and the post-login redirect allowlist. Leaving it unset is supported but lets a forged `Host` steer the URLs this server generates.
 - Create an `aide_` [API key](/system/api-keys) for every GraphQL or MCP client. Never bypass those endpoints.
 - Enable `TRUST_PROXY_HEADERS` only when a proxy in front of this server sets the forwarded headers and strips client-supplied copies.

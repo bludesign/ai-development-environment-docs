@@ -5,21 +5,21 @@ description: "Every environment variable the control plane and the local agent r
 
 The server reads its configuration from the environment. A source checkout loads `.env`; the Homebrew service reads `$(brew --prefix)/etc/ai-development-environment.env`; the container image takes `--env` flags or an env file. `.env.example` in the repository mirrors this page.
 
-`APP_SECRET` is the only required variable. Everything else has a working default.
+`APP_SECRET` is required for database and Vault credential storage, including local development. On macOS with `CREDENTIAL_STORAGE_TYPE=keychain`, you can leave it unset or blank to use automatic Keychain storage. Additional variables are required when you select Vault or OIDC authentication.
 
 | Variable        | Required                  |
 | --------------- | ------------------------- |
-| `APP_SECRET`    | Always, including locally |
-| Everything else | No                        |
+| `APP_SECRET`    | Except for automatic macOS Keychain storage |
+| Other variables | Depend on the selected backend and authentication mode |
 
 ## Core
 
-<ParamField path="APP_SECRET" type="string" required>
+<ParamField path="APP_SECRET" type="string">
   The root secret. Must be base64 or hex encoding of **exactly 32 random bytes** — a passphrase is rejected. Generate one with `openssl rand -base64 32`.
 
-Session signing, credential encryption, and install-link signing are each derived from it with a separate HKDF label, so a leak of one derived key tells an attacker nothing about the others. Back it up: without it, stored credentials cannot be read.
+Session signing, database credential encryption, and install-link signing are each derived from it with a separate HKDF label, so a leak of one derived key tells an attacker nothing about the others. Back it up: database credential payloads cannot be read without it. Vault and Keychain integration credentials do not depend on this root.
 
-The Homebrew service generates one into its environment file on first start if you have not set one.
+An explicit environment value always takes precedence. If it is invalid, startup fails without consulting Keychain. When it is unset or blank on macOS with Keychain credential storage, the server reads or creates a persistent Keychain entry instead. See [automatic storage](#automatic-app-secret-storage).
 
 </ParamField>
 
@@ -114,6 +114,8 @@ The remaining variables apply only when `AUTH_MODE` is `oidc` or `both`. Supply 
 
 Database storage is always encrypted with a key derived from `APP_SECRET`. There is no plaintext mode and no separate encryption key to configure. Vault and Keychain storage never use the derived key.
 
+On macOS, selecting `keychain` also enables automatic app-secret storage when `APP_SECRET` is absent. Homebrew already selects it; npm and source installs must opt in. Other platforms require an explicit `APP_SECRET` and report the unsupported Keychain credential backend.
+
 </ParamField>
 
 Vault settings apply only when `CREDENTIAL_STORAGE_TYPE=vault`. See [credential storage](/system/credentials).
@@ -138,6 +140,7 @@ Vault settings apply only when `CREDENTIAL_STORAGE_TYPE=vault`. See [credential 
 | `AGENT_WS_HOSTNAME`                  | Interface the agent GraphQL WebSocket binds to                               | `127.0.0.1`                                 |
 | `AGENT_WS_PORT`                      | Agent GraphQL WebSocket port                                                 | `3091`                                      |
 | `NEXT_PUBLIC_AGENT_WS_URL`           | WebSocket URL compiled into the browser bundle                               | Derived from the port above                 |
+| `CONTROL_AGENT_OPENCODE_EXECUTABLE` | Absolute OpenCode 2 executable path; an invalid explicit override fails | Auto-detected |
 | `CONTROL_AGENT_TAILSCALE_EXECUTABLE` | Absolute `tailscale` executable path used by a control agent                 | Auto-detected                               |
 | `CONTROL_AGENT_DSYM_CACHE`           | Where a macOS agent caches DWARF files for crash symbolication, up to 10 GiB | `~/Library/Caches/control-agent/dsym-cache` |
 
@@ -179,9 +182,40 @@ None of these are read by a production install.
 | `SIDEBAR_USAGE_COLLECTION_DISABLED`  | Skips sidebar usage collection during captures                 |
 | `ADE_IOS_DEVICE_SUPPORT_DIRECTORY`   | Overrides where the agent looks for iOS device support files   |
 
+## Automatic app-secret storage
+
+With `CREDENTIAL_STORAGE_TYPE=keychain` on macOS, leave `APP_SECRET` unset or blank. Before serving requests, the server loads the root from your login Keychain. If the entry is absent, it generates 32 random bytes, stores their base64 encoding, and confirms persistence before starting services.
+
+| Property | Value |
+| --- | --- |
+| Keychain service | `com.bludesign.ai-development-environment.app-secret` |
+| Account | `APP_SECRET` |
+| Scope | One shared root per macOS account, across server installations |
+| Environment precedence | An explicit valid `APP_SECRET` wins; it is never copied into Keychain |
+| Persistence | Keychain only; the resolved root is passed to existing consumers through the server process's environment |
+
+This entry is separate from the integration credential service `com.bludesign.ai-development-environment.credentials`. It does not appear in the [Credentials](/system/credentials) inventory. Restarting or upgrading the server reuses it. Builds never read or create it.
+
+Back up the app-secret entry and run the server as your normal macOS user, without `sudo`. Removing an environment override switches to the existing or newly generated Keychain root, which can sign users out and invalidate outstanding install links. Deleting the entry lets the next startup generate a new root with the same effects. To preserve sessions and links, retain or restore the original root.
+
+### Startup failures and recovery
+
+The server generates a root only when Keychain confirms the entry is absent. It stops startup if Keychain access fails, the stored value is malformed, or a write cannot be confirmed. It never replaces an invalid entry automatically.
+
+| Failure | Recovery |
+| --- | --- |
+| Keychain is locked, access is denied, or the native adapter cannot open it | Unlock your login Keychain and grant the server access, or configure `APP_SECRET` explicitly |
+| Stored root is empty or malformed | Restore the original base64 or hex encoding of 32 bytes, or configure a valid explicit `APP_SECRET` |
+| Initialization lock cannot be acquired | Check permissions under `~/.ai-development-environment/` and retry startup |
+| Keychain is selected on Linux or in a container without `APP_SECRET` | Configure an explicit secret; automatic storage is macOS-only |
+
+Concurrent first starts coordinate through `~/.ai-development-environment/app-secret.lock`. Lock acquisition retries for up to 30 seconds, active locks receive heartbeat updates, and abandoned locks can be recovered after 10 seconds without an update. The lock contains no secret. The server rechecks Keychain after acquiring the lock so competing starts reuse one root.
+
 ## Rotating APP_SECRET
 
-Rotation signs every user out and invalidates outstanding install links. Stored credentials are preserved as long as the old value is supplied:
+Changing the active root signs every user out and invalidates outstanding install links. Vault and Keychain integration credentials remain usable without `APP_SECRET_PREVIOUS` because those backends do not use its derived encryption key. Supplying an explicit root overrides automatic Keychain storage without changing the Keychain entry.
+
+For database credential storage, preserve existing payloads by supplying the old value alongside the new one:
 
 ```bash
 APP_SECRET="<the new value>"
@@ -190,7 +224,7 @@ APP_SECRET_PREVIOUS="<the old value>"
 
 On the next start, every credential sealed under the old root is re-encrypted under the new one, then `APP_SECRET_PREVIOUS` can be removed. The step is idempotent, so an interrupted start simply resumes.
 
-Without `APP_SECRET_PREVIOUS`, a changed `APP_SECRET` refuses to start rather than silently losing access to stored credentials. `APP_SECRET_PREVIOUS` accepts several values, comma-separated, so a rotation can roll across replicas.
+When existing database credentials use another root, omitting `APP_SECRET_PREVIOUS` causes startup to fail rather than silently losing access to those payloads. `APP_SECRET_PREVIOUS` accepts several values, comma-separated, so a rotation can roll across replicas. It does not update or recover the automatic Keychain app-secret entry.
 
 ## Retired variables
 

@@ -20,13 +20,13 @@ There are four ways to install AI Development Environment. Pick one, then enroll
 - Docker, for the container install.
 - Xcode and its command line tools, if you plan to run iOS builds.
 
-Every production install needs one stable Better Auth secret and the origin you use to open it. Generate the secret once, store it outside source control, and keep it across upgrades:
+Every server needs a stable root secret for sessions and signed install links. Homebrew installs on macOS load or generate it in your login Keychain automatically. For database or Vault credential storage, generate `APP_SECRET` once, store it outside source control, and keep it across upgrades:
 
 ```bash
 openssl rand -base64 32
 ```
 
-The examples below use password authentication. See [Authentication](/reference/authentication) to use OAuth/OIDC instead or alongside it.
+`APP_ORIGINS` is optional; set it to pin the hostnames you use to open the server. The examples below use password authentication. See [Authentication](/reference/authentication) to use OAuth/OIDC instead or alongside it.
 
 ## Option 1: Homebrew (macOS)
 
@@ -41,13 +41,15 @@ The examples below use password authentication. See [Authentication](/reference/
 
   </Step>
   <Step title="Know where things live">
-    The SQLite database is stored under Homebrew's `var/ai-development-environment/`, logs are in `$(brew --prefix)/var/log/`, and every setting — including the credential and Vault variables — lives in the owner-only file:
+    The SQLite database is stored under Homebrew's `var/ai-development-environment/`, logs are in `$(brew --prefix)/var/log/`, and persistent environment settings — including the credential and Vault variables — live in the owner-only file:
 
     ```bash
     $(brew --prefix)/etc/ai-development-environment.env
     ```
 
-    The service generates `APP_SECRET` into that file on first start and defaults `APP_ORIGINS` to `localhost:3090,127.0.0.1:3090`, so nothing else is required. Add `AUTH_MODE=password` to the file if you want the mode written down explicitly. Then start the service:
+    Homebrew selects `CREDENTIAL_STORAGE_TYPE=keychain`. Leave `APP_SECRET` unset or blank: before serving requests, the control plane loads it from your login Keychain or generates and persists one if the entry is absent. It uses service `com.bludesign.ai-development-environment.app-secret`, account `APP_SECRET`, separately from integration credentials. All installations under the same macOS account share this secret. No generated secret is written to the environment file.
+
+    An explicit `APP_SECRET` always takes precedence and is never copied into Keychain. `AUTH_MODE` defaults to `password`; `APP_ORIGINS` is optional. Start the service:
 
     ```bash
     brew services start ai-development-environment
@@ -56,10 +58,10 @@ The examples below use password authentication. See [Authentication](/reference/
     Restart with `brew services restart ai-development-environment` after editing it.
 
     <Warning>
-      Back up the generated `APP_SECRET`. It signs sessions and encrypts stored credentials; replacing it without listing the old value in `APP_SECRET_PREVIOUS` makes stored credentials unreadable.
+      Back up the app-secret Keychain entry. Changing the active secret signs users out and invalidates signed install links. Keychain integration credentials do not depend on it. Removing an environment override activates the stored or newly generated Keychain secret. See [automatic storage and recovery](/reference/environment-variables#automatic-app-secret-storage).
     </Warning>
 
-    To reach this install by any other hostname, add it to `APP_ORIGINS` in the same file.
+    Set `APP_ORIGINS` in the same file to pin the hostnames this install accepts and uses in generated links. If Keychain access fails or the stored secret is malformed, startup stops; unlock your login Keychain and grant access, restore the original entry, or supply `APP_SECRET` explicitly.
 
   </Step>
 </Steps>
@@ -81,13 +83,17 @@ The examples below use password authentication. See [Authentication](/reference/
 
   </Step>
   <Step title="Start the server">
+    Use the secret you generated above, and retain it for later starts:
+
     ```bash
-    APP_SECRET="$(openssl rand -base64 32)" \
+    APP_SECRET="paste-your-generated-secret-here" \
     APP_ORIGINS="localhost:3090,127.0.0.1:3090" \
     ai-development-environment
     ```
 
     The command applies pending migrations, then serves `http://127.0.0.1:3090` with agent GraphQL WebSockets on `ws://127.0.0.1:3091/graphql`. Its SQLite database is stored at `~/.ai-development-environment/production.db`.
+
+    On macOS, you can select `CREDENTIAL_STORAGE_TYPE=keychain` and leave `APP_SECRET` unset or blank to use [automatic app-secret storage](/reference/environment-variables#automatic-app-secret-storage).
 
   </Step>
 </Steps>
@@ -117,7 +123,7 @@ docker run --detach \
   ghcr.io/bludesign/ai-development-environment:latest
 ```
 
-The server applies pending migrations, listens on both container ports, and stores SQLite state beneath `/data`. The agent is a separate image and opens no listening port.
+The server applies pending migrations, listens on both container ports, and stores SQLite state beneath `/data`. The agent is a separate image and needs no published port; its OpenCode services use authenticated loopback connections.
 
 See [Docker](/reference/docker) for the complete Docker Compose deployment, one-time agent enrollment, persistent AI-provider credentials, and repository or external-disk mounts.
 
@@ -132,7 +138,7 @@ See [Docker](/reference/docker) for the complete Docker Compose deployment, one-
     ```
   </Step>
   <Step title="Configure the database">
-    Copy the example environment file and adjust `DATABASE_URL` if you want the SQLite file somewhere other than `prisma/dev.db`. Only `file:` URLs are accepted. Set `APP_SECRET` to the output of `openssl rand -base64 32`; it is required in development too. Localhost is trusted automatically, so `APP_ORIGINS` is only needed if you reach the dev server by another hostname.
+    Copy the example environment file and adjust `DATABASE_URL` if you want the SQLite file somewhere other than `prisma/dev.db`. Only `file:` URLs are accepted. With the default database credential storage, set `APP_SECRET` to the output of `openssl rand -base64 32`; development requires a stable secret too. On macOS, you can instead set `CREDENTIAL_STORAGE_TYPE=keychain` and remove or blank the example's `APP_SECRET` placeholder to use automatic Keychain storage. Localhost is trusted automatically, so `APP_ORIGINS` is only needed if you reach the dev server by another hostname.
 
     ```bash
     cp .env.example .env
@@ -188,7 +194,7 @@ Every signed-in user has full application and user-management access. Open [User
 
 ## Enroll a control agent
 
-The dashboard needs at least one enrolled agent before it can create worktrees, run commands, or start builds. Every agent connects outbound only and never exposes a listening port.
+The dashboard needs at least one enrolled agent before it can create worktrees, run commands, or start builds. Every agent connects outbound to the control plane and requires no published inbound port. OpenCode services use authenticated local loopback connections; see [OpenCode 2](/reference/opencode).
 
 <Steps>
   <Step title="Install the agent">
@@ -248,7 +254,9 @@ Long-lived Jira, GitHub, cache-server, MCP, iOS signing, App Store Connect, and 
     CREDENTIAL_STORAGE_TYPE="keychain"
     ```
 
-    Selecting it on Linux or in a container leaves the app running but reports an unsupported-backend error, and credential-dependent operations fail.
+    On macOS, leave `APP_SECRET` unset or blank to load or create it in a separate Keychain entry, service `com.bludesign.ai-development-environment.app-secret`, account `APP_SECRET`. It is shared by installations under the same macOS account. An explicit `APP_SECRET` wins without reading or writing that entry. Back up the entry and run the server without `sudo`. See [automatic storage and recovery](/reference/environment-variables#automatic-app-secret-storage).
+
+    Automatic app-secret storage is unavailable on Linux and in containers; an explicit `APP_SECRET` is required there. With one configured, the app starts but reports the unsupported Keychain credential backend, and credential-dependent operations fail.
 
   </Tab>
   <Tab title="Vault">

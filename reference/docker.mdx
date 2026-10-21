@@ -53,7 +53,7 @@ volumes:
   agent-home:
 ```
 
-The server stores its SQLite database in `server-data`. The agent stores its enrollment in `agent-data` and AI-provider credentials in `agent-home`. The agent opens outbound connections only and does not publish a port.
+The server stores its SQLite database in `server-data`. The agent stores its enrollment in `agent-data` and AI-provider credentials in `agent-home`. The agent connects outbound to the control plane and needs no published port. OpenCode services listen only on authenticated loopback connections inside the container.
 
 Create a `.env` file beside `compose.yaml` before starting:
 
@@ -128,11 +128,13 @@ Docker Desktop or OrbStack may require you to allow access to the external path 
 
 ## Runtime capabilities
 
-The Linux agent image runs as the non-root `node` user and includes Git, SSH, Codex, OpenCode, and the Claude Agent SDK. It can manage codebases, worktrees, commands, workflows, coverage, skills, and AI runs.
+The Linux agent image runs as the non-root `node` user and includes Git, SSH, Codex, OpenCode 2.1.1 (`@opencode/cli`), and the Claude Agent SDK. See [OpenCode 2](/reference/opencode) for provider authentication and migration requirements. It can manage codebases, worktrees, commands, workflows, coverage, skills, and AI runs.
 
 Xcode build data, iOS builds, and signing-asset jobs are macOS-only. Install the control agent through Homebrew or npm on a Mac that needs those capabilities.
 
 ## Operate and update
+
+For the OpenCode 2 upgrade, deploy the server and let its database migration finish before updating agents. Update the iOS app before using it to answer native forms.
 
 ```bash
 docker compose ps
