@@ -61,7 +61,7 @@ An agent with no matching worktrees, usage, or runs produces empty results. Offl
 ## How it fits together
 
 - The **control plane** is a Next.js app with a GraphQL API and a SQLite database that you run on your own machine or server.
-- Each managed machine runs a **control agent** that makes outbound HTTP and GraphQL WebSocket connections to the control plane. Managed machines and agent containers never expose a listening port.
+- Each managed machine runs a **control agent** that makes outbound HTTP and GraphQL WebSocket connections to the control plane. Agents require no published inbound port; OpenCode services use authenticated local loopback connections.
 - Agent identity and job history are durable, so jobs, builds, and Sessions survive restarts while subscriptions deliver live output.
 - Long-lived Jira, GitHub, signing, and APNs credentials and their connection settings go through a server-only [credential service](/system/credentials) backed by the database, HashiCorp Vault, or the macOS Keychain.
 

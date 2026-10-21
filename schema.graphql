@@ -83,6 +83,9 @@ type ActionCenterQuestionOption {
 
 """Represents an action center question in the GraphQL API."""
 type ActionCenterQuestion {
+  """Native typed form field definition, when supplied by the provider."""
+  field: JSON
+
   """Stable identifier for this action center question."""
   id: ID!
 
@@ -113,6 +116,9 @@ type ActionCenterQuestion {
 
 """A batch of action center questions processed together."""
 type ActionCenterQuestionBatch {
+  """Most recent native answer delivery error."""
+  error: String
+
   """Stable identifier for this action center question batch."""
   id: ID!
 
@@ -2511,6 +2517,32 @@ type Mutation {
     """The answers used to filter or perform the operation."""
     answers: JSON!
   ): AgentRun!
+
+  """Cancels a pending native form and lets the run continue."""
+  cancelRunQuestion(
+    """Identifier of the pending question batch."""
+    batchId: ID!
+  ): AgentRun!
+
+  """
+  Reports an authoritative native question resolution or rejected submission.
+  """
+  reportRunQuestionResolution(
+    """Identifier of the owning managed run."""
+    runId: ID!
+
+    """Provider identifier of the form or permission request."""
+    nativeRequestId: String!
+
+    """Native request state: ANSWERED, CANCELLED, or PENDING after rejection."""
+    status: String!
+
+    """Typed or legacy answers supplied by the native client."""
+    answers: JSON
+
+    """Native answer delivery error, when the request remains pending."""
+    error: String
+  ): RunQuestionBatch!
 
   """Prepares a run answer revision and returns an agent run."""
   prepareRunAnswerRevision(
@@ -18308,6 +18340,9 @@ type RunQuestionOption {
 
 """Represents a run question in the GraphQL API."""
 type RunQuestion {
+  """Native typed form field definition, when supplied by the provider."""
+  field: JSON
+
   """Stable identifier for this run question."""
   id: ID!
 
@@ -18359,6 +18394,9 @@ type RunAnswerRevision {
 
 """A batch of run questions processed together."""
 type RunQuestionBatch {
+  """Most recent native answer delivery error."""
+  error: String
+
   """Stable identifier for this run question batch."""
   id: ID!
 
@@ -19111,6 +19149,9 @@ input RunQuestionOptionInput {
 
 """Values used to run a question."""
 input RunQuestionInput {
+  """Native typed form field definition."""
+  field: JSON
+
   """Identifier of the run question to affect."""
   id: ID
 

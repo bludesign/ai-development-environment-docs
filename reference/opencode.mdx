@@ -1,0 +1,83 @@
+---
+title: "OpenCode 2"
+description: "Install OpenCode 2 for managed runs, migrate configuration, and answer native forms in the web and iOS apps."
+---
+
+AI Development Environment requires OpenCode `>=2.1.1 <3` on each agent machine that runs OpenCode plans or sessions. The agent uses `@opencode/client` 2.1.1, and the Linux agent image includes `@opencode/cli` 2.1.1.
+
+## Install and connect a provider
+
+```bash
+npm install -g @opencode/cli@2.1.1
+opencode --version
+opencode auth login
+```
+
+On macOS, you can install with `brew install anomalyco/tap/opencode-v2` instead. Connect providers through OpenCode's `/connect` interface or `opencode auth login`, then check authentication under [System → Status](/system/status).
+
+<Warning>
+  OpenCode 1's `opencode-ai` package and the old `@opencode-ai/sdk/v2`
+  entrypoint do not provide OpenCode 2 support. Remove a package-managed
+  OpenCode 1 installation before installing OpenCode 2: both install an
+  `opencode` command.
+</Warning>
+
+If the service cannot find the intended installation, set `CONTROL_AGENT_OPENCODE_EXECUTABLE` to its absolute executable path in the agent's environment and restart the agent. An invalid explicit path fails rather than silently selecting another installation. The integration checks the CLI and server versions and reports incompatible versions.
+
+The agent reads enabled models, provider names, and model variants for the selected worktree. Different worktrees can offer different models and effort choices. Choose the worktree before choosing a model; there is no fixed OpenCode effort scale.
+
+## Migrate configuration
+
+Supported existing global and project configuration and `.opencode/skills` locations remain usable. Review the [OpenCode migration guide](https://opencode.ai/v2/docs/migrate-v1/) before upgrading:
+
+- OpenCode 1 plugins require porting to the new plugin API.
+- Native v2 MCP configuration nests server connections beneath `mcp.servers`. See the [OpenCode MCP documentation](https://opencode.ai/v2/docs/mcp-servers/).
+- Terminal preferences migrate to the global `cli.json` file.
+
+Control-plane [MCP presets](/system/tools#mcp-tool-presets) remain the way to select tools for a managed run. The agent registers those connections at runtime. Runs carrying MCP credentials use separate owned OpenCode services, keeping their connection headers separate from concurrent runs.
+
+## Local services and history
+
+The agent starts authenticated OpenCode services on loopback, with private registration state beneath its configuration directory. You do not need to publish or forward their ports. The reusable agent service is separate from services created for individual MCP runs, which the agent closes during cleanup.
+
+The agent can inspect a discoverable compatible shared OpenCode service for active sessions. It does not start or stop that shared service.
+
+OpenCode's native history migration must finish before the agent imports a new history snapshot. While migration is running, synchronization defers and retries. Migration errors are reported, and a partial or failed refresh does not replace an existing complete transcript. For a stalled import, inspect OpenCode's migration status and error before retrying; restarting the control plane does not repair a failed native migration.
+
+Provider credentials remain on the agent machine. Control-plane MCP credentials are supplied to owned runtime connections. Imported messages, form definitions, submitted answers, answer revisions, and delivery errors are stored by the control plane and can contain sensitive information; apply the same access and backup policies as other run history.
+
+## Answer native forms
+
+The web and iOS run details support text, number, integer, boolean, multiselect, and external-step fields. The iOS Action Center uses the same native controls.
+
+- Text fields can offer labeled choices, custom answers, formats, patterns, and length limits. Display labels can differ from the values submitted to OpenCode.
+- Number and integer fields enforce their limits. `0` and boolean **No** are valid answers, distinct from an unanswered field.
+- Defaults initialize new entries. Conditional fields are evaluated in field order, and inactive answers are omitted when you submit. Hidden fields can carry defaults.
+- Opening an external link does not answer it. Finish the external step, then select **I completed the external step** before submitting.
+- **Cancel form** cancels the native request and allows the run to continue. It is separate from cancelling the entire run.
+
+A rejected native submission returns the form to an editable state with its delivery error. Answers or cancellations made in a native OpenCode client are reconciled into the control plane. Refresh if the display is stale.
+
+The iOS app retains unfinished entries in scene restoration state, which may include sensitive answers on the device. Answer history preserves the submitted native types and maps stored choice values back to their labels. Revising an answer initializes from the recorded answers, without adding defaults to fields that were left unanswered. See [Plans](/ai/plan-detail#questions-and-answer-revisions) and [Sessions](/ai/session-detail#intervening) for rollback and stash behavior.
+
+### GraphQL answers
+
+For a question whose `field` is non-null, use its native `field.key`, with each answer inside a `value` envelope:
+
+```json
+{
+  "environment": { "value": "staging" },
+  "retries": { "value": 0 },
+  "confirmed": { "value": false },
+  "checks": { "value": ["unit", "integration"] },
+  "authorization": { "value": true }
+}
+```
+
+Send that object to `answerRunQuestion` or `reviseRunAnswer`. Validate and omit inactive fields before submission. `cancelRunQuestion(batchId: ID!)` cancels a pending native form. Read `RunQuestionBatch.error` when delivery is rejected. Questions without `field` keep their existing question-ID and `answers` array representation, including Claude and Codex questions.
+
+## Upgrade order
+
+Deploy the updated control plane and apply its additive database migration before upgrading agents. The migration adds nullable native-field storage and a delivery-error column; existing questions and answers keep their representation. Update the iOS app to use the native form controls before answering new OpenCode forms from that app.
+
+For Docker deployments, update the server first and wait for it to become healthy, then update the agent. Back up the database and agent credential volumes using your normal deployment procedure. See [Docker](/reference/docker#operate-and-update).

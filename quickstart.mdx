@@ -117,7 +117,7 @@ docker run --detach \
   ghcr.io/bludesign/ai-development-environment:latest
 ```
 
-The server applies pending migrations, listens on both container ports, and stores SQLite state beneath `/data`. The agent is a separate image and opens no listening port.
+The server applies pending migrations, listens on both container ports, and stores SQLite state beneath `/data`. The agent is a separate image and needs no published port; its OpenCode services use authenticated loopback connections.
 
 See [Docker](/reference/docker) for the complete Docker Compose deployment, one-time agent enrollment, persistent AI-provider credentials, and repository or external-disk mounts.
 
@@ -188,7 +188,7 @@ Every signed-in user has full application and user-management access. Open [User
 
 ## Enroll a control agent
 
-The dashboard needs at least one enrolled agent before it can create worktrees, run commands, or start builds. Every agent connects outbound only and never exposes a listening port.
+The dashboard needs at least one enrolled agent before it can create worktrees, run commands, or start builds. Every agent connects outbound to the control plane and requires no published inbound port. OpenCode services use authenticated local loopback connections; see [OpenCode 2](/reference/opencode).
 
 <Steps>
   <Step title="Install the agent">

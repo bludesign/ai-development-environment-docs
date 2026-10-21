@@ -206,6 +206,7 @@
               "reference/authentication",
               "reference/environment-variables",
               "reference/docker",
+              "reference/opencode",
               "reference/development",
               "reference/api",
               "reference/database",

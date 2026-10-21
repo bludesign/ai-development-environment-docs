@@ -44,7 +44,7 @@ The new run page at `/ai/drafts/new` is the single form for starting AI work: pi
 The picker is grouped by tool — Codex, Claude, OpenCode — and a tool that serves more than one catalog gets a heading per group, because the difference between them is usually a billing one. Alongside each model sits its effort scale.
 
 <Note>
-  Effort is not a shared scale: Codex ranks six levels, Claude five, OpenCode two. The effort icon draws the model's whole ramp and lights the part you have reached, so **high** reads correctly as mid-scale on one tool and near the top on another. **Auto** hands the choice to the provider and is drawn as a plain chip rather than a position on the scale.
+  Effort is not a shared scale: Codex and Claude have provider-specific levels, while OpenCode offers the variants reported by each model for the selected worktree. The effort icon draws the model's whole ramp and lights the part you have reached, so **high** reads correctly as mid-scale on one tool and near the top on another. **Auto** hands the choice to the provider and is drawn as a plain chip rather than a position on the scale.
 </Note>
 
 Models you use get remembered as **Recent**, and you can pin any tool-model-effort combination as a **Preset** for one-click reuse. A preset is the whole triple — *Opus / high* and *Opus / max* are different choices, so effort is part of its identity.

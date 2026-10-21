@@ -187,7 +187,7 @@ The production server accepts the standard Next.js `HOSTNAME` and `PORT` environ
 
 The generic TypeScript control agent lives in `packages/control-agent`, and the types it shares with the server live in `packages/agent-contract`. Both are npm workspaces of the root package, so `npm ci` at the root installs them and the `agent:*` scripts proxy into them.
 
-The agent is a client, not a server: it dials the control plane's GraphQL WebSocket outbound and executes jobs it is handed. Nothing on a managed machine listens for inbound connections. It bundles the Claude Agent SDK, the Codex SDK, and the OpenCode SDK, which is how a Session actually runs a model on the target machine.
+The agent dials the control plane's GraphQL WebSocket outbound and executes jobs it is handed. It bundles the Claude Agent SDK, the Codex SDK, and `@opencode/client` 2.1.1. OpenCode runs require the OpenCode 2 CLI and use authenticated local services on loopback; no agent port needs to be published. See [OpenCode 2](/reference/opencode) for installation, configuration migration, and runtime isolation.
 
 <Warning>
   Changing `packages/agent-contract` changes a wire contract. A server and an
