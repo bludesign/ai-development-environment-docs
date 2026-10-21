@@ -5,9 +5,9 @@ description: "Configure password or OIDC sign-in, bootstrap the first user, and 
 
 AI Development Environment uses Better Auth for user accounts, browser and mobile sessions, OAuth/OIDC identities, and API keys. Every signed-in user has the same access. Agent credentials keep their narrower run and enrollment permissions.
 
-## Required production settings
+## Production settings
 
-Set a stable secret before starting a production server. Naming the origins the server is reached at is optional but recommended:
+The server needs a stable root for signing sessions and install links. With database or Vault credential storage, configure `APP_SECRET` before starting it. Naming the origins the server is reached at is optional but recommended:
 
 ```bash
 APP_SECRET="$(openssl rand -base64 32)"
@@ -15,7 +15,9 @@ APP_ORIGINS="control.example.com"
 AUTH_MODE="password"
 ```
 
-Generate `APP_SECRET` once and back it up. It must be base64 or hex encoding of exactly 32 random bytes; a passphrase is rejected, because the same root also encrypts stored credentials. Changing it signs every user out, and stored credentials become unreadable unless the old value is supplied as `APP_SECRET_PREVIOUS` — see [Environment variables](/reference/environment-variables#rotating-app-secret).
+Generate `APP_SECRET` once and back it up. It must be base64 or hex encoding of exactly 32 random bytes; a passphrase is rejected, because the same root also encrypts database credential payloads. Changing the active root signs every user out and invalidates outstanding install links. Database payloads require the old value as `APP_SECRET_PREVIOUS` during rotation; Keychain and Vault integration credentials do not depend on it — see [Environment variables](/reference/environment-variables#rotating-app-secret).
+
+On macOS with `CREDENTIAL_STORAGE_TYPE=keychain`, omit or blank `APP_SECRET` to load or create it automatically in your login Keychain before services start. Homebrew selects this backend by default. All server installations under the same macOS account share the Keychain root. An explicit environment root takes precedence and is never copied into Keychain. Removing that override can switch roots and invalidate existing sessions. See [automatic app-secret storage and recovery](/reference/environment-variables#automatic-app-secret-storage).
 
 `APP_ORIGINS` lists every origin users and the identity provider use to reach the server, comma-separated. It is what the CSRF check and the post-login redirect check are validated against, so an origin missing from it is rejected with `Invalid origin`.
 

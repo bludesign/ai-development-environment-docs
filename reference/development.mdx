@@ -22,7 +22,9 @@ Install dependencies with a clean, lockfile-exact install:
 npm ci
 ```
 
-Then copy the example environment file and set `APP_SECRET` to the output of `openssl rand -base64 32`. It is required in development too — there is no built-in fallback — and it must decode to exactly 32 bytes. `DATABASE_URL` remains the only database setting a source checkout needs.
+Then copy the example environment file. With the default database credential storage, set `APP_SECRET` to the output of `openssl rand -base64 32` and retain it across restarts. It must decode to exactly 32 bytes. `DATABASE_URL` remains the only database setting a source checkout needs.
+
+On macOS, you can instead set `CREDENTIAL_STORAGE_TYPE=keychain` and remove or blank the example's `APP_SECRET` placeholder. The control plane loads or creates a persistent root in your login Keychain. This root is shared with other Keychain-backed server installations under the same macOS account, including Homebrew. Explicit environment values always take precedence. Builds never access the app-secret entry. See [automatic storage and recovery](/reference/environment-variables#automatic-app-secret-storage).
 
 Localhost, `127.0.0.1`, and `[::1]` are trusted automatically outside production, so `APP_ORIGINS` is only needed when you reach the dev server by another hostname, such as a tunnel or a machine name on your LAN.
 
@@ -181,7 +183,7 @@ Tests live beside the code they cover as `*.test.ts` and `*.test.tsx`. The suite
 | `npm run schema:publish` | Publishes the schema to Apollo GraphOS using `APOLLO_KEY`.                  |
 | `npm run clean`          | Removes `.next`, coverage, generated sources, and the development database. |
 
-The production server accepts the standard Next.js `HOSTNAME` and `PORT` environment variables plus `DATABASE_URL`. It also requires `APP_SECRET`, and `APP_ORIGINS` is recommended; see [Environment variables](/reference/environment-variables) for the full list and [Authentication](/reference/authentication) for the password and OIDC mode variables.
+The production server accepts the standard Next.js `HOSTNAME` and `PORT` environment variables plus `DATABASE_URL`. Supply `APP_SECRET` unless you use automatic macOS Keychain storage. `APP_ORIGINS` is optional and recommended; see [Environment variables](/reference/environment-variables) for the full list and [Authentication](/reference/authentication) for the password and OIDC mode variables.
 
 ## The control agent
 
