@@ -43,20 +43,20 @@ The [Worktrees](/worktrees/worktrees) page in that tour is a good example of how
 
 ## Focus on an agent
 
-On the web, use **Active Agent**, immediately to the left of **Search**, to focus the agent filters on [Worktrees](/worktrees/worktrees), [Usage](/ai/usage), [Commands](/commands/commands), [Workflows](/workflows/workflows), [Plans](/ai/plans), and [Sessions](/ai/sessions). The selector starts at **None**. Search by agent name or hostname, then choose any enrolled agent, including an offline one. The iOS app supports agent focus on Worktrees and Usage.
+On the web, use **Active Agent**, immediately to the left of **Search**, to focus the agent filters on the **Agents** and **Branches** tabs of [Codebases](/codebases/codebases), [Worktrees](/worktrees/worktrees), [Usage](/ai/usage), [Commands](/commands/commands), [Workflows](/workflows/workflows), [Plans](/ai/plans), and [Sessions](/ai/sessions). The selector starts at **None**. Search by agent name or hostname, then choose any enrolled agent, including an offline one. The iOS app supports agent focus on Worktrees and Usage.
 
 <Frame>
   <img className="block dark:hidden" src="/images/light/active-agent-selector.png" alt="Active Agent menu with searchable agents in light theme" />
   <img className="hidden dark:block" src="/images/dark/active-agent-selector.png" alt="Active Agent menu with searchable agents in dark theme" />
 </Frame>
 
-While an agent is active, each affected page's **Agent** filter shows that agent, is disabled, and says **Controlled by Active Agent**. Other filters still apply. Select **None** in the global selector to restore each page's previous agent choice. Worktrees views inside individual apps keep separate saved choices.
+While an agent is active, each affected page's **Agent** filter shows that agent, is disabled, and says **Controlled by Active Agent**. Other filters still apply. Select **None** in the global selector to restore each page's previous agent choice. Worktrees views inside individual apps and the Codebases Agents and Branches tabs keep separate saved choices.
 
 The browser remembers your active agent and previous page choices across navigation and reloads. Tabs signed into the same account share the browser's active choice. The iOS app remembers its own selection for each server and account; selecting an agent on one device does not change another device's choice.
 
 On mobile web, the selector collapses to an icon with an active indicator. In the iOS app, tap the dedicated **Active Agent** toolbar icon on the home destination list or a feature page. On iPad, it appears beside Search. The searchable sheet includes **None** to restore page filters.
 
-An agent with no matching worktrees, usage, or runs produces empty results. Offline agents remain selectable. A failed catalog refresh preserves your selection; a successful refresh that confirms the agent was removed clears it. Pages without an agent filter keep their usual behavior, and active focus does not change where commands, builds, or other operations run.
+An agent with no matching codebases, branches, worktrees, usage, or runs produces empty results. Offline agents remain selectable. A failed catalog refresh preserves your selection; a successful refresh that confirms the agent was removed clears it. Pages without an agent filter keep their usual behavior, and active focus does not change where commands, builds, or other operations run.
 
 ## How it fits together
 

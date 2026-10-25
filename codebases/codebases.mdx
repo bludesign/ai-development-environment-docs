@@ -25,6 +25,12 @@ Two concepts sit behind this page, and the distinction matters:
 
 Use **Agents** to see what each machine hosts, **Repositories** to see where a repository is checked out, or **Branches** to clean up local branches across all agents. The iOS app offers the same three views.
 
+## Filter by agent
+
+On the web, the **Agents** tab has a searchable agent filter. Search by agent name or hostname to narrow the codebases shown. The **Agents** and **Branches** tabs remember separate agent choices across navigation and reloads, and both start at **All agents**.
+
+The [Active Agent selector](/index#focus-on-an-agent) overrides both filters. While an agent is active, each dropdown shows that agent, is disabled, and displays **Controlled by Active Agent**. Choose **None** globally to restore each tab's saved choice. An agent without matching codebases or branches shows an empty result. The **Repositories** view and the scope of **Refresh all**, **Fetch all**, and **Refresh inventory** stay the same.
+
 ## Clean up local branches
 
 <Frame>
@@ -32,15 +38,15 @@ Use **Agents** to see what each machine hosts, **Repositories** to see where a r
   <img className="hidden dark:block" src="/images/dark/codebase-branches.png" alt="Local branch cleanup tab in dark theme" />
 </Frame>
 
-The **Branches** tab lists local branches from every registered checkout. Each row identifies the repository, agent, folder, last local commit, age, and last successful scan. The same branch name on two agents represents two separate local branches.
+The **Branches** tab lists local branches from every registered checkout. Each row identifies the repository, agent, folder, last local commit, age, and last successful scan. On the web, the latest local commit's author appears beneath the agent name in smaller gray text; missing author metadata shows **Unknown**. The same branch name on two agents represents two separate local branches.
 
 On the web, the **Repository** column shows the folder relative to that agent's **Base repository directory**. Hover over the folder to see its full path. Folders outside the base directory, or on agents without a configured base, show their full paths. Long column text wraps; narrower screens let you scroll the table horizontally.
 
 Both clients start with all agents, all repositories, and no age restriction, sorted oldest first with unknown ages last. The web shows 50 branches per page; iOS uses a native scrolling list. Configure the codebase's default branch before cleanup if it is unknown.
 
-1. Filter by **Agent** and **Repository**. A repository filter includes its checkouts across agents.
+1. Filter by **Agent** and **Repository**. A repository filter includes its checkouts across agents. On the web, use the searchable **Author** filter to match the author name on the commit at each local branch tip, regardless of who committed it or created the branch. It starts at **All authors** and combines with the other filters. Identical author names share one option; branches with unknown authors appear only when all authors are included.
 2. Choose **Older than**: any age, 7, 30, or 90 days, or a custom positive number of days. Age means time since the commit at the local branch tip, not when the branch was created. Unknown dates are excluded when an age filter applies.
-3. Check individual branches or choose **Select all matching eligible branches**. On the web, this includes matching branches across all pages. Changing filters or leaving the tab clears your selection.
+3. Check individual branches or choose **Select all matching eligible branches**. On the web, this includes matching branches across all pages. Changing filters, including Active Agent, or leaving the tab clears your selection. On the web, filter changes also return to the first page and close any pending deletion review.
 4. Choose **Delete selected** and review the branch names, agents, and checkout folders before confirming.
 
 Normal deletion uses Git's merged-branch checks. To remove unmerged branches, enable **Force delete unmerged branches** and accept the separate confirmation before deleting.
@@ -51,11 +57,11 @@ Normal deletion uses Git's merged-branch checks. To remove unmerged branches, en
 
 Offline agents retain their last successful inventory, with deletion disabled until they reconnect. Failed scans keep the previous inventory and show a scan failure. Older agents can show recorded local branch names with unknown metadata; update the agent and refresh before cleanup becomes available.
 
-**Refresh inventory** queues a local scan without fetching origin. Background reconciliation also refreshes the inventory. The control plane stores branch names, tip hashes, commit subjects and dates, worktree paths, and the scan timestamp for each registered codebase. Removing a codebase removes this cached inventory with its registration.
+**Refresh inventory** queues a local scan without fetching origin. Background reconciliation also refreshes the inventory. The control plane stores branch names, tip hashes, commit author names, subjects and dates, worktree paths, and the scan timestamp for each registered codebase. Removing a codebase removes this cached inventory with its registration.
 
 Cleanup runs one job per checkout and reports each branch as deleted, skipped, or failed. A changed branch tip or newly active worktree blocks deletion even after confirmation. Other branches continue when one fails. After a timeout or connection loss, refresh the inventory to confirm what remains before retrying.
 
-The iOS app uses native selection buttons and the same filters, review, force confirmation, and per-branch results.
+The iOS app uses native selection buttons, agent/repository/age filters, review, force confirmation, and per-branch results. The author filter and Active Agent behavior described above apply to the web tabs.
 
 ## Status
 
