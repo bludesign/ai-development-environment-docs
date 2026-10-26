@@ -3991,6 +3991,14 @@ type AppCounts {
   """Number of visible worktrees with staged or unstaged changes."""
   dirtyWorktrees: Int!
 
+  """Number of visible worktrees on a named branch other than main."""
+  nonMainWorktrees: Int!
+
+  """
+  Number of distinct open pull requests and merge requests linked to visible worktrees.
+  """
+  openRequests: Int!
+
   """Number of active plans."""
   plans: Int!
 
@@ -4769,7 +4777,7 @@ type Query {
     scope: GitHubPullRequestScope!
 
     """
-    Identifier of the repository. Omit it to leave this dimension unfiltered.
+    Optional managed repository filter for any scope; required for REPOSITORY scope.
     """
     repositoryId: ID
 
@@ -9242,6 +9250,9 @@ type LocalBranch {
   """Subject of the local tip commit, or null when unknown."""
   lastCommitMessage: String
 
+  """Author name of the local tip commit, or null when unknown."""
+  lastCommitAuthor: String
+
   """Whether this is the registered checkout's current branch."""
   current: Boolean!
 
@@ -9275,6 +9286,9 @@ input LocalBranchInput {
 
   """Local tip commit subject, or null when unknown."""
   lastCommitMessage: String
+
+  """Author name of the local tip commit, or null when unknown."""
+  lastCommitAuthor: String
 
   """Whether this is the registered checkout's current branch."""
   current: Boolean!

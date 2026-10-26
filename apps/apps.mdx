@@ -14,7 +14,20 @@ Apps do not replace repositories. A repository still owns its checkouts and repo
 
 ## Using the page
 
-Each card shows the app description, assigned repositories, and current totals for worktrees, Plans, and Sessions. Click **Open app** to open the app hub.
+Each web and iOS card shows the app description, assigned repositories, and resource counts. Choose **Open app** to open the app hub.
+
+### Card counts
+
+| Counter | What it includes |
+| --- | --- |
+| **Dirty worktrees** | Visible worktrees with staged or unstaged changes. Appears only when the count is greater than zero. |
+| **Worktrees** | All visible primary and linked worktrees in the app's assigned repositories. |
+| **Worktrees off main** | Visible worktrees on a named branch other than the literal `main`. Detached worktrees and unknown branch names are excluded. A branch named `master` contributes to this count. |
+| **Open PRs** | Distinct open pull requests and merge requests linked to visible worktrees, including drafts. The same request is counted once across multiple checkouts. |
+
+Counts span the app's assigned repositories and their agents. They use the worktree and linked request status last stored by the control plane. Use **Refresh request** on a [worktree](/worktrees/worktrees) to refresh its pull or merge request status.
+
+Select any count to open the app's **Worktrees** view. The web view restores its saved filters.
 
 ### Create an app
 
@@ -53,7 +66,7 @@ A shared repository contributes its resources to every app that includes it. For
 
 - MCP clients can use `get_apps` and `get_app` to read app names, descriptions, selected agent IDs, repository IDs, and resource counts. These read-only tools omit nested agent configuration. Add them to an [MCP preset](/system/tools#mcp-tool-presets) to make app discovery available to a run.
 - App assignments are many-to-many. An app can contain many repositories, and a repository can belong to many apps.
-- Counts exclude hidden worktrees and archived Plans or Sessions where the corresponding global view excludes them.
+- Card counts exclude hidden worktrees. The app hub's **Overview** also shows plan and session totals, which exclude archived runs.
 - **Create app** only groups existing repositories. **Import** and the app's **Sync** view can create missing checkouts on selected agents.
 
 ## Related pages

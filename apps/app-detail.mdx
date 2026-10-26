@@ -14,7 +14,7 @@ An app hub at `/dashboard/apps/[appId]` brings every resource backed by the app'
 
 | View | What you can do |
 | --- | --- |
-| **Overview** | Review resource totals, assigned repositories, and repository Build cards. |
+| **Overview** | Review repository, worktree, plan, session, and build totals, assigned repositories, and repository Build cards. |
 | **Repositories** | Inspect assigned repositories and their checkouts. Open a repository or codebase for repository-level and checkout-level operations. |
 | **Worktrees** | Search, create, inspect, and manage worktrees from the assigned repositories. Hidden worktrees remain scoped to the app, and the search and filters are saved per app, so leaving this view and returning restores them. |
 | **Plans** | Search and manage Plans that use an app worktree. Start a new Plan with only eligible app worktrees offered. |
@@ -23,6 +23,15 @@ An app hub at `/dashboard/apps/[appId]` brings every resource backed by the app'
 | **Sync** | Compare repository coverage across agents and clone selected missing checkouts into each agent's Base repository directory. |
 
 The scoped views keep their normal actions. Opening a resource takes you to its full detail page when the action needs more space.
+
+## Filter app worktrees
+
+Open **Worktrees** to search the app's worktrees. **Filter by agent** and **Filter by repository** use the same searchable dropdowns as the main [Worktrees page](/worktrees/worktrees): search agents by name or hostname, and repositories by name or origin. Each app keeps its own saved filters. **Active Agent** overrides the agent filter until you choose **None** globally, then restores the app's previous choice.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/app-worktrees.png" alt="Searchable agent and repository filters in app Worktrees in light theme" />
+  <img className="hidden dark:block" src="/images/dark/app-worktrees.png" alt="Searchable agent and repository filters in app Worktrees in dark theme" />
+</Frame>
 
 ## Sync repositories to other agents
 

@@ -30,6 +30,8 @@ Tools are grouped by source. Built-in tools ship with the server and cover agent
 
 Read tools also cover cross-product search (`global_search`), the Action Center (`get_action_center`), apps (`get_apps`, `get_app`), cached CLI health (`get_installation_status`, `get_agent_cli_health`), and crash investigation (`get_crash_reports`, `get_crash_report`, `get_dsyms`, `get_dsym`). These tools let an AI find the relevant resource before invoking a more specific tool.
 
+`get_apps` and `get_app` return `counts.dirtyWorktrees`, `counts.nonMainWorktrees`, and `counts.openRequests` alongside the other app resource totals. These use the same [card count rules](/apps/apps#card-counts) as the Apps page. See [App resource counts](/graphql/overview#app-resource-counts) for the equivalent GraphQL query.
+
 Expand a tool to see its description and a form generated from its input schema. Fill in the parameters and **Run tool** to execute it; the complete response — not a summary — appears underneath and can be copied.
 
 Parameters render as typed controls where the schema allows it, and fall back to a JSON editor for objects and arrays. The editor validates before it will let you run.

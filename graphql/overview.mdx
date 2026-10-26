@@ -93,6 +93,29 @@ query Agents {
 
 Arguments, return types, deprecations, and a sample response are listed on each generated operation page. Open **Queries** or **Mutations** in the generated GraphQL navigation and select `agents` or `enrollAgent`. Field types link through to the **Types** section, so you can walk the graph from any operation.
 
+### App resource counts
+
+Use `apps` or `app(id:)` to read resource totals for an app's assigned repositories. The Apps page's card counters are available through `AppCounts`:
+
+```graphql
+query AppResourceCounts {
+  apps {
+    id
+    name
+    counts {
+      worktrees
+      dirtyWorktrees
+      nonMainWorktrees
+      openRequests
+    }
+  }
+}
+```
+
+`nonMainWorktrees` counts visible worktrees on named branches other than `main`. `openRequests` counts distinct open pull requests and merge requests linked to visible worktrees, including drafts. See [Card counts](/apps/apps#card-counts) for visibility, duplicate requests, and refresh behavior.
+
+`AppCounts` also exposes `repositories`, `codebases`, `plans`, `sessions`, and `builds`. Plan and session totals exclude archived runs.
+
 ### Tailscale Serve operations
 
 `tailscaleServeOverview` returns typed templates, explicit per-agent assignments, Tailscale identities, desired-versus-observed state, and related `AgentJob` records. `tailscaleServeOperation(id:)` returns durable per-agent progress. Use `expectedRevision` when updating, toggling, or deleting a template, and always send explicit `{agentId, enabled}` assignments when upserting.
