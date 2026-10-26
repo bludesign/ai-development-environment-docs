@@ -4769,7 +4769,7 @@ type Query {
     scope: GitHubPullRequestScope!
 
     """
-    Identifier of the repository. Omit it to leave this dimension unfiltered.
+    Optional managed repository filter for any scope; required for REPOSITORY scope.
     """
     repositoryId: ID
 
