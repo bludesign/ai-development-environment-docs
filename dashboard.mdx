@@ -8,7 +8,7 @@ description: "Live work, decisions, failures, and builds waiting to run."
   <img className="hidden dark:block" src="/images/dark/dashboard.png" alt="Action Center in dark theme" />
 </Frame>
 
-The **Action Center** is the home screen at `/dashboard/action-center`. It is a single queue built from four different resource types — AI Plans, AI Sessions, iOS builds, and workflow runs — so anything that is running, stuck, failed, or waiting on you shows up in one list instead of five separate pages.
+The **Action Center** is the home screen at `/dashboard/action-center`. It is a single queue built from six resource types — AI Plans, AI Sessions, iOS builds, workflow runs, GitHub pull requests, and GitLab merge requests — so anything that is running, stuck, failed, or waiting on you appears in one queue.
 
 Nothing is added by hand. The control plane derives the list from the current state of each resource, so an item disappears on its own as soon as the underlying work moves on.
 
@@ -51,9 +51,11 @@ Every item carries one **reason** badge. The reason also sets the item's positio
 | Blocked | Neutral | A workflow run is blocked, or a Plan or Session landed in a failed phase. |
 | Failed | Red | The resource finished in a failed state and has not been acknowledged. |
 | Ready to run | Blue | A successful build produced a runnable app that has never been deployed. |
+| Approval required | Amber | The connected account is requested to review a pull request or merge request. |
+| Ready to merge | Green | The provider confirms that the request can merge. |
 | Active | Green | Work is queued or in progress and needs nothing from you. |
 
-The first four are grouped under **Needs attention**. Only **Active** items land in the **Active** section.
+Questions, blocked or failed work, ready-to-run builds, approval requests, and merge-ready requests are grouped under **Needs attention**. Only **Active** items land in the **Active** section.
 
 <AccordionGroup>
   <Accordion title="How “Blocked” is decided" icon="circle-exclamation">
@@ -119,6 +121,33 @@ Question batches come from Plans and Sessions directly, and from workflow runs b
   Answers are submitted for the whole batch at once. If a batch asks three questions, all three must be answered before you can submit.
 </Note>
 
+## Pull requests and merge requests
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/action-center-pull-requests.png" alt="Action Center pull requests in light theme" />
+  <img className="hidden dark:block" src="/images/dark/action-center-pull-requests.png" alt="Action Center pull requests in dark theme" />
+</Frame>
+
+The full queue includes GitHub **Mine** requests (authored or assigned), GitLab requests you authored, and requests asking the connected provider account to review. A request that belongs to both categories appears once. Drafts remain visible with a **Draft** indicator; closed and merged requests leave the queue after refresh.
+
+Each card shows its provider, repository, branch, pipeline status, and overall approval status. Open the pipeline link to inspect checks. A green **Merge** button opens the existing provider merge dialog, where you review the current commit, available merge method, and optional follow-up actions. The dialog checks readiness again before merging. Unknown or blocked readiness does not show a green button.
+
+Approving a request removes its review-category membership. Your own or assigned requests remain visible even when approved, so you can merge them. A dismissed or revoked approval makes a request eligible for the review queue again. Overall approval and your personal approval are separate: a request can still need other reviewers after you approve it.
+
+Open **System → Settings → Action Center** to configure shared preferences:
+
+| Setting | Default | Behavior |
+| --- | --- | --- |
+| **Maximum request age (days)** | `30` | Excludes requests created more than this many days ago. Set `0` to disable the cutoff. Applies to the full and compact queues. |
+| **Show my open requests in sidebar** | On | Includes the Mine category in the compact queue. |
+| **Show requests awaiting my approval in sidebar** | On | Includes requests awaiting your approval in the compact queue. |
+
+The sidebar switches are independent. Turning either off leaves its category available in the full Action Center. Counts and pagination reflect the selected surface, including filtering before a page is read. Dedicated GitHub and GitLab request lists retain their own filters.
+
+The iOS app exposes the same shared settings, request statuses, native detail screens, and merge sheets. On iPad, the navigation sidebar also includes a compact request queue; iPhone uses the full Action Center.
+
+Request summaries are stored in the control plane database and refreshed on startup, every 60 seconds, and after relevant provider events. Provider response caches still apply. **Refresh** rebuilds the index using those caches. If discovery fails or hits a provider limit, the queue shows a warning and preserves previously available entries; merge readiness is not confirmed for that provider until a successful refresh. Changing or disconnecting an account removes its old index entries during reconciliation. The index contains request metadata, not provider tokens.
+
 ## Mini Action Center
 
 The app shell carries a compact copy of the same queue in the sidebar, showing the total count and a condensed row per item — title, reason badge, the first pending question, any error, and the linked worktree. It shares state with the full page, so answering, acknowledging, running, or dismissing in one place updates the other immediately. The iOS list exposes **Dismiss** as a swipe action and repeats it on Action Center details.
@@ -133,7 +162,7 @@ The queue subscribes to an `actionCenterChanged` subscription and refetches when
 
 ## Discovery through MCP
 
-`get_action_center` reads this queue with `first` (1–200, default 50) and an optional `after` cursor. It returns active work, pending questions, blocked or failed resources, and builds awaiting action. It does not acknowledge or dismiss items.
+`get_action_center` reads this queue with `first` (1–200, default 50) and an optional `after` cursor. It returns active work, pending questions, blocked or failed resources, builds awaiting action, and pull or merge requests with provider status. It does not acknowledge or dismiss items.
 
 Use `global_search` to locate resources across the development environment. Its `query` is required and limited to 200 characters; `firstPerGroup` is 1–10 (default 5) and `relatedFirst` is 0–5 (default 3). Add these read-only tools to an [MCP preset](/system/tools#mcp-tool-presets) to help an AI find the resource it needs.
 

@@ -119,3 +119,7 @@ Each enrolled agent contributes five rows. Their cadences come from the per-agen
     The global scan and fetch intervals behind the agent rows.
   </Card>
 </Columns>
+
+## Action Center requests
+
+**Action Center requests** refreshes the local GitHub pull request and GitLab merge request index every `60` seconds, on startup, and after relevant provider events. Requests use the configured provider response caches. The [Action Center](/dashboard#pull-requests-and-merge-requests) shows discovery warnings and preserves existing summaries if a provider is unavailable. Its manual **Refresh** also rebuilds the index.
