@@ -204,6 +204,7 @@
             "icon": "book",
             "pages": [
               "reference/authentication",
+              "reference/mcp-oauth",
               "reference/environment-variables",
               "reference/docker",
               "reference/opencode",

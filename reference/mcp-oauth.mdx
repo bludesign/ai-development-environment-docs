@@ -1,0 +1,119 @@
+---
+title: "MCP OAuth"
+description: "Connect ChatGPT and Codex directly with scoped OAuth consent and immediate connection revocation."
+---
+
+Incoming MCP OAuth lets remote clients use the control plane as a signed-in user with explicitly granted permissions. It is disabled by default and independent of `AUTH_MODE`. Password and configured OIDC sign-in both authorize MCP clients. API keys, browser/mobile sessions, and enrolled-agent credentials continue to work.
+
+## Configure the canonical origin
+
+Deploy the database migrations before enabling OAuth:
+
+```bash
+npm run db:deploy
+```
+
+Configure a stable public origin, preserving your existing `APP_SECRET`:
+
+```bash
+PUBLIC_BASE_URL="https://control.example.com"
+APP_ORIGINS="https://control.example.com"
+MCP_OAUTH_ENABLED="true"
+MCP_OAUTH_DCR_ENABLED="false"
+```
+
+Restart the server after changing these settings. `PUBLIC_BASE_URL` takes precedence; otherwise OAuth uses the first configured exact `APP_ORIGINS` entry. A request's `Host` cannot select the OAuth identity. HTTPS is required except for loopback development, such as `http://localhost:3000`.
+
+The issuer is `https://control.example.com/api/auth`. The resource and token audience is always `https://control.example.com/api/mcp`, including connections whose URL selects `?preset=<id>`. Query parameters select tools; they do not change the OAuth audience or grant permissions.
+
+Signing keys, clients, consent, authorizations, and refresh credentials live in SQLite. Back up the database and `APP_SECRET` together; signing keys remain stable across restarts. Each access token lasts five minutes. Offline access uses rotating refresh tokens with a 30-day lifetime for each issued refresh token. Reusing a rotated refresh token fails.
+
+## Discovery and connectivity
+
+These endpoints must be reachable without a browser session or localization redirects:
+
+| Purpose                       | URL path                                                                                                  |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Protected resource metadata   | `/.well-known/oauth-protected-resource` and `/.well-known/oauth-protected-resource/api/mcp`               |
+| Authorization server metadata | `/.well-known/oauth-authorization-server/api/auth` and `/api/auth/.well-known/oauth-authorization-server` |
+| Signing keys                  | `/api/auth/jwks`                                                                                          |
+| Provider endpoints            | `/api/auth/oauth2/*`                                                                                      |
+| Login and consent             | `/mcp/sign-in` and `/mcp/consent`, including localized paths                                              |
+| MCP                           | `/api/mcp`, including selected presets                                                                    |
+
+An unauthenticated MCP response returns `401` with `WWW-Authenticate` metadata so clients can discover the provider. Both the 2026-07-28 protocol and older stateless MCP clients use the same tool catalog. Outbound Streamable HTTP connections negotiate the protocol automatically; configured external SSE servers remain supported.
+
+<Warning>
+  OAuth does not replace a separate Cloudflare Access policy. ChatGPT must reach
+  the public HTTPS endpoint from OpenAI's network, and clients must reach the
+  discovery, JWKS, authorization, and token endpoints. A Cloudflare login
+  interstitial, browser-only cookie, bot challenge, or service-token requirement
+  can prevent OAuth even when the dashboard works in your browser. Configure an
+  appropriate Access/network policy for the intended clients. The control plane
+  still authenticates every MCP request.
+</Warning>
+
+## Choose permissions
+
+New consent selects read access only. Write, destructive, and offline access require explicit selection, and the server grants only scopes requested by the client and selected by the user.
+
+| Permission     | Required scopes                               | Examples                                                                                                                         |
+| -------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Read           | `mcp:read`                                    | List codebases, builds, runs, and tool descriptors                                                                               |
+| Write          | `mcp:read mcp:write`                          | Add a Jira comment or edit a notification preference                                                                             |
+| Destructive    | `mcp:read mcp:write mcp:destructive`          | Delete data; execute or configure commands, agents, workflows, builds, preparations, skills, or automations; call external tools |
+| Offline access | `offline_access` plus the selected MCP scopes | Refresh access without another interactive sign-in                                                                               |
+
+The server owns the classification independently of tool annotations. Unknown tools require all three MCP scopes. A preset narrows the tool selection and cannot grant scopes. Selected descriptors remain discoverable and advertise `aide/requiredScopes` in their `_meta`, allowing clients to request additional consent. Missing scopes return HTTP `403` with an `insufficient_scope` challenge before a tool handler runs.
+
+OAuth tokens authorize MCP only. They cannot act as application sessions, manage accounts, call GraphQL, use Tools REST, or access an enrolled agent's run endpoint.
+
+## Connect Codex
+
+Add the endpoint and sign in through the browser:
+
+```bash
+codex mcp add aide --url https://control.example.com/api/mcp
+codex mcp login aide --scopes mcp:read,offline_access
+```
+
+For a preset, quote the complete URL when adding the server. Request all cumulative scopes when you need execution or destructive actions:
+
+```bash
+codex mcp login aide --scopes mcp:read,mcp:write,mcp:destructive,offline_access
+```
+
+Review the requested permissions on the consent page. Current Codex supports CIMD automatically when discovery advertises it. See [OpenAI's MCP configuration guide](https://learn.chatgpt.com/docs/extend/mcp) for registration and callback options.
+
+## Connect ChatGPT
+
+In [ChatGPT Plugins](https://chatgpt.com/plugins), choose **Add custom MCP server**, enter your public HTTPS MCP URL, and select OAuth authentication. Choose CIMD when offered, create/install the custom connection, and complete the control plane's sign-in and consent pages. Workspace settings determine whether custom MCP connections are available.
+
+Start with read access and test a read tool. Request additional cumulative MCP scopes when the client supports selecting scopes, then explicitly select them in consent. Select offline access if you want refresh-based renewal. See [OpenAI's connection guide](https://developers.openai.com/api/docs/mcp#connect-in-chatgpt) and [OAuth guidance](https://developers.openai.com/plugins/build/auth).
+
+## Support older clients with DCR
+
+CIMD is the default client identification method. The provider fetches and validates metadata documents through its SSRF-protected Node transport. Dynamic client registration is absent from discovery unless you explicitly set:
+
+```bash
+MCP_OAUTH_DCR_ENABLED="true"
+```
+
+Restart the server. This enables the provider's registration endpoint for older clients while retaining its redirect URI validation, PKCE requirements, and rate limits. It does not grant user permissions. Authorization-code and refresh-token flows are enabled; client-credentials and device-code grants are unavailable.
+
+## Manage connected applications
+
+Open **Settings → Connected applications** at `/system/connected-applications`. The page lists your clients and their granted permissions. **Disconnect** immediately blocks the client's current access tokens, refresh families, and outstanding authorization codes. Other users manage their own connections. Already-running jobs continue under their existing lifecycle.
+
+Authorizing again creates a new authorization identifier. Old tokens remain invalid. Deleting an account also immediately blocks its MCP access and refresh attempts. Audit records identify the user and client without recording token values; arguments continue to be stored only as hashes.
+
+## Roll out and roll back
+
+1. Deploy the SDK migration and additive database migration with `MCP_OAUTH_ENABLED=false`.
+2. Configure the canonical URL and network reachability, then enable OAuth in a test deployment.
+3. Verify password and OIDC sign-in, partial consent, read/write/destructive calls, refresh rotation, and disconnects with your target ChatGPT and Codex clients.
+4. Enable OAuth in production after that verification.
+
+Set `MCP_OAUTH_ENABLED=false` and restart to disable OAuth discovery, issuance, and access-token authentication. Existing API-key, session, and enrolled-agent authentication continues working. Keep the additive tables and signing keys for a later rollout.
+
+See [Authentication](/reference/authentication), [API reference](/reference/api#mcp), and [Tools and presets](/system/tools).
