@@ -103,11 +103,12 @@ Restart the server. This enables the provider's registration endpoint for older 
 
 ## Manage connected applications
 
-Open **System → Connected applications** in the sidebar at `/system/connected-applications`. You can also open it from **Settings**. The page shows connections for your signed-in account, with:
+Open **System → Connected Applications** in the sidebar at `/system/connected-applications`. You can also open it from **Settings**. The page shows connections for your signed-in account, with:
 
 - The application name and client ID, so you can identify which client you authorized.
 - **First authorized** and **Last authorized** dates and the number of **Current authorizations**, including repeated approvals. These cover authorizations that have not been revoked; they do not indicate the application's last activity or whether its tokens are still valid.
 - **Granted permissions**, their scope names, and what they allow. The list combines permissions across current authorizations; each token retains only the permissions granted when it was issued.
+- A **Current authorizations** table for each application, newest approval first, with its authorization date and individual permissions. This lets you distinguish an earlier read-only approval from a later approval with more access. Revoked authorizations and other users' approvals do not appear. Authorization records can remain after their tokens expire.
 - Offline access details. Without `offline_access`, access tokens expire after five minutes and the client may ask you to sign in again. With offline access, the client can renew access using rotating refresh tokens, each with a 30-day lifetime.
 
 Choose **Refresh** to reload the list after connecting an application. If OAuth is disabled, you can still review and disconnect saved authorizations.
