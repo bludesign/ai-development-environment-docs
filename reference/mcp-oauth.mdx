@@ -117,6 +117,12 @@ Choose **Refresh** to reload the list after connecting an application. If OAuth 
 
 To replace a connection's permissions, disconnect it here, then reconnect from the client's MCP settings. The client must request additional scopes before you can select them on the consent page. A read-only connection has only `mcp:read`; this page cannot add scopes to an existing token.
 
+### Revoke one authorization
+
+In an application's **Current authorizations** table, choose **Revoke** beside an approval. Review the application name and approval date, then confirm. Its access tokens, refresh tokens, and pending authorization code stop working immediately. Other approvals for the same application and already-running jobs are unaffected.
+
+The revoked row disappears, and the application's permission summary and authorization count update. Revoking its last current authorization removes the application from the list and clears its saved consent. Use **Disconnect** when you want to revoke every approval for an application at once.
+
 ### Disconnect an application
 
 Choose **Disconnect** and confirm the application's name. This revokes all its current authorizations for your account and immediately blocks its access tokens, refresh families, and outstanding authorization codes. Other users' connections and API keys are unaffected. Already-running jobs continue under their existing lifecycle.
