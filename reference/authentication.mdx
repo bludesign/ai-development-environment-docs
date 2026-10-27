@@ -137,13 +137,15 @@ The server does not link a new OIDC identity to a password account solely becaus
 | Crash uploads (`/api/public/crashes`)  | Recorded               | Recorded     | No                    | Yes, rate limited                          |
 | Integration endpoints                  | Not required           | Not required | Not required          | Yes                                        |
 
+Incoming MCP OAuth tokens apply only to unscoped or preset MCP. They cannot authenticate the dashboard, GraphQL, management endpoints, or run-scoped MCP.
+
 Browser sessions use the Better Auth cookie. Native clients send the Better Auth session in `Authorization: Bearer <session-token>`. Existing agents use that same header with their `agent_` token. API keys use only `X-API-Key` and begin with `aide_`.
 
 Invalid credentials fail with `401`; conflicting credentials fail with `400`. The server never falls back to anonymous access after receiving a bad credential.
 
 ## Incoming MCP OAuth
 
-`MCP_OAUTH_ENABLED` defaults to `false`, independently of `AUTH_MODE`. Enable it with a configured canonical HTTPS origin to connect ChatGPT and Codex directly. OAuth tokens work only at `/api/mcp`; presets narrow the selected tools without granting permissions. Manage immediate revocation in **Settings → Connected Applications**. Follow the [MCP OAuth setup guide](/reference/mcp-oauth) for consent, scopes, discovery, optional DCR, Cloudflare connectivity, and rollout.
+`MCP_OAUTH_ENABLED` defaults to `false`, independently of `AUTH_MODE`. Enable it with a configured canonical HTTPS origin to connect ChatGPT and Codex directly. OAuth tokens work only at `/api/mcp`; presets narrow the selected tools without granting permissions. Manage approvals and immediate revocation in **System → Connected Applications** or **Settings → Connected Applications** in the web and native iOS apps. [Connected Applications](/system/connected-applications) supports both per-approval **Revoke** and application-wide **Disconnect**. Follow the [MCP OAuth setup guide](/reference/mcp-oauth) for consent, scopes, discovery, optional DCR, Cloudflare connectivity, and rollout.
 
 ## Public routes
 

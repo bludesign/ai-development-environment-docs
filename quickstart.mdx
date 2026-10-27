@@ -318,6 +318,8 @@ iOS device enrollment, over-the-air installs, and the GitHub webhook need a publ
 
 Behind Cloudflare Access, bypass only the application's documented auth and integration routes: localized sign-in/register pages, `/api/auth/*`, `/api/public/*`, `/api/openapi.json`, the two telemetry ingestion routes, the API-key-authenticated dSYM uploads at `/api/dsyms` and `/api/dsyms/uploads/*`, and `/api/ios/apns-devices`. Keep `/api/graphql`, `/api/mcp`, Tools REST, first-party push registration, enrollment start/export, and dashboard routes behind Better Auth. Configure Access paths without query strings.
 
+To connect ChatGPT or Codex through OAuth, also make the [MCP OAuth discovery and connection paths](/reference/mcp-oauth#discovery-and-connectivity) reachable without a Cloudflare sign-in interstitial. The MCP endpoint continues to authenticate every request. Manage those approvals separately on [Connected Applications](/system/connected-applications).
+
 <Warning>
   Exposing this server publicly exposes every route, not just build artifacts.
   Keep the origin private and use the exact reverse-proxy allowlist.

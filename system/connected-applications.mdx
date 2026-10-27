@@ -1,0 +1,81 @@
+---
+title: "Connected Applications"
+description: "Review MCP OAuth permissions, revoke one approval, or disconnect an application from your account in the web and iOS apps."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/connected-applications.png" alt="Connected Applications with permissions and current authorizations in light theme" />
+  <img className="hidden dark:block" src="/images/dark/connected-applications.png" alt="Connected Applications with permissions and current authorizations in dark theme" />
+</Frame>
+
+Open **System → Connected Applications** in the sidebar, or choose **Connected Applications** from **Settings**. The web route is `/system/connected-applications`.
+
+This page manages incoming MCP OAuth approvals for your signed-in account. It shows the server's OAuth enabled state, connected application count, and each application's name and client ID. Other users manage their own approvals. API keys have separate controls on [API keys](/system/api-keys).
+
+## Review permissions and approvals
+
+Each application shows **First authorized**, **Last authorized**, and **Current authorizations**. These dates and counts cover approvals that have not been revoked, including repeated approvals. They do not indicate last activity or whether a token has expired.
+
+**Granted permissions** combines the permissions across the application's current approvals. The **Current authorizations** table lists each approval separately, newest first. Each token retains only the scopes granted to its own approval.
+
+| Permission | Scope | Allows |
+| --- | --- | --- |
+| Read | `mcp:read` | View development data and tool results |
+| Write | `mcp:write`, plus read | Make ordinary changes, such as adding comments or updating preferences |
+| Destructive actions and execution | `mcp:destructive`, plus read and write | Delete data, run commands and agents, configure execution and automations, and call external tools |
+| Offline access | `offline_access` | Renew access without another interactive sign-in using rotating refresh tokens |
+
+Access tokens last five minutes. Each rotating refresh token lasts 30 days. Without offline access, the client may ask you to sign in again when its access token expires. The page displays authorization metadata and never reveals token values.
+
+Choose **Refresh** after authorizing a new client. Saved approvals remain manageable when MCP OAuth is disabled, although their tokens cannot access MCP while it is disabled.
+
+## Revoke one authorization
+
+Choose **Revoke** beside an approval. Review the application name and approval date, then confirm.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/connected-applications-revoke.png" alt="Confirm revoking one MCP approval in light theme" />
+  <img className="hidden dark:block" src="/images/dark/connected-applications-revoke.png" alt="Confirm revoking one MCP approval in dark theme" />
+</Frame>
+
+The approval's access tokens, refresh credentials, and pending authorization code stop working immediately. Other approvals for the same application keep their existing permissions. Running jobs continue.
+
+The revoked row disappears and the permission summary, dates, and count update. Revoking the last current approval removes the application from the list and clears its saved consent.
+
+## Disconnect an application
+
+Choose **Disconnect** on the application and confirm its name. This revokes every current approval for that application on your account, invalidates its tokens and pending codes, and clears saved consent. Other users' connections and API keys are unaffected. Running jobs continue under their existing lifecycle.
+
+Reconnecting creates a new approval. It never restores revoked tokens.
+
+## Change permissions
+
+Disconnect the application, then reconnect from its MCP settings. The client must request write, destructive, or offline access before you can select those permissions on the consent page. New consent starts with read access selected. This page cannot add permissions to an existing token.
+
+If ChatGPT requests only read access, the resulting approval has only `mcp:read`. Reconnecting without a request for additional scopes produces another read-only approval. See [MCP OAuth](/reference/mcp-oauth#choose-permissions) for scope selection and client setup.
+
+## Manage connections on iOS
+
+Open **System → Connected Applications** in the native navigation, or open it from **Settings**. The app uses the same account-scoped management endpoint as the web app with your existing server session.
+
+The native screen shows the same client identity, dates, counts, permission explanations, and individual approvals. Choose **Revoke** for one approval or **Disconnect** for the whole application, then confirm. Pull to refresh or use **Refresh** in the toolbar. The page also explains disabled OAuth, offline access, and reconnection. Request failures keep existing approvals visible and allow retry.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/ios-connected-applications.png" alt="Native iOS Connected Applications screen in light theme" style={{ maxHeight: "700px", width: "auto", margin: "0 auto" }} />
+  <img className="hidden dark:block" src="/images/dark/ios-connected-applications.png" alt="Native iOS Connected Applications screen in dark theme" style={{ maxHeight: "700px", width: "auto", margin: "0 auto" }} />
+</Frame>
+
+## Management API
+
+The web and native apps use `GET /api/auth/mcp-connections` to read the OAuth enabled state and the current user's applications and approvals. Authorization IDs identify approvals; they are not tokens.
+
+Send `DELETE` to the same endpoint with `clientId` and `authorizationId` to revoke one approval. Send only `clientId` to disconnect all of that application's approvals for your account. Repeating a revocation for your own saved approval succeeds without restoring it.
+
+These operations require a browser or native user session. MCP OAuth tokens and API keys cannot manage connections. The server checks both account and client ownership, rejects malformed requests, and never exposes token values.
+
+## Related pages
+
+- [MCP OAuth setup, discovery, and rollout](/reference/mcp-oauth)
+- [Authentication and sessions](/reference/authentication)
+- [Tools and MCP presets](/system/tools)
+- [API keys](/system/api-keys)

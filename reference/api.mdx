@@ -327,6 +327,8 @@ The run scope is different: it authenticates the caller as an enrolled agent ins
 | ------ | ---------------------------------------- | --------------------------------------------------------------- |
 | `400`  | `INVALID_MCP_SCOPE`                      | Conflicting or empty `preset` / `run` parameters                |
 | `401`  | `TOOL_API_UNAUTHORIZED`                  | Missing, conflicting, expired, disabled, or invalid credentials |
+| `401` | `MCP_AUTHENTICATION_REQUIRED` | MCP OAuth access is missing, invalid, expired, disabled, or revoked |
+| `403` | `INSUFFICIENT_SCOPE` | The OAuth approval lacks required cumulative MCP scopes |
 | `403`  | `RUN_MCP_FORBIDDEN`                      | The run belongs to a different agent                            |
 | `404`  | `RUN_NOT_FOUND` / `MCP_PRESET_NOT_FOUND` | The referenced run or preset does not exist                     |
 
