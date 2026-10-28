@@ -65,6 +65,9 @@ type ActionCenterWorktree {
   """The folder associated with this action center worktree."""
   folder: String!
 
+  """Display path relative to the agent's repository directory."""
+  relativePath: String!
+
   """
   Git branch associated with this action center worktree. May be null when unavailable or not applicable.
   """
@@ -10060,6 +10063,11 @@ type CommandRun {
   The worktree associated with this command run. May be null when unavailable or not applicable.
   """
   worktree: Worktree
+
+  """
+  Repository name associated with this run's worktree, when it still exists.
+  """
+  repositoryName: String
 
   """The agent name associated with this command run."""
   agentName: String!
