@@ -92,16 +92,21 @@ The endpoint is `/api/mcp` on this server's origin. The bare endpoint exposes bu
 
 Unscoped and preset MCP connections require one of these Better Auth credentials:
 
-| Credential      | Behavior                                                   |
-| --------------- | ---------------------------------------------------------- |
-| Browser session | A signed-in user can connect from the dashboard            |
-| API key         | Send an `aide_` key in `X-API-Key` from an external client |
+| Credential      | Behavior                                                            |
+| --------------- | ------------------------------------------------------------------- |
+| Browser session | A signed-in user can connect from the dashboard                     |
+| API key         | Send an `aide_` key in `X-API-Key` from an external client          |
+| MCP OAuth       | When enabled, sign in and select the scopes requested by the client |
 
 <Warning>
   `TOOLS_API_TOKEN` is no longer supported, and there is no anonymous fallback.
   Create a key on [API keys](/system/api-keys), then replace the old bearer
   header with `X-API-Key`.
 </Warning>
+
+Direct ChatGPT and Codex clients can use [MCP OAuth](/reference/mcp-oauth) with read, write, destructive, and optional offline access. The server enforces its own permission classification, independently of the catalog badges. A preset selects tools and never adds OAuth permissions. Manage your approvals and revoke access on [Connected Applications](/system/connected-applications) in the web or iOS app.
+
+Streamable HTTP connections negotiate the supported protocol version automatically. The SDK v2 server and outbound client retain the existing catalog, preset URLs, custom headers, timeouts, and legacy external SSE support.
 
 Run-scoped MCP uses an enrolled agent's bearer credential instead. User sessions and API keys cannot enter a run scope.
 

@@ -46,4 +46,4 @@ curl https://control.example.com/api/mcp \
   --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
-Do not put API keys in `Authorization`. That header is reserved for Better Auth mobile sessions and existing `agent_` credentials.
+Send API keys only in `X-API-Key`. The `Authorization` header carries mobile sessions, enrolled-agent credentials, and OAuth access tokens on MCP. OAuth clients can instead connect through [MCP OAuth](/reference/mcp-oauth), with separate scope consent and [connection revocation](/system/connected-applications).

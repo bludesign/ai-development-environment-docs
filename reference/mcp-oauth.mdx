@@ -1,0 +1,141 @@
+---
+title: "MCP OAuth"
+description: "Connect ChatGPT and Codex directly with scoped OAuth consent and immediate connection revocation."
+---
+
+Incoming MCP OAuth lets remote clients use the control plane as a signed-in user with explicitly granted permissions. It is disabled by default and independent of `AUTH_MODE`. Password and configured OIDC sign-in both authorize MCP clients. API keys, browser/mobile sessions, and enrolled-agent credentials continue to work.
+
+## Configure the canonical origin
+
+Deploy the database migrations before enabling OAuth:
+
+```bash
+npm run db:deploy
+```
+
+Configure a stable public origin, preserving your existing `APP_SECRET`:
+
+```bash
+PUBLIC_BASE_URL="https://control.example.com"
+APP_ORIGINS="https://control.example.com"
+MCP_OAUTH_ENABLED="true"
+MCP_OAUTH_DCR_ENABLED="false"
+```
+
+Restart the server after changing these settings. `PUBLIC_BASE_URL` takes precedence; otherwise OAuth uses the first configured exact `APP_ORIGINS` entry. A request's `Host` cannot select the OAuth identity. HTTPS is required except for loopback development, such as `http://localhost:3000`.
+
+The issuer is `https://control.example.com/api/auth`. The resource and token audience is always `https://control.example.com/api/mcp`, including connections whose URL selects `?preset=<id>`. Query parameters select tools; they do not change the OAuth audience or grant permissions.
+
+Signing keys, clients, consent, authorizations, and refresh credentials live in SQLite. Back up the database and `APP_SECRET` together; signing keys remain stable across restarts. Each access token lasts five minutes. Offline access uses rotating refresh tokens with a 30-day lifetime for each issued refresh token. Reusing a rotated refresh token fails.
+
+## Discovery and connectivity
+
+These endpoints must be reachable without a browser session or localization redirects:
+
+| Purpose                       | URL path                                                                                                  |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Protected resource metadata   | `/.well-known/oauth-protected-resource` and `/.well-known/oauth-protected-resource/api/mcp`               |
+| Authorization server metadata | `/.well-known/oauth-authorization-server/api/auth` and `/api/auth/.well-known/oauth-authorization-server` |
+| Signing keys                  | `/api/auth/jwks`                                                                                          |
+| Provider endpoints            | `/api/auth/oauth2/*`                                                                                      |
+| Login and consent             | `/mcp/sign-in` and `/mcp/consent`, including localized paths                                              |
+| MCP                           | `/api/mcp`, including selected presets                                                                    |
+
+An unauthenticated MCP response returns `401` with `WWW-Authenticate` metadata so clients can discover the provider. Both the 2026-07-28 protocol and older stateless MCP clients use the same tool catalog. Outbound Streamable HTTP connections negotiate the protocol automatically; configured external SSE servers remain supported.
+
+<Warning>
+  OAuth does not replace a separate Cloudflare Access policy. ChatGPT must reach
+  the public HTTPS endpoint from OpenAI's network, and clients must reach the
+  discovery, JWKS, authorization, and token endpoints. A Cloudflare login
+  interstitial, browser-only cookie, bot challenge, or service-token requirement
+  can prevent OAuth even when the dashboard works in your browser. Configure an
+  appropriate Access/network policy for the intended clients. The control plane
+  still authenticates every MCP request.
+</Warning>
+
+## Choose permissions
+
+New consent selects read access only. Write, destructive, and offline access require explicit selection, and the server grants only scopes requested by the client and selected by the user.
+
+| Permission     | Required scopes                               | Examples                                                                                                                         |
+| -------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Read           | `mcp:read`                                    | List codebases, builds, runs, and tool descriptors                                                                               |
+| Write          | `mcp:read mcp:write`                          | Add a Jira comment or edit a notification preference                                                                             |
+| Destructive    | `mcp:read mcp:write mcp:destructive`          | Delete data; execute or configure commands, agents, workflows, builds, preparations, skills, or automations; call external tools |
+| Offline access | `offline_access` plus the selected MCP scopes | Refresh access without another interactive sign-in                                                                               |
+
+The server owns the classification independently of tool annotations. Unknown tools require all three MCP scopes. A preset narrows the tool selection and cannot grant scopes. Selected descriptors remain discoverable and advertise `aide/requiredScopes` in their `_meta`, allowing clients to request additional consent. Missing scopes return HTTP `403` with an `insufficient_scope` challenge before a tool handler runs.
+
+OAuth tokens authorize MCP only. They cannot act as application sessions, manage accounts, call GraphQL, use Tools REST, or access an enrolled agent's run endpoint.
+
+## Connect Codex
+
+Add the endpoint and sign in through the browser:
+
+```bash
+codex mcp add aide --url https://control.example.com/api/mcp
+codex mcp login aide --scopes mcp:read,offline_access
+```
+
+For a preset, quote the complete URL when adding the server. Request all cumulative scopes when you need execution or destructive actions:
+
+```bash
+codex mcp login aide --scopes mcp:read,mcp:write,mcp:destructive,offline_access
+```
+
+Review the requested permissions on the consent page. Current Codex supports CIMD automatically when discovery advertises it. See [OpenAI's MCP configuration guide](https://learn.chatgpt.com/docs/extend/mcp) for registration and callback options.
+
+## Connect ChatGPT
+
+In [ChatGPT Plugins](https://chatgpt.com/plugins), choose **Add custom MCP server**, enter your public HTTPS MCP URL, and select OAuth authentication. Choose CIMD when offered, create/install the custom connection, and complete the control plane's sign-in and consent pages. Workspace settings determine whether custom MCP connections are available.
+
+Start with read access and test a read tool. Request additional cumulative MCP scopes when the client supports selecting scopes, then explicitly select them in consent. Select offline access if you want refresh-based renewal. See [OpenAI's connection guide](https://developers.openai.com/api/docs/mcp#connect-in-chatgpt) and [OAuth guidance](https://developers.openai.com/plugins/build/auth).
+
+## Support older clients with DCR
+
+CIMD is the default client identification method. The provider fetches and validates metadata documents through its SSRF-protected Node transport. Dynamic client registration is absent from discovery unless you explicitly set:
+
+```bash
+MCP_OAUTH_DCR_ENABLED="true"
+```
+
+Restart the server. This enables the provider's registration endpoint for older clients while retaining its redirect URI validation, PKCE requirements, and rate limits. It does not grant user permissions. Authorization-code and refresh-token flows are enabled; client-credentials and device-code grants are unavailable.
+
+## Manage connected applications
+
+Open **System → Connected Applications** in the sidebar at `/system/connected-applications`. You can also open it from **Settings**. The native iOS app exposes the same page in System navigation and Settings, with refresh, permission details, individual approval revocation, and application-wide disconnect. See [Connected Applications](/system/connected-applications) for web and native screenshots and operating instructions. The page shows connections for your signed-in account, with:
+
+- The application name and client ID, so you can identify which client you authorized.
+- **First authorized** and **Last authorized** dates and the number of **Current authorizations**, including repeated approvals. These cover authorizations that have not been revoked; they do not indicate the application's last activity or whether its tokens are still valid.
+- **Granted permissions**, their scope names, and what they allow. The list combines permissions across current authorizations; each token retains only the permissions granted when it was issued.
+- A **Current authorizations** table for each application, newest approval first, with its authorization date and individual permissions. This lets you distinguish an earlier read-only approval from a later approval with more access. Revoked authorizations and other users' approvals do not appear. Authorization records can remain after their tokens expire.
+- Offline access details. Without `offline_access`, access tokens expire after five minutes and the client may ask you to sign in again. With offline access, the client can renew access using rotating refresh tokens, each with a 30-day lifetime.
+
+Choose **Refresh** to reload the list after connecting an application. If OAuth is disabled, you can still review and disconnect saved authorizations.
+
+### Change permissions
+
+To replace a connection's permissions, disconnect it here, then reconnect from the client's MCP settings. The client must request additional scopes before you can select them on the consent page. A read-only connection has only `mcp:read`; this page cannot add scopes to an existing token.
+
+### Revoke one authorization
+
+In an application's **Current authorizations** table, choose **Revoke** beside an approval. Review the application name and approval date, then confirm. Its access tokens, refresh tokens, and pending authorization code stop working immediately. Other approvals for the same application and already-running jobs are unaffected.
+
+The revoked row disappears, and the application's permission summary and authorization count update. Revoking its last current authorization removes the application from the list and clears its saved consent. Use **Disconnect** when you want to revoke every approval for an application at once.
+
+### Disconnect an application
+
+Choose **Disconnect** and confirm the application's name. This revokes all its current authorizations for your account and immediately blocks its access tokens, refresh families, and outstanding authorization codes. Other users' connections and API keys are unaffected. Already-running jobs continue under their existing lifecycle.
+
+Authorizing again creates a new authorization identifier. Old tokens remain invalid. Deleting an account also immediately blocks its MCP access and refresh attempts. Audit records identify the user and client without recording token values; arguments continue to be stored only as hashes.
+
+## Roll out and roll back
+
+1. Deploy the SDK migration and additive database migration with `MCP_OAUTH_ENABLED=false`.
+2. Configure the canonical URL and network reachability, then enable OAuth in a test deployment.
+3. Verify password and OIDC sign-in, partial consent, read/write/destructive calls, refresh rotation, and disconnects with your target ChatGPT and Codex clients.
+4. Enable OAuth in production after that verification.
+
+Set `MCP_OAUTH_ENABLED=false` and restart to disable OAuth discovery, issuance, and access-token authentication. Existing API-key, session, and enrolled-agent authentication continues working. Keep the additive tables and signing keys for a later rollout.
+
+See [Authentication](/reference/authentication), [API reference](/reference/api#mcp), and [Tools and presets](/system/tools).

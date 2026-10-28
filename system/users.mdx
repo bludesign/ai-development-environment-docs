@@ -27,7 +27,7 @@ You can search by name or email, create a local account when password authentica
 
 Each user row shows its password or OIDC providers and active sessions. Revoke an individual session to sign that device out.
 
-You cannot delete your current account or the final account. Deleting another account also removes its sessions, password or provider accounts, and API keys.
+You cannot delete your current account or the final account. Deleting another account also removes its sessions, password or provider accounts, API keys, and incoming MCP OAuth authorizations. Its existing MCP access tokens and refresh attempts stop working immediately. Users manage individual MCP approvals on [Connected Applications](/system/connected-applications).
 
 <Warning>
   No invitation, verification, or password-reset email is sent. Deliver newly

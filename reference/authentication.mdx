@@ -3,7 +3,7 @@ title: "Authentication"
 description: "Configure password or OIDC sign-in, bootstrap the first user, and understand which routes accept each credential."
 ---
 
-AI Development Environment uses Better Auth for user accounts, browser and mobile sessions, OAuth/OIDC identities, and API keys. Every signed-in user has the same access. Agent credentials keep their narrower run and enrollment permissions.
+AI Development Environment uses Better Auth for user accounts, browser and mobile sessions, OAuth/OIDC identities, and API keys. Every signed-in user has the same access. Optional incoming [MCP OAuth](/reference/mcp-oauth) gives connected applications separate read, write, and destructive permissions without granting application sessions. Agent credentials keep their narrower run and enrollment permissions.
 
 ## Production settings
 
@@ -21,7 +21,7 @@ On macOS with `CREDENTIAL_STORAGE_TYPE=keychain`, omit or blank `APP_SECRET` to 
 
 `APP_ORIGINS` lists every origin users and the identity provider use to reach the server, comma-separated. It is what the CSRF check and the post-login redirect check are validated against, so an origin missing from it is rejected with `Invalid origin`.
 
-Leaving it unset is supported: the server then trusts whatever host each request arrived on, sign-in works on any hostname, and cross-site requests are still rejected. What you give up is control over the absolute URLs the server generates — the OAuth `redirect_uri` among them — which a forged `Host` header can otherwise steer. Set it in production whenever you know the hostname. See [Environment variables](/reference/environment-variables).
+With MCP OAuth disabled, leaving it unset is supported: the server then trusts whatever host each request arrived on, sign-in works on any hostname, and cross-site requests are still rejected. What you give up is control over the absolute URLs the server generates — the OAuth `redirect_uri` among them — which a forged `Host` header can otherwise steer. Set it in production whenever you know the hostname. See [Environment variables](/reference/environment-variables).
 
 When external systems reach this server at a different address than the dashboard — the iOS enrollment flow, over-the-air installs, the GitHub App webhook — configure the client-facing address in [Server URLs](/system/settings#server-urls) and select it for the action. `PUBLIC_BASE_URL` remains a detected Remote origin and is trusted automatically without being repeated in `APP_ORIGINS`. An override or Proxy setting does not automatically change browser authentication origin configuration.
 
@@ -93,7 +93,7 @@ AUTH_OAUTH_ISSUER="https://identity.example.com"
 Register this redirect URL with the provider:
 
 ```text
-https://control.example.com/api/auth/oauth2/callback/company
+https://control.example.com/api/auth/callback/company
 ```
 
 You can replace `AUTH_OAUTH_DISCOVERY_URL` with all three explicit endpoints:
@@ -137,9 +137,15 @@ The server does not link a new OIDC identity to a password account solely becaus
 | Crash uploads (`/api/public/crashes`)  | Recorded               | Recorded     | No                    | Yes, rate limited                          |
 | Integration endpoints                  | Not required           | Not required | Not required          | Yes                                        |
 
+Incoming MCP OAuth tokens apply only to unscoped or preset MCP. They cannot authenticate the dashboard, GraphQL, management endpoints, or run-scoped MCP.
+
 Browser sessions use the Better Auth cookie. Native clients send the Better Auth session in `Authorization: Bearer <session-token>`. Existing agents use that same header with their `agent_` token. API keys use only `X-API-Key` and begin with `aide_`.
 
-Invalid or conflicting credentials fail with `401`. The server never falls back to anonymous access after receiving a bad credential.
+Invalid credentials fail with `401`; conflicting credentials fail with `400`. The server never falls back to anonymous access after receiving a bad credential.
+
+## Incoming MCP OAuth
+
+`MCP_OAUTH_ENABLED` defaults to `false`, independently of `AUTH_MODE`. Enable it with a configured canonical HTTPS origin to connect ChatGPT and Codex directly. OAuth tokens work only at `/api/mcp`; presets narrow the selected tools without granting permissions. Manage approvals and immediate revocation in **System → Connected Applications** or **Settings → Connected Applications** in the web and native iOS apps. [Connected Applications](/system/connected-applications) supports both per-approval **Revoke** and application-wide **Disconnect**. Follow the [MCP OAuth setup guide](/reference/mcp-oauth) for consent, scopes, discovery, optional DCR, Cloudflare connectivity, and rollout.
 
 ## Public routes
 
@@ -152,7 +158,9 @@ Only these application routes should bypass a reverse proxy's sign-in layer:
 - `/api/dsyms` and `/api/dsyms/uploads/*`, which CI reaches with an `X-API-Key` — the route checks the key itself
 - Third-party app registration at `/api/ios/apns-devices`
 
-Keep `/api/graphql`, `/api/mcp`, first-party `/api/ios/notification-devices`, enrollment start and export routes, Tools REST, and every other control-plane route protected. GraphQL performs its own credential checks before parsing or resolving operations, so aliases, batches, introspection, and mixed operations cannot bypass the enrollment exception.
+For direct OAuth clients, also allow the [MCP OAuth discovery and connection paths](/reference/mcp-oauth#discovery-and-connectivity) through the proxy while retaining the control plane’s own authentication. OAuth does not bypass Cloudflare Access automatically.
+
+Keep `/api/graphql`, first-party `/api/ios/notification-devices`, enrollment start and export routes, Tools REST, and every other control-plane route protected. GraphQL performs its own credential checks before parsing or resolving operations, so aliases, batches, introspection, and mixed operations cannot bypass the enrollment exception.
 
 ## iOS sessions
 
@@ -162,7 +170,7 @@ Signing out invalidates the server session, removes the Keychain item, clears Ap
 
 ## Upgrade from the MCP environment token
 
-`TOOLS_API_TOKEN` is no longer supported. Unscoped and preset MCP endpoints no longer permit anonymous access or an environment-token fallback.
+`TOOLS_API_TOKEN` is no longer supported. Unscoped and preset MCP endpoints no longer permit anonymous access or an environment-token fallback. They also accept scoped OAuth when [MCP OAuth](/reference/mcp-oauth) is enabled.
 
 1. Sign in and open [API keys](/system/api-keys).
 2. Create a key and copy it from the one-time result.

@@ -287,19 +287,19 @@ Everything under `/api/public/*` is intentionally unauthenticated: iOS enrollmen
 
 ## MCP
 
-`/api/mcp` is a stateless Streamable HTTP MCP endpoint. Point Claude Code, Cursor, or any other MCP client at it and the server's built-in tools become callable directly.
+`/api/mcp` serves the 2026-07-28 MCP protocol and older stateless clients through the same catalog. Point Claude Code, Cursor, or any other MCP client at it and the server's built-in tools become callable directly.
 
 The catalog spans agents, builds, codebases, worktrees, commands, workflows, runs, GitHub, GitLab, Jira, skills, notifications, signing, devices, disk space, usage, and debugging. Discovery tools include `global_search`, `get_action_center`, `get_apps`, `get_app`, `get_installation_status`, `get_agent_cli_health`, `get_crash_reports`, `get_crash_report`, `get_dsyms`, and `get_dsym`. Browse and export the catalog, run tools by hand, and inspect call history from [Tools](/system/tools).
 
-### Scopes
+### Tool selection
 
-The same endpoint serves three scopes, selected by query parameter:
+The same endpoint serves three tool selections, selected by query parameter. These selections are independent of OAuth permission scopes:
 
-| URL                    | Exposes                                                                                        | Authenticated by                   |
-| ---------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------- |
-| `/api/mcp`             | Every built-in tool                                                                            | Better Auth session or `X-API-Key` |
-| `/api/mcp?preset=<id>` | Selected built-in and external tools in that [MCP tool preset](/system/tools#mcp-tool-presets) | Better Auth session or `X-API-Key` |
-| `/api/mcp?run=<runId>` | The run's frozen built-in and external tool selections                                         | An enrolled agent's credential     |
+| URL                    | Exposes                                                                                        | Authenticated by                                       |
+| ---------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| `/api/mcp`             | Every built-in tool                                                                            | Better Auth session, `X-API-Key`, or enabled MCP OAuth |
+| `/api/mcp?preset=<id>` | Selected built-in and external tools in that [MCP tool preset](/system/tools#mcp-tool-presets) | Better Auth session, `X-API-Key`, or enabled MCP OAuth |
+| `/api/mcp?run=<runId>` | The run's frozen built-in and external tool selections                                         | An enrolled agent's credential                         |
 
 Supplying both `preset` and `run`, or either one twice, is rejected with `400 INVALID_MCP_SCOPE`.
 
@@ -311,7 +311,7 @@ MCP clients can discover preset IDs with `get_mcp_tool_presets` and pass `mcpPre
 
 ### Authentication
 
-Unscoped and preset MCP calls require a signed-in user's session or a Better Auth API key. Scripts should use an `aide_` key in `X-API-Key`. The raw key is shown only once when you create it on [API keys](/system/api-keys).
+Unscoped and preset MCP calls require a signed-in user's session, a Better Auth API key, or an enabled [MCP OAuth](/reference/mcp-oauth) authorization. OAuth scopes are cumulative: read requires `mcp:read`, ordinary writes also require `mcp:write`, and destructive/indirect execution and external tools require `mcp:destructive` as well. A missing scope returns HTTP `403` with an `insufficient_scope` challenge; selected descriptors advertise `aide/requiredScopes`. OAuth tokens do not authorize GraphQL or management routes. Scripts should use an `aide_` key in `X-API-Key`. The raw key is shown only once when you create it on [API keys](/system/api-keys).
 
 ```bash
 curl -s http://127.0.0.1:3090/api/mcp \
@@ -327,6 +327,8 @@ The run scope is different: it authenticates the caller as an enrolled agent ins
 | ------ | ---------------------------------------- | --------------------------------------------------------------- |
 | `400`  | `INVALID_MCP_SCOPE`                      | Conflicting or empty `preset` / `run` parameters                |
 | `401`  | `TOOL_API_UNAUTHORIZED`                  | Missing, conflicting, expired, disabled, or invalid credentials |
+| `401` | `MCP_AUTHENTICATION_REQUIRED` | MCP OAuth access is missing, invalid, expired, disabled, or revoked |
+| `403` | `INSUFFICIENT_SCOPE` | The OAuth approval lacks required cumulative MCP scopes |
 | `403`  | `RUN_MCP_FORBIDDEN`                      | The run belongs to a different agent                            |
 | `404`  | `RUN_NOT_FOUND` / `MCP_PRESET_NOT_FOUND` | The referenced run or preset does not exist                     |
 
@@ -354,7 +356,7 @@ Both Tools routes require a signed-in user session. They do not accept API keys 
 
 ### External MCP servers
 
-The [Tools](/system/tools) page manages and tests external Streamable HTTP or legacy SSE MCP servers. Their tools can be called from the Tools page, workflows, and scoped preset/run MCP connections. Saved custom header values stay server-side and are never returned to the browser.
+The [Tools](/system/tools) page manages and tests external Streamable HTTP or legacy SSE MCP servers. Their tools can be called from the Tools page, workflows, and scoped preset/run MCP connections. Outbound Streamable HTTP clients automatically negotiate the protocol version while retaining custom headers, timeouts, and pagination guards. External OAuth sign-in is not supported by this change. Saved custom header values stay server-side and are never returned to the browser.
 
 <Note>
   The bare `/api/mcp` endpoint remains built-in only. External tools are
@@ -391,9 +393,26 @@ External calls resolve credentials at call time. Credential rotation is supporte
 
 ```graphql
 mutation RequestExternalRetry($projectId: ID!, $pipelineId: ID!, $jobId: ID) {
-  runGitLabPipelineAction(projectId: $projectId, pipelineId: $pipelineId, action: RETRY, jobId: $jobId) {
-    pipeline { id status }
-    execution { id status nativeStatus externalStatus message targetedStatusIds startedAt completedAt }
+  runGitLabPipelineAction(
+    projectId: $projectId
+    pipelineId: $pipelineId
+    action: RETRY
+    jobId: $jobId
+  ) {
+    pipeline {
+      id
+      status
+    }
+    execution {
+      id
+      status
+      nativeStatus
+      externalStatus
+      message
+      targetedStatusIds
+      startedAt
+      completedAt
+    }
   }
 }
 ```

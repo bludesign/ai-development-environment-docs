@@ -183,6 +183,7 @@
             "pages": [
               "system/users",
               "system/api-keys",
+              "system/connected-applications",
               "system/status",
               "system/tailscale",
               "system/prepare",
@@ -204,6 +205,7 @@
             "icon": "book",
             "pages": [
               "reference/authentication",
+              "reference/mcp-oauth",
               "reference/environment-variables",
               "reference/docker",
               "reference/opencode",
