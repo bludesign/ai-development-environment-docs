@@ -164,9 +164,13 @@ A transition that Jira requires a screen for is listed but disabled and labelled
 
 **Jira Tickets** opens in **All**. Use **Project** to choose a managed project, then **Source** when it has more than one source. The horizontally scrolling status selector uses the same exact names and preserves your selection when it is available in the next view. Search combines with the selected status.
 
+**All statuses** applies the same per-project exclusions and completed-status hiding as the web app. Hidden statuses remain in the selector: choose one explicitly to show its tickets. Configure these defaults under **Manage → project → Display settings** in the web app; assignment filters still apply.
+
+If loading a status fails, its status choices remain available so you can retry or choose another status.
+
 Pull to refresh or select **Refresh** to refresh the current scope. Warnings identify failed sources, and a failed refresh keeps the existing tickets. On iPad, filtering also reconciles the selected ticket in the detail pane.
 
-The native app requires the updated control plane schema for the All view.
+Use an updated control plane with its database migrations applied (`npm run db:deploy` in the server repository). The native client requires the All view and status-filter schema, including `availableStatuses`.
 
 ## GraphQL
 
