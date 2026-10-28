@@ -2178,6 +2178,11 @@ type Mutation {
     sourceId: ID!
   ): JiraTicketBoard!
 
+  """
+  Refreshes every configured Jira source and returns their combined tickets.
+  """
+  refreshAllJiraTickets: JiraTicketCollection!
+
   """Updates a Jira cache TTL and returns the updated Jira settings."""
   updateJiraCacheTtl(
     """The TTL minutes used to filter or perform the operation."""
@@ -5212,6 +5217,11 @@ type Query {
     """Identifier of the source."""
     sourceId: ID!
   ): JiraTicketBoard!
+
+  """
+  Returns tickets from every configured source, preserving project display filters.
+  """
+  jiraAllTickets: JiraTicketCollection!
 
   """Returns a Jira ticket detail."""
   jiraTicketSummary(
@@ -15876,6 +15886,26 @@ type JiraTicketBoard {
   truncated: Boolean!
 
   """Warnings associated with this Jira ticket board."""
+  warnings: [String!]!
+}
+
+"""
+Tickets combined from all configured Jira sources after project display filters.
+"""
+type JiraTicketCollection {
+  """Tickets deduplicated by issue key, preferring the newest update."""
+  tickets: [JiraTicketSummary!]!
+
+  """Workflow status names in configured source order."""
+  statusOrder: [String!]!
+
+  """Combined source cache metadata; stale when any source fails."""
+  cache: JiraCacheMeta!
+
+  """Whether any source reached its ticket limit."""
+  truncated: Boolean!
+
+  """Project and source labelled warnings, including failed sources."""
   warnings: [String!]!
 }
 
