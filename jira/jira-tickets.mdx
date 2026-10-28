@@ -8,9 +8,27 @@ description: "Browse saved Jira projects, boards, and JQL queries by status."
   <img className="hidden dark:block" src="/images/dark/jira-tickets.png" alt="Jira Tickets page in dark theme" />
 </Frame>
 
-The **Jira Tickets** page at `/jira/tickets` is the ticket queue. Each managed project gets a tab, each project has one or more named **sources** — a JQL query or a Jira board — and every source renders as either a status-grouped table or a board of columns. Clicking a ticket opens it beside the list, where you can reassign it, transition it, comment on it, or turn it into a worktree branch without leaving the page.
+The **Jira Tickets** page at `/jira/tickets` is the ticket queue. **All** opens by default and combines the sources in every managed project. Each project also gets its own tab and has one or more named **sources** — a JQL query or a Jira board — and every source renders as either a status-grouped table or a board of columns. Clicking a ticket opens it beside the list, where you can reassign it, transition it, comment on it, or turn it into a worktree branch without leaving the page.
 
 This is the page to work from when you want to pick up the next ticket: it is the only place in the product that goes from a Jira issue to a checked-out branch on an agent in one dialog.
+
+## All projects and status filters
+
+Select **All** to browse every configured source together. A ticket appears once even when multiple sources include it; the most recently updated copy is used. Each source still applies its project's **Tickets to show** and **Hide completed tickets** settings. Projects that you have not added to the app are not included.
+
+The searchable status dropdown sits beside the project tabs. Open it and type to find a workflow status, such as **In Progress** or **In Review**, or select **All statuses** to clear the filter. Your selection filters either layout. **All statuses** hides the statuses excluded in each project’s display settings and the configured completed statuses when **Hide completed tickets** is enabled. These statuses stay in the dropdown: select one explicitly to show its tickets. This applies to both **All** projects and individual project views; assignment filters still apply. When you switch projects or sources, the selected status stays active if that view contains it; otherwise the selector returns to **All statuses**.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/jira-tickets-filtered.png" alt="All projects filtered to In Progress in light theme" />
+  <img className="hidden dark:block" src="/images/dark/jira-tickets-filtered.png" alt="All projects filtered to In Progress in dark theme" />
+</Frame>
+
+Select a project to use its saved source tabs. The status selector works the same way within that project.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/jira-tickets-project.png" alt="Project tickets filtered to In Progress in light theme" />
+  <img className="hidden dark:block" src="/images/dark/jira-tickets-project.png" alt="Project tickets filtered to In Progress in dark theme" />
+</Frame>
 
 ## Projects and sources
 
@@ -26,7 +44,7 @@ Both are validated before they are saved. JQL is run against Jira with a one-res
 A Scrum board's **column configuration** also sets the status order, so the columns here match the columns in Jira. A Scrum board with no active sprint loads nothing and says so.
 
 <Note>
-  The project tab, the source tab, and the open ticket are all in the URL as `?project=`, `?source=`, and `?issue=`. A link to a specific ticket in a specific source is shareable and survives a reload.
+  The selected project, source, status, and open ticket are in the URL as `?project=`, `?source=`, `?status=`, and `?issue=`. **All** omits project and source; **All statuses** omits status. Links survive a reload and browser Back and Forward restore the selected view.
 </Note>
 
 ## Reading the list
@@ -40,14 +58,14 @@ A Scrum board's **column configuration** also sets the status order, so the colu
 
 Priority is colour-coded from Highest through Lowest. Collapsing a status in the table view hides its rows but keeps the count visible.
 
-**Refresh** re-reads the current source from Jira, bypassing the [cache](/jira/jira-cache). Everything else on the page is served from the cache first.
+**Refresh** re-reads every configured source in **All**, or just the selected source in a project, bypassing the [cache](/jira/jira-cache). Other reads use the cache first. If a refresh fails, the results already on screen remain available.
 
 ### Banners
 
 | Banner | What it means |
 | --- | --- |
-| Jira could not be reached | The live read failed and expired cached data is being shown instead |
-| More than 1,000 tickets | The source hit the ceiling; refine the JQL or the board to see the rest |
+| Some Jira data could not be refreshed | Cached data or successful sources are shown. In **All**, warnings identify each project and source that failed. If every source fails on the first load, an error appears instead of an empty result. |
+| Source ticket limit | At least one source reached 1,000 tickets; refine its JQL or board to see the rest. **All** can contain more than 1,000 tickets across sources. |
 | A warning from Jira | Jira's own message, such as a Scrum board with no active sprint |
 
 ## Opening a ticket
@@ -107,7 +125,9 @@ A transition that Jira requires a screen for is listed but disabled and labelled
     | **Unassigned or assigned to me** | Unassigned tickets plus your own |
     | **My in-progress tickets** | Your tickets whose status category is in progress |
 
-    **Hide completed tickets** removes the project statuses you mark as completed, and drops those columns from the board entirely.
+    **Hide completed tickets** hides the project statuses you mark as completed while **All statuses** is selected. Their empty columns are also hidden. You can still choose a completed status in the status filter to see its tickets.
+
+    **Statuses excluded from All statuses** lets you select additional statuses to hide by default for this project. The exclusions apply in both the combined **All** view and the project’s source views. Selecting one of these statuses explicitly shows its tickets. Save the display settings to apply your changes.
 
     **Auto Merge done status** is the status linked tickets are moved to after Auto Merge merges the pull request on the [worktree](/worktrees/worktrees). Leave it unset to skip that step.
   </Accordion>
@@ -140,6 +160,22 @@ A transition that Jira requires a screen for is listed but disabled and labelled
   The function runs in a sandbox with no network, filesystem, or module access — 8 MB of memory, a 250 ms budget per call, and 1 second to generate the full candidate list. It is limited to 10,000 characters.
 </Warning>
 
+## In the iOS app
+
+**Jira Tickets** opens in **All**. Use **Project** to choose a managed project, then **Source** when it has more than one source. The horizontally scrolling status selector uses the same exact names and preserves your selection when it is available in the next view. Search combines with the selected status.
+
+**All statuses** applies the same per-project exclusions and completed-status hiding as the web app. Hidden statuses remain in the selector: choose one explicitly to show its tickets. Configure these defaults under **Manage → project → Display settings** in the web app; assignment filters still apply.
+
+If loading a status fails, its status choices remain available so you can retry or choose another status.
+
+Pull to refresh or select **Refresh** to refresh the current scope. Warnings identify failed sources, and a failed refresh keeps the existing tickets. On iPad, filtering also reconciles the selected ticket in the detail pane.
+
+Use an updated control plane with its database migrations applied (`npm run db:deploy` in the server repository). The native client requires the All view and status-filter schema, including `availableStatuses`.
+
+## GraphQL
+
+Use `jiraAllTickets` for the combined collection and `refreshAllJiraTickets` to force a refresh. Both accept an optional exact workflow name in `status` and return `JiraTicketCollection` with `tickets`, `statusOrder`, `availableStatuses`, `cache`, `truncated`, and `warnings`. Omit `status` to apply the project’s default exclusions; set it to reveal a specific status. `availableStatuses` lists selectable statuses before these display exclusions. Existing `jiraTicketBoard(sourceId:, status:)` and `refreshJiraSource(sourceId:, status:)` use the same filtering for individual sources.
+
 ## Requirements
 
 - A Jira Cloud site URL, account email, and API token in [Settings](/system/settings). Without them the page has nothing to list.
@@ -148,8 +184,8 @@ A transition that Jira requires a screen for is listed but disabled and labelled
 ## Notes
 
 - A source stops at 1,000 tickets. The banner tells you when that ceiling was hit.
-- Reads are served from the [Jira cache](/jira/jira-cache) until the TTL expires. **Refresh** forces a live read of the whole source.
-- With the [Jira webhook](/jira/webhooks) configured, the board reloads on its own when a ticket on it — or any ticket in the selected project — changes in Jira.
+- Reads are served from the [Jira cache](/jira/jira-cache) until the TTL expires. **Refresh** forces live reads for the selected scope.
+- With the [Jira webhook](/jira/webhooks) configured, the view reloads when a displayed ticket or a ticket in the selected project changes in Jira. **All** also reloads for changes in any configured project.
 - A ticket that appears in a source it was not in on the previous load records a **Jira source new ticket** observation for [workflows](/workflows/workflows).
 - Assignments, transitions, and comments are written straight to Jira and re-read immediately, so the list reflects Jira rather than a local copy.
 
