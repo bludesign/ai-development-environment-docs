@@ -57,7 +57,7 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
   <Step title="Choose the branch source" icon="code-branch">
     - **New branch** — name a branch and pick a base.
     - **Existing branch** — choose a local branch, an origin branch, or one that exists in both.
-    - **From ticket** — enter a Jira ticket key and let the branch name be derived from it, using the repository's Jira branch regex.
+    - **From ticket** — enter a Jira ticket key and use its Jira project’s JavaScript or AI naming configuration. The repository’s Jira regex identifies linked tickets from names; it does not generate names.
   </Step>
   <Step title="Pick a base branch" icon="code-merge">
     Select a base, or inherit the remote default.
@@ -66,6 +66,34 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
     The agent creates the worktree, applies the repository's preparation rules, and reports it back. If preparation fails, AIDE removes the incomplete worktree and removes only a branch created by that job.
   </Step>
 </Steps>
+
+## Ticket branch naming
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-ai-create-generated.png" alt="Creating a worktree with an editable AI branch name" />
+  <img className="hidden dark:block" src="/images/dark/worktree-ai-create-generated.png" alt="Creating a worktree with an editable AI branch name" />
+</Frame>
+
+The **From ticket** tab loads ticket metadata without calling a model. For projects using [AI branch naming](/jira/jira-tickets#ai-branch-naming), select **Generate branch name** to fill an editable branch field. **Regenerate branch name** requests another suggestion. Creating or changing a branch uses your preview, including edits, without generating it again.
+
+You can leave the name empty and submit **Create worktree** or **Change branch** directly. The agent generates and validates the name in the background before making Git changes or stashing files. The form shows progress and keeps generation failures visible for retry. There is no automatic JavaScript fallback.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-ai-change-generated.png" alt="Changing a worktree branch using an AI-generated name" />
+  <img className="hidden dark:block" src="/images/dark/worktree-ai-change-generated.png" alt="Changing a worktree branch using an AI-generated name" />
+</Frame>
+
+The name is checked against recorded branches across the repository and checked again in Git when the job runs. A taken name receives `-2`, `-3`, and subsequent numeric suffixes, with up to 100 candidates and the existing 255-character branch limit. Changing the ticket or target discards its preview. Generation errors, invalid output, and a 120-second generation timeout stop before Git changes.
+
+The iOS **Create Worktree** and **Change Branch** forms offer the same previews and editable generated names. They wait for the branch job to finish before dismissing, keeping errors in the form.
+
+### GraphQL and MCP
+
+`worktreeTicketBranchContext(input:)` returns ticket metadata, `branchNamingMode`, and a JavaScript preview when applicable without invoking AI. `generateWorktreeTicketBranch(input:)` accepts `codebaseId`, optional `worktreeId`, `ticketKey`, and a client-generated `requestId`, and returns an `AgentJob` immediately. Poll `agentJob` or subscribe to its changes; a successful generation exposes `worktreeTicketBranchResult { branchName }`.
+
+Pass that name or an edited value in `WorktreeBranchSelectionInput.branchName` with `mode: TICKET` to reuse it. Omit it to generate within the create/change job. `previewWorktreeTicketBranch` remains available for callers that need a resolved preview; AI projects can take longer, so interactive clients should use the asynchronous generation mutation. Use the same request ID when retrying a dispatched generation request to reuse its job.
+
+MCP exposes `get_worktree_ticket_branch_context` and `generate_worktree_ticket_branch` for the same flow. Use `update_jira_project_ai_branch_naming` to save project settings. The existing `create_worktree` and `change_worktree_branch` tools also follow the project’s naming mode and accept an edited `branchName` in ticket mode.
 
 ## Per-worktree actions
 

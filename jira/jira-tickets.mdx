@@ -94,7 +94,7 @@ A transition that Jira requires a screen for is listed but disabled and labelled
     Only online agents that support branch operations and have an available codebase are offered. A codebase or worktree with a job already running is left out, and an existing worktree has to be available.
   </Step>
   <Step title="Confirm the branch" icon="pen">
-    The branch name is generated from the project's branch naming function, with the ticket key fixed. You can still edit it and choose the base branch.
+    The ticket key is fixed. JavaScript projects show the name from their naming function. AI projects offer **Generate branch name** and an editable name, or generate automatically when you submit. Choose the base branch before submitting.
   </Step>
   <Step title="Create" icon="check">
     The dialog waits for the worktree job to finish and reports the result. Switching an existing worktree keeps the dialog open so you can see the confirmation.
@@ -132,7 +132,9 @@ A transition that Jira requires a screen for is listed but disabled and labelled
     **Auto Merge done status** is the status linked tickets are moved to after Auto Merge merges the pull request on the [worktree](/worktrees/worktrees). Leave it unset to skip that step.
   </Accordion>
   <Accordion title="Branch naming" icon="code">
-    Each project has a JavaScript function that names branches created from its tickets. It receives `ticketKey`, `type`, and `title`, and must return a valid Git branch name.
+    Each project uses **JavaScript** by default. Enable **AI branch naming** to use a saved provider, model, effort, and prompt instead. Save the naming mode and AI settings separately from the JavaScript function; switching modes preserves both configurations.
+
+    The JavaScript function names branches created from the project’s tickets. It receives `ticketKey`, `type`, and `title`, and must return a valid Git branch name.
 
     When the name it returns is already taken, it is called again with `alreadyTaken` set to the previous candidate, and has to return something different — that is how the `-2`, `-3` suffixes are produced.
 
@@ -160,9 +162,37 @@ A transition that Jira requires a screen for is listed but disabled and labelled
   The function runs in a sandbox with no network, filesystem, or module access — 8 MB of memory, a 250 ms budget per call, and 1 second to generate the full candidate list. It is limited to 10,000 characters.
 </Warning>
 
+## AI branch naming
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/jira-ai-branch-settings.png" alt="AI branch naming settings with model selection and prompt tokens" />
+  <img className="hidden dark:block" src="/images/dark/jira-ai-branch-settings.png" alt="AI branch naming settings with model selection and prompt tokens" />
+</Frame>
+
+Open **Manage → project → Branch naming**, enable **AI branch naming**, choose a provider, model, and effort, and enter your prompt. Select **Save naming mode and AI settings**. Codex, Claude, and OpenCode use the existing model catalog; execution runs on the agent hosting the selected codebase. That agent must be online, updated for AI branch naming, and have the selected provider and model available.
+
+Use the token buttons to choose the ticket data included in the prompt:
+
+| Token | Value |
+| --- | --- |
+| `{{ticket.key}}` | Jira ticket key |
+| `{{ticket.type}}` | Issue type, or an empty string when unavailable |
+| `{{ticket.title}}` | Ticket summary |
+| `{{ticket.description}}` | Description converted to Markdown, or an empty string when absent |
+
+Tokens expand once as literal text. Unsupported tokens and malformed token syntax are rejected when saving. The default prompt includes the key, type, and title, requesting `feature/` or `bugfix/` followed by the ticket key and a short slug. Include the key in custom naming conventions so the repository’s Jira regex can identify linked tickets.
+
+The description is fetched for generation only when its token appears in the saved prompt. No omitted ticket field is automatically appended. Prompts may contain up to 10,000 characters. Generation has a 120-second timeout.
+
+In the [worktree dialogs](/worktrees/worktrees#ticket-branch-naming), select **Generate branch name** to preview and edit the result. You can also submit without generating a preview. Name collisions add numeric suffixes locally without another model request. Provider errors, invalid names, and timeouts remain visible for retry; they do not fall back to JavaScript or change Git.
+
+<Note>
+  The prompt template is stored with the Jira project. Referenced ticket fields are sent to the selected provider and the rendered prompt is stored in the agent job payload. Apply your agent-job access and retention policies to these records, including descriptions you choose to include.
+</Note>
+
 ## In the iOS app
 
-**Jira Tickets** opens in **All**. Use **Project** to choose a managed project, then **Source** when it has more than one source. The horizontally scrolling status selector uses the same exact names and preserves your selection when it is available in the next view. Search combines with the selected status.
+**Jira Tickets** opens in **All**. Select a project and open **Branch naming** to configure its AI mode, provider, model, effort, and prompt tokens. The native **Create Worktree** and **Change Branch** forms show the same ticket preview, generation button, editable name, progress, and retry errors as the web app. Use **Project** to choose a managed project, then **Source** when it has more than one source. The horizontally scrolling status selector uses the same exact names and preserves your selection when it is available in the next view. Search combines with the selected status.
 
 **All statuses** applies the same per-project exclusions and completed-status hiding as the web app. Hidden statuses remain in the selector: choose one explicitly to show its tickets. Configure these defaults under **Manage → project → Display settings** in the web app; assignment filters still apply.
 
@@ -175,6 +205,8 @@ Use an updated control plane with its database migrations applied (`npm run db:d
 ## GraphQL
 
 Use `jiraAllTickets` for the combined collection and `refreshAllJiraTickets` to force a refresh. Both accept an optional exact workflow name in `status` and return `JiraTicketCollection` with `tickets`, `statusOrder`, `availableStatuses`, `cache`, `truncated`, and `warnings`. Omit `status` to apply the project’s default exclusions; set it to reveal a specific status. `availableStatuses` lists selectable statuses before these display exclusions. Existing `jiraTicketBoard(sourceId:, status:)` and `refreshJiraSource(sourceId:, status:)` use the same filtering for individual sources.
+
+For naming configuration, `updateJiraProjectAiBranchNaming(input:)` saves `mode`, `provider`, `model`, `effort`, and `prompt` for a `projectId`. `updateJiraProjectBranchNaming` continues to save the JavaScript function. `jiraProjects` exposes both saved configurations. Workflows that resolve or create ticket branches follow the project’s selected mode.
 
 ## Requirements
 
