@@ -16,7 +16,7 @@ This is the page to work from when you want to pick up the next ticket: it is th
 
 Select **All** to browse every configured source together. A ticket appears once even when multiple sources include it; the most recently updated copy is used. Each source still applies its project's **Tickets to show** and **Hide completed tickets** settings. Projects that you have not added to the app are not included.
 
-The status selector offers **All statuses** and the exact workflow names found in the current view, such as **In Progress** or **In Review**. Select a status to filter either layout. When you switch projects or sources, the selected status stays active if that view contains it; otherwise the selector returns to **All statuses**.
+The searchable status dropdown sits beside the project tabs. Open it and type to find a workflow status, such as **In Progress** or **In Review**, or select **All statuses** to clear the filter. Your selection filters either layout. **All statuses** hides the statuses excluded in each project’s display settings and the configured completed statuses when **Hide completed tickets** is enabled. These statuses stay in the dropdown: select one explicitly to show its tickets. This applies to both **All** projects and individual project views; assignment filters still apply. When you switch projects or sources, the selected status stays active if that view contains it; otherwise the selector returns to **All statuses**.
 
 <Frame>
   <img className="block dark:hidden" src="/images/light/jira-tickets-filtered.png" alt="All projects filtered to In Progress in light theme" />
@@ -125,7 +125,9 @@ A transition that Jira requires a screen for is listed but disabled and labelled
     | **Unassigned or assigned to me** | Unassigned tickets plus your own |
     | **My in-progress tickets** | Your tickets whose status category is in progress |
 
-    **Hide completed tickets** removes the project statuses you mark as completed, and drops those columns from the board entirely.
+    **Hide completed tickets** hides the project statuses you mark as completed while **All statuses** is selected. Their empty columns are also hidden. You can still choose a completed status in the status filter to see its tickets.
+
+    **Statuses excluded from All statuses** lets you select additional statuses to hide by default for this project. The exclusions apply in both the combined **All** view and the project’s source views. Selecting one of these statuses explicitly shows its tickets. Save the display settings to apply your changes.
 
     **Auto Merge done status** is the status linked tickets are moved to after Auto Merge merges the pull request on the [worktree](/worktrees/worktrees). Leave it unset to skip that step.
   </Accordion>
@@ -168,7 +170,7 @@ The native app requires the updated control plane schema for the All view.
 
 ## GraphQL
 
-Use `jiraAllTickets` for the combined collection and `refreshAllJiraTickets` to force a refresh. Both return `JiraTicketCollection` with `tickets`, `statusOrder`, `cache`, `truncated`, and `warnings`. Existing `jiraTicketBoard(sourceId:)` and `refreshJiraSource(sourceId:)` continue to load individual sources.
+Use `jiraAllTickets` for the combined collection and `refreshAllJiraTickets` to force a refresh. Both accept an optional exact workflow name in `status` and return `JiraTicketCollection` with `tickets`, `statusOrder`, `availableStatuses`, `cache`, `truncated`, and `warnings`. Omit `status` to apply the project’s default exclusions; set it to reveal a specific status. `availableStatuses` lists selectable statuses before these display exclusions. Existing `jiraTicketBoard(sourceId:, status:)` and `refreshJiraSource(sourceId:, status:)` use the same filtering for individual sources.
 
 ## Requirements
 

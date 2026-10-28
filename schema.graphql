@@ -2176,12 +2176,22 @@ type Mutation {
   refreshJiraSource(
     """Identifier of the source."""
     sourceId: ID!
+
+    """
+    Exact workflow name to show, overriding default completed and excluded statuses.
+    """
+    status: String
   ): JiraTicketBoard!
 
   """
   Refreshes every configured Jira source and returns their combined tickets.
   """
-  refreshAllJiraTickets: JiraTicketCollection!
+  refreshAllJiraTickets(
+    """
+    Exact workflow name to show, overriding default completed and excluded statuses.
+    """
+    status: String
+  ): JiraTicketCollection!
 
   """Updates a Jira cache TTL and returns the updated Jira settings."""
   updateJiraCacheTtl(
@@ -5216,12 +5226,22 @@ type Query {
   jiraTicketBoard(
     """Identifier of the source."""
     sourceId: ID!
+
+    """
+    Exact workflow name to show, overriding default completed and excluded statuses.
+    """
+    status: String
   ): JiraTicketBoard!
 
   """
   Returns tickets from every configured source, preserving project display filters.
   """
-  jiraAllTickets: JiraTicketCollection!
+  jiraAllTickets(
+    """
+    Exact workflow name to show, overriding default completed and excluded statuses.
+    """
+    status: String
+  ): JiraTicketCollection!
 
   """Returns a Jira ticket detail."""
   jiraTicketSummary(
@@ -15776,6 +15796,11 @@ type JiraProject {
   completedStatusIds: [ID!]!
 
   """
+  Status IDs hidden under All statuses; explicitly selecting a status reveals it.
+  """
+  excludedStatusIds: [ID!]!
+
+  """
   Identifier of the related done status. May be null when unavailable or not applicable.
   """
   doneStatusId: ID
@@ -15879,6 +15904,11 @@ type JiraTicketBoard {
   """Status orders associated with this Jira ticket board."""
   statusOrder: [String!]!
 
+  """
+  Selectable workflow names before default status exclusions, preserving assignment filters.
+  """
+  availableStatuses: [String!]!
+
   """The cache associated with this Jira ticket board."""
   cache: JiraCacheMeta!
 
@@ -15898,6 +15928,11 @@ type JiraTicketCollection {
 
   """Workflow status names in configured source order."""
   statusOrder: [String!]!
+
+  """
+  Selectable workflow names before default status exclusions, preserving assignment filters.
+  """
+  availableStatuses: [String!]!
 
   """Combined source cache metadata; stale when any source fails."""
   cache: JiraCacheMeta!
@@ -16660,6 +16695,11 @@ input UpdateJiraProjectDisplaySettingsInput {
 
   """Identifiers of the completed statuses to use."""
   completedStatusIds: [ID!]!
+
+  """
+  Status IDs hidden under All statuses. Omit to preserve the current exclusions.
+  """
+  excludedStatusIds: [ID!]
 
   """Identifier of the done status to use."""
   doneStatusId: ID
