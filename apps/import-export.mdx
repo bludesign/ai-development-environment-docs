@@ -29,6 +29,7 @@ The package can include:
 | --- | --- |
 | App | Name, description, and repository assignments. |
 | Repository details | Name, description, Jira branch regex, and **Keep base branch up to date**, selected individually. |
+| Reviewer pools | Preferred people for code owner and approval groups, including provider identity and profile metadata. Destination discovery validates groups and members before import. |
 | Preparations | Individual write, delete, and assume-unchanged rules; selected write rules include uploaded bytes. |
 | iOS App configuration | Saved source paths, schemes, build configurations, actions, advanced settings, and export settings. Agent observations and past build artifacts are not transferred. |
 | Build scripts | Selected reusable scripts and their repository assignments. |
@@ -87,6 +88,14 @@ Imported workflows remain disabled by default. **Enable this workflow after impo
 When you import from repository details, the current repository is the destination. Its origin and existing checkouts are preserved even when the template came from a different repository.
 
 If the package includes several repositories, select **Repository to use as the template**. Review settings and definitions as usual, then choose any **Optional additional checkouts**. Excluding a repository setting preserves the destination's current value.
+
+## Reviewer preferences in packages
+
+The repository `reviewerPools` setting carries saved group keys, provider and repository identities, discovery branches, and preferred user IDs with their display profiles. It contains no provider token and does not change CODEOWNERS files, branch protections, or approval rules.
+
+Import refreshes the destination's provider discovery. It can remap a matching group to another repository on the same provider instance, but every saved person must remain eligible there. Cross-provider or different-instance pools, missing groups, and unverifiable members block importing that setting. Exclude `reviewerPools` and configure [Code reviewers](/codebases/repository-detail) at the destination when the identities cannot be resolved. Review and apply use the existing transfer fingerprint checks.
+
+Including `reviewerPools` replaces the destination's saved reviewer preferences. Excluding it preserves them. Packages created before this field existed preserve current preferences too. Exported user IDs, names, and profile URLs can identify team members; review them before sharing a package.
 
 ## Clone requirements and progress
 

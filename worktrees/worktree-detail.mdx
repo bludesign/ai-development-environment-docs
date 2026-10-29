@@ -31,6 +31,8 @@ The same action set as the [Worktrees](/worktrees/worktrees) page — pull, sync
 
 Starting a build, coverage build, or rebuild refreshes this page in place instead of navigating to Build History.
 
+**Assign** opens the shared [reviewer picker](/worktrees/worktrees#assign-reviewers) when this worktree has an open GitHub PR or GitLab MR and configured repository reviewer pools. Select people manually or preview a random selection for the applicable approval groups, then send the additions. The same action is available in the native iOS app.
+
 ## Build history
 
 The **Build History** card loads the latest 50 builds for this worktree and appends older records with **Load more**. Select a row to open its immutable build details. Select any **Out of date** badge to open **Rebuild** without leaving this surface. **Copy path** in the worktree actions copies the complete folder path. **Rebuild** queues a new build without leaving the page, and a successful runnable build adds **Run** with the shared detailed agent-and-device picker. It defaults to the build agent, lazily loads devices when you select another eligible Mac, and transfers the app through the control plane when the active agent differs from the builder.
