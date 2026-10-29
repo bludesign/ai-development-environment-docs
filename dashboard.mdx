@@ -138,15 +138,33 @@ Open **System → Settings → Action Center** to configure shared preferences:
 
 | Setting | Default | Behavior |
 | --- | --- | --- |
-| **Maximum request age (days)** | `30` | Excludes requests created more than this many days ago. Set `0` to disable the cutoff. Applies to the full and compact queues. |
+| **Maximum request age (days)** | `30` | Excludes requests created more than this many days ago. Set `0` to disable the cutoff. Applies to the full and compact queues and the Pull Requests and Merge Requests totals. |
 | **Show my open requests in sidebar** | On | Includes the Mine category in the compact queue. |
 | **Show requests awaiting my approval in sidebar** | On | Includes requests awaiting your approval in the compact queue. |
 
-The sidebar switches are independent. Turning either off leaves its category available in the full Action Center. Counts and pagination reflect the selected surface, including filtering before a page is read. Dedicated GitHub and GitLab request lists retain their own filters.
+The sidebar switches are independent. Turning either off leaves its category available in the full Action Center and in the provider request totals. Queue counts and pagination reflect the selected surface, including filtering before a page is read. Dedicated GitHub and GitLab request lists retain their own filters.
 
 The iOS app exposes the same shared settings, request statuses, native detail screens, and merge sheets. On iPad, the navigation sidebar also includes a compact request queue; iPhone uses the full Action Center.
 
 Request summaries are stored in the control plane database and refreshed on startup, every 60 seconds, and after relevant provider events. Provider response caches still apply. **Refresh** rebuilds the index using those caches. If discovery fails or hits a provider limit, the queue shows a warning and preserves previously available entries; merge readiness is not confirmed for that provider until a successful refresh. Changing or disconnecting an account removes its old index entries during reconciliation. The index contains request metadata, not provider tokens.
+
+## Sidebar and iOS totals
+
+The bottom-left web sidebar shows activity totals alongside spend and disk status. Open **Status Center** in the native iOS app for the same totals. Select a counter to open its corresponding page.
+
+| Counter | What it counts |
+| --- | --- |
+| **Action Center** | Items in the full Action Center queue. |
+| **Pull Requests** | Open GitHub requests in **Mine** (authored or assigned), plus requests awaiting your approval. |
+| **Actions** | GitHub Actions workflow runs that are running or queued to start across your managed repositories. |
+| **Merge Requests** | Open GitLab requests you authored, plus requests awaiting your approval. |
+| **Pipelines** | Active GitLab pipelines from your managed projects, including preparing, queued, running, and canceling pipelines. |
+
+**Pull Requests** and **Actions** appear when GitHub is configured. **Merge Requests** and **Pipelines** appear when GitLab is configured. Connecting both providers shows all four counters; a configured provider with no matching activity shows `0`.
+
+A request that is both yours and awaiting your review counts once. Review requests leave the total after you approve them, even if other reviewers still need to approve. Your own or assigned requests remain counted after approval. The saved **Maximum request age (days)** applies to both request counters: the default is `30`, and `0` includes every age. The compact queue's two visibility switches do not change these totals.
+
+Completed runs and pipelines in **Manual** or **Scheduled** states are excluded from the active CI totals. These totals refresh in the background and through live updates. During a temporary provider failure, the control plane retains the last successful count for the same connection. A configured provider shows `—` until its count is available.
 
 ## Mini Action Center
 
