@@ -254,6 +254,10 @@ Removing these settings hides the Actions Cache page until it is reconfigured.
 
 ## Action Center request settings
 
-**Action Center** settings are shared by the web and native iOS apps. Set **Maximum request age (days)** to limit requests by creation date; the default is `30`, and `0` disables the cutoff. Independently choose **Show my open requests in sidebar** and **Show requests awaiting my approval in sidebar**, both enabled by default. These switches change the compact queue; both categories remain in the full [Action Center](/dashboard).
+**Action Center** settings are shared by the web and native iOS apps. Set **Maximum request age (days)** to limit requests by creation date; the default is `30`, and `0` disables the cutoff. This cutoff applies to the full and compact queues and to the **Pull Reqs** and **Merge Reqs** totals in the web sidebar, labeled **Pull Requests** and **Merge Requests** in native **Status Center**.
 
-The review queue excludes requests you have approved. Your own requests remain visible after approval so you can merge them. The settings cover both GitHub and GitLab.
+Independently choose **Show my open requests in sidebar** and **Show requests awaiting my approval in sidebar**, both enabled by default. These switches change the compact queue; both categories remain in the full [Action Center](/dashboard) and in the provider request totals.
+
+The review queue and review-category totals exclude requests you have approved, even when other reviewers still need to approve. Your own requests remain visible and counted after approval so you can merge them. A request belonging to both categories counts once. The settings cover both GitHub and GitLab.
+
+The web activity totals show **Pull Reqs** and **Actions** for GitHub, **Merge Reqs** and **Pipelines** for GitLab, and both pairs when both providers are configured. Native iOS keeps the full **Pull Requests** and **Merge Requests** labels. **Actions** and **Pipelines** count running and queued CI work; the request age cutoff does not limit them. See [Sidebar and iOS totals](/dashboard#sidebar-and-ios-totals) for count and availability details.
