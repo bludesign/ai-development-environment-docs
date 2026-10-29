@@ -112,6 +112,14 @@ Use `repositoryTransferExportPreview` and `exportRepositoryTransfer` for export.
 
 Read `repositoryTransferOperation(id:)` or subscribe to `repositoryTransferChanged(operationId:)` for progress. `retryRepositoryTransfer` retries clone failures. `appRepositorySync` and `syncAppRepositories` provide the app Sync view. These operations require control-plane authentication; enrolled agent tokens cannot invoke them.
 
+### MCP and workflow automation
+
+MCP exposes `get_repository_transfer_export_preview` and `export_repository_transfer` for exports; `preview_repository_transfer` and `apply_repository_transfer` for reviewed imports; and `get_repository_transfer_operation` and `retry_repository_transfer` for progress and failed checkouts. `get_app_repository_sync` and `sync_app_repositories` provide the same app checkout review. Preview can queue destination inspections, so it is a write operation.
+
+Pass the preview's fingerprint and the unchanged reviewed input when applying. Keep `requestId` stable across retries of that request. Configuration saves before clone jobs finish; inspect per-checkout errors rather than treating the initial response as completion.
+
+The workflow palette has corresponding dedicated transfer actions. A preview step named `review` returns `steps.review.output.preview.fingerprint`; bind that path into the apply step. Add a **Human confirm** step if a person must approve the preview. Use the returned operation ID for later reads or use `REPOSITORY_TRANSFER_RESULT` in a follow-up workflow. [OAuth clients](/reference/mcp-oauth#choose-permissions) need write scopes for preview and destructive scopes for apply.
+
 The package identifies itself with `format: "aide.repository-transfer"` and `version: 1`. Existing workflow-only and command-only JSON imports remain available on their own pages.
 
 ## Related pages

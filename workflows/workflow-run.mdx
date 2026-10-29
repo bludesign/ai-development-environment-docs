@@ -52,6 +52,14 @@ Each parked step lists what it is **Waiting on** — a link straight to the job,
 
 The published graph is annotated with live state — which node succeeded, failed, is waiting, or is active. It updates as the run progresses. For command-output matching, the graph shows the actual execution of each emitted match branch instead of the dormant scheduling template; the source command continues to display its own terminal state separately.
 
+## Inspecting action results
+
+Open **Session data** to inspect a dedicated action's response at `steps.<stepId>.output`. Responses retain their tool wrapper, such as `output.preview` or `output.operation`; use that path when binding a later step. The **Step attempts** tab shows whether dispatch succeeded or an attempt failed.
+
+A successful dispatch can leave the returned operation running on an agent. Its step need not appear as **Parked** unless that kind explicitly waits for completion. Open or read the returned job/operation, use an appropriate wait step, or react through its result trigger before starting work that depends on the result. For example, `REPOSITORY_TRANSFER_RESULT`, `TAILSCALE_SERVE_OPERATION_RESULT`, and `CLI_HEALTH_RESULT` report their domain outcomes.
+
+Tool-backed actions share the [tool-call audit](/system/tools#audit), with the workflow run as caller and the step attempt as correlation context. Review both the attempt and the operation outcome when diagnosing a failed background task.
+
 ## Answering a question
 
 When a step raises a question, the run moves to **Waiting** and the question appears on this page, labeled with the step that asked it. Pick from the offered buttons or type a **Custom answer**, then **Answer**.
