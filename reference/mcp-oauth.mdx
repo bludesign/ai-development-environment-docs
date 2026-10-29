@@ -66,6 +66,16 @@ New consent selects read access only. Write, destructive, and offline access req
 
 The server owns the classification independently of tool annotations. Unknown tools require all three MCP scopes. A preset narrows the tool selection and cannot grant scopes. Selected descriptors remain discoverable and advertise `aide/requiredScopes` in their `_meta`, allowing clients to request additional consent. Missing scopes return HTTP `403` with an `insufficient_scope` challenge before a tool handler runs.
 
+Permission checks also cover the expanded administrative tools. Tool names and UI badges do not determine OAuth access:
+
+| Example | Required cumulative MCP scopes |
+| --- | --- |
+| `get_repository_transfer_operation`, `preview_mcp_tool_preset_import` | `mcp:read` |
+| `preview_repository_transfer`, `symbolicate_crash_report` | `mcp:read mcp:write` |
+| `apply_repository_transfer`, `delete_codebase_branches`, `create_mcp_tool_preset`, `run_cli_health_checks` | `mcp:read mcp:write mcp:destructive` |
+
+Repository preview can start destination inspections; CLI checks execute commands, and presets can change future executable tool selections. Read the descriptor's `_meta["aide/requiredScopes"]` rather than inferring permission from a `get`, `preview`, or `run` prefix. Newly added tools do not join existing preset selections or frozen run grants automatically. See [reviewed automation requests](/reference/api#reviewed-automation-requests) before granting a client import or cleanup access.
+
 OAuth tokens authorize MCP only. They cannot act as application sessions, manage accounts, call GraphQL, use Tools REST, or access an enrolled agent's run endpoint.
 
 ## Connect Codex

@@ -8,13 +8,13 @@ description: "Drag steps onto the canvas, connect typed handles, then validate a
   <img className="hidden dark:block" src="/images/dark/workflow-edit.png" alt="Workflow editor in dark theme" />
 </Frame>
 
-The workflow editor at `/dashboard/workflows/{id}/edit` is a visual canvas for building durable automations. You place one trigger and a set of typed steps, connect their handles, configure each one, validate the graph, and publish an immutable version.
+The workflow editor at `/dashboard/workflows/{id}/edit` is a visual canvas for building durable automations. You place one or more triggers and a set of typed steps, connect their handles, configure each one, validate the graph, and publish an immutable version.
 
 ## Anatomy of a workflow
 
 <Columns cols={2}>
   <Card title="Trigger" icon="play">
-    Exactly one, and it starts the run. Triggers cover manual starts, schedules, GitHub, GitLab, and Jira events, build results, worktree state changes, AI run lifecycle events, agent and disk thresholds, and more.
+    At least one; each starts a run through its own connected entry path. Triggers cover manual starts, schedules, GitHub, GitLab, and Jira events, build results, worktree state changes, AI run lifecycle events, agent and disk thresholds, and more.
   </Card>
   <Card title="Steps" icon="code-fork">
     The work. Typed kinds span Jira, GitHub, GitLab, worktrees, codebases, builds, AI runs, skills, commands, notifications, signing, devices, control flow, and MCP calls.
@@ -72,7 +72,7 @@ Selecting a node opens its inspector.
     - **Use a fixed value** — a literal you type now.
     - **Bind to session data** — a session path such as `ticket.key`, read when the run executes.
 
-    Text fields also accept `{token}` interpolation to splice session data into a string at execution time.
+    Text fields also accept `{{path}}` interpolation to splice session data into a string at execution time.
   </Accordion>
   <Accordion title="Session data contract" icon="database">
     The inspector states what the step needs and what it produces:
@@ -105,6 +105,46 @@ Selecting a node opens its inspector.
     Steps that invoke a model expose **Provider**, **Model**, and **Effort**.
   </Accordion>
 </AccordionGroup>
+
+### Dedicated actions and results
+
+The current catalog has **345 typed step kinds**. Dedicated actions cover resource discovery, repository and worktree setup, build configuration and scripts, command and skill authoring, agent administration, apps, transfers, crashes, telemetry, notifications, caches, and tool/preset administration. Use the palette search rather than maintaining a separate list of every operation. The web and iOS editors use the same catalog and configuration schemas.
+
+The operation-specific actions use a fixed MCP tool identity with that tool's input validation, permissions, and audit context. Configuration cannot substitute another tool. **MCP call** remains available when you need to select a built-in or configured external tool directly.
+
+These actions write their structured response to `steps.<stepId>.output`. Keep the response wrapper when binding a later field: a repository import preview at step `review` exposes its fingerprint at `steps.review.output.preview.fingerprint`. The inspector lists the guaranteed output path; use the returned schema and response to choose deeper fields.
+
+An action that queues background work can succeed as soon as it returns a durable job or operation ID. Its success handle confirms dispatch, not completion. Follow with a supported wait action or a separate result-triggered workflow; use the returned ID with read actions to inspect status before dependent work. Existing steps that explicitly wait, such as the Tailscale fleet steps below, keep that behavior. Inspect the kind's description before connecting a dependent action.
+
+When a dedicated action accepts `requestId` and you leave it unset, the runtime generates the same value for retries of that run's node. Keep an explicit request ID stable when retrying the exact same operation; changing the reviewed input requires a new review and request identity.
+
+### Event triggers and thresholds
+
+The catalog has **124 trigger kinds**. The additional domain triggers cover existing application events:
+
+| Domain | Trigger kinds |
+| --- | --- |
+| Crash and dSYM processing | `CRASH_REPORT_CHANGED`, `DSYM_CHANGED` |
+| Telemetry ingestion | `TELEMETRY_CONSOLE_INGESTED`, `TELEMETRY_ANALYTICS_INGESTED` |
+| CLI health | `CLI_HEALTH_RESULT` |
+| Tailscale Serve | `TAILSCALE_SERVE_STATE_CHANGED`, `TAILSCALE_SERVE_OPERATION_RESULT` |
+| Repository transfers | `REPOSITORY_TRANSFER_RESULT` |
+| App and definition changes | `APP_CHANGED`, `COMMAND_DEFINITION_CHANGED`, `BUILD_SCRIPT_CHANGED`, `SKILL_DEFINITION_CHANGED` |
+| Notifications and attention | `NOTIFICATION_CREATED`, `ACTION_CENTER_CHANGED` |
+| SSE configuration and storage | `SSE_ENDPOINT_CHANGED`, `SSE_STORAGE_CHANGED` |
+
+Use **Filters** to match the event's session paths. Payloads expose public resource fields and operation identities. `DSYM_CHANGED` distinguishes bundle and upload events with `dsym.entityKind`; upload failures include `dsym.uploadId` and `dsym.status` before a bundle is indexed. `CLI_HEALTH_RESULT` includes completed job identity and failures even when no successful check result exists. Definition and SSE changes can provide a catalog-level change signal; read the relevant resource when you need its current configuration.
+
+`NOTIFICATION_CREATED` excludes workflow lifecycle notifications, which already have `WORKFLOW_FINISHED`. `ACTION_CENTER_CHANGED` observes non-workflow attention items and excludes active work, preventing a workflow's own lifecycle from continually restarting it. Telemetry triggers react to ingestion, not highlights or display-setting edits; skill-definition changes exclude synchronization progress.
+
+| Trigger | Timing and result behavior |
+| --- | --- |
+| `WORKTREE_DIRTY_DURATION` | Defaults to `durationSeconds: 3600`. Tracks continuous dirty time from the first observation in a durable cursor, checks worktree changes and minute audits, and fires once per dirty interval. Clean observations reset it even when a filter such as `worktree.dirty: true` rejects that observation. |
+| `SIGNING_ASSET_EXPIRING` | Checks provisioning profiles on startup, signing changes, and minute audits. Defaults to `signingProfile.expiresInDays <= 30`; custom thresholds can use `expiresInDays` or `expiresInSeconds` under `signingProfile`. |
+| `BUILD_DATA_CLEANUP_RESULT` | Reports actual deletion-job completion, including failed, cancelled, timed-out, or invalid outcomes and parsed deletion results. Inventory collection alone does not produce a cleanup result. |
+| `BUILD_DATA_THRESHOLD` | Waits for known sizes for every remaining entry, then reevaluates fresh sizing and cleanup changes. It can fire again after a total falls below and later crosses the same threshold. |
+
+Threshold comparisons fire when the condition becomes true and stay quiet until it becomes false again. A later crossing is a new event, including a return to a previously observed size.
 
 ### Reacting to command output
 

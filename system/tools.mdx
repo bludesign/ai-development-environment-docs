@@ -26,6 +26,8 @@ MCP `get_server_url_settings` reads these settings, and `update_server_url_setti
 
 ## Tool catalog
 
+With every production dependency available, the built-in registry contains **560 tools in 30 top-level groups**. The live catalog remains the source of truth for names, schemas, required inputs, and provider availability. Saved presets and existing run snapshots keep their explicit selections when new tools are added.
+
 Tools are grouped by source. Built-in tools ship with the server and cover agents, builds, codebases, commands, worktrees, GitHub, GitLab, Jira, skills, runs, workflows, notifications, signing assets, devices, disk space, usage, and debugging. Each external MCP server you add contributes its own group.
 
 Read tools also cover cross-product search (`global_search`), the Action Center (`get_action_center`), apps (`get_apps`, `get_app`), cached CLI health (`get_installation_status`, `get_agent_cli_health`), and crash investigation (`get_crash_reports`, `get_crash_report`, `get_dsyms`, `get_dsym`). These tools let an AI find the relevant resource before invoking a more specific tool.
@@ -41,6 +43,28 @@ Search filters across tool names, descriptions, and server names at once. **Refr
 The built-in **Builds** group includes `import_coverage_report`. It records an LCOV or Istanbul file already written inside a worktree as a host-only build and coverage report. See [Importing coverage from other test runners](/builds/build-coverage#importing-coverage-from-other-test-runners) for its inputs, limits, and workflow equivalent.
 
 The built-in **Tailscale** group reads the fleet Serve overview, inspects agents, upserts typed templates, toggles individual assignments, and deletes templates. Its write tools operate through durable agent jobs and expose operation progress rather than raw CLI output. See [Tailscale Serve](/system/tailscale#automation-interfaces) for the complete catalog and safety constraints.
+
+### Capability coverage
+
+The catalog exposes the same user-facing services used by the dashboard. Use these groups to find administrative and automation operations as well as resource reads:
+
+| Area | Available operations |
+| --- | --- |
+| App and repository transfer | Export selections, preview and apply reviewed imports, read or retry checkout operations, and sync an app's missing repositories |
+| Plans and sessions | Manage drafts, inspect provider-import status, and cancel a pending native form while continuing the run |
+| Crashes and dSYMs | Start symbolication, manage report and dSYM metadata or deletion, inspect upload processing, retry failed build imports, and configure collection and retention |
+| Builds | Reparse configurations, manage project and script assignments, inspect signing options, and select eligible deployment agents |
+| Commands and skills | Author and share definitions, import or export saved commands, and manage skill packages, groups, and synchronization |
+| GitHub and GitLab | Manage registered repositories or projects, preferences, webhooks, cache operations, auto-retry rules, and merge follow-ups; run configured GitLab external pipeline actions |
+| Worktrees and codebases | Manage tags and settings, purge hidden records, preview ticket branches, and delete reviewed local branches with expected commit tips |
+| Apps, agents, and Action Center | Manage apps and memberships, rename agents, run CLI health checks, edit custom checks, refresh attention, and acknowledge or dismiss supported items |
+| Tools and presets | Create, update, export, preview-import, or delete presets; manage external-server metadata and clear completed audit records |
+| Notifications and debugging | Inspect and test subscriptions or registered devices, manage telemetry and SSE views, presets, and filters, and inspect APNs readiness |
+| Operational services | Manage Tailscale Serve, disk and build-data operations, cache settings and storage cleanup, usage history, and model-cost sources |
+
+Some operations return a job or operation immediately. Read that operation or use a result trigger before treating the work as complete. See [workflow action results](/workflows/workflow-edit#dedicated-actions-and-results) and [reviewed automation requests](/reference/api#reviewed-automation-requests).
+
+Credential values, enrollment secrets, agent-only reporting, native transcripts, raw upload bytes, browser subscription registration, signing identity imports, and certificate portal changes use their separate authenticated flows. Exported configuration can still contain authored scripts and selected repository preparation file contents; review it before sharing.
 
 ### Tool badges
 

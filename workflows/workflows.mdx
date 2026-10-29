@@ -10,7 +10,9 @@ description: "Design, publish, and monitor durable development automations."
 
 The **Workflows** page at `/dashboard/workflows` is the index for durable development automations. It has two tabs: **Workflows**, the definitions you have authored, and **All runs**, every execution across every workflow.
 
-A workflow is a typed graph — one trigger, then steps connected by handles — that the control plane executes durably. A run survives a control plane restart, an agent restart, and a dropped connection, picking up from the last completed step rather than starting over.
+A workflow is a typed graph — one or more triggers, then steps connected by handles — that the control plane executes durably. A run survives a control plane restart, an agent restart, and a dropped connection, picking up from the last completed step rather than starting over.
+
+The current catalog contains **345 step kinds and 124 trigger kinds**. Browse the [editor catalog](/workflows/workflow-edit#dedicated-actions-and-results) for typed actions and [event triggers](/workflows/workflow-edit#event-triggers-and-thresholds), or query the live catalog through [GraphQL or MCP](/reference/api#workflow-catalog-and-authoring).
 
 ## Workflows tab
 

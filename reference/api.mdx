@@ -124,6 +124,12 @@ mutation ApplyMcpPresetImport(
 
 Changing the document or decisions requires a fresh preview. The server also rechecks referenced tools and replacement targets before writing; a changed or invalid review fails without a partial import. `REPLACE` keeps the target preset's ID.
 
+### Workflow catalog and authoring
+
+`workflowCatalog` returns the live step and trigger definitions, configuration schemas, required/provided session paths, handles, and effect flags. The current catalog contains **345 steps and 124 triggers**. MCP clients can call `list_workflow_step_kinds`, `list_workflow_trigger_kinds`, `describe_workflow_kind`, and `list_workflow_session_paths` before authoring; validate the draft before publishing.
+
+Dedicated operation actions use fixed built-in tools and return structured data at `steps.<stepId>.output`. Actions that queue work return durable identities rather than automatically waiting for the work to finish. The [editor reference](/workflows/workflow-edit#dedicated-actions-and-results) explains output bindings, request IDs, and result triggers; [trigger timing](/workflows/workflow-edit#event-triggers-and-thresholds) covers dirty duration, signing expiry, and build-data thresholds.
+
 ### Agent build-transfer routes
 
 Cross-agent app deployment uses REST routes under `/api/agent/build-artifact-transfers/{transferId}`. They support transfer status and metadata, `HEAD` offset inspection, sequential `PATCH` upload chunks, completion, and ranged download. These endpoints accept only the enrolled source or target agent assigned to that transfer; browser sessions and general API keys cannot substitute for that identity. Their payloads are intentionally small or ranged so reverse proxies never receive a whole large `.app` archive in one request.
@@ -290,6 +296,23 @@ Everything under `/api/public/*` is intentionally unauthenticated: iOS enrollmen
 `/api/mcp` serves the 2026-07-28 MCP protocol and older stateless clients through the same catalog. Point Claude Code, Cursor, or any other MCP client at it and the server's built-in tools become callable directly.
 
 The catalog spans agents, builds, codebases, worktrees, commands, workflows, runs, GitHub, GitLab, Jira, skills, notifications, signing, devices, disk space, usage, and debugging. Discovery tools include `global_search`, `get_action_center`, `get_apps`, `get_app`, `get_installation_status`, `get_agent_cli_health`, `get_crash_reports`, `get_crash_report`, `get_dsyms`, and `get_dsym`. Browse and export the catalog, run tools by hand, and inspect call history from [Tools](/system/tools).
+
+The full production registry contains **560 built-in tools in 30 top-level groups**. Available providers and external discovery affect the live catalog; use its schemas instead of assuming that a tool is callable from its name alone. Coverage includes reviewed repository transfers, run drafts/import controls, crash processing, build setup, provider administration, tags and branch cleanup, presets, notifications, and operational settings. See the [grouped capability coverage](/system/tools#capability-coverage).
+
+### Reviewed automation requests
+
+The MCP tools retain the dashboard's review and concurrency protections:
+
+| Operation | Required review data |
+| --- | --- |
+| Repository import | Call `preview_repository_transfer`, resolve blockers, then call `apply_repository_transfer` with the same `input`, returned `preview.fingerprint`, and a stable `requestId`. Preview can queue destination-inspection work and requires write permission. |
+| App repository sync | Read `get_app_repository_sync`, review the selected destinations, and pass its `overview.fingerprint` with a stable `requestId` to `sync_app_repositories`. |
+| MCP preset import | Call `preview_mcp_tool_preset_import`, then send the same `input` and the returned `preview.token` as `previewToken` to `import_mcp_tool_presets`. |
+| Batch local-branch deletion | Send each reviewed `codebaseId`, branch name, and `expectedHeadSha` to `delete_codebase_branches`, plus a stable `requestId`. `force` defaults to `false`; protected branches and changed tips remain guarded, and results include skipped targets. |
+
+Refresh the preview if the choices, mappings, destination state, or configuration change. Preserve a request ID only for retries of that exact request. Transfers save selected configuration atomically before independent checkout jobs complete; read `get_repository_transfer_operation` or use `REPOSITORY_TRANSFER_RESULT` to observe the outcome. A successful dispatch does not establish successful completion of every target.
+
+The preview requirement also applies to dedicated workflow actions. Bind the fingerprint from the preview step's structured output and insert a human-confirmation step when your automation needs a person to approve the reviewed changes.
 
 ### Tool selection
 
