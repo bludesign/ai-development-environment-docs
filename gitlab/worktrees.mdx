@@ -16,6 +16,12 @@ A GitLab worktree can discover the branch's merge request, create a request for 
 
 Expand a pipeline in the worktree's pipeline card to inspect jobs grouped by stage, timing, allowed failures, and retry history. Use the pipeline menu to retry or cancel when available, or retry a completed current job. **All pipelines** opens the [Pipelines](/gitlab/pipelines) page with the project selected.
 
+## Assign reviewers
+
+Configure preferred people under [Repository details → Code Reviewers](/codebases/repository-detail), then use **Assign** on a worktree with an open merge request. The picker uses the request's applicable approval rules and code ownership to show eligible configured people. It distinguishes approvals from pending requests and can preview enough random additions for rules requiring multiple people. Confirm with **Assign selected**; existing reviewer assignments remain in place.
+
+See [Assign reviewers](/worktrees/worktrees#assign-reviewers) for the shared web and iOS flow. Inaccessible rules or groups appear as discovery issues rather than silently being treated as having no requirements.
+
 ## Merge and clean up
 
 The worktree's merge action opens the same project-aware merge controls as the merge request page. You can merge immediately or enable auto-merge, honor the project's squash and source-branch settings, supply optional commit messages, and choose available follow-ups.

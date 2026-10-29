@@ -48,6 +48,30 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
 | Working tree | Dirty when staged or unstaged changes exist; otherwise clean |
 | Review decision | Approved, changes requested, review required, or no decision |
 
+## Assign reviewers
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-assign-reviewers-github.png" alt="Choosing GitHub reviewers with approval, requested, and selected counts" />
+  <img className="hidden dark:block" src="/images/dark/worktree-assign-reviewers-github.png" alt="GitHub reviewer assignment in dark theme" />
+</Frame>
+
+**Assign** appears when the worktree has an open GitHub pull request or GitLab merge request and its [repository Code Reviewers settings](/codebases/repository-detail) contain preferred people. The action is shared by worktree cards, table rows, worktree details, app worktrees, and worktree actions on plan and session pages. It contacts the provider through the control plane, so the local agent does not need to be online.
+
+Open **Assign**, search people, and select one or more reviewers under the applicable ownership and approval groups. Each group distinguishes **Required**, **Approved**, **Requested**, and **Selected** counts. A requested reviewer has not approved yet. Existing reviewers and approvals remain visible; assignment adds people without removing existing requests. You can assign part of the required group and add more later.
+
+**Random selection** fills remaining reviewer targets from your configured, currently eligible people. Existing valid approvals, pending requests, and your selections contribute to those targets. One person can cover overlapping groups when eligible for each. A rule requiring two approvals needs two distinct people. Random selection only prepares the list: review it, then select **Assign selected** to send requests.
+
+The request author, bots, ineligible people, existing requested reviewers, and people with valid approvals are excluded from new requests. If the configured pool is too small, the picker explains which targets remain short. Discovery or permission issues remain visible. A successful selection is a request for review; the provider remains responsible for accepting approvals and enforcing merge rules.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-assign-reviewers-gitlab.png" alt="Choosing GitLab reviewers for multiple approval groups" />
+  <img className="hidden dark:block" src="/images/dark/worktree-assign-reviewers-gitlab.png" alt="GitLab reviewer assignment in dark theme" />
+</Frame>
+
+The server checks the request and eligibility again before assigning. If the PR or MR closed, the worktree switched requests, or permissions changed, reload the options and retry. Assignment errors keep your selection available. The native iOS app offers the same settings, group counts, random preview, and additive assignment from worktree actions.
+
+For API clients, `repositoryCodeReviewers` discovers pools and `saveRepositoryCodeReviewers` stores preferences. Load `worktreeReviewerAssignment(worktreeId:)` before selecting people. Pass its provider request identity in `requestId` to `previewRandomWorktreeReviewers` or `assignWorktreeReviewers`; do not generate a new identity. Random preview is a query and sends no review requests. The assignment mutation accepts the selected `reviewerIds` and requires control-plane authentication.
+
 ## Creating a worktree
 
 <Steps>

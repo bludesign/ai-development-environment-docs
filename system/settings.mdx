@@ -173,6 +173,8 @@ GitLab preferences are stored separately from the credentials. Saving them does 
 
 See [Set up GitLab](/gitlab/setup) for the complete flow.
 
+Reviewer assignment uses the configured GitLab token to read project members, code ownership, and applicable approval rules, and to update the MR's reviewers. Available rules depend on the instance's capabilities and the token's visibility. Review discovery issues under [Code Reviewers](/codebases/repository-detail) when groups or members cannot be read.
+
 ### GitHub credentials
 
 A personal access token for pull requests, review threads, and workflow-run details.
@@ -182,6 +184,8 @@ Use a fine-grained token limited to the repositories used here, granting **Actio
 **Actions notification and Auto Retry interval** sets the polling cadence in seconds, from 30 to 3600. It drives Auto Retry polling always, and notification polling only when a signed GitHub App webhook is unavailable — the current mode is visible on the [Polling](/system/polling) page.
 
 Removing GitHub credentials keeps managed repositories and Jira regex settings.
+
+Reviewer discovery also reads repository contents, collaborators, applicable branch rules, and CODEOWNERS teams and members. The personal token needs visibility into those groups and permission to request pull request reviews. Inaccessible organization teams or rules appear as discovery issues in [Code Reviewers](/codebases/repository-detail); selecting a person never grants them repository access.
 
 ### GitHub App pipeline retries
 

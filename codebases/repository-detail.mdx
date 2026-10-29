@@ -10,7 +10,7 @@ description: "Manage settings shared by every registered checkout of a repositor
 
 The repository details page at `/dashboard/codebases/repositories/{id}` manages settings that belong to the *logical* repository rather than to any one checkout. Everything here applies across every agent checkout and every worktree that shares the origin.
 
-The page has six tabs.
+The page has seven tabs.
 
 <Tabs>
   <Tab title="Repository details">
@@ -25,6 +25,27 @@ The page has six tabs.
     <Tip>
       Skill groups are how a repository gets a consistent set of agent skills on every machine. Define them under [Skills](/skills/skill-groups), then assign them here once instead of per checkout.
     </Tip>
+  </Tab>
+  <Tab title="Code Reviewers">
+    <Frame>
+      <img className="block dark:hidden" src="/images/light/repository-code-reviewers-github.png" alt="Preferred GitHub code reviewers grouped by ownership and approval rules" />
+      <img className="hidden dark:block" src="/images/dark/repository-code-reviewers-github.png" alt="GitHub code reviewer preferences in dark theme" />
+    </Frame>
+
+    Choose the people you want to offer when assigning reviewers to GitHub pull requests and GitLab merge requests. Preferences apply to every checkout and worktree of this repository.
+
+    Select **Discover groups on branch**, then choose preferred people under each discovered code owner, approval rule, or general reviewer group. Use **Search people** to narrow long lists. **Refresh groups** updates provider discovery while retaining your unsaved selections; **Save reviewers** stores the displayed pools. Preferences for other groups are retained.
+
+    The request's target branch and changed files determine which rules apply when assigning reviewers. Discover another branch here when its ownership groups differ. The saved preferences narrow the provider's eligible candidates; they do not change its ownership or approval rules.
+
+    Unverifiable saved people remain labeled with unavailable eligibility and can be removed. Discovery issues explain inaccessible teams, rules, or provider capabilities. Resolve those issues before relying on the list as complete.
+
+    In iOS, open **Edit Repository → Code Reviewers** to configure the same shared pools. See [Assign reviewers](/worktrees/worktrees#assign-reviewers) for manual and random selection.
+
+    <Frame>
+      <img className="block dark:hidden" src="/images/light/repository-code-reviewers-gitlab.png" alt="Preferred GitLab code reviewers grouped by ownership and approval rules" />
+      <img className="hidden dark:block" src="/images/dark/repository-code-reviewers-gitlab.png" alt="GitLab code reviewer preferences in dark theme" />
+    </Frame>
   </Tab>
   <Tab title="Preparations">
     Upload files to write or override, list exact paths to delete, and select tracked paths that should always be assume-unchanged. Saving updates the repository definition without modifying existing worktrees.
@@ -99,7 +120,7 @@ A repository is usually checked out on more than one Mac, and each checkout can 
 
 Use **Import** or **Export** in repository details to open the shared configuration review. Save pending repository details and preparation edits first; transfers use the saved definition.
 
-Export can include the repository name, description, Jira regex, base-branch update setting, preparations, iOS build configurations, repository commands, and workflows. Uncheck any item or individual repository setting you want to leave out.
+Export can include the repository name, description, Jira regex, base-branch update setting, reviewer pools, preparations, iOS build configurations, repository commands, and workflows. Uncheck any item or individual repository setting you want to leave out. Imported reviewer pools are checked against the destination provider and current membership; unresolved groups or people block that selection. See [Reviewer preferences in packages](/apps/import-export#reviewer-preferences-in-packages).
 
 Import applies selected settings to the repository you are editing. Its Git origin and existing checkouts stay in place. When an app package contains several repositories, choose **Repository to use as the template**. Additional clones are optional. The preview shows current and imported values, shared definitions affected elsewhere, and dependencies that need local mappings.
 
