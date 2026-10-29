@@ -666,6 +666,9 @@ type AgentJob {
 
   """Typed worktree-operation result when this is a worktree operation job."""
   worktreeOperationResult: WorktreeOperationResult
+
+  """Typed output of a successful Jira branch generation job."""
+  worktreeTicketBranchResult: WorktreeTicketBranchResult
 }
 
 """Represents an agent job log in the GraphQL API."""
@@ -2162,8 +2165,14 @@ type Mutation {
   ): [JiraProject!]!
 
   """
-  Updates a Jira project branch naming and returns the updated Jira project.
+  Save project AI branch naming settings without discarding the JavaScript function.
   """
+  updateJiraProjectAiBranchNaming(
+    """Project and AI naming settings to save."""
+    input: UpdateJiraProjectAiBranchNamingInput!
+  ): [JiraProject!]!
+
+  """Updates the saved JavaScript branch naming function."""
   updateJiraProjectBranchNaming(
     """Identifier of the project."""
     projectId: ID!
@@ -3730,6 +3739,14 @@ type Mutation {
     """Identifier of the worktree."""
     worktreeId: ID!
   ): WorktreeAutoMerge!
+
+  """
+  Generate a ticket branch name asynchronously on the selected codebase's agent.
+  """
+  generateWorktreeTicketBranch(
+    """Target ticket, agent scope, and idempotency key."""
+    input: GenerateWorktreeTicketBranchInput!
+  ): AgentJob!
 }
 
 """Live events emitted as control-plane resources change."""
@@ -6238,6 +6255,12 @@ type Query {
     """Identifier of the worktree."""
     worktreeId: ID!
   ): WorktreeAutoMerge
+
+  """Load ticket metadata and naming mode without AI generation."""
+  worktreeTicketBranchContext(
+    """Ticket and codebase to preview without AI."""
+    input: PreviewWorktreeTicketBranchInput!
+  ): WorktreeTicketBranchContext!
   _service: _Service!
 }
 
@@ -15648,6 +15671,38 @@ type GitLabPipelineActionResult {
   execution: ExternalPipelineExecution
 }
 
+"""How a Jira project names ticket branches."""
+enum JiraBranchNamingMode {
+  """Run the saved JavaScript naming function."""
+  JAVASCRIPT
+
+  """Generate names using the configured model and prompt."""
+  AI
+}
+
+"""AI naming settings. Switching modes preserves both configurations."""
+input UpdateJiraProjectAiBranchNamingInput {
+  """Jira project whose naming settings should change."""
+  projectId: ID!
+
+  """Active naming strategy; inactive settings are preserved."""
+  mode: JiraBranchNamingMode!
+
+  """AI provider identifier: CODEX, CLAUDE, or OPENCODE."""
+  provider: String
+
+  """Model identifier from the agent provider catalog."""
+  model: String
+
+  """Model reasoning effort; auto uses the provider default."""
+  effort: String
+
+  """
+  Prompt template with supported ticket tokens; at most 10,000 characters.
+  """
+  prompt: String
+}
+
 """Values supported for Jira source."""
 enum JiraSourceKind {
   """Represents the jql option."""
@@ -15807,6 +15862,23 @@ type JiraProject {
 
   """The branch naming script associated with this Jira project."""
   branchNamingScript: String!
+
+  """Active strategy for naming ticket branches."""
+  branchNamingMode: JiraBranchNamingMode!
+
+  """Saved AI provider identifier, even when JavaScript is active."""
+  branchNamingProvider: String
+
+  """Saved AI model identifier."""
+  branchNamingModel: String
+
+  """Saved model reasoning effort."""
+  branchNamingEffort: String
+
+  """
+  Saved AI prompt template; description is included only when referenced.
+  """
+  branchNamingPrompt: String!
 
   """Sources associated with this Jira project."""
   sources: [JiraSource!]!
@@ -25357,6 +25429,52 @@ input ConfigureWorktreeAutoMergeInput {
 
   """Whether move ticket to done applies to the request."""
   moveTicketToDone: Boolean! = false
+}
+
+"""Ticket metadata, loaded without invoking a model."""
+type WorktreeTicketBranchContext {
+  """Normalized Jira issue key."""
+  ticketKey: ID!
+
+  """Ticket summary from Jira."""
+  ticketTitle: String!
+
+  """Issue type when available."""
+  ticketType: String
+
+  """Managed Jira project key."""
+  projectKey: String!
+
+  """Project naming strategy."""
+  branchNamingMode: JiraBranchNamingMode!
+
+  """JavaScript preview; null until generated for AI projects."""
+  branchName: String
+}
+
+"""
+An AI-generated branch name, checked against recorded repository branches.
+"""
+type WorktreeTicketBranchResult {
+  """Generated and validated Git branch name."""
+  branchName: String!
+}
+
+"""Target and idempotency key for asynchronous AI branch generation."""
+input GenerateWorktreeTicketBranchInput {
+  """Codebase whose agent should execute generation."""
+  codebaseId: ID!
+
+  """Existing worktree for a branch change; omit for a new worktree."""
+  worktreeId: ID
+
+  """Normalized Jira issue key."""
+  ticketKey: ID!
+
+  """
+  Client-generated idempotency identifier; reuse when retrying the same request.
+  """
+  requestId: ID!
 }
 
 scalar _FieldSet
