@@ -93,7 +93,7 @@ If the package includes several repositories, select **Repository to use as the 
 
 The repository `reviewerPools` setting carries saved group keys, provider and repository identities, discovery branches, and preferred user IDs with their display profiles. It contains no provider token and does not change CODEOWNERS files, branch protections, or approval rules.
 
-Import refreshes the destination's provider discovery. It can remap a matching group to another repository on the same provider instance, but every saved person must remain eligible there. Cross-provider or different-instance pools, missing groups, and unverifiable members block importing that setting. Exclude `reviewerPools` and configure [Code Reviewers](/codebases/repository-detail) at the destination when the identities cannot be resolved. Review and apply use the existing transfer fingerprint checks.
+Import refreshes the destination's provider discovery. It can remap a matching group to another repository on the same provider instance, but every saved person must remain eligible there. Cross-provider or different-instance pools, missing groups, and unverifiable members block importing that setting. Exclude `reviewerPools` and configure [Code reviewers](/codebases/repository-detail) at the destination when the identities cannot be resolved. Review and apply use the existing transfer fingerprint checks.
 
 Including `reviewerPools` replaces the destination's saved reviewer preferences. Excluding it preserves them. Packages created before this field existed preserve current preferences too. Exported user IDs, names, and profile URLs can identify team members; review them before sharing a package.
 
