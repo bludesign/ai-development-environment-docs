@@ -138,7 +138,7 @@ Open **System → Settings → Action Center** to configure shared preferences:
 
 | Setting | Default | Behavior |
 | --- | --- | --- |
-| **Maximum request age (days)** | `30` | Excludes requests created more than this many days ago. Set `0` to disable the cutoff. Applies to the full and compact queues and the Pull Requests and Merge Requests totals. |
+| **Maximum request age (days)** | `30` | Excludes requests created more than this many days ago. Set `0` to disable the cutoff. Applies to the full and compact queues and the provider request totals. |
 | **Show my open requests in sidebar** | On | Includes the Mine category in the compact queue. |
 | **Show requests awaiting my approval in sidebar** | On | Includes requests awaiting your approval in the compact queue. |
 
@@ -152,15 +152,15 @@ Request summaries are stored in the control plane database and refreshed on star
 
 The bottom-left web sidebar shows activity totals alongside spend and disk status. Open **Status Center** in the native iOS app for the same totals. Select a counter to open its corresponding page.
 
-| Counter | What it counts |
-| --- | --- |
-| **Actions** | Items in the full Action Center queue. |
-| **Pull Requests** | Open GitHub requests in **Mine** (authored or assigned), plus requests awaiting your approval. |
-| **Actions** | GitHub Actions workflow runs that are running or queued to start across your managed repositories. |
-| **Merge Requests** | Open GitLab requests you authored, plus requests awaiting your approval. |
-| **Pipelines** | Active GitLab pipelines from your managed projects, including preparing, queued, running, and canceling pipelines. |
+| Web counter | iOS counter | What it counts |
+| --- | --- | --- |
+| **Actions** | **Actions** | Items in the full Action Center queue. |
+| **Pull Reqs** | **Pull Requests** | Open GitHub requests in **Mine** (authored or assigned), plus requests awaiting your approval. |
+| **Actions** | **Actions** | GitHub Actions workflow runs that are running or queued to start across your managed repositories. |
+| **Merge Reqs** | **Merge Requests** | Open GitLab requests you authored, plus requests awaiting your approval. |
+| **Pipelines** | **Pipelines** | Active GitLab pipelines from your managed projects, including preparing, queued, running, and canceling pipelines. |
 
-**Pull Requests** and **Actions** appear when GitHub is configured. **Merge Requests** and **Pipelines** appear when GitLab is configured. Connecting both providers shows all four counters; a configured provider with no matching activity shows `0`.
+The GitHub request and **Actions** counters appear when GitHub is configured. The GitLab request and **Pipelines** counters appear when GitLab is configured. Connecting both providers shows all four counters; a configured provider with no matching activity shows `0`.
 
 A request that is both yours and awaiting your review counts once. Review requests leave the total after you approve them, even if other reviewers still need to approve. Your own or assigned requests remain counted after approval. The saved **Maximum request age (days)** applies to both request counters: the default is `30`, and `0` includes every age. The compact queue's two visibility switches do not change these totals.
 
