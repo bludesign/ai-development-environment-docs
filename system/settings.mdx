@@ -256,7 +256,7 @@ Removing these settings hides the Actions Cache page until it is reconfigured.
   </Card>
 </Columns>
 
-## Action Center request settings
+## Action Center settings
 
 **Action Center** settings are shared by the web and native iOS apps. Set **Maximum request age (days)** to limit requests by creation date; the default is `30`, and `0` disables the cutoff. This cutoff applies to the full and compact queues and to the **Pull Reqs** and **Merge Reqs** totals in the web sidebar, labeled **Pull Requests** and **Merge Requests** in native **Status Center**.
 
@@ -265,3 +265,13 @@ Independently choose **Show my open requests in sidebar** and **Show requests aw
 The review queue and review-category totals exclude requests you have approved, even when other reviewers still need to approve. Your own requests remain visible and counted after approval so you can merge them. A request belonging to both categories counts once. The settings cover both GitHub and GitLab.
 
 The web activity totals show **Pull Reqs** and **Actions** for GitHub, **Merge Reqs** and **Pipelines** for GitLab, and both pairs when both providers are configured. Native iOS keeps the full **Pull Requests** and **Merge Requests** labels. **Actions** and **Pipelines** count running and queued CI work; the request age cutoff does not limit them. See [Sidebar and iOS totals](/dashboard#sidebar-and-ios-totals) for count and availability details.
+
+Three additional settings control the web sidebar. All are enabled by default:
+
+| Setting | Behavior |
+| --- | --- |
+| **Confirm before clearing all notifications** | Opens a confirmation menu before clearing the notification sidebar. Turn it off to clear with one click. Notifications remain in history. |
+| **Show pull/merge request and Actions/Pipelines counters** | Shows provider request and CI totals. Turning it off stops dedicated sidebar CI polling and clears its cached counts. Action Center and notification polling continue. |
+| **Show Dirty and Off Main counters** | Shows worktree totals and links to the corresponding changes and branch filters. Turning it off also skips the worktree-count queries. |
+
+Select **Save settings** to apply changes. Saved preferences update open web sidebars immediately through live updates. See [Worktree counters](/dashboard#worktree-counters) and [Notifications](/notifications#history).

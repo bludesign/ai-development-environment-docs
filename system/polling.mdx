@@ -56,6 +56,7 @@ These loops live in the server process and start with it.
 | **APNs batch recovery** | 30s | Picks up [push notification](/debugging/push-notifications) batches that were interrupted |
 | **Worktree automation** | 60s | Drives [worktree](/worktrees/worktrees) auto-sync and automation rules |
 | **Sidebar usage** | 300s | Collects the Claude usage totals shown in the sidebar and on [Usage](/ai/usage) |
+| **Sidebar source control totals** | 60s | Refreshes active GitHub Actions and GitLab pipeline totals for the sidebar |
 
 **GitHub actions notifications** is the one to read closely, because its **Details** column reports a mode rather than a plain on or off:
 
@@ -68,6 +69,8 @@ These loops live in the server process and start with it.
 Its interval comes from the GitHub settings rather than from this page. Auto-retry is scheduled at its configured cadence but never runs faster than every 30 seconds.
 
 GitLab follows the same webhook-first model independently. A configured project hook supplies merge-request, pipeline, and job events. Polling remains scheduled as a fallback and shares neither state nor retry counters with GitHub.
+
+Turn off **Show pull/merge request and Actions/Pipelines counters** under [Action Center settings](/system/settings#action-center-settings) to disable **Sidebar source control totals**. This stops the dedicated sidebar CI scans and clears their cached counts. Action Center request discovery, notification polling, and Auto Retry keep their own schedules.
 
 ## Agent operations
 

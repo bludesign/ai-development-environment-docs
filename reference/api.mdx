@@ -39,6 +39,20 @@ Build clients use `buildRunAgents(buildId:)` to discover eligible target Macs, o
 
 SSE responses include `endpointPath`, `localUrl`, `remoteUrl`, and nullable `proxyUrl`; `publicUrl` remains for compatibility. See [Server URLs](/system/settings#server-urls) and the [script contract](/builds/builds#hook-server-and-endpoint-contract).
 
+### Worktree loading
+
+Use `worktreeOverview(savedOnly: true)` to read saved worktrees without waiting for external integrations. The default remains `false`. Both the overview and independent metadata responses expose `durationMs` for server processing time.
+
+Call `worktreeEnrichment(kind:, appId:, worktreeId:, force:)` separately for `GITHUB`, `GITLAB_MERGE_REQUESTS`, `GITLAB_PIPELINES`, or `JIRA`. `appId` scopes results to an app's repositories. `worktreeId` scopes them to that worktree's repository, including sibling checkouts. `force` defaults to `false`; set it to `true` to force a GitLab pipeline refresh. Responses contain `updates`, per-worktree `warnings`, and `durationMs`.
+
+Apply an update only while its worktree ID, codebase, canonical origin, branch, and head commit still match the requested worktree. Jira updates must also match the ticket key. For GitLab warnings, `preserveFields` identifies `APPROVAL_STATE` or `UNRESOLVED_DISCUSSIONS_COUNT` values that failed independently. Preserve an older value only when the merge request ID, project ID, and head commit are unchanged. See [Loading and retrying details](/worktrees/worktrees#loading-and-retrying-details).
+
+### Action Center and sidebar preferences
+
+Read `actionCenterSettings`, save with `saveActionCenterSettings(input:)`, and subscribe to `actionCenterSettingsChanged` for the saved values. Alongside the required request-age and queue-visibility fields, the save input accepts optional `confirmClearAllNotifications`, `showIntegrationCountsInSidebar`, and `showWorktreeCountsInSidebar` booleans. Each defaults to `true` for new settings; omitting one preserves its saved value.
+
+`sidebarStatus` includes these preferences in `settings`. Its `activity.dirtyWorktrees` and `activity.offMainWorktrees` fields are nullable and return `null` when worktree counters are disabled. Hiding integration counters returns `null` for the provider counts and stops their dedicated sidebar CI polling; Action Center and notification polling continue. See [Action Center settings](/system/settings#action-center-settings).
+
 ### MCP catalog and preset portability
 
 The web and iOS apps use the same GraphQL operations to export tool definitions, share presets, and review imports:

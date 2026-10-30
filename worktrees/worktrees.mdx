@@ -22,6 +22,16 @@ The **Worktrees** page at `/dashboard/worktrees` is the busiest page in the prod
 
 Your search, changes filter, branch filter, grouping, and layout are saved in the browser and restored the next time you open the page. Filters combine, so you can show, for example, dirty worktrees that are also off their default branch. A saved agent or repository filter is ignored if that item no longer exists. The worktrees view inside an [app](/apps/app-detail) keeps its own saved filters, separate from this page's. The iOS Worktree Actions menu offers the same changes and branch filters for the current visit.
 
+The web sidebar's **Dirty** counter opens `/dashboard/worktrees?changes=dirty&branches=all`. **Off Main** opens `/dashboard/worktrees?changes=all&branches=non-default`. These URL parameters take precedence over remembered changes and branch filters, and the resulting selection is saved in the browser. Other filters and active-agent scope still apply. Changing a filter updates its URL parameter when present. See [Worktree counters](/dashboard#worktree-counters) for how the totals are calculated.
+
+### Loading and retrying details
+
+In the web app, saved worktrees appear first. GitHub pull requests, GitLab merge requests, GitLab pipelines, and Jira summaries then update independently, including in an app's Worktrees view. A slow integration does not block the worktree list.
+
+Open **Loading details** above the filters to inspect each stage's status, elapsed time, server processing time, and warnings. Elapsed time includes request queueing and network time. **Updated with warnings** means some details could not refresh; use **Try again** beside the affected stage to retry it independently. A failed **Saved worktrees** stage has its own retry.
+
+Previously loaded details remain visible during a failed refresh while the worktree still represents the same repository, branch, and commit. Failed GitLab approval or discussion lookups preserve the last successful value only for the same merge request and head commit; newly discovered requests remain visible even if an optional summary fails. Review the warning before relying on an older value.
+
 ### Use the active agent
 
 The [Active Agent selector](/index#focus-on-an-agent) applies to this page and Worktrees views inside apps. When selected, it locks **Filter by agent** to that agent while preserving each view's previous choice. Select **None** globally to restore it, including after reopening the page. Search, repository, changes, and branch filters still combine with the active agent. An agent without matching worktrees shows **No matching worktrees**.

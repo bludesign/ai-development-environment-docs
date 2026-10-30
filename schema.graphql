@@ -349,6 +349,17 @@ type ActionCenterRequest {
 
 """Shared Action Center request preferences."""
 type ActionCenterSettings {
+  """Ask for confirmation before clearing all sidebar notifications."""
+  confirmClearAllNotifications: Boolean!
+
+  """
+  Show provider request and CI counters and enable their dedicated polling.
+  """
+  showIntegrationCountsInSidebar: Boolean!
+
+  """Show dirty worktree and non-default branch counters in the sidebar."""
+  showWorktreeCountsInSidebar: Boolean!
+
   """
   Exclude requests created more than this many days ago; zero disables the cutoff.
   """
@@ -365,6 +376,17 @@ type ActionCenterSettings {
 
 """Shared Action Center request preferences."""
 input SaveActionCenterSettingsInput {
+  """Ask for confirmation before clearing all sidebar notifications."""
+  confirmClearAllNotifications: Boolean
+
+  """
+  Show provider request and CI counters and enable their dedicated polling.
+  """
+  showIntegrationCountsInSidebar: Boolean
+
+  """Show dirty worktree and non-default branch counters in the sidebar."""
+  showWorktreeCountsInSidebar: Boolean
+
   """
   Exclude requests created more than this many days ago; zero disables the cutoff.
   """
@@ -3841,6 +3863,9 @@ type Subscription {
     jobId: ID!
   ): AgentJobLog!
 
+  """Emits the saved preferences whenever Action Center settings change."""
+  actionCenterSettingsChanged: ActionCenterSettings!
+
   """Emits a change signal whenever action center changes."""
   actionCenterChanged: Boolean!
 
@@ -6333,11 +6358,19 @@ type Query {
     """
     worktreeId: ID
 
+    """Return saved data without contacting external integrations."""
+    savedOnly: Boolean! = false
+
     """
     Identifier of an app whose assigned repositories should scope the results.
     """
     appId: ID
   ): WorktreeOverview!
+
+  """
+  Refresh one kind of optional metadata without blocking the worktree list.
+  """
+  worktreeEnrichment(appId: ID, worktreeId: ID, kind: WorktreeEnrichmentKind!, force: Boolean! = false): WorktreeEnrichment!
 
   """Returns worktrees."""
   hiddenWorktrees(
@@ -11935,6 +11968,16 @@ input UpdateDiskSpaceSettingsInput {
 """Represents sidebar activity counts in the GraphQL API."""
 type SidebarActivityCounts {
   """
+  Worktrees with staged or unstaged changes, excluding missing worktrees. Null when counters are disabled.
+  """
+  dirtyWorktrees: Int
+
+  """
+  Non-missing worktrees off a known repository default branch, including detached HEADs. Null when counters are disabled.
+  """
+  offMainWorktrees: Int
+
+  """
   Open GitHub Mine requests and requests awaiting personal approval, within the Action Center age limit. Null when GitHub is not configured.
   """
   pullRequests: Int
@@ -12015,6 +12058,9 @@ type SidebarDiskSummary {
 
 """Disk and usage summaries for the shared sidebar."""
 type SidebarStatus {
+  """Saved Action Center and sidebar preferences."""
+  settings: ActionCenterSettings!
+
   """The usage today associated with this sidebar status."""
   usageToday: SidebarUsageToday!
 
@@ -25126,6 +25172,9 @@ type WorktreeAgentGroup {
 
 """Represents a worktree overview in the GraphQL API."""
 type WorktreeOverview {
+  """Server time spent loading this overview, in milliseconds."""
+  durationMs: Float!
+
   """Agents associated with this worktree overview."""
   agents: [WorktreeAgentGroup!]!
 
@@ -25140,6 +25189,50 @@ type WorktreeOverview {
 
   """Active moves associated with this worktree overview."""
   activeMoves: [WorktreeMove!]!
+}
+
+"""Optional metadata that can load independently of the saved worktrees."""
+enum WorktreeEnrichmentKind {
+  GITHUB
+  GITLAB_MERGE_REQUESTS
+  GITLAB_PIPELINES
+  JIRA
+}
+
+"""A worktree whose optional metadata could not be fully refreshed."""
+type WorktreeEnrichmentWarning {
+  worktreeId: ID!
+  message: String!
+
+  """
+  Keep these details from the same merge request revision when the refreshed value is unavailable.
+  """
+  preserveFields: [GitLabMergeRequestSummaryField!]!
+}
+
+"""
+Optional GitLab merge request details that can fail independently of discovery.
+"""
+enum GitLabMergeRequestSummaryField {
+  APPROVAL_STATE
+  UNRESOLVED_DISCUSSIONS_COUNT
+}
+
+"""
+Metadata for the captured worktree identity. Only the requested kind is refreshed.
+"""
+type WorktreeEnrichmentUpdate {
+  worktree: Worktree!
+  canonicalOrigin: String!
+}
+
+"""
+An independent worktree metadata load and its measured server duration.
+"""
+type WorktreeEnrichment {
+  updates: [WorktreeEnrichmentUpdate!]!
+  durationMs: Float!
+  warnings: [WorktreeEnrichmentWarning!]!
 }
 
 """Represents a worktree move in the GraphQL API."""

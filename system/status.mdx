@@ -1,6 +1,6 @@
 ---
 title: "Status"
-description: "Review installed versions and cached CLI health for every enrolled agent."
+description: "Review live WebSocket connections, installed versions, and cached CLI health for every enrolled agent."
 ---
 
 <Frame>
@@ -9,6 +9,12 @@ description: "Review installed versions and cached CLI health for every enrolled
 </Frame>
 
 Open **System → Status** to compare the software installed on the control plane with every enrolled agent and to run CLI authentication checks. The page keeps the latest completed results, so you can investigate an offline machine without losing its last report.
+
+## WebSocket connections
+
+The web page shows **Browser WebSocket** below the page title and **Agent WebSocket** on each agent card. These report this browser's live-update connection and the agent's job-notification connection separately from the heartbeat-based **Online** or **Offline** state and cached CLI health.
+
+Hover or focus a badge to inspect its verification and connection timestamps. **Unknown** means there is no fresh observation. A machine can still send HTTP heartbeats while its WebSocket is disconnected. See [WebSocket connections](/agents/agents#websocket-connections) for detection delays, stale observations, and troubleshooting.
 
 ## Installed versions
 

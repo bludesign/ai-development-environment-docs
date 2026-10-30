@@ -141,10 +141,15 @@ Open **System → Settings → Action Center** to configure shared preferences:
 | **Maximum request age (days)** | `30` | Excludes requests created more than this many days ago. Set `0` to disable the cutoff. Applies to the full and compact queues and the provider request totals. |
 | **Show my open requests in sidebar** | On | Includes the Mine category in the compact queue. |
 | **Show requests awaiting my approval in sidebar** | On | Includes requests awaiting your approval in the compact queue. |
+| **Confirm before clearing all notifications** | On | Asks you to confirm before clearing the web notification sidebar. Dismissed notifications remain in history. |
+| **Show pull/merge request and Actions/Pipelines counters** | On | Shows provider totals in the web sidebar and enables their dedicated CI polling. |
+| **Show Dirty and Off Main counters** | On | Shows saved worktree totals in the web sidebar. |
 
-The sidebar switches are independent. Turning either off leaves its category available in the full Action Center and in the provider request totals. Queue counts and pagination reflect the selected surface, including filtering before a page is read. Dedicated GitHub and GitLab request lists retain their own filters.
+The two request-category switches are independent. Turning either off leaves its category available in the full Action Center and in the provider request totals. Queue counts and pagination reflect the selected surface, including filtering before a page is read. Dedicated GitHub and GitLab request lists retain their own filters.
 
-The iOS app exposes the same shared settings, request statuses, native detail screens, and merge sheets. On iPad, the navigation sidebar also includes a compact request queue; iPhone uses the full Action Center.
+Select **Save settings** to apply changes. Open web sidebars update through live settings notifications. Hiding provider counters stops their dedicated sidebar CI polling and clears those cached counts; Action Center discovery and notification polling continue. Showing the counters again starts a fresh refresh.
+
+The iOS app exposes the same shared request-age and request-category settings, request statuses, native detail screens, and merge sheets. On iPad, the navigation sidebar also includes a compact request queue; iPhone uses the full Action Center.
 
 Request summaries are stored in the control plane database and refreshed on startup, every 60 seconds, and after relevant provider events. Provider response caches still apply. **Refresh** rebuilds the index using those caches. If discovery fails or hits a provider limit, the queue shows a warning and preserves previously available entries; merge readiness is not confirmed for that provider until a successful refresh. Changing or disconnecting an account removes its old index entries during reconciliation. The index contains request metadata, not provider tokens.
 
@@ -160,11 +165,22 @@ The bottom-left web sidebar shows activity totals alongside spend and disk statu
 | **Merge Reqs** | **Merge Requests** | Open GitLab requests you authored, plus requests awaiting your approval. |
 | **Pipelines** | **Pipelines** | Active GitLab pipelines from your managed projects, including preparing, queued, running, and canceling pipelines. |
 
-The GitHub request and **Actions** counters appear when GitHub is configured. The GitLab request and **Pipelines** counters appear when GitLab is configured. Connecting both providers shows all four counters; a configured provider with no matching activity shows `0`.
+With provider counters enabled, the GitHub request and **Actions** counters appear when GitHub is configured. The GitLab request and **Pipelines** counters appear when GitLab is configured. Connecting both providers shows all four counters; a configured provider with no matching activity shows `0`.
 
 A request that is both yours and awaiting your review counts once. Review requests leave the total after you approve them, even if other reviewers still need to approve. Your own or assigned requests remain counted after approval. The saved **Maximum request age (days)** applies to both request counters: the default is `30`, and `0` includes every age. The compact queue's two visibility switches do not change these totals.
 
 Completed runs and pipelines in **Manual** or **Scheduled** states are excluded from the active CI totals. These totals refresh in the background and through live updates. During a temporary provider failure, the control plane retains the last successful count for the same connection. A configured provider shows `—` until its count is available.
+
+### Worktree counters
+
+The web sidebar also shows **Dirty** and **Off Main** when **Show Dirty and Off Main counters** is enabled:
+
+| Counter | What it counts | Opens |
+| --- | --- | --- |
+| **Dirty** | Worktrees with staged or unstaged changes. | Worktrees with **Dirty worktrees** and all branches selected. |
+| **Off Main** | Worktrees off a known repository default branch, including detached HEADs. The default branch can have any name. | Worktrees with all change states and **Not on default branch** selected. |
+
+These totals use saved reports across agents, include hidden worktrees, and exclude missing worktrees. **Off Main** excludes repositories whose default branch is unknown. The links select the corresponding changes and branch filters; other filters and the [Active Agent selector](/worktrees/worktrees#use-the-active-agent) still apply. See [Finding a worktree](/worktrees/worktrees#finding-a-worktree).
 
 ## Mini Action Center
 
