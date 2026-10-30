@@ -45,6 +45,11 @@ The pane follows output automatically while you are scrolled to the bottom. Scro
 
     Tune that interval under **Agent cadence** on the [agent detail page](/agents/agent-detail).
   </Accordion>
+  <Accordion title="Completion reporting during an outage" icon="cloud-arrow-up">
+    If a handler finishes while the control plane is temporarily unavailable, the running agent retains its result and retries reporting completion. Reconciliation does not rerun that completed handler while its result is awaiting acknowledgement.
+
+    Reporting retries use increasing delays up to 30 seconds. Authentication, authorization, validation, and missing-resource failures stop retries, as does agent shutdown. The page may continue to show the previous job status until the control plane accepts the result.
+  </Accordion>
   <Accordion title="Timeouts" icon="stopwatch">
     Every job carries a timeout in seconds. A job that exceeds it is marked **Timed out** rather than being left running indefinitely.
   </Accordion>

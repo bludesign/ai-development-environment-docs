@@ -30,7 +30,7 @@ Each entry links to the agent's [detail page](/agents/agent-detail) and shows:
 | Field             | What it tells you                                                      |
 | ----------------- | ---------------------------------------------------------------------- |
 | Name and hostname | The identity the agent enrolled with                                   |
-| Status            | **Online** while the WebSocket is connected, **Offline** once it drops |
+| Status            | **Online** while recent heartbeats indicate availability; otherwise **Offline** |
 | Version           | The `control-agent` build currently running                            |
 | Platform          | Operating system version and CPU architecture                          |
 | Last seen         | The most recent heartbeat, or **Never**                                |
@@ -42,6 +42,19 @@ The list is driven by an `agentChanged` subscription, so status, version, and re
   Command quick actions scoped to an agent home appear inline on each entry. See
   [Commands](/commands/commands) for how to define them.
 </Tip>
+
+## WebSocket connections
+
+The web agent list shows **Agent WebSocket** and **Browser WebSocket** badges separately from the heartbeat-based **Online** status.
+
+- **Agent WebSocket** reports the agent's authenticated job-notification subscription on this control-plane server. **Connected** means at least one active notification connection is present; **Disconnected** means none is present. An HTTP heartbeat does not establish a WebSocket connection.
+- **Browser WebSocket** reports this browser's live-update connection. It can show **Connecting**, **Connected**, **Reconnecting**, **Disconnected**, or **Unknown**.
+
+Hover or focus a badge to inspect **Last verified**, **Last changed**, **Connected since**, and **Last disconnected**. Silent failures can take approximately 24 seconds to appear for agent connections and 15 seconds for browser connections.
+
+The web app also refetches agent connection snapshots when live updates fail or the page becomes visible. An observation without a fresh successful response for 30 seconds becomes **Unknown**, retaining its last known timestamps. Server connection history is held in memory and resets when the control plane restarts.
+
+Use these badges to distinguish a machine that still sends heartbeats from a working notification connection. See [Hosting and networking](/reference/hosting) when either WebSocket cannot connect.
 
 ## Enrolling a machine
 

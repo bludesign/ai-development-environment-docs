@@ -209,6 +209,8 @@ The agent dials the control plane's GraphQL WebSocket outbound and executes jobs
 
 `npm run full-check:ci` reproduces the first job locally. Run it before opening a pull request — it is the same sequence in the same order.
 
+The release workflow also maintains the Homebrew server formula's launchd service settings. It sets `process_type :interactive` so builds running on the same machine do not leave the control plane at background CPU and disk I/O priority.
+
 ## Screenshots
 
 `npm run screenshots` captures every app route at four combinations of viewport and colour scheme, and records a walkthrough screencast at each of them. It installs the Chromium build Playwright needs, rebuilds `prisma/mock.db` from the seed modules in `scripts/mock-data/`, produces an isolated Next output in `.next-mock/`, and runs the capture suite. Everything lands in `screenshots/<project>/` and is gitignored — captures are generated on demand, not a committed baseline.
@@ -229,7 +231,13 @@ The four capture projects are `desktop-light`, `desktop-dark`, `mobile-light`, a
 npm run screenshots:copy -- ../elsewhere
 ```
 
-The mobile captures stay local.
+The mobile captures stay local. PNGs are copied by default. Include walkthrough recordings only when you intend to update the videos:
+
+```bash
+npm run screenshots:copy -- --include-videos ../ai-development-environment-docs
+```
+
+Review the docs repository diff after copying. Discard video-only binary changes when the walkthrough itself has not changed; recording frame timing can change the file even when the visible behavior is identical.
 
 Nothing reaches the network: `scripts/mock-api-server.ts` stubs the GitHub and Jira APIs, and the capture server points at it with the `GITHUB_API_BASE_URL` and `GITHUB_GRAPHQL_URL` overrides. Pages backed by those integrations have no local tables, so without the stub they would render their "connect your account" empty state instead of data.
 
