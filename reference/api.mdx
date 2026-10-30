@@ -336,6 +336,10 @@ MCP clients can discover preset IDs with `get_mcp_tool_presets` and pass `mcpPre
 
 Unscoped and preset MCP calls require a signed-in user's session, a Better Auth API key, or an enabled [MCP OAuth](/reference/mcp-oauth) authorization. OAuth scopes are cumulative: read requires `mcp:read`, ordinary writes also require `mcp:write`, and destructive/indirect execution and external tools require `mcp:destructive` as well. A missing scope returns HTTP `403` with an `insufficient_scope` challenge; selected descriptors advertise `aide/requiredScopes`. OAuth tokens do not authorize GraphQL or management routes. Scripts should use an `aide_` key in `X-API-Key`. The raw key is shown only once when you create it on [API keys](/system/api-keys).
 
+Tool authentication declarations reflect the validated request credentials. API-key requests receive `securitySchemes: [{"type":"noauth"}]`; OAuth requests receive `oauth2` with the tool's required scopes. Both the full catalog and preset catalogs publish the declaration at the top level and mirror it in `_meta.securitySchemes`, alongside `_meta["aide/requiredScopes"]`.
+
+For a [ChatGPT connection through an API-key tunnel](/reference/mcp-oauth#api-key-through-a-tunnel), select **No authentication** in ChatGPT while the tunnel sends `X-API-Key` to the control plane. `noauth` does not enable anonymous access to the control plane. API keys retain signed-in-user capabilities and are not restricted by OAuth consent scopes; presets narrow the exposed tool selection.
+
 ```bash
 curl -s http://127.0.0.1:3090/api/mcp \
   -H "X-API-Key: aide_replace-with-created-key" \
