@@ -47,3 +47,7 @@ curl https://control.example.com/api/mcp \
 ```
 
 Send API keys only in `X-API-Key`. The `Authorization` header carries mobile sessions, enrolled-agent credentials, and OAuth access tokens on MCP. OAuth clients can instead connect through [MCP OAuth](/reference/mcp-oauth), with separate scope consent and [connection revocation](/system/connected-applications).
+
+When a trusted tunnel supplies `X-API-Key` for ChatGPT, select **No authentication** in ChatGPT. The control plane validates the key before returning tool descriptors marked `noauth` at the top level and in `_meta.securitySchemes`. Missing or invalid keys still fail authentication. Follow the [API-key tunnel setup](/reference/mcp-oauth#api-key-through-a-tunnel), then refresh the connection's tools after upgrading the server.
+
+OAuth MCP consent scopes do not restrict API keys. Use a [tool preset](/system/tools#mcp-tool-presets) to narrow the tools exposed through that MCP URL; the key retains its other API capabilities.

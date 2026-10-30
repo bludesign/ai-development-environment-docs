@@ -192,7 +192,7 @@ Each candidate is parsed and validated as an IP address — bracketed IPv6, an a
 - Use only the documented Better Auth and integration [public-route allowlist](#cloudflare-access-paths).
 - Keep and back up a stable app-secret root. Configure `APP_SECRET` explicitly, or use [automatic Keychain storage](/reference/environment-variables#automatic-app-secret-storage) on macOS and back up that entry. It signs sessions and install links; database credential storage also uses its derived encryption key.
 - List every hostname this server is reached at in `APP_ORIGINS`, and use exact hosts — wildcards are rejected in production because they widen both the CSRF check and the post-login redirect allowlist. Leaving it unset is supported but lets a forged `Host` steer the URLs this server generates.
-- Create an `aide_` [API key](/system/api-keys) for every GraphQL or MCP client. Never bypass those endpoints.
+- Authenticate GraphQL clients with a session or an `aide_` [API key](/system/api-keys), and MCP clients with the credentials supported by their [tool selection](/reference/api#tool-selection). ChatGPT can use [direct OAuth or an API-key-backed tunnel](/reference/mcp-oauth#connect-chatgpt); retain the control plane's credential checks for both.
 - Enable `TRUST_PROXY_HEADERS` only when a proxy in front of this server sets the forwarded headers and strips client-supplied copies.
 - Leave `APOLLO_SANDBOX` unset in production; it enables schema introspection and the Apollo sandbox.
 - Remember that the database file is as sensitive as the secrets in it — see [Database](/reference/database#backups).

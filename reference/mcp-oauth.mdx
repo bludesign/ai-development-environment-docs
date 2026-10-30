@@ -97,9 +97,26 @@ Review the requested permissions on the consent page. Current Codex supports CIM
 
 ## Connect ChatGPT
 
+### Direct OAuth
+
 In [ChatGPT Plugins](https://chatgpt.com/plugins), choose **Add custom MCP server**, enter your public HTTPS MCP URL, and select OAuth authentication. Choose CIMD when offered, create/install the custom connection, and complete the control plane's sign-in and consent pages. Workspace settings determine whether custom MCP connections are available.
 
-Start with read access and test a read tool. Request additional cumulative MCP scopes when the client supports selecting scopes, then explicitly select them in consent. Select offline access if you want refresh-based renewal. See [OpenAI's connection guide](https://developers.openai.com/api/docs/mcp#connect-in-chatgpt) and [OAuth guidance](https://developers.openai.com/plugins/build/auth).
+Start with read access and test a read tool. Request additional cumulative MCP scopes when the client supports selecting scopes, then explicitly select them in consent. Select offline access if you want refresh-based renewal. See [OpenAI's connection guide](https://developers.openai.com/api/docs/guides/custom-mcp-server) and [OAuth guidance](https://developers.openai.com/plugins/build/auth).
+
+### API key through a tunnel
+
+If a dedicated tunnel supplies an API key to the control plane, choose **No authentication** in ChatGPT. This connection does not require `MCP_OAUTH_ENABLED`.
+
+1. Create an [API key](/system/api-keys) and configure the tunnel to send it in `X-API-Key` on every MCP request, including initialization, tool discovery, and tool calls. Keep the key in the trusted tunnel configuration and restrict who can use that connection.
+2. Enter the tunnel's MCP URL in ChatGPT. Use `/api/mcp?preset=<id>` to expose a selected [tool preset](/system/tools#mcp-tool-presets), or `/api/mcp` for every built-in tool.
+3. Select **No authentication**, then create and install the connection. ChatGPT does not supply an OAuth access token for this setup.
+4. After upgrading or restarting the control plane, refresh the connection's tools in ChatGPT and test `get_codebases`. A small preset containing that tool can help isolate discovery problems.
+
+For a validated API-key request, tool descriptors advertise `securitySchemes: [{"type":"noauth"}]` at the top level and in `_meta.securitySchemes`. OAuth requests continue to advertise `oauth2` and each tool's required scopes. The policy applies to both the full catalog and preset tools, including selected external tools.
+
+`noauth` describes ChatGPT's part of the connection. The control plane still validates the tunnel's API key and rejects missing, expired, disabled, revoked, or invalid credentials. An API key grants the same MCP capabilities as a signed-in user; the OAuth `mcp:read`, `mcp:write`, and `mcp:destructive` consent scopes do not restrict it. A preset limits which tools this connection exposes, while the key retains its other API access.
+
+If this connection still advertises only `oauth2`, verify that the tunnel supplies `X-API-Key`, that the updated server is running, and that ChatGPT has refreshed its tool list. Changing Cloudflare settings does not change the tool descriptors' authentication policy.
 
 ## Support older clients with DCR
 
