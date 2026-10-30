@@ -54,6 +54,16 @@ Capability checks still disable Jira completion or worktree deletion when the ac
 
 The merge submission includes the source commit shown in the dialog. If the branch changes before submission, refresh the options and review the new commit before retrying.
 
+### Update targeting worktrees
+
+**Update targeting worktrees** lists other managed checkouts whose effective base is the source worktree's branch, across all agents for the same canonical repository. Select individual unchecked boxes to update their bases to the destination shown in the dialog. The section is hidden when no worktrees target the source branch, and invalid destinations are disabled.
+
+The control plane saves the selected checkouts and displayed destination before submitting the merge. This applies to **Merge now** and **Enable auto-merge**, even after you close the web or iOS app. Base updates run after GitLab confirms the matching source merged and before local worktree cleanup.
+
+The GraphQL options expose `baseBranchUpdateOptions`. Send `baseBranchUpdate` with `worktreeIds` and the reviewed `destinationBaseBranch` on `submitGitLabMergeRequestMerge`; its saved operation exposes `baseBranchUpdateResults`.
+
+A removed checkout or one whose repository, branch, or base changed while waiting is skipped. Recorded results appear with the merge follow-ups, and retries leave completed updates alone. Updating AIDE's base setting does not retarget the GitLab merge request or run a rebase; existing **Auto Sync** uses the new base afterward.
+
 ## Track completion and follow-ups
 
 The control plane saves the merge operation and observes GitLab until it confirms completion. **Auto-merge enabled** means the request is still waiting. **Running follow-ups** means GitLab has merged the request and selected Jira or worktree actions remain in progress.

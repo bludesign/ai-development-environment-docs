@@ -266,10 +266,20 @@ Auto Sync never forces through a preparation conflict automatically. It pauses w
 
 ## Auto Merge
 
-**Auto Merge** hands the merge to the worktree's provider: the GitHub pull request or GitLab merge request merges as soon as its required checks, reviews, and branch rules are satisfied. Two optional follow-ups:
+**Auto Merge** hands the merge to the worktree's provider: the GitHub pull request or GitLab merge request merges as soon as its required checks, reviews, and branch rules are satisfied. Optional follow-ups:
 
 - **Delete this worktree after the pull request merges**.
 - **Move the linked Jira ticket to the project's configured done status**.
+- **Update targeting worktrees**: select dependent checkouts to receive this worktree's effective base after the merge.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-auto-merge-options.png" alt="Auto Merge with targeting worktree selections in light theme" />
+  <img className="hidden dark:block" src="/images/dark/worktree-auto-merge-options.png" alt="Auto Merge with targeting worktree selections in dark theme" />
+</Frame>
+
+Targeting worktrees include checkouts on other agents for the same canonical repository, including checkouts whose base is inherited from their codebase. New checkboxes are unchecked; editing a saved configuration restores your selections. The destination is fixed when you save, even if the parent worktree's base later changes.
+
+Updates run only after the provider confirms the merge and before parent-worktree cleanup. Changed or removed targets are skipped and their outcomes are recorded. Retry follow-ups after fixing an error; completed steps do not overwrite subsequent edits. These are base-setting updates, so existing **Auto Sync** can use the new base afterward. GitHub and GitLab manual merge dialogs and the native iOS app offer the same controls.
 
 Like Auto Sync, it can be paused, resumed, and cancelled, and reports **Auto Merge complete** when it lands.
 

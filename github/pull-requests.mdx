@@ -59,6 +59,11 @@ When **Retry** is unavailable it explains why on hover: no verified GitHub App, 
 
 ## Merging a pull request
 
+<Frame>
+  <img className="block dark:hidden" src="/images/light/github-merge-options.png" alt="GitHub merge dialog with targeting worktrees in light theme" />
+  <img className="hidden dark:block" src="/images/dark/github-merge-options.png" alt="GitHub merge dialog with targeting worktrees in dark theme" />
+</Frame>
+
 **Merge** on an open pull request opens a dialog that reads the merge requirements from GitHub first.
 
 <Steps>
@@ -79,6 +84,18 @@ When **Retry** is unavailable it explains why on hover: no verified GitHub App, 
 <Tip>
   To merge as soon as the required checks and reviews pass, rather than waiting for them yourself, use **Auto Merge** on the worktree instead. See [Worktrees](/worktrees/worktrees).
 </Tip>
+
+### Update targeting worktrees
+
+When the merging branch is the base of other managed worktrees, **Update targeting worktrees** lists those checkouts across all agents for the same repository. Each row shows its branch, agent, path, and proposed base change. Select each worktree you want to update; new selections start unchecked.
+
+After the provider confirms the merge, selected worktrees receive the merging worktree's effective base as an explicit base override. For example, merging `feature/search` with base `main` can update a dependent worktree from `feature/search` to `main`.
+
+The destination shown when you submit is saved, including for Auto Merge. A target whose repository, branch, or base changes while waiting is skipped; removed targets are also skipped. Completed updates are recorded so retrying follow-ups preserves later edits. Invalid destinations are disabled.
+
+GraphQL merge options expose `baseBranchUpdateOptions`. Submit `baseBranchUpdate` with the selected `worktreeIds` and displayed `destinationBaseBranch` on the merge or Auto Merge input. The saved worktree Auto Merge rule exposes `baseBranchUpdateResults`.
+
+These updates change AIDE's base setting. They do not rebase branches or retarget pull requests on GitHub. Existing **Auto Sync** follows the new base on its next run. The iOS merge sheet exposes the same selection controls. If a post-merge action fails, review its error and retry the saved follow-ups from the linked worktree rather than submitting another merge.
 
 ## Managing repositories
 
