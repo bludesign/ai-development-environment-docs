@@ -29,6 +29,8 @@ Starting a resumed follow-up from a **paused** Session cancels the parent and at
 
 Rows are grouped by creation day, with queued and active runs pulled into a leading **Active** group.
 
+For imported native runs, background synchronization applies changed prompts, status, and archive state even when transcript events have not changed. Unchanged snapshots do not rewrite the run or emit another update, and repeated synchronization preserves the original archive timestamp.
+
 | Column | What it shows |
 | --- | --- |
 | ID | `#1234`, the Session's display number |

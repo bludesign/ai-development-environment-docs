@@ -56,6 +56,12 @@ A failed run surfaces its error at the top of the page. So does a phase like *St
   </Accordion>
 </AccordionGroup>
 
+### Recovering from a control-plane outage
+
+A temporary HTTP or WebSocket failure does not turn a completed provider run into a failed run. While the agent remains running, it keeps the provider result and retries reporting its final checkpoint, attempt result, and command completion after transient failures. Permanent request failures and agent shutdown stop those retries. The displayed status can lag until the control plane accepts completion.
+
+Transcript events are journaled on the agent and uploaded incrementally from the last acknowledged position. After a restart, journal recovery preserves complete events and discards an incomplete final line before appending new output. Imported native history synchronizes in the background so it does not delay command recovery or the agent's notification connection.
+
 ## Intervening
 
 <Steps>
@@ -100,6 +106,8 @@ Immediately below **Follow Up**, three cards bring the linked worktree into the 
 | **Actions** | **Build**, **New Plan**, **New Session**, plus the command and workflow quick actions eligible for this worktree |
 | **Worktree Status** | Clean or dirty state, origin sync, current and base branches, path, upstream, HEAD, agent, availability, base freshness, and pull request, review, and pipeline status |
 | **Builds** | The latest 50 builds for the worktree, with **Load more**, build navigation, rebuild, and device run controls |
+
+In the web app, select the review badge in **Worktree Status** to open [review details](/worktrees/worktrees#review-details), including approvers, requested reviewers, and code-owner rules.
 
 **Open Worktree** opens the complete [worktree details](/worktrees/worktree-detail) page. Build and worktree changes refresh these cards in place. If supplementary worktree data cannot load, the Session itself remains usable and the card shows a retryable warning. Imported runs without a resolvable worktree omit the cards.
 

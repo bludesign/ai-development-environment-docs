@@ -48,6 +48,28 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
 | Working tree | Dirty when staged or unstaged changes exist; otherwise clean |
 | Review decision | Approved, changes requested, review required, or no decision |
 
+## Review details
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-review-status-github.png" alt="GitHub review details with approvers, requested reviewers, and code-owner groups" />
+  <img className="hidden dark:block" src="/images/dark/worktree-review-status-github.png" alt="GitHub review details in dark theme" />
+</Frame>
+
+In the web app, select a worktree's review badge, such as **Review required** or **Approved**, to open review details without leaving the card. The same popover is available in worktree table rows, worktree details, app worktrees, and the worktree status card on Plan and Session pages.
+
+The popover lists **Approved reviewers** and **Requested reviewers** separately, with names, usernames, and avatars. Applicable approval rules show their code-owner groups, file patterns, distinct approved count, and required approval count. Expand **Eligible reviewers** to inspect group members and their **Approved** or **Requested** labels. A pending request does not count as an approval.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-review-status-gitlab.png" alt="GitLab review details preserving a grouped approval rule across code-owner groups" />
+  <img className="hidden dark:block" src="/images/dark/worktree-review-status-gitlab.png" alt="GitLab review details in dark theme" />
+</Frame>
+
+GitLab rules retain their provider grouping: multiple contributing groups do not create separate approval quotas. People can contribute to overlapping rules when eligible. Optional ownership reviews show **Suggested** without an enforced approval target.
+
+You can inspect a linked open, closed, or merged request without configuring preferred reviewers. **Refresh review details** loads current provider data; the request link opens GitHub or GitLab. Missing permissions or incomplete discovery appear alongside available details. Refresh and retry after a failed read. Escape or an outside click closes the popover.
+
+This view is read-only. Use **Assign** below to request reviewers. API clients can load the same details with `worktreeReviewStatus(worktreeId:)` using control-plane authentication; agent credentials cannot call it.
+
 ## Assign reviewers
 
 <Frame>
@@ -120,6 +142,8 @@ Pass that name or an edited value in `WorktreeBranchSelectionInput.branchName` w
 MCP exposes `get_worktree_ticket_branch_context` and `generate_worktree_ticket_branch` for the same flow. Use `update_jira_project_ai_branch_naming` to save project settings. The existing `create_worktree` and `change_worktree_branch` tools also follow the project’s naming mode and accept an edited `branchName` in ticket mode.
 
 ## Per-worktree actions
+
+Worktree action errors appear beside the worktree that failed. An error on one card does not appear on another card, and a successful retry clears that worktree's operation error.
 
 <AccordionGroup>
   <Accordion title="Git operations" icon="code-branch">

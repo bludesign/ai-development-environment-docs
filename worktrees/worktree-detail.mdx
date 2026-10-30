@@ -29,7 +29,9 @@ A **Linked** badge distinguishes a linked worktree from the repository's primary
 
 The same action set as the [Worktrees](/worktrees/worktrees) page — pull, sync, rebase, push, force push, reset, clear lock, stash, staging, [commit](/worktrees/worktrees#committing-changes), branch change, Auto Sync, Auto Merge, move, and delete — is available here, alongside the worktree's tags and highlight color. **Build**, **New session**, and **New plan** open native dialogs for this worktree, and eligible command and workflow quick actions use the same permission checks as the Worktrees page. **Clear lock** removes a stale Git `index.lock` after you stop other Git processes. When preparation-managed files block Sync or Rebase, the page lists those paths and asks for explicit confirmation before offering the destructive force retry.
 
-Starting a build, coverage build, or rebuild refreshes this page in place instead of navigating to Build History.
+Starting a build, coverage build, or rebuild refreshes this page in place instead of navigating to Build History. Operation errors remain scoped to this worktree.
+
+In the web app, select the review-status badge to inspect [review details](/worktrees/worktrees#review-details): approvers, requested reviewers, approval rules, and expandable code-owner groups. This read-only view works without saved reviewer preferences and also supports linked closed or merged requests.
 
 **Assign** opens the shared [reviewer picker](/worktrees/worktrees#assign-reviewers) when this worktree has an open GitHub PR or GitLab MR and configured repository reviewer pools. Select people manually or preview a random selection for the applicable approval groups, then send the additions. The same action is available in the native iOS app.
 

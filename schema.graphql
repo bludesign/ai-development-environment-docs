@@ -393,6 +393,42 @@ enum AgentConnectionStatus {
   OFFLINE
 }
 
+"""
+Server-observed presence of an authenticated agent notification subscription.
+"""
+enum AgentWebSocketStatus {
+  """An authenticated notification subscription has a responsive socket."""
+  CONNECTED
+
+  """No active notification subscription is connected to this server."""
+  DISCONNECTED
+}
+
+"""
+Live WebSocket state on this control-plane server; reset when the server restarts.
+"""
+type AgentWebSocketConnection {
+  """Identifier of the agent whose connection is being observed."""
+  agentId: ID!
+
+  """Current server-observed notification connection status."""
+  status: AgentWebSocketStatus!
+
+  """ISO 8601 timestamp when continuous notification connectivity began."""
+  connectedAt: String
+
+  """ISO 8601 timestamp of the latest subscription request or socket pong."""
+  lastVerifiedAt: String
+
+  """
+  ISO 8601 timestamp when the final active notification connection ended.
+  """
+  disconnectedAt: String
+
+  """ISO 8601 timestamp when the connection status last changed."""
+  changedAt: String
+}
+
 """Lifecycle statuses for agent job."""
 enum AgentJobStatus {
   """Represents the queued status for agent job."""
@@ -534,6 +570,9 @@ type Agent {
 
   """The connection status associated with this agent."""
   connectionStatus: AgentConnectionStatus!
+
+  """Live presence of the agent's job-notification WebSocket subscription."""
+  webSocketConnection: AgentWebSocketConnection!
 
   """
   The IP address associated with this agent. May be null when unavailable or not applicable.
@@ -3780,6 +3819,11 @@ type Subscription {
     agentId: ID
   ): Agent!
 
+  """
+  Emits agent WebSocket lifecycle changes and successful liveness checks.
+  """
+  agentWebSocketConnectionChanged(agentId: ID): AgentWebSocketConnection!
+
   """Emits an agent job whenever agent job changes."""
   agentJobChanged(
     """Identifier of the job."""
@@ -4886,6 +4930,9 @@ type Query {
     """
     latestOnly: Boolean = false
 
+    """Bypass the workflow list cache for an explicit refresh."""
+    forceRefresh: Boolean = false
+
     """Maximum number of records to return. Defaults to `25`."""
     first: Int = 25
 
@@ -5531,6 +5578,14 @@ type Query {
     """App identifier."""
     appId: ID!
   ): RepositorySyncOverview!
+
+  """
+  Inspect a linked pull or merge request's live reviews without configuring reviewers.
+  """
+  worktreeReviewStatus(
+    """Worktree with a linked pull or merge request."""
+    worktreeId: ID!
+  ): WorktreeReviewStatus!
 
   """Discover eligible reviewer groups and load saved preferences."""
   repositoryCodeReviewers(
@@ -12176,6 +12231,12 @@ enum GitHubRequestSource {
   """Represents the actions page option."""
   ACTIONS_PAGE
 
+  """Server-side sidebar count reconciliation."""
+  SIDEBAR_COUNTS
+
+  """Background Action Center request synchronization."""
+  ACTION_CENTER_REQUESTS
+
   """Represents the worktrees option."""
   WORKTREES
 
@@ -18590,6 +18651,88 @@ type WorktreeReviewerAssignment {
   issues: [String!]!
 
   """Whether all applicable provider rules could be discovered."""
+  discoveryComplete: Boolean!
+}
+
+"""
+An ownership group or approval pool contributing to a request's review rule.
+"""
+type WorktreeReviewGroup {
+  """Provider-scoped group key."""
+  key: String!
+
+  """Provider group or pool name."""
+  name: String!
+
+  """GENERAL, CODEOWNERS, or APPROVAL_RULE."""
+  kind: String!
+}
+
+"""An applicable provider approval rule or suggested ownership review."""
+type WorktreeReviewRequirement {
+  """Provider-scoped rule identifier."""
+  id: ID!
+
+  """Provider rule description."""
+  name: String!
+
+  """Whether this rule enforces an approval requirement."""
+  isRequired: Boolean!
+
+  """Applicable ownership or review file patterns."""
+  patterns: [String!]!
+
+  """Distinct approvals required by policy; zero for suggestions."""
+  requiredApprovals: Int!
+
+  """
+  Groups contributing eligible reviewers, without splitting the rule's quota.
+  """
+  groups: [WorktreeReviewGroup!]!
+
+  """People eligible to approve under this rule."""
+  eligibleReviewerIds: [ID!]!
+
+  """Distinct eligible people whose approvals are valid."""
+  approvedReviewerIds: [ID!]!
+
+  """Eligible people currently requested to review."""
+  requestedReviewerIds: [ID!]!
+}
+
+"""Read-only review details independent of saved reviewer preferences."""
+type WorktreeReviewStatus {
+  """Worktree being inspected."""
+  worktreeId: ID!
+
+  """Linked provider request identifier."""
+  requestId: ID!
+
+  """Pull or merge request URL."""
+  requestUrl: String!
+
+  """Connected source control provider."""
+  provider: String!
+
+  """Whether the request remains open."""
+  requestOpen: Boolean!
+
+  """People referenced by current reviews and applicable rules."""
+  reviewers: [CodeReviewerPerson!]!
+
+  """Existing individual review requests."""
+  currentReviewerIds: [ID!]!
+
+  """People whose approvals are currently valid."""
+  approvedReviewerIds: [ID!]!
+
+  """Applicable rules, preserving provider grouping."""
+  requirements: [WorktreeReviewRequirement!]!
+
+  """Provider discovery or capability issues."""
+  issues: [String!]!
+
+  """Whether all applicable rules and members could be verified."""
   discoveryComplete: Boolean!
 }
 

@@ -93,6 +93,45 @@ query Agents {
 
 Arguments, return types, deprecations, and a sample response are listed on each generated operation page. Open **Queries** or **Mutations** in the generated GraphQL navigation and select `agents` or `enrollAgent`. Field types link through to the **Types** section, so you can walk the graph from any operation.
 
+### Worktree review status
+
+`worktreeReviewStatus(worktreeId:)` returns live GitHub or GitLab review details independently of saved reviewer preferences. It accepts linked open, closed, and merged requests. It requires control-plane authentication and rejects stale worktree/request associations.
+
+```graphql
+query ReviewStatus($worktreeId: ID!) {
+  worktreeReviewStatus(worktreeId: $worktreeId) {
+    requestId
+    requestUrl
+    provider
+    requestOpen
+    approvedReviewerIds
+    currentReviewerIds
+    reviewers { id username name avatarUrl }
+    requirements {
+      id
+      name
+      isRequired
+      patterns
+      requiredApprovals
+      groups { key name kind }
+      eligibleReviewerIds
+      approvedReviewerIds
+      requestedReviewerIds
+    }
+    discoveryComplete
+    issues
+  }
+}
+```
+
+Each requirement counts distinct approving people. Requested reviewers do not satisfy approval counts. Suggested reviews have `isRequired: false` and `requiredApprovals: 0`; keep GitLab's grouped requirements intact rather than creating one quota per contributing group. Show discovery issues alongside available results. See [Review details](/worktrees/worktrees#review-details) for the web UI.
+
+### Agent WebSocket presence
+
+Read `Agent.webSocketConnection` for a server-observed notification connection and subscribe to `agentWebSocketConnectionChanged(agentId:)` for lifecycle changes and successful liveness checks. The snapshot includes `agentId`, `status`, `connectedAt`, `lastVerifiedAt`, `disconnectedAt`, and `changedAt`.
+
+`status` is `CONNECTED` or `DISCONNECTED`; HTTP heartbeats do not establish this presence. Snapshots and their timestamps are process-local and reset when the server restarts. A control-plane client can omit `agentId` to watch all agents; an enrolled agent can subscribe only for its own ID. Browser connection state and the web UI's stale **Unknown** state are client observations, separate from this schema enum.
+
 ### App resource counts
 
 Use `apps` or `app(id:)` to read resource totals for an app's assigned repositories. The Apps page's card counters are available through `AppCounts`:
