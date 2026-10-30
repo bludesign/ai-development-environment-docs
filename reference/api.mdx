@@ -409,6 +409,14 @@ External MCP aliases have the form `aide_ext_<identity-hash>_<tool-label>` and a
 
 External calls resolve credentials at call time. Credential rotation is supported, but a changed endpoint URL or transport is rejected for an existing run. Upstream content, structured results, and MCP error results pass through the scoped connection; failed external calls are recorded in the same tool-call audit as built-ins.
 
+## Reviewer and sidebar additions
+
+`sidebarUsageHistory` reads seven daily retained usage totals without starting collection. Reviewer queries accept `includeEligibleReviewers` (default `true` for existing clients) and `refresh`; interactive web clients initially pass `false`. `worktreeReviewerAssignment(includeAllReviewers: true)` expands choices beyond preferred pools. `membersLoaded` distinguishes deliberately deferred membership from discovery errors, and `directoryStale` identifies retained data after a failed refresh.
+
+`assignWorktreeReviewers` remains additive when `removeReviewerIds` is omitted. Supply that optional list to remove individual requests, including all existing requests, and `includeAllReviewers: true` to validate additions outside saved pools. Approvals are unaffected. `gitlabReviewerDirectories`, `refreshGitLabReviewerDirectory`, and `deleteGitLabReviewerDirectory` expose directory cache management.
+
+`worktreeSettings` includes `autoAssignHighlightColor` and `highlightColorMode` (`SPREAD` or `RANDOM`). `saveWorktreeSettings` accepts partial updates so editor and highlight preferences preserve one another. Action Center settings include `hideUnapprovedRequestsInSidebar` and `hideRunningPipelineRequestsInSidebar`, both defaulting to `true`.
+
 ## Related pages
 
 <Columns cols={2}>

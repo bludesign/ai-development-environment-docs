@@ -21,4 +21,17 @@ You can inspect or delete one entry, purge every GitLab entry, change the defaul
 
 Mutations invalidate only related project, merge-request, discussion, pipeline, or job scopes. They do not clear the entire provider cache.
 
+## Reviewer directory
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/gitlab-reviewer-directory.png" alt="Cached GitLab reviewer membership with expiry and refresh controls" />
+  <img className="hidden dark:block" src="/images/dark/gitlab-reviewer-directory.png" alt="GitLab reviewer directory cache in dark theme" />
+</Frame>
+
+The **Reviewer directory** card shows each cached project's repository name, distinct member count, fetch and expiry times, and freshness. Directory data uses a separate `GitLabReviewerDirectory` operation with a default 24-hour TTL; a per-operation override can change it. **Refresh directory** reloads membership, and **Delete directory** clears it for the next full discovery. Clearing the provider cache also clears reviewer data.
+
+Review details and Assign load only needed people initially. **Load all reviewers** reads the directory on demand. Approvals and requested reviewers are read live and are not part of the daily membership snapshot. Ordinary reviewer changes preserve cached directory membership.
+
+Membership stores provider user identifiers, names, usernames, and public profile/avatar URLs in the control-plane database. It follows the configured provider connection boundary. A failed refresh retains the last successful directory and does not reset its freshness timestamp.
+
 The same page shows cache metrics, sanitized API-call logs, request IDs, response time, stale usage, and rate-limit snapshots. Tokens, signature material, and sensitive response fields are never written to those logs.

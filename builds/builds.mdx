@@ -83,6 +83,15 @@ The control plane snapshots all three base addresses, the selected kind, and the
 
 GraphQL `StartBuildInput.serverUrlKind` and MCP build inputs accept `LOCAL`, `REMOTE`, or `PROXY`. Omit the field to use the destination's default. Worktree coverage builds use the same selection and contract.
 
+## Choosing a build device
+
+Start Build uses the same searchable, two-line destination rows as Run, with single selection and no play buttons. For simulators, the first line shows **device name · device type**, such as **QA Phone · iPhone 17 Pro**; the second shows the iOS version and status. Identical names and types are displayed once. Older agents without device-type metadata continue to show the device name.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/build-start-devices.png" alt="Searchable two-line simulator picker in Start Build" />
+  <img className="hidden dark:block" src="/images/dark/build-start-devices.png" alt="Start Build simulator picker in dark theme" />
+</Frame>
+
 ## Running on devices
 
 **Run** opens the same detailed destination picker on Builds, Build Details, Worktrees, Worktree Details, Plan and Session build cards, and the Action Center.

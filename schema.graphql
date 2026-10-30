@@ -349,6 +349,16 @@ type ActionCenterRequest {
 
 """Shared Action Center request preferences."""
 type ActionCenterSettings {
+  """
+  Hide requests with queued or running pipelines in the sidebar, except failed pipelines.
+  """
+  hideRunningPipelineRequestsInSidebar: Boolean!
+
+  """
+  Hide requests without required approval in the sidebar, except failed pipelines.
+  """
+  hideUnapprovedRequestsInSidebar: Boolean!
+
   """Ask for confirmation before clearing all sidebar notifications."""
   confirmClearAllNotifications: Boolean!
 
@@ -376,6 +386,16 @@ type ActionCenterSettings {
 
 """Shared Action Center request preferences."""
 input SaveActionCenterSettingsInput {
+  """
+  Hide requests with queued or running pipelines in the sidebar, except failed pipelines.
+  """
+  hideRunningPipelineRequestsInSidebar: Boolean
+
+  """
+  Hide requests without required approval in the sidebar, except failed pipelines.
+  """
+  hideUnapprovedRequestsInSidebar: Boolean
+
   """Ask for confirmation before clearing all sidebar notifications."""
   confirmClearAllNotifications: Boolean
 
@@ -1925,6 +1945,18 @@ type Mutation {
     resolved: Boolean!
   ): GitHubReviewThreadState!
 
+  """Refresh project reviewer membership on demand."""
+  refreshGitLabReviewerDirectory(
+    """GitLab project identifier."""
+    projectId: ID!
+  ): [GitLabReviewerDirectory!]!
+
+  """Delete cached membership so a subsequent full discovery reloads it."""
+  deleteGitLabReviewerDirectory(
+    """GitLab project identifier."""
+    projectId: ID!
+  ): Boolean!
+
   """Save git lab settings for Mutation."""
   saveGitLabSettings(
     """Input used by saveGitLabSettings."""
@@ -2630,9 +2662,11 @@ type Mutation {
     input: SaveRepositoryCodeReviewersInput!
   ): RepositoryCodeReviewers!
 
-  """Add selected reviewers while preserving existing requests."""
+  """
+  Apply additions and explicit removals while preserving unrelated requests and approvals.
+  """
   assignWorktreeReviewers(
-    """Expected request and preferred eligible people to add."""
+    """Expected request, eligible additions, and optional removals."""
     input: AssignWorktreeReviewersInput!
   ): WorktreeReviewerAssignment!
 
@@ -3755,7 +3789,13 @@ type Mutation {
   """Saves worktree settings and returns the updated worktree settings."""
   saveWorktreeSettings(
     """The editor variant used to filter or perform the operation."""
-    editorVariant: WorktreeEditorVariant!
+    editorVariant: WorktreeEditorVariant
+
+    """Enable automatic colors for newly created worktrees."""
+    autoAssignHighlightColor: Boolean
+
+    """Choose spread or random automatic colors."""
+    highlightColorMode: WorktreeHighlightColorMode
   ): WorktreeSettings!
 
   """Purges a hidden worktree and reports whether the operation succeeded."""
@@ -4837,6 +4877,9 @@ type Query {
   """Returns iOS device settings."""
   iosDeviceSettings: IosDeviceSettings!
 
+  """Returns retained spend without dispatching collection jobs."""
+  sidebarUsageHistory: SidebarUsageHistory!
+
   """Returns disk space settings."""
   diskSpaceSettings: DiskSpaceSettings!
 
@@ -5098,6 +5141,11 @@ type Query {
     """Keys used to filter or perform the operation."""
     keys: [GitHubPipelineRecordKeyInput!]!
   ): [GitHubPipelineRecord!]!
+
+  """
+  List durable reviewer membership cached separately from live approvals.
+  """
+  gitlabReviewerDirectories: [GitLabReviewerDirectory!]!
 
   """Source control integration state for Query."""
   sourceControlIntegrationState: SourceControlIntegrationState!
@@ -5613,6 +5661,12 @@ type Query {
   Inspect a linked pull or merge request's live reviews without configuring reviewers.
   """
   worktreeReviewStatus(
+    """Load the full eligible directory; false loads only needed people."""
+    includeEligibleReviewers: Boolean = true
+
+    """Refresh cached directory data on demand."""
+    refresh: Boolean = false
+
     """Worktree with a linked pull or merge request."""
     worktreeId: ID!
   ): WorktreeReviewStatus!
@@ -5631,6 +5685,17 @@ type Query {
 
   """Load live reviewer assignment options for an open request."""
   worktreeReviewerAssignment(
+    """
+    Allow manual selection outside preferred pools. Random selection still uses preferences.
+    """
+    includeAllReviewers: Boolean = false
+
+    """Load the full eligible directory; false loads only needed people."""
+    includeEligibleReviewers: Boolean = true
+
+    """Refresh cached directory data on demand."""
+    refresh: Boolean = false
+
     """Worktree with an open pull or merge request."""
     worktreeId: ID!
   ): WorktreeReviewerAssignment!
@@ -6370,7 +6435,25 @@ type Query {
   """
   Refresh one kind of optional metadata without blocking the worktree list.
   """
-  worktreeEnrichment(appId: ID, worktreeId: ID, kind: WorktreeEnrichmentKind!, force: Boolean! = false): WorktreeEnrichment!
+  worktreeEnrichment(
+    """
+    Identifier of an app whose assigned repositories should scope the results.
+    """
+    appId: ID
+
+    """
+    Scope to the repository containing this worktree, including sibling checkouts.
+    """
+    worktreeId: ID
+
+    """The kind of optional metadata to refresh."""
+    kind: WorktreeEnrichmentKind!
+
+    """
+    Whether to bypass cached GitLab pipeline data when refreshing pipelines.
+    """
+    force: Boolean! = false
+  ): WorktreeEnrichment!
 
   """Returns worktrees."""
   hiddenWorktrees(
@@ -12076,6 +12159,27 @@ type SidebarStatus {
   diskSummary: SidebarDiskSummary!
 }
 
+"""Retained daily spend for the seven-day sidebar chart."""
+type SidebarUsageDay {
+  """Calendar date in YYYY-MM-DD format."""
+  period: String!
+
+  """Recorded cost in USD."""
+  totalCost: Float!
+}
+
+"""Read-only usage history; reading it never starts agent collection."""
+type SidebarUsageHistory {
+  """Seven calendar days, oldest first."""
+  days: [SidebarUsageDay!]!
+
+  """Whether retained observations exist in this range."""
+  hasUsage: Boolean!
+
+  """Latest sidebar collection time."""
+  collectedAt: String
+}
+
 """Values supported for GitHub pull request."""
 enum GitHubPullRequestScope {
   """Limits the operation to mine."""
@@ -15523,6 +15627,27 @@ input GitLabPipelineVariableInput {
   value: String!
 }
 
+"""Durable GitLab project reviewer-directory membership."""
+type GitLabReviewerDirectory {
+  """GitLab project identifier."""
+  id: ID!
+
+  """Repository path with namespace."""
+  repository: String!
+
+  """Distinct members across cached pages."""
+  memberCount: Int!
+
+  """Oldest page fetch time."""
+  fetchedAt: String!
+
+  """Directory expiry according to its TTL."""
+  expiresAt: String!
+
+  """Whether any cached page has expired."""
+  stale: Boolean!
+}
+
 """Persisted merge intent and independently retryable follow-ups."""
 type GitLabMergeOperation {
   """Stable identifier of the saved merge operation."""
@@ -18665,6 +18790,16 @@ type ReviewerAssignmentRequirement {
 
 """Live reviewer options or a random selection preview."""
 type WorktreeReviewerAssignment {
+  """
+  Whether the full eligible membership was loaded, independently of discovery errors.
+  """
+  membersLoaded: Boolean!
+
+  """
+  Whether a directory refresh failed and retained membership is being displayed.
+  """
+  directoryStale: Boolean!
+
   """Worktree being reviewed."""
   worktreeId: ID!
 
@@ -18753,6 +18888,16 @@ type WorktreeReviewRequirement {
 
 """Read-only review details independent of saved reviewer preferences."""
 type WorktreeReviewStatus {
+  """
+  Whether the full eligible membership was loaded, independently of discovery errors.
+  """
+  membersLoaded: Boolean!
+
+  """
+  Whether a directory refresh failed and retained membership is being displayed.
+  """
+  directoryStale: Boolean!
+
   """Worktree being inspected."""
   worktreeId: ID!
 
@@ -18783,7 +18928,9 @@ type WorktreeReviewStatus {
   """Provider discovery or capability issues."""
   issues: [String!]!
 
-  """Whether all applicable rules and members could be verified."""
+  """
+  Whether the requested discovery scope completed without provider errors.
+  """
   discoveryComplete: Boolean!
 }
 
@@ -18810,15 +18957,29 @@ input SaveRepositoryCodeReviewersInput {
   pools: [CodeReviewerPoolInput!]!
 }
 
-"""Add people to the existing reviewers of the loaded request."""
+"""
+Add reviewer requests and optionally remove existing individual requests.
+"""
 input AssignWorktreeReviewersInput {
+  """
+  Existing individual reviewer requests to remove. Approvals are unaffected.
+  """
+  removeReviewerIds: [ID!]
+
+  """
+  Allow additions from the full eligible directory without changing saved pools.
+  """
+  includeAllReviewers: Boolean = false
+
   """Worktree being reviewed."""
   worktreeId: ID!
 
   """Expected provider request identity from reviewer options."""
   requestId: ID!
 
-  """Configured eligible people to request."""
+  """
+  Eligible people to request, using preferred pools unless explicitly expanded.
+  """
   reviewerIds: [ID!]!
 }
 
@@ -24740,7 +24901,22 @@ type WorktreeTag {
 }
 
 """Configurable settings for worktree."""
+enum WorktreeHighlightColorMode {
+  """Choose a least-used color in this codebase."""
+  SPREAD
+
+  """Choose a random palette color."""
+  RANDOM
+}
+
+"""Shared editor and automatic worktree highlighting preferences."""
 type WorktreeSettings {
+  """Automatically highlight worktrees created through the app."""
+  autoAssignHighlightColor: Boolean!
+
+  """How automatic highlight colors are chosen."""
+  highlightColorMode: WorktreeHighlightColorMode!
+
   """The editor variant associated with this worktree settings."""
   editorVariant: WorktreeEditorVariant!
 
@@ -25193,15 +25369,27 @@ type WorktreeOverview {
 
 """Optional metadata that can load independently of the saved worktrees."""
 enum WorktreeEnrichmentKind {
+  """Refresh GitHub pull requests and their pipeline status."""
   GITHUB
+
+  """Refresh GitLab merge requests and their optional summary details."""
   GITLAB_MERGE_REQUESTS
+
+  """Refresh GitLab pipelines for the worktree commits."""
   GITLAB_PIPELINES
+
+  """Refresh Jira ticket details associated with the worktrees."""
   JIRA
 }
 
 """A worktree whose optional metadata could not be fully refreshed."""
 type WorktreeEnrichmentWarning {
+  """
+  Identifier of the worktree whose metadata could not be fully refreshed.
+  """
   worktreeId: ID!
+
+  """Description of the metadata refresh failure."""
   message: String!
 
   """
@@ -25214,7 +25402,10 @@ type WorktreeEnrichmentWarning {
 Optional GitLab merge request details that can fail independently of discovery.
 """
 enum GitLabMergeRequestSummaryField {
+  """The merge request approval state."""
   APPROVAL_STATE
+
+  """The number of unresolved merge request discussions."""
   UNRESOLVED_DISCUSSIONS_COUNT
 }
 
@@ -25222,7 +25413,10 @@ enum GitLabMergeRequestSummaryField {
 Metadata for the captured worktree identity. Only the requested kind is refreshed.
 """
 type WorktreeEnrichmentUpdate {
+  """The worktree with refreshed metadata for the requested kind."""
   worktree: Worktree!
+
+  """Canonical repository origin captured for this worktree update."""
   canonicalOrigin: String!
 }
 
@@ -25230,8 +25424,13 @@ type WorktreeEnrichmentUpdate {
 An independent worktree metadata load and its measured server duration.
 """
 type WorktreeEnrichment {
+  """Worktrees whose requested metadata was successfully refreshed."""
   updates: [WorktreeEnrichmentUpdate!]!
+
+  """Server time spent refreshing the requested metadata, in milliseconds."""
   durationMs: Float!
+
+  """Failures encountered while refreshing optional worktree metadata."""
   warnings: [WorktreeEnrichmentWarning!]!
 }
 

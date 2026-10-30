@@ -99,6 +99,15 @@ The page distinguishes several kinds of "nothing here", so the fix is never a gu
 - `ccusage` must be installed on the agent. A machine that cannot run it reports a failure rather than silently contributing zero.
 - The agent does not rely on `PATH` alone. A service started by `brew services` inherits a bare `PATH` that hides Homebrew, npm, and bun installs, so the agent also searches `~/.local/bin`, `~/.bun/bin`, `~/.npm-global/bin`, the directory holding its own `node` binary, and `/opt/homebrew/bin` and `/usr/local/bin` on macOS. Set `CONTROL_AGENT_CCUSAGE_EXECUTABLE` to a full path to pin an install the search misses.
 
+## Sidebar mini chart
+
+Select **Usage today** in the sidebar to open a seven-day daily cost chart with today's total, the latest collection time, and **View full usage**. Opening the popover reads retained observations and does not start agent collection jobs. Missing days are displayed as zero; an empty history shows an empty-state message. Use **Retry** if the read fails.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/sidebar-usage.png" alt="Seven-day usage popover in the sidebar" />
+  <img className="hidden dark:block" src="/images/dark/sidebar-usage.png" alt="Seven-day usage popover in dark theme" />
+</Frame>
+
 ## Related pages
 
 <Columns cols={2}>
