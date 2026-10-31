@@ -5712,6 +5712,11 @@ type Query {
 
     """Manual selections to keep while filling outstanding slots."""
     selectedReviewerIds: [ID!]
+
+    """
+    Pending reviewer request removals to exclude from coverage and selection. Approvals are unaffected.
+    """
+    removeReviewerIds: [ID!]
   ): WorktreeReviewerAssignment!
 
   """Returns an agent run page."""
@@ -13048,6 +13053,9 @@ type GitHubPullRequest implements SourceControlRequest {
   """The review decision associated with this GitHub pull request."""
   reviewDecision: GitHubReviewDecision!
 
+  """Number of pending reviewer or team review requests, when available."""
+  requestedReviewerCount: Int
+
   """Number of unresolved review threads."""
   unresolvedReviewThreadCount: Int!
 
@@ -14004,6 +14012,9 @@ type GitHubPullRequestDetail {
 
   """The review decision associated with this GitHub pull request detail."""
   reviewDecision: GitHubReviewDecision!
+
+  """Number of pending reviewer or team review requests, when available."""
+  requestedReviewerCount: Int
 
   """Number of unresolved review threads."""
   unresolvedReviewThreadCount: Int!

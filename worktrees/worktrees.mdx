@@ -56,7 +56,7 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
 | Upstream status | Ahead, behind, diverged, in sync, unpublished, detached |
 | Base freshness | Current with an ahead count, or a count of commits behind base |
 | Working tree | Dirty when staged or unstaged changes exist; otherwise clean |
-| Review decision | Approved, changes requested, review required, or no decision |
+| Review decision | Approved, changes requested, review requested, review required, or no decision |
 
 ## Review details
 
@@ -66,6 +66,8 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
 </Frame>
 
 In the web app, select a worktree's review badge, such as **Review required** or **Approved**, to open review details without leaving the card. The same popover is available in worktree table rows, worktree details, app worktrees, and the worktree status card on Plan and Session pages.
+
+When a GitHub PR or GitLab MR requires review, the badge shows **Review requested** if reviewers are assigned and **Review required** if none are assigned.
 
 The popover lists **Approved reviewers** and **Requested reviewers** separately, with names, usernames, and avatars. Applicable approval rules show their code-owner groups, file patterns, distinct approved count, and required approval count. Select **Load all reviewers**, then expand **Eligible reviewers** to inspect group members and their **Approved** or **Requested** labels. A pending request does not count as an approval.
 
@@ -213,7 +215,7 @@ Worktree action errors appear beside the worktree that failed. An error on one c
 
     Starting a build or rebuild closes its dialog and refreshes this worktree in place. It does not send you to Build History.
 
-    A successful **Latest build** badge is a direct keyboard-accessible link to the [build details](/builds/build-detail) page. Rebuild and run actions remain available beside it. Builds that produced a runnable app use the detailed agent-and-device picker described on the [Builds page](/builds/builds#running-on-devices), so the app can run locally or be transferred to another eligible Mac without leaving the worktree.
+    Every **Latest build** status badge, including **Preparing** and **Failed**, is a keyboard-accessible link to the [build details](/builds/build-detail) page. The build action badge with a dropdown arrow opens its menu. Rebuild and run actions remain available beside it. Builds that produced a runnable app use the detailed agent-and-device picker described on the [Builds page](/builds/builds#running-on-devices), so the app can run locally or be transferred to another eligible Mac without leaving the worktree.
   </Accordion>
   <Accordion title="Navigation" icon="arrow-up-right-from-square">
     Select the card surface or **Open details** in the table to open the [worktree details page](/worktrees/worktree-detail). **View codebase**, **View repository**, and **Open in GitHub/GitLab** jump to the related resource, and **Refresh request** re-reads the pull or merge request state.
