@@ -26,10 +26,6 @@ The page is organized into three groups.
 
 ## Development
 
-### Connected Applications
-
-Open [Connected Applications](/system/connected-applications) to review the MCP OAuth clients authorized for your account, inspect their permissions and individual approvals, revoke one approval, or disconnect an entire application. The same screen is available from System navigation and Settings in the native iOS app.
-
 ### Server URLs
 
 **Server URLs** is the single place to configure the control plane's client-facing addresses. Endpoint help, enrollment commands, MCP configurations, webhooks, and artifact links use these settings in both the web and iOS apps.
@@ -55,6 +51,23 @@ In the iOS app, **Settings → Server URLs** edits these same server-side values
 Choose which editor the **Open in editor** actions launch: **Visual Studio Code**, **Visual Studio Code - Insiders**, or **None**, which hides the editor buttons entirely.
 
 The chosen edition has to be installed on the machine that _hosts_ the worktree, not on the machine running your browser — the action runs on the agent.
+
+### Worktrees
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/settings-worktrees.png" alt="Automatic worktree highlight colors with Spread and Random choices" />
+  <img className="hidden dark:block" src="/images/dark/settings-worktrees.png" alt="Worktree highlight settings in dark theme" />
+</Frame>
+
+**Automatically assign a highlight color** is enabled by default for worktrees created through the app, including workflow and ticket creation. It does not recolor existing worktrees discovered during scans. Choose **Spread colors** (the default) to use a least-used palette color among active worktrees in that codebase, or **Random colors** to pick independently. You can change or clear an individual worktree's color afterward.
+
+### Action Center
+
+**Hide unapproved pull/merge requests in the sidebar** and **Hide pull/merge requests with pipelines in progress in the sidebar** are enabled by default. They affect only the sidebar Action Center, including its count and pagination. The full [Action Center](/dashboard) continues to show matching requests.
+
+Requests with failed, error, or timed-out pipelines remain visible through these filters, even when unapproved. Requests without an approval requirement count as approved for filtering. Queued, pending, preparing, running, scheduled, and resource/callback-waiting pipelines count as in progress. Existing age, account, and category settings still apply.
+
+Manage OAuth clients on the separate [Connected Applications](/system/connected-applications) page in System navigation.
 
 ## Apple services
 

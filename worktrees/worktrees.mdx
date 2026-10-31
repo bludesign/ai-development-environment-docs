@@ -67,7 +67,7 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
 
 In the web app, select a worktree's review badge, such as **Review required** or **Approved**, to open review details without leaving the card. The same popover is available in worktree table rows, worktree details, app worktrees, and the worktree status card on Plan and Session pages.
 
-The popover lists **Approved reviewers** and **Requested reviewers** separately, with names, usernames, and avatars. Applicable approval rules show their code-owner groups, file patterns, distinct approved count, and required approval count. Expand **Eligible reviewers** to inspect group members and their **Approved** or **Requested** labels. A pending request does not count as an approval.
+The popover lists **Approved reviewers** and **Requested reviewers** separately, with names, usernames, and avatars. Applicable approval rules show their code-owner groups, file patterns, distinct approved count, and required approval count. Select **Load all reviewers**, then expand **Eligible reviewers** to inspect group members and their **Approved** or **Requested** labels. A pending request does not count as an approval.
 
 <Frame>
   <img className="block dark:hidden" src="/images/light/worktree-review-status-gitlab.png" alt="GitLab review details preserving a grouped approval rule across code-owner groups" />
@@ -89,9 +89,9 @@ This view is read-only. Use **Assign** below to request reviewers. API clients c
 
 **Assign** appears when the worktree has an open GitHub pull request or GitLab merge request and its [repository Code reviewers settings](/codebases/repository-detail) contain preferred people. The action is shared by worktree cards, table rows, worktree details, app worktrees, and worktree actions on plan and session pages. It contacts the provider through the control plane, so the local agent does not need to be online.
 
-Open **Assign**, search people, and select one or more reviewers under the applicable ownership and approval groups. Each group distinguishes **Required**, **Approved**, **Requested**, and **Selected** counts. A requested reviewer has not approved yet. Existing reviewers and approvals remain visible; assignment adds people without removing existing requests. You can assign part of the required group and add more later.
+Open **Assign**, search people, and select one or more reviewers under the applicable ownership and approval groups. Each group distinguishes **Required**, **Approved**, **Requested**, and **Selected** counts. A requested reviewer has not approved yet. Existing reviewers and approvals remain visible; checked requests are retained and unchecked requests are removed when you save. You can assign part of the required group and add more later.
 
-**Random selection** fills remaining reviewer targets from your configured, currently eligible people. Existing valid approvals, pending requests, and your selections contribute to those targets. One person can cover overlapping groups when eligible for each. A rule requiring two approvals needs two distinct people. Random selection only prepares the list: review it, then select **Assign selected** to send requests.
+**Random selection** fills remaining reviewer targets from your configured, currently eligible people. Existing valid approvals, pending requests, and your selections contribute to those targets. One person can cover overlapping groups when eligible for each. A rule requiring two approvals needs two distinct people. Random selection only prepares the list: review it, then select **Save changes** to update requests.
 
 The request author, bots, ineligible people, existing requested reviewers, and people with valid approvals are excluded from new requests. If the configured pool is too small, the picker explains which targets remain short. Discovery or permission issues remain visible. A successful selection is a request for review; the provider remains responsible for accepting approvals and enforcing merge rules.
 
@@ -100,9 +100,16 @@ The request author, bots, ineligible people, existing requested reviewers, and p
   <img className="hidden dark:block" src="/images/dark/worktree-assign-reviewers-gitlab.png" alt="GitLab reviewer assignment in dark theme" />
 </Frame>
 
-The server checks the request and eligibility again before assigning. If the PR or MR closed, the worktree switched requests, or permissions changed, reload the options and retry. Assignment errors keep your selection available. The native iOS app offers the same settings, group counts, random preview, and additive assignment from worktree actions.
+The server checks the request and eligibility again before assigning. If the PR or MR closed, the worktree switched requests, or permissions changed, reload the options and retry. After an assignment error, the web picker reloads provider state before another attempt. The native iOS app offers the same settings, group counts, random preview, and additive assignment from worktree actions.
 
 For API clients, `repositoryCodeReviewers` discovers pools and `saveRepositoryCodeReviewers` stores preferences. Load `worktreeReviewerAssignment(worktreeId:)` before selecting people. Pass its provider request identity in `requestId` to `previewRandomWorktreeReviewers` or `assignWorktreeReviewers`; do not generate a new identity. Random preview is a query and sends no review requests. The assignment mutation accepts the selected `reviewerIds` and requires control-plane authentication.
+
+
+In the web app, **Assign** sits immediately before **More**. The picker initially loads preferred people and current review requests. Requested people start checked. Check people to request a review or uncheck them to remove the request, then select **Save changes**. You can remove the last requested reviewer; existing approvals are unaffected.
+
+Use **Load all reviewers** to select other provider-eligible people without changing repository preferences. **Random selection** continues to use preferred pools. A failed save reloads provider state before another attempt, including when only part of a provider update succeeded.
+
+Directory membership is cached separately from approvals and requests for 24 hours, refreshed on demand. **Refresh** bypasses directory caching. If a directory refresh fails, retained membership can be displayed with a stale notice. Eligibility of additions is checked again before writing. Inspect GitLab directory freshness on [GitLab Cache](/gitlab/cache).
 
 ## Creating a worktree
 
@@ -259,10 +266,20 @@ Auto Sync never forces through a preparation conflict automatically. It pauses w
 
 ## Auto Merge
 
-**Auto Merge** hands the merge to the worktree's provider: the GitHub pull request or GitLab merge request merges as soon as its required checks, reviews, and branch rules are satisfied. Two optional follow-ups:
+**Auto Merge** hands the merge to the worktree's provider: the GitHub pull request or GitLab merge request merges as soon as its required checks, reviews, and branch rules are satisfied. Optional follow-ups:
 
 - **Delete this worktree after the pull request merges**.
 - **Move the linked Jira ticket to the project's configured done status**.
+- **Update targeting worktrees**: select dependent checkouts to receive this worktree's effective base after the merge.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-auto-merge-options.png" alt="Auto Merge with targeting worktree selections in light theme" />
+  <img className="hidden dark:block" src="/images/dark/worktree-auto-merge-options.png" alt="Auto Merge with targeting worktree selections in dark theme" />
+</Frame>
+
+Targeting worktrees include checkouts on other agents for the same canonical repository, including checkouts whose base is inherited from their codebase. New checkboxes are unchecked; editing a saved configuration restores your selections. The destination is fixed when you save, even if the parent worktree's base later changes.
+
+Updates run only after the provider confirms the merge and before parent-worktree cleanup. Changed or removed targets are skipped and their outcomes are recorded. Retry follow-ups after fixing an error; completed steps do not overwrite subsequent edits. These are base-setting updates, so existing **Auto Sync** can use the new base afterward. GitHub and GitLab manual merge dialogs and the native iOS app offer the same controls.
 
 Like Auto Sync, it can be paused, resumed, and cancelled, and reports **Auto Merge complete** when it lands.
 

@@ -200,6 +200,10 @@ The queue subscribes to an `actionCenterChanged` subscription and refetches when
 
 Use `global_search` to locate resources across the development environment. Its `query` is required and limited to 200 characters; `firstPerGroup` is 1–10 (default 5) and `relatedFirst` is 0–5 (default 3). Add these read-only tools to an [MCP preset](/system/tools#mcp-tool-presets) to help an AI find the resource it needs.
 
+## Sidebar request filters
+
+The sidebar hides unapproved requests and requests with pipelines in progress by default. Change either option under [Settings → Action Center](/system/settings#action-center). Failed/error/timed-out pipelines remain visible even when approval is outstanding. These settings do not filter this full Action Center page.
+
 ## Related pages
 
 <Columns cols={2}>
