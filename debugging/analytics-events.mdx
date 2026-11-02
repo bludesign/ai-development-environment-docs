@@ -91,7 +91,7 @@ Quick filters on this view are **Kind**, **Name**, **Screen Name**, **Device IP*
 
 ## Reading the timeline
 
-Events load newest first, 200 at a time, with **Load more** at the bottom and a _matching of total_ counter above the table. Rows are grouped by local day, new arrivals flash on ingestion, and separators — manual ones you add with **+ Separator**, and the `Build · <configuration> · <destination>` markers created automatically when a build starts — are shared with the other views.
+Events load newest first, 200 at a time, with **Load more** at the bottom and a _matching of total_ counter above the table. Rows are grouped by local day, new arrivals flash on ingestion, and separators — manual ones you add with **+ Separator**, and build-run markers created after an app successfully launches — are shared with the other views.
 
 Each expanded event offers a 19-color **Highlight** strip that tints the row for everyone using the app, and a **Delete** button for that single event.
 
@@ -181,3 +181,9 @@ The page subscribes to telemetry changes: events appear as they are ingested, hi
     Query the same timeline from a script with `telemetryTimeline`.
   </Card>
 </Columns>
+
+## Build and session context
+
+Build and session IDs use a monospaced font. Their filters show the complete ID on the first line and its earliest retained event date and time on the second. Dates use the shared local date display. Selecting a build ID badge opens its build details.
+
+Build-run separators appear by default after a successful app launch, once per Run batch. Use **Show Build Run Separators** to hide or show them; manual separators and historical **Build created** markers remain available. Object keys containing spaces display their text without added bracket-and-quote notation; stored data and filtering paths retain their original meaning. The native telemetry views provide matching ID filters, links, and separator controls.

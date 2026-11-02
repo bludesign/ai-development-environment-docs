@@ -14,13 +14,13 @@ The **GitLab Merge Requests** page at `/gitlab/merge-requests` lists requests au
 
 - **Mine** shows merge requests authored by you. It is the default tab.
 - **Review requests** shows requests where GitLab assigns you as a reviewer.
-- **All accessible** requires a project. Choose one before the page loads its merge requests.
+- **All accessible** includes every author within **Managed projects**. With **All projects**, select a project before loading its merge requests.
 
-The searchable **Project** filter includes projects visible to your GitLab token, even when they have not been added as managed projects. By default, discovery includes only projects where the token's user is a member. Search by project or namespace, then use **Load more projects** for another page of results. Discovery loads 25 projects at a time. Selecting a project does not add it as a managed project or create a webhook. On the web, long selected project names use an ellipsis; hover to read the full namespace and project name. The dropdown stays within the viewport on narrow screens.
+**Managed projects** is the default project scope. Together with **Mine**, it loads your merge requests only in projects managed by the control plane, avoiding organization-wide discovery on initial load. Select **All projects** to expand the scope. The searchable **Project** filter can select a specific project visible to your GitLab token, even when it has not been added as a managed project. By default, discovery includes only projects where the token's user is a member. Search by project or namespace, then use **Load more projects** for another page of results. Discovery loads 25 projects at a time. Selecting a project does not add it as a managed project or create a webhook. On the web, long selected project names use an ellipsis; hover to read the full namespace and project name. The dropdown stays within the viewport on narrow screens.
 
 Select **Manage GitLab projects** to change member-only discovery, manage projects and their webhooks, or choose the default AIDE merge options. Turning member-only discovery off widens both this project picker and the manager's **Browse** results. An authorized numeric project ID or `namespace/project` path can always be entered manually in the manager, even when discovery remains member-only.
 
-Project and scope filters work together: choosing a project on **Mine** still shows only requests authored by you in that project. Clear the project selection to return to all projects for **Mine** or **Review requests**. **All accessible** always requires a selected project; it does not offer an all-projects selection.
+Project and scope filters work together: choosing a project on **Mine** still shows only requests authored by you in that project. Clear the project selection to return to the chosen **Managed projects** or **All projects** scope for **Mine** or **Review requests**. **All accessible** allows **All managed projects**. Combining it with **All projects** requires a selected project.
 
 Choose **Open**, **Merged**, **Closed**, or **All** in the status filter. The selected scope, project, status, and page are kept in the URL. Filter changes reset pagination, and browser Back and Forward restore the previous filters. Use **Previous** and **Next** to browse requests.
 
@@ -36,7 +36,7 @@ Select the title or number to open [merge request details](/gitlab/merge-request
 
 ## Use Merge Requests on iPhone and iPad
 
-Open **GitLab → Merge Requests** in the app navigation. **Mine**, **Review Requests**, and **All Accessible** use the same scope, discovery preference, and project filtering as the web app. **All Accessible** shows **Choose a Project** until you select one; it does not offer **All Projects**. The **State** control offers **Open**, **Merged**, **Closed**, and **All**.
+Open **GitLab → Merge Requests** in the app navigation. **Mine**, **Review Requests**, and **All Accessible** use the same scope, discovery preference, and project filtering as the web app. The native **Project scope** control also starts with **Managed Projects**. **All Accessible** can show all authors in managed projects. When combined with **All Projects**, it shows **Choose a Project** until you select one. The **State** control offers **Open**, **Merged**, **Closed**, and **All**.
 
 Use the **Manage Projects** toolbar action to open the native manager. It provides the same four preferences, managed-project and webhook actions, paginated **Browse** results, and numeric-ID-or-namespace manual entry as the web dialog.
 

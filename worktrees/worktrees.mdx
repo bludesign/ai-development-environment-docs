@@ -317,6 +317,8 @@ If destination changes block the branch switch, choose **Stash and continue** �
 
 ## Hidden worktrees
 
+Deleting a worktree also removes Xcode build data associated with that checkout when it exists, using an updated macOS agent with the cleanup capability. Older agents retain their existing deletion behavior. Cleanup targets the deleted checkout’s data. If checkout deletion succeeds but Xcode cleanup fails, a notification links to the deletion job so you can inspect the warning and remove the remaining data.
+
 A worktree that disappears from disk is not deleted immediately — it moves to **Hidden** and is retained for seven days. If the agent rediscovers it in that window, its saved metadata, tags, and highlight come back. **Purge** and **Purge all** remove hidden entries early.
 
 ## Related pages

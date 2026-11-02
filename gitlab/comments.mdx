@@ -12,7 +12,7 @@ The **GitLab Comments** page at `/gitlab/comments` brings merge request discussi
 
 ## What it loads
 
-The feed discovers open merge requests you authored, requests assigned to you, requests awaiting your review, and open requests in managed GitLab projects. A request found in more than one scope appears once. System activity notes are omitted.
+The feed starts with open merge requests authored by the connected GitLab user in managed projects. Enable **Include other users’ merge requests** to include other authors in those projects. This controls which requests are fetched; the separate discussion-author filters control whose comments you see within them. System activity notes are omitted.
 
 The page loads discussions in bounded batches. Choose **Load more** to continue; the count and filters apply to the discussions already loaded. Ordinary loads can use cached GitLab responses. Choose **Refresh** to fetch current data from GitLab, including comments posted since the last load. Refresh starts the feed again; its continuation pages also fetch current provider data while keeping the same batch limits. A partial-load warning remains visible when some data could not be read. Use **Refresh** to retry. A continuation can expire after inactivity or a control-plane restart; **Refresh** starts discovery again.
 
@@ -37,7 +37,7 @@ Use **Resolve thread** or **Reopen thread** on a resolvable discussion. GitLab p
 
 Open **GitLab → Comments** in the app navigation. The native dashboard shows unresolved and resolved discussion counts and the number of merge requests represented in the loaded feed. These totals cover loaded discussions; general comments appear in **All**.
 
-Tap **Merge Request** to open a searchable sheet. Search loaded requests by number, title, or project, choose one, or return to **All Relevant Merge Requests**. **Load More Merge Requests** expands the loaded search results. **Authors** offers **All Authors**, **Mine**, and **Others**. **Discussions** offers **All**, **Unresolved**, and **Resolved**. Both author and discussion filters start at **All**. The controls adapt to larger text sizes with selection sheets.
+Tap **Merge Request** to open a searchable sheet. Search loaded requests by number, title, or project, choose one, or return to **All Relevant Merge Requests**. **Load More Merge Requests** expands the loaded search results. **Authors** offers **All Authors**, **Mine**, and **Others**. **Discussions** offers **All**, **Unresolved**, and **Resolved**. Both author and discussion filters start at **All**. **Include other users’ merge requests** starts off and changes server-side request discovery. The controls adapt to larger text sizes with selection sheets.
 
 Discussion cards show a preview, author avatar, readable date, and reply count. Previews and conversation notes display inline Markdown formatting. On iPhone, tap a card to open the conversation. Wider iPad layouts keep the discussion list beside the selected conversation. The conversation includes selectable notes, the file location when available, and links to the merge request and GitLab.
 
@@ -49,7 +49,7 @@ Pull to refresh to fetch current GitLab data, use **Load More Discussions** to c
 
 ## API and access
 
-The web and native clients use the paginated `gitlabComments` query. It accepts an optional project and merge request number, an optional discussion ID, and a continuation cursor. Set `refresh: true` to bypass cached provider responses for a fresh feed and its continuation pages; the default is `false`. Existing merge request detail queries and discussion mutations remain available to other clients.
+The web and native clients use the paginated `gitlabComments` query. It accepts an optional project and merge request number, an optional discussion ID, and a continuation cursor. Set `includeOtherAuthors: true` to include other users’ merge requests in managed projects; it defaults to `false`. Set `refresh: true` to bypass cached provider responses for a fresh feed and its continuation pages; the default is `false`. Existing merge request detail queries and discussion mutations remain available to other clients.
 
 Deploy the control-plane version that exposes `gitlabComments` and `gitlabAccessibleProjects` before distributing the updated iOS client. These additive Comments and project-filter APIs require no new database migration.
 

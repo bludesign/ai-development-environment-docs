@@ -19,6 +19,8 @@ Each GET response is keyed by:
 
 You can inspect or delete one entry, purge every GitLab entry, change the default TTL, and add per-operation TTL overrides. Requests may bypass or refresh the cache, and a stale response can be used when GitLab is temporarily unavailable.
 
+Set the default TTL to any whole number of minutes from **0** upward. **0** disables cache reads, writes, and stale fallback for operations that inherit the default. An explicit positive operation override still enables caching for that operation; an override of **0** disables it. The web and iOS controls accept zero.
+
 Mutations invalidate only related project, merge-request, discussion, pipeline, or job scopes. They do not clear the entire provider cache.
 
 ## Reviewer directory

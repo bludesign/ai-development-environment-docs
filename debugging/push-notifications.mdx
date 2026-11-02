@@ -113,7 +113,7 @@ A device is **eligible** when its registration is active, its topic matches the 
 | **One-off Live Activity token** | `liveactivity` only | A single token you paste, as HEX or Base64, against sandbox or production |
 | **Broadcast channel**           | `liveactivity` only | A channel whose bundle ID matches the topic                               |
 
-Tokens are validated as exactly 32 bytes. A one-off token is stored only for the duration of the send and deleted afterwards — which is why such a batch cannot be resent later.
+Tokens may have any nonzero byte length. HEX input must be nonempty hexadecimal with an even number of characters; Base64 input must use valid Base64 encoding. Registration and direct sends normalize the decoded bytes consistently. A one-off token is stored only for the duration of the send and deleted afterwards — which is why such a batch cannot be resent later.
 
 ## Sending, drafts, and presets
 

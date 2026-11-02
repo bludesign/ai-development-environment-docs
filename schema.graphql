@@ -301,6 +301,16 @@ enum ActionCenterSurface {
 
 """A provider-qualified request and its current status."""
 type ActionCenterRequest {
+  """
+  Commits missing from the current target branch, or null when unavailable.
+  """
+  behindCount: Int
+
+  """
+  Whether the provider requires updating the source branch before merging.
+  """
+  needsRebase: Boolean!
+
   """The provider reported for this request."""
   provider: SourceControlProvider!
 
@@ -1065,7 +1075,12 @@ type Mutation {
   """
   Refreshes the local request index using the configured provider caches.
   """
-  refreshActionCenter: Boolean!
+  refreshActionCenter(
+    """
+    Bypass provider caches for pull request discovery, approvals and checks.
+    """
+    forcePullRequests: Boolean = false
+  ): Boolean!
 
   """
   Acknowledges an action center item and reports whether the operation succeeded.
@@ -1154,6 +1169,20 @@ type Mutation {
     """Whether locked applies to the operation."""
     locked: Boolean!
   ): DerivedDataCollection!
+
+  """
+  Reports a successful device or simulator launch from the owning deployment agent.
+  """
+  reportBuildDeploymentLaunched(
+    """Identifier of the agent job performing the deployment."""
+    jobId: ID!
+
+    """Identifier of the successfully launched deployment."""
+    deploymentId: ID!
+
+    """ISO 8601 timestamp when the launch succeeded."""
+    launchedAt: String!
+  ): Boolean!
 
   """
   Removes an iOS project and its configurations, preserving completed build history. Active builds prevent removal.
@@ -5189,6 +5218,9 @@ type Query {
   Load human comments from relevant open requests or a directly selected request.
   """
   gitlabComments(
+    """Include other authors' requests in managed projects."""
+    includeOtherAuthors: Boolean = false
+
     """Optional project filter; required when selecting a request directly."""
     projectId: ID
 
@@ -5212,6 +5244,9 @@ type Query {
 
   """Gitlab merge requests for Query."""
   gitlabMergeRequests(
+    """Restrict discovery to managed projects by default."""
+    projectScope: GitLabProjectScope = MANAGED
+
     """Scope used by gitlabMergeRequests."""
     scope: GitLabMergeRequestScope!
 
@@ -5239,6 +5274,9 @@ type Query {
 
   """Gitlab pipelines for Query."""
   gitlabPipelines(
+    """Default to the current user's requests and checked-out branches."""
+    scope: GitLabPipelineScope = RELEVANT
+
     """Project id used by gitlabPipelines."""
     projectId: ID!
 
@@ -5347,6 +5385,9 @@ type Query {
     """Pipeline id."""
     pipelineId: ID!
   ): [ExternalPipelineExecution!]!
+
+  """Available Jira Resolution values for per-project fallback selection."""
+  jiraResolutions: [JiraNamedValue!]!
 
   """Returns Jira settings."""
   jiraSettings: JiraSettings!
@@ -6112,6 +6153,14 @@ type Query {
     """Stable operation identifier."""
     id: ID!
   ): TailscaleServeOperation
+
+  """
+  Returns build and session identifiers with first-seen event timestamps.
+  """
+  telemetryIdFacets(
+    """The view whose retained events determine the available identifiers."""
+    view: TelemetryView!
+  ): TelemetryIdFacets!
 
   """Returns a telemetry timeline page."""
   telemetryTimeline(
@@ -14451,7 +14500,32 @@ type SourceControlIntegrationState {
   gitlab: SourceControlProviderState!
 }
 
-"""GitLabMergeRequestScope values exposed by the GitLab integration."""
+"""
+Selects managed projects or all accessible projects for merge request discovery.
+"""
+enum GitLabProjectScope {
+  """Only projects managed by this installation."""
+  MANAGED
+
+  """All projects accessible to the connected account."""
+  ALL
+}
+
+"""The requests and checked-out branches whose pipelines are included."""
+enum GitLabPipelineScope {
+  """The current user's merge requests and checked-out branches."""
+  RELEVANT
+
+  """Only the current user's merge requests."""
+  MINE
+
+  """All pipelines in the selected project."""
+  ALL
+}
+
+"""
+Selects merge requests by their relationship to the connected GitLab user.
+"""
 enum GitLabMergeRequestScope {
   """Represents the mine value."""
   MINE
@@ -16212,6 +16286,11 @@ type JiraProject {
   """
   doneStatusId: ID
 
+  """
+  Fallback Resolution used when a transition does not declare its own default.
+  """
+  defaultResolutionId: ID
+
   """The branch naming script associated with this Jira project."""
   branchNamingScript: String!
 
@@ -16511,6 +16590,11 @@ type JiraEditField {
 
 """Represents a Jira transition in the GraphQL API."""
 type JiraTransition {
+  """
+  Required fields that cannot be supplied from Jira defaults or project settings.
+  """
+  unresolvedRequiredFields: [String!]!
+
   """Stable identifier for this Jira transition."""
   id: ID!
 
@@ -17126,6 +17210,9 @@ input UpdateJiraSourceInput {
 
 """Values used to update Jira project display settings."""
 input UpdateJiraProjectDisplaySettingsInput {
+  """Fallback Resolution ID; null clears the fallback."""
+  defaultResolutionId: ID
+
   """Identifier of the project to use."""
   projectId: ID!
 
@@ -22972,6 +23059,11 @@ type TelemetryViewSettings {
   timeFormat: String!
 
   """
+  Whether successful build run separators are visible. Historical creation and manual separators remain visible.
+  """
+  showBuildRunSeparators: Boolean!
+
+  """
   Identifier of the related active column preset. May be null when unavailable or not applicable.
   """
   activeColumnPresetId: ID
@@ -23076,6 +23168,9 @@ input TelemetryTimelineInput {
   """The view to use for the request."""
   view: TelemetryView!
 
+  """Whether to show successful build run separators."""
+  showBuildRunSeparators: Boolean = true
+
   """The first to use for the request."""
   first: Int = 200
 
@@ -23124,6 +23219,9 @@ input SaveTelemetryViewSettingsInput {
   """The time format to use for the request."""
   timeFormat: String
 
+  """Whether to show successful build run separators."""
+  showBuildRunSeparators: Boolean
+
   """Identifier of the active column preset to use."""
   activeColumnPresetId: ID
 
@@ -23162,6 +23260,24 @@ input SaveTelemetryFilterInput {
 
   """Structured definition for the request."""
   definition: TelemetryAdvancedFilterInput!
+}
+
+"""A build or session identifier and its earliest retained event time."""
+type TelemetryIdFacet {
+  """The full identifier used to filter telemetry."""
+  value: String!
+
+  """ISO 8601 client timestamp of the earliest retained event in this view."""
+  firstSeenAt: String!
+}
+
+"""Build and session identifiers available in a telemetry view."""
+type TelemetryIdFacets {
+  """Build identifiers with their earliest retained event times."""
+  buildIds: [TelemetryIdFacet!]!
+
+  """Session identifiers with their earliest retained event times."""
+  sessionIds: [TelemetryIdFacet!]!
 }
 
 """Values supported for external MCP transport."""
