@@ -129,6 +129,8 @@ A transition that Jira requires a screen for is listed but disabled and labelled
 
     **Statuses excluded from All statuses** lets you select additional statuses to hide by default for this project. The exclusions apply in both the combined **All** view and the project’s source views. Selecting one of these statuses explicitly shows its tickets. Save the display settings to apply your changes.
 
+    **In review ticket status** moves a linked ticket to your selected workflow status after **Assign** adds new reviewers to a worktree's open pull or merge request. Leave it unset to keep the ticket's status. Previewing **Random Assign**, refreshing reviewers, or a failed assignment does not transition a ticket. If reviewers are assigned but Jira rejects the transition, the reviewers stay assigned and the sheet shows a warning; complete the ticket transition in Jira.
+
     **Auto Merge done status** is the status linked tickets are moved to after Auto Merge merges the pull request on the [worktree](/worktrees/worktrees). Leave it unset to skip that step.
   </Accordion>
   <Accordion title="Branch naming" icon="code">
@@ -239,3 +241,20 @@ The control plane reads transition field requirements before moving a ticket to 
 The fallback applies only when Resolution is required and accepts the configured value. Other required fields remain blockers and are named in the error. Resolve those fields in Jira and retry the follow-up; a merged pull request stays merged if its Jira follow-up fails.
 
 API clients can list available values with `jiraResolutions` and save `defaultResolutionId` through `updateJiraProjectDisplaySettings`. Transition metadata retains `requiredFields` and separately reports `unresolvedRequiredFields`; disable transitions only for the unresolved list, since a configured Resolution fallback can satisfy a required field.
+
+
+## In review after assigning reviewers
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/jira-project-in-review-status.png" alt="Jira project In review ticket status setting in light theme" />
+  <img className="hidden dark:block" src="/images/dark/jira-project-in-review-status.png" alt="Jira project In review ticket status setting in dark theme" />
+</Frame>
+
+Configure **Manage → project → Display settings → In review ticket status** to move linked tickets when **Assign** successfully adds reviewers from a worktree. The setting starts unset. On iPhone or iPad, select the project in **Jira Tickets**, then open **In review status**. Already matching ticket statuses require no transition. Provider assignment failures leave Jira unchanged; a Jira transition failure preserves the assigned reviewers and displays a warning.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-assign-reviewers-jira-warning.png" alt="Assigned reviewers with a Jira transition warning in light theme" />
+  <img className="hidden dark:block" src="/images/dark/worktree-assign-reviewers-jira-warning.png" alt="Assigned reviewers with a Jira transition warning in dark theme" />
+</Frame>
+
+API clients can read `JiraProject.inReviewStatusId` and save it through `updateJiraProjectDisplaySettings`. Set it to `null` to disable the follow-up. `assignWorktreeReviewers` returns `ticketTransitionError` when the reviewer assignment succeeds but the ticket transition fails.

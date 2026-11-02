@@ -337,3 +337,24 @@ A worktree that disappears from disk is not deleted immediately — it moves to 
 Select an **Out of date** build badge for a **Rebuild** menu. The action refreshes the current surface and reports failures there. **Copy path** in the worktree actions copies the full worktree folder path, including its parent directories.
 
 The Start Build sheet keeps destination tabs, device selection, and scripts visible. Expand **Details** for the remaining settings and command preview. Valid configurations use green badges.
+
+
+## Bulk Sync
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-bulk-sync-all.png" alt="Bulk Sync selection in light theme" />
+  <img className="hidden dark:block" src="/images/dark/worktree-bulk-sync-all.png" alt="Bulk Sync selection in dark theme" />
+</Frame>
+
+Select **Bulk Sync** beside **Fetch now** on Worktrees or an app's Worktrees tab to review outdated worktrees before syncing. The sheet includes every outdated worktree in that page's app or global scope and respects Active Agent. List search, repository, changes, and branch filters do not exclude checkouts from the bulk sheet.
+
+Eligible worktrees start checked. Uncheck any checkout to exclude it. Each row shows its branch, repository, agent, base branch, and commits behind; blocked checkouts remain visible with their reason and cannot be selected. Choose **Sync selected** to start the batch. Sync uses the existing worktree sync behavior and does not enable Auto Sync.
+
+The control plane continues the batch after you close the sheet or navigate away. Worktrees in the same codebase run serially, while separate codebases can progress independently. Reopen the active batch from Worktrees to see pending, running, succeeded, failed, skipped, and attention-required outcomes. One failure does not stop other codebases. Pending checkouts whose agent goes offline are skipped with a reason. If an agent disconnects after a job is submitted, that job remains active until the agent reports its terminal recovery result; the codebase stays reserved. Address conflicts and preparation issues through the worktree's existing recovery actions.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-bulk-sync-all-results.png" alt="Bulk Sync progress and outcomes in light theme" />
+  <img className="hidden dark:block" src="/images/dark/worktree-bulk-sync-all-results.png" alt="Bulk Sync progress and outcomes in dark theme" />
+</Frame>
+
+The native iOS app offers the same selection and progress sheets from global and app-scoped Worktrees. API clients can start a batch with `startWorktreeSyncBatch`, inspect `worktreeSyncBatch`, and rediscover running batches through `worktreeOverview.activeSyncBatches`.
