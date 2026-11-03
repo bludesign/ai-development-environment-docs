@@ -54,7 +54,7 @@ This is where you decide whether the workflow appears as a button on other pages
     | Type | Where the button appears |
     | --- | --- |
     | **Standard** | Alongside the normal worktree actions |
-    | **Merge conflict** | Only while a worktree rebase is stopped on conflicts |
+    | **Merge conflict** | Starts while a worktree rebase is stopped on conflicts; active runs remain accessible after resolution |
     | **GitHub Actions** | In matching GitHub pipeline and job menus |
     | **None** | Nowhere — the workflow is run from its own page only |
   </Step>
@@ -68,6 +68,8 @@ This is where you decide whether the workflow appears as a button on other pages
     **Save quick actions** applies the configuration.
   </Step>
 </Steps>
+
+On web worktree cards and table rows, a running merge-conflict action keeps its workflow button and **Manage running** control after conflicts clear or the rebase finishes. You can still open or manage the run while later steps complete. Other inactive merge-conflict actions are hidden until a rebase needs them again. The **Rebase paused** warning and **Cancel rebase** control disappear when the rebase ends.
 
 <Note>
   A quick action only renders when the workflow is published, enabled, and has a resource trigger matching the selected action type. All four conditions have to hold — the page states this inline as a reminder.
