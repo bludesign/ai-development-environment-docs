@@ -56,11 +56,13 @@ Which actions appear depends on the run's state and on what the AI tool supports
     The final output, shown once the run reaches a terminal status. On a Plan this is the proposal itself and the card is titled **Plan**; on a Session the same card is titled **Summary**. Markdown rendering, raw toggle, and copy, as with the prompt.
   </Accordion>
   <Accordion title="Changes" icon="file-diff">
-    Git checkpoints captured during the run — **Start**, **Question**, **Answer rollback**, **Before answer revision**, **Continue**, and **Final** — each with its HEAD SHA, branch, and either a full patch or a diff summary. The most recent patch is also surfaced at the top of the card.
+    The main diff compares the captured baseline with the file contents in the latest **Final** checkpoint. Each changed file appears once, regardless of staging. An empty latest **Final** shows **No file content changes.** and does not revive an earlier patch.
+
+    Git checkpoints — **Start**, **Question**, **Answer rollback**, **Before answer revision**, **Continue**, and **Final** — stay collapsed by default. Expand one for its HEAD SHA, branch, and patch or diff summary. Before a **Final** exists, changes appear only in this history.
 
     Patches list one collapsible row per file, with its change type and added and removed line counts; expand a row for the diff itself.
 
-    A Plan that changed its worktree is flagged here with **This read-only Plan unexpectedly changed the selected worktree**.
+    A Plan whose latest final diff contains changes is flagged here with **This read-only Plan unexpectedly changed the selected worktree**.
   </Accordion>
 </AccordionGroup>
 
@@ -75,7 +77,7 @@ Answered batches stay on the page as history, and a managed run whose batch stil
     Preparing a revision computes the rollback patch against the checkpoint taken immediately before the question. The dialog waits while that work runs on the agent.
   </Step>
   <Step title="Review what will be undone" icon="file-diff">
-    **Undo worktree changes made after this question** is on by default and shows the exact diff that will be reverted. Turn it off to keep the current worktree contents and change only the answer. If commits have already been pushed, the dialog warns before you continue.
+    **Undo worktree changes made after this question** is on by default and shows the exact diff that will be reverted. Working-tree and index changes remain separate in this preview because rollback restores file contents and staging state. Turn it off to keep the current worktree contents and change only the answer. If commits have already been pushed, the dialog warns before you continue.
   </Step>
   <Step title="Optionally stash first" icon="archive">
     **Stash current tracked and untracked changes before restoring** keeps a recoverable copy of the working tree before the rollback.
@@ -121,6 +123,19 @@ The cards immediately after **Follow Up** let you act on the Plan's worktree whi
 | **Builds** | The worktree's latest 50 builds, live updates, **Load more**, build navigation, rebuild, and device run controls |
 
 These are supplementary to the Plan. A failed worktree or build refresh shows a non-blocking warning, while an imported Plan with no resolvable worktree simply omits the cards. Run controls default to the build agent and can switch to another eligible Mac; selection and search stay scoped to that agent, and remote runs use the authenticated artifact relay. The iOS app provides the same cards and native Build, Plan, Session, quick-action, pagination, rebuild, and agent-aware run controls.
+
+## Plan info
+
+The **Plan info** card sits at the bottom of the detail page in the web and iOS apps, including Plans with no Git checkpoints. It shows the provider and version, origin, native session ID, owning agent ID, repository and branch, model and effort, native transcript and AIDE activity-log paths, working directory, and created, started, finished, and updated times.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/plan-info.png" alt="Plan info card in light theme" />
+  <img className="hidden dark:block" src="/images/dark/plan-info.png" alt="Plan info card in dark theme" />
+</Frame>
+
+Select **Copy** beside an ID or an available path. The card uses the latest non-superseded attempt and marks missing details as unavailable; older Plans may gain supported metadata after the agent next synchronizes.
+
+Codex and Claude can report their actual native transcript files. OpenCode exposes no standalone session file. Managed Plans can show an AIDE activity journal; imported Plans have none. Paths refer to the owning agent, and displaying them does not download files or change retention. See [Session info](/ai/session-detail#session-info) for provider-specific locations and stored metadata details.
 
 ## Exporting
 

@@ -44,7 +44,9 @@ A failed run surfaces its error at the top of the page. So does a phase like *St
     Tiles for **Reported by provider**, **Model cost catalog**, input, output, cache read, cache write, and reasoning tokens, and the tool-call count. A per-model table breaks the same numbers down, and where an answer revision has retired earlier work a second table separates **Active attempts** from **Superseded** usage. Individual tool calls expand to their input, output, and error JSON.
   </Accordion>
   <Accordion title="Changes" icon="file-diff">
-    Every Git checkpoint the run captured — **Start**, **Question**, **Answer rollback**, **Before answer revision**, **Continue**, **Final** — with HEAD SHA, branch, and a full patch or diff summary. The most recent patch is repeated at the top of the card, which is usually the quickest read of what the Session actually did.
+    The main diff compares the captured baseline with the file contents in the latest **Final** checkpoint. Each changed file appears once, whether its edits are staged, unstaged, or partially staged. An empty latest **Final** shows **No file content changes.** instead of falling back to an earlier patch.
+
+    Checkpoint history stays collapsed by default. Expand **Start**, **Question**, **Answer rollback**, **Before answer revision**, **Continue**, or **Final** to inspect its HEAD SHA, branch, and patch or diff summary. Before a **Final** exists, changes appear only in this history.
 
     Patches list one collapsible row per file, with its change type and added and removed line counts; expand a row for the diff itself.
   </Accordion>
@@ -72,7 +74,7 @@ Transcript events are journaled on the agent and uploaded incrementally from the
     A question batch appears inline as **Answer needed**. OpenCode 2 forms support typed text, number, integer, boolean, multiselect, and external-step controls, with defaults, validation, and conditional visibility. Complete external steps and acknowledge them separately from opening their links. **Cancel form** cancels the native request without cancelling the Session. Rejected submissions remain editable with the delivery error. These controls are available in web and iOS run details; see [native forms](/reference/opencode#answer-native-forms). Other questions retain their existing choice and free-text controls. Submitting resumes the run. A Session waiting for an answer keeps its worktree admission slot.
   </Step>
   <Step title="Revise an answer" icon="rotate-ccw">
-    An answered batch that still has its checkpoint can be revised. The dialog prepares a rollback patch against the checkpoint taken immediately before the question, shows exactly what will be undone, and offers to stash the current tracked and untracked changes first. Confirming starts a new linked Session from the revised answer and keeps the previous one as audit history.
+    An answered batch that still has its checkpoint can be revised. The dialog prepares a rollback patch against the checkpoint taken immediately before the question, shows exactly what will be undone, and offers to stash the current tracked and untracked changes first. Its separate working-tree and index sections show the contents and staging state that rollback restores. Confirming starts a new linked Session from the revised answer and keeps the previous one as audit history.
   </Step>
   <Step title="Pause or cancel" icon="circle-stop">
     Pausing holds the run and its admission slot. Cancelling ends it and releases the slot, leaving the worktree in whatever state the run reached.
@@ -112,6 +114,36 @@ In the web app, select the review badge in **Worktree Status** to open [review d
 **Open Worktree** opens the complete [worktree details](/worktrees/worktree-detail) page. Build and worktree changes refresh these cards in place. If supplementary worktree data cannot load, the Session itself remains usable and the card shows a retryable warning. Imported runs without a resolvable worktree omit the cards.
 
 The run controls use the same agent-aware device picker as Builds and Worktrees: the build agent is the default, selecting another eligible Mac clears the current devices and loads that agent's destinations, and a remote run transfers the app without requiring the Session worktree on the target. The iOS app presents the same order and actions with native sheets. Its Follow Up form also supports attachments, eligible MCP presets, provider defaults, cross-provider context, and paused-Session transfer confirmation, then opens the created child run.
+
+## Session info
+
+The **Session info** card sits at the bottom of the detail page in the web and iOS apps, including runs with no Git checkpoints.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/session-info.png" alt="Session info card in light theme" />
+  <img className="hidden dark:block" src="/images/dark/session-info.png" alt="Session info card in dark theme" />
+</Frame>
+
+| Details | What they show |
+| --- | --- |
+| Provider and run | AI tool, provider version, managed or imported origin, repository, branch, model, and effort |
+| IDs | The native session ID and the owning agent ID |
+| Paths | Native transcript path, AIDE activity-log path, and recorded working directory on the agent |
+| Timestamps | Created, started, finished, and updated times |
+
+Select **Copy** beside an ID or an available path to copy its exact value. Native session information comes from the latest non-superseded attempt; a newer attempt with missing metadata does not reuse an older attempt's ID or paths.
+
+| Provider | Native transcript path |
+| --- | --- |
+| Codex | The actual session JSONL file, including archived sessions and custom Codex home directories |
+| Claude | The actual session JSONL file, including custom Claude configuration directories |
+| OpenCode | No standalone session file is exposed; the card explains this instead of displaying a guessed path |
+
+Managed runs can also show their AIDE activity journal. Imported runs have no AIDE activity log. Missing details are marked unavailable; older runs may gain supported metadata after the agent next synchronizes.
+
+<Note>
+  Locations are saved with the run and can reveal usernames and directory names. This card reports paths on the owning agent; it does not download the files or change their retention. Use **Export** when you need transcript contents.
+</Note>
 
 ## Exporting
 

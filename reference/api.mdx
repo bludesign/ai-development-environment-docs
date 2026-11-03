@@ -47,6 +47,34 @@ Call `worktreeEnrichment(kind:, appId:, worktreeId:, force:)` separately for `GI
 
 Apply an update only while its worktree ID, codebase, canonical origin, branch, and head commit still match the requested worktree. Jira updates must also match the ticket key. For GitLab warnings, `preserveFields` identifies `APPROVAL_STATE` or `UNRESOLVED_DISCUSSIONS_COUNT` values that failed independently. Preserve an older value only when the merge request ID, project ID, and head commit are unchanged. See [Loading and retrying details](/worktrees/worktrees#loading-and-retrying-details).
 
+### Session and plan information
+
+`RunAttempt.sessionInfo` exposes nullable locations on the owning agent for both Sessions and Plans:
+
+```graphql
+query RunSessionLocations($id: ID!) {
+  agentRun(id: $id) {
+    kind
+    provider
+    agentId
+    attempts {
+      generation
+      nativeId
+      supersededAt
+      sessionInfo {
+        nativeTranscriptPath
+        activityLogPath
+        workingDirectory
+      }
+    }
+  }
+}
+```
+
+For the current run, select the greatest `generation` whose `supersededAt` is `null`. Do not substitute an older attempt when the current one has no native ID or locations. `sessionInfo` and its fields may be `null`, including older runs whose agent has not yet reported supported metadata.
+
+OpenCode has no standalone native transcript path. Imported runs have no AIDE activity journal. These fields report stored filesystem locations, not log contents or download URLs; see [Session info](/ai/session-detail#session-info) for provider and retention details.
+
 ### Action Center and sidebar preferences
 
 Read `actionCenterSettings`, save with `saveActionCenterSettings(input:)`, and subscribe to `actionCenterSettingsChanged` for the saved values. Alongside the required request-age and queue-visibility fields, the save input accepts optional `confirmClearAllNotifications`, `showIntegrationCountsInSidebar`, and `showWorktreeCountsInSidebar` booleans. Each defaults to `true` for new settings; omitting one preserves its saved value.
