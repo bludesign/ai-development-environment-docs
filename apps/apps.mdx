@@ -22,7 +22,7 @@ Each web and iOS card shows the app description, assigned repositories, and reso
 | --- | --- |
 | **Dirty worktrees** | Visible worktrees with staged or unstaged changes. Appears only when the count is greater than zero. |
 | **Worktrees** | All visible primary and linked worktrees in the app's assigned repositories. |
-| **Worktrees off main** | Visible worktrees on a named branch other than the literal `main`. Detached worktrees and unknown branch names are excluded. A branch named `master` contributes to this count. |
+| **Worktrees off main** | Visible worktrees on a named branch other than the literal `main`. Appears only when the count is greater than zero. Detached worktrees and unknown branch names are excluded. A branch named `master` contributes to this count. |
 | **Open PRs** | Distinct open pull requests and merge requests linked to visible worktrees, including drafts. The same request is counted once across multiple checkouts. |
 
 Counts span the app's assigned repositories and their agents. They use the worktree and linked request status last stored by the control plane. Use **Refresh request** on a [worktree](/worktrees/worktrees) to refresh its pull or merge request status.
