@@ -62,8 +62,8 @@ Keys that are not safe identifiers are bracketed instead — `additionalParamete
   <Step title="Promote a parameter" icon="plus">
     Click the **+** beside any path to add it as a column. Click the funnel to filter the timeline to that exact value.
   </Step>
-  <Step title="Copy what you need" icon="clipboard">
-    Right-click a parameter row for **Copy `<key>`: value** or **Copy value**; right-click a whole block for **Copy JSON dictionary** or **Copy path: values**.
+  <Step title="Copy or filter a value" icon="clipboard">
+    Right-click a parameter row, expanded detail, or metadata value for **Copy `<label>`: value**, **Copy value**, and **Filter by value**. Right-click a whole block for **Copy JSON dictionary** or **Copy path: values**.
   </Step>
 </Steps>
 
@@ -80,6 +80,10 @@ Save a layout as a preset, mark one preset as the default for this view, or **Re
 Search runs in **Text**, **Glob**, or **Regex** (RE2) mode with an independent **Case sensitive** toggle, and it covers field names and values — including every parameter path.
 
 Quick filters on this view are **Kind**, **Name**, **Screen Name**, **Device IP**, **Build ID**, and **Session ID**, each populated from the values actually present in stored events. Selecting several values in one dropdown matches any of them; selections across dropdowns must all match.
+
+In the web app, **Filter by value** applies immediately without opening the **Filters** sheet. It selects that exact value in a quick filter when one is available; otherwise, it adds a case-sensitive **is** condition. This works on table cells and on the values in an expanded event, including both parameter dictionaries.
+
+**Time** and **Received** filters match the stored timestamp exactly, while copy actions retain the displayed date and time format. Filtering is disabled for missing metadata values shown as `—`.
 
 **Filters** opens the advanced sheet, where any field — standard or parameter path — can be combined with **contains**, **does not contain**, **is**, **is not**, **matches glob**, **matches regex**, **no regex match**, **is empty**, or **is not empty**, joined by **All conditions** or **Any condition**. Name a set of conditions to save it; saved filters and column presets are scoped to this view.
 
@@ -187,3 +191,5 @@ The page subscribes to telemetry changes: events appear as they are ingested, hi
 Build and session IDs use a monospaced font. Their filters show the complete ID on the first line and its earliest retained event date and time on the second. Dates use the shared local date display. Selecting a build ID badge opens its build details.
 
 Build-run separators appear by default after a successful app launch, once per Run batch. Use **Show Build Run Separators** to hide or show them; manual separators and historical **Build created** markers remain available. Object keys containing spaces display their text without added bracket-and-quote notation; stored data and filtering paths retain their original meaning. The native telemetry views provide matching ID filters, links, and separator controls.
+
+In the native iOS app, open an event and long-press or right-click its detail, a metadata value, or a row in either parameter dictionary for the same copy and **Filter by value** actions. Choosing **Filter by value** returns you to the timeline and applies the filter alongside your current search and other filters. Build and session values use their existing filter pickers; other values add exact conditions. Use **Remove filter** or **Clear value filters** for those conditions. Clear build and session selections with **All Builds** and **All Sessions** in their pickers.

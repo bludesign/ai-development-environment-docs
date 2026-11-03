@@ -83,7 +83,9 @@ Five dropdowns sit under the search box — **Level**, **Category**, **Device IP
 
 Set **Match** to **All conditions** or **Any condition**, and give each condition its own case sensitivity. The **Filters** button shows a badge with the number of active conditions.
 
-Right-clicking any cell or attribute row offers **Filter by value**, which adds the right condition for you — a quick filter if the field has one, otherwise an advanced condition.
+In the web app, right-click a table cell, an expanded message or metadata value, or an attribute row and choose **Filter by value**. The timeline updates immediately without opening the **Filters** sheet. The action selects that exact value in its quick filter when one is available; otherwise, it adds a case-sensitive **is** condition.
+
+**Time** and **Received** filters match the stored timestamp exactly, while copy actions retain the displayed date and time format. Filtering is disabled for missing metadata values shown as `—`.
 
 ### Saved filters
 
@@ -118,7 +120,7 @@ Records are listed newest first, 200 at a time, with **Load more** at the bottom
 - Rows are grouped under a **local-day header**.
 - Clicking a row expands it: the full message, a metadata grid — time, received, device IP, build ID, session ID, level, category — and the attributes dictionary rendered as path and value pairs.
 - Newly arrived rows flash briefly, so you can see ingestion happening live.
-- Right-click a cell for **Copy `<column>`: value**, **Copy value**, and **Filter by value**. Right-click the attributes block for **Copy JSON dictionary** or **Copy path: values**.
+- Right-click a cell, expanded message, metadata value, or attribute row for **Copy `<label>`: value**, **Copy value**, and **Filter by value**. Right-click the attributes block for **Copy JSON dictionary** or **Copy path: values**.
 - The expanded row carries a **Highlight** swatch strip — 19 colors plus a clear button — that tints the row for everyone using the app, and a **Delete** button for that single record.
 
 ## Separators
@@ -279,3 +281,5 @@ The page subscribes to telemetry changes and reconciles in place. New records ap
 Build and session IDs use a monospaced font. Their filters show the complete ID on the first line and its earliest retained event date and time on the second. Dates use the shared local date display. Selecting a build ID badge opens its build details.
 
 Build-run separators appear by default after a successful app launch, once per Run batch. Use **Show Build Run Separators** to hide or show them; manual separators and historical **Build created** markers remain available. Object keys containing spaces display their text without added bracket-and-quote notation; stored data and filtering paths retain their original meaning. The native telemetry views provide matching ID filters, links, and separator controls.
+
+In the native iOS app, open a record and long-press or right-click its message, a metadata value, or an attribute row for the same copy and **Filter by value** actions. Choosing **Filter by value** returns you to the timeline and applies the filter alongside your current search and other filters. Build and session values use their existing filter pickers; other values add exact conditions. Use **Remove filter** or **Clear value filters** for those conditions. Clear build and session selections with **All Builds** and **All Sessions** in their pickers.
