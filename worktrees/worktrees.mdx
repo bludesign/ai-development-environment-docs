@@ -268,7 +268,7 @@ Auto Sync never forces through a preparation conflict automatically. It pauses w
 
 ## Auto Merge
 
-**Auto Merge** hands the merge to the worktree's provider: the GitHub pull request or GitLab merge request merges as soon as its required checks, reviews, and branch rules are satisfied. Optional follow-ups:
+**Auto Merge** merges a GitHub pull request or GitLab merge request after its checks, reviews, and branch rules are satisfied. Leave **Auto sync branch** off to use the provider's existing native auto-merge behavior. Select it when you want the control plane to rebase and push the linked branch before merging, including when a rebase requirement blocks native auto-merge. Optional follow-ups:
 
 - **Delete this worktree after the pull request merges**.
 - **Move the linked Jira ticket to the project's configured done status**.
@@ -283,7 +283,31 @@ Targeting worktrees include checkouts on other agents for the same canonical rep
 
 Updates run only after the provider confirms the merge and before parent-worktree cleanup. Changed or removed targets are skipped and their outcomes are recorded. Retry follow-ups after fixing an error; completed steps do not overwrite subsequent edits. These are base-setting updates, so existing **Auto Sync** can use the new base afterward. GitHub and GitLab manual merge dialogs and the native iOS app offer the same controls.
 
-Like Auto Sync, it can be paused, resumed, and cancelled, and reports **Auto Merge complete** when it lands.
+### Sync the branch before merging
+
+Select **Auto sync branch**, review the displayed source commit, choose the merge options and follow-ups, then enable Auto Merge. The setting defaults to off. It requires a matching linked worktree and an updated agent advertising `worktree.auto-sync.reviewed-head`.
+
+The control plane saves the operation before starting Git work. The agent verifies the reviewed local and remote source revision, rebases onto the request's actual target repository and branch, and pushes with an explicit force-with-lease. Fork targets are supported. Changing the worktree's configured base does not change this operation's merge target.
+
+After syncing, the control plane waits for successful CI associated with the resulting source revision and for the provider's merge requirements. An older green pipeline, missing CI, pending or failed checks, cancellation, or skipped-only CI cannot authorize the merge. If the target advances while waiting, the control plane syncs again and checks CI for the resulting revision. Native auto-merge stays disabled during this managed flow.
+
+| Progress | Meaning |
+| --- | --- |
+| **Syncing branch** | A saved sync request is waiting for the agent or running a guarded rebase and push. |
+| **Waiting for CI** | The current source revision still needs passing CI. |
+| **Waiting for merge requirements** | CI passed, but provider readiness, approvals, or branch rules still block merging. |
+| **Merging** | The control plane submitted the merge and is awaiting confirmation. |
+| **Action required** | Review and resolve the displayed problem before resuming. |
+
+Conflicts, dirty worktrees, and preparation conflicts pause the operation. Resolve any rebase manually, finish and push it, then refresh the merge options, review the current source commit, and choose **Resume Auto Merge**. This flow does not invoke a conflict workflow or force through preparations. Unrelated source commits, retargeting, or changes to the linked worktree's identity also require explicit review and resume. CI retries remain available through the existing pipeline controls and retry rules.
+
+**Cancel Auto Merge** cancels pending sync work and prevents further merge attempts. A rebase already pushed is preserved. If the provider already accepted the merge, the control plane confirms it and handles the saved follow-ups. Closing the web or iOS app does not stop a saved operation. Standalone **Auto Sync** keeps its configuration while the merge operation coordinates access to the worktree.
+
+The native iOS merge sheets expose the same setting, eligibility reason, progress, cancellation, and resume controls. After updating the control plane, apply its database migrations and update the control agents before using branch syncing.
+
+GraphQL callers set `autoSync: true` on `ConfigureWorktreeAutoMergeInput` for GitHub and also provide the reviewed `expectedHeadSha`. GitLab callers set `autoMerge: true` and `autoSync: true` on `SubmitGitLabMergeRequestMergeInput`, retaining its required reviewed `sha`. Merge options expose `canAutoMergeWithSync`, `autoSyncBlockedReason`, and `defaultAutoSync`; saved operations expose `autoSync` and their current `state`.
+
+Auto Merge reports **Auto Merge complete** after merging and completing its selected follow-ups. Retry unfinished follow-ups after fixing their error; this does not submit another merge.
 
 ## Moving a worktree to another agent
 

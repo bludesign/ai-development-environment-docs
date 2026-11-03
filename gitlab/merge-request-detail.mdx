@@ -44,6 +44,14 @@ Open **Merge** to fetch current readiness and project policy. The dialog offers:
 
 **Merge now** submits an immediate merge. **Enable auto-merge** asks GitLab to merge when its requirements are met. The dialog explains why an action is unavailable. If auto-merge is already enabled, **Cancel auto-merge** cancels the pending request when your token permits it.
 
+### Rebase before auto-merge
+
+If GitLab requires a rebase, select **Auto sync branch** in the web or iOS merge sheet, review the source commit and follow-ups, then enable auto-merge. A matching linked worktree and an updated control agent are required. The setting defaults to off, and an unavailable option explains what is missing.
+
+With syncing selected, the control plane manages the operation: it rebases and pushes the branch, waits for passing CI associated with the resulting revision, and submits a merge only when GitLab's requirements are satisfied. It keeps native GitLab auto-merge disabled during this flow. Target-branch changes trigger another sync; an earlier green pipeline cannot authorize a different source revision. The operation remains saved after you close the sheet or app.
+
+The sheet shows **Syncing branch**, **Waiting for CI**, **Waiting for merge requirements**, **Merging**, or **Action required**. Resolve conflicts or local changes manually, finish and push any rebase, then refresh, review the current commit, and choose **Resume Auto Merge**. **Cancel auto-merge** also cancels pending sync work. Saved follow-ups still wait for a confirmed merge. See [Auto Merge](/worktrees/worktrees#sync-the-branch-before-merging) for CI behavior, fork targets, revision checks, and rollout requirements.
+
 When GitLab allows squash to be changed, and when Jira or worktree follow-ups are eligible, AIDE resolves their initial selections in this order:
 
 1. GitLab's required or forbidden squash policy overrides every AIDE selection.

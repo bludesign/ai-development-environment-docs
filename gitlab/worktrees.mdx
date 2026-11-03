@@ -26,6 +26,8 @@ See [Assign reviewers](/worktrees/worktrees#assign-reviewers) for the shared web
 
 The worktree's merge action opens the same project-aware merge controls as the merge request page. You can merge immediately or enable auto-merge, honor the project's squash and source-branch settings, supply optional commit messages, and choose available follow-ups.
 
+Select **Auto sync branch** to rebase and push this linked branch before merging, including when GitLab reports that a rebase is required. The control plane syncs against the merge request's actual target, waits for passing CI on the resulting revision, and syncs again if the target changes. Conflicts pause for manual resolution. Refresh and review the current commit before resuming. The web and iOS sheets show the saved operation's progress and offer cancellation. See [Auto Merge](/worktrees/worktrees#sync-the-branch-before-merging).
+
 Select **Delete linked worktree** only when you want the control plane to remove the local worktree after GitLab confirms the merge. The control plane verifies that the non-primary worktree still belongs to the same source repository, branch, and commit, then requires a clean working tree before deletion. GitLab source-branch removal and local worktree cleanup are separate options.
 
 If Jira completion or cleanup fails after merging, open the merge follow-up status and retry the unfinished work. An enabled auto-merge does not itself trigger cleanup. The web and iOS clients use the same merge lifecycle and follow-up checks.

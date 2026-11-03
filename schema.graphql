@@ -14155,6 +14155,18 @@ type GitHubPullRequestDetail {
 
 """Represents GitHub pull request merge options in the GraphQL API."""
 type GitHubPullRequestMergeOptions {
+  """Whether the linked worktree supports managed sync and merge."""
+  canAutoMergeWithSync: Boolean!
+
+  """Reason branch syncing is unavailable."""
+  autoSyncBlockedReason: String
+
+  """Previously selected branch syncing setting."""
+  defaultAutoSync: Boolean!
+
+  """Saved merge operation for the linked worktree."""
+  autoMergeOperation: WorktreeAutoMerge
+
   """
   Targeting worktrees and the reviewed destination for post-merge base updates.
   """
@@ -15215,8 +15227,11 @@ type GitLabPipelinePage {
   """Items for GitLabPipelinePage."""
   items: [GitLabPipeline!]!
 
-  """Total for GitLabPipelinePage."""
+  """Matching pipelines found; a lower bound when totalIsExact is false."""
   total: Int!
+
+  """False when additional pipeline history remains to be scanned."""
+  totalIsExact: Boolean
 
   """Page for GitLabPipelinePage."""
   page: Int!
@@ -15757,6 +15772,9 @@ type GitLabReviewerDirectory {
 
 """Persisted merge intent and independently retryable follow-ups."""
 type GitLabMergeOperation {
+  """Whether AIDE syncs the linked branch before merging."""
+  autoSync: Boolean!
+
   """Recorded outcomes for selected targeting worktrees."""
   baseBranchUpdateResults: [MergeBaseBranchUpdateResult!]!
 
@@ -15797,6 +15815,15 @@ type GitLabMergeOperation {
 Current GitLab project policy, readiness, defaults and linked follow-ups.
 """
 type GitLabMergeOptions {
+  """Whether the linked worktree supports managed sync and merge."""
+  canAutoMergeWithSync: Boolean!
+
+  """Reason branch syncing is unavailable."""
+  autoSyncBlockedReason: String
+
+  """Previously selected branch syncing setting."""
+  defaultAutoSync: Boolean!
+
   """
   Targeting worktrees and the reviewed destination for post-merge base updates.
   """
@@ -15915,6 +15942,11 @@ type GitLabMergeResult {
 Submit the SHA reviewed in the merge sheet. Omitted messages use GitLab defaults.
 """
 input SubmitGitLabMergeRequestMergeInput {
+  """
+  Rebase and push the linked branch before waiting for passing CI and merging.
+  """
+  autoSync: Boolean = false
+
   """
   Selected targeting worktrees to update only after the merge is confirmed.
   """
@@ -25257,6 +25289,11 @@ type WorktreeOperationResult {
 
 """Represents a worktree auto merge in the GraphQL API."""
 type WorktreeAutoMerge {
+  """
+  Whether AIDE syncs the linked branch and waits for passing CI before merging.
+  """
+  autoSync: Boolean!
+
   """Recorded outcomes for selected targeting worktrees."""
   baseBranchUpdateResults: [MergeBaseBranchUpdateResult!]!
 
@@ -26434,6 +26471,14 @@ input ConfigureWorktreeAutoSyncInput {
 
 """Values used to configure a worktree auto merge."""
 input ConfigureWorktreeAutoMergeInput {
+  """
+  Rebase and push the linked branch before waiting for passing CI and merging.
+  """
+  autoSync: Boolean = false
+
+  """Reviewed source revision, required when autoSync is selected."""
+  expectedHeadSha: String
+
   """
   Selected targeting worktrees to update only after the merge is confirmed.
   """
