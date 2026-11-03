@@ -264,11 +264,22 @@ The action is unavailable when the worktree has no staged or unstaged changes, h
 
 It can also handle conflicts for you — enable **Run a quick-action workflow to resolve merge conflicts automatically** and select a merge-conflict workflow, optionally with a specific trigger choice. Auto Sync can be paused, resumed, and cancelled.
 
+Worktree cards show a green **Auto Syncing** indicator while Auto Sync is active. Multiple worktrees can keep Auto Sync enabled for the same codebase. When another Git operation holds that codebase, Auto Sync waits and retries automatically after the operation completes. A completed sync cycle leaves room for other work before checking again.
+
 Auto Sync never forces through a preparation conflict automatically. It pauses with a preparation reason and shows the affected paths. **Force Sync** runs the existing conflict workflow when needed, reapplies repository preparations, and resumes Auto Sync after success.
 
 ## Auto Merge
 
-**Auto Merge** merges a GitHub pull request or GitLab merge request after its checks, reviews, and branch rules are satisfied. Leave **Auto sync branch** off to use the provider's existing native auto-merge behavior. Select it when you want the control plane to rebase and push the linked branch before merging, including when a rebase requirement blocks native auto-merge. Optional follow-ups:
+**Auto Merge** merges a GitHub pull request or GitLab merge request after its checks, reviews, and branch rules are satisfied. Leave **Auto sync branch** off to use the provider's existing native auto-merge behavior. Select it when you want the control plane to rebase and push the linked branch before merging, including when a rebase requirement blocks native auto-merge.
+
+Enabled Auto Merge appears as green **Auto Merging** on web and iOS worktree cards, including native auto-merge enabled at the provider. The indicator stays visible when the request becomes ready to merge. Paused operations show their action-required state instead. Open the automation controls to review or cancel the operation.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-automations.png" alt="Active Auto Syncing and Auto Merging controls in light theme" />
+  <img className="hidden dark:block" src="/images/dark/worktree-automations.png" alt="Active Auto Syncing and Auto Merging controls in dark theme" />
+</Frame>
+
+Optional follow-ups:
 
 - **Delete this worktree after the pull request merges**.
 - **Move the linked Jira ticket to the project's configured done status**.
@@ -290,6 +301,8 @@ Select **Auto sync branch**, review the displayed source commit, choose the merg
 The control plane saves the operation before starting Git work. The agent verifies the reviewed local and remote source revision, rebases onto the request's actual target repository and branch, and pushes with an explicit force-with-lease. Fork targets are supported. Changing the worktree's configured base does not change this operation's merge target.
 
 After syncing, the control plane waits for successful CI associated with the resulting source revision and for the provider's merge requirements. An older green pipeline, missing CI, pending or failed checks, cancellation, or skipped-only CI cannot authorize the merge. If the target advances while waiting, the control plane syncs again and checks CI for the resulting revision. Native auto-merge stays disabled during this managed flow.
+
+Git work waits when another operation holds the codebase and resumes automatically when it can proceed. The same applies to worktree cleanup after merging. Temporary codebase contention does not require **Resume Auto Merge**. Existing operations paused solely by that contention error recover automatically after the control plane revalidates their saved identities.
 
 | Progress | Meaning |
 | --- | --- |
@@ -370,7 +383,7 @@ The Start Build sheet keeps destination tabs, device selection, and scripts visi
   <img className="hidden dark:block" src="/images/dark/worktree-bulk-sync-all.png" alt="Bulk Sync selection in dark theme" />
 </Frame>
 
-Select **Bulk Sync** beside **Fetch now** on Worktrees or an app's Worktrees tab to review outdated worktrees before syncing. The sheet includes every outdated worktree in that page's app or global scope and respects Active Agent. List search, repository, changes, and branch filters do not exclude checkouts from the bulk sheet.
+Select **Bulk Sync** beside **Fetch now** on Worktrees or an app's Worktrees tab to review outdated worktrees before syncing. The centered web sheet includes every outdated worktree in that page's app or global scope and respects Active Agent. List search, repository, changes, and branch filters do not exclude checkouts from the bulk sheet.
 
 Eligible worktrees start checked. Uncheck any checkout to exclude it. Each row shows its branch, repository, agent, base branch, and commits behind; blocked checkouts remain visible with their reason and cannot be selected. Choose **Sync selected** to start the batch. Sync uses the existing worktree sync behavior and does not enable Auto Sync.
 
