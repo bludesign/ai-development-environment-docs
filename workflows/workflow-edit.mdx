@@ -108,7 +108,7 @@ Selecting a node opens its inspector.
 
 ### Dedicated actions and results
 
-The current catalog has **345 typed step kinds**. Dedicated actions cover resource discovery, repository and worktree setup, build configuration and scripts, command and skill authoring, agent administration, apps, transfers, crashes, telemetry, notifications, caches, and tool/preset administration. Use the palette search rather than maintaining a separate list of every operation. The web and iOS editors use the same catalog and configuration schemas.
+The current catalog has **346 typed step kinds**. Dedicated actions cover resource discovery, repository and worktree setup, build configuration and scripts, command and skill authoring, agent administration, apps, transfers, crashes, telemetry, notifications, caches, and tool/preset administration. Use the palette search rather than maintaining a separate list of every operation. The web and iOS editors use the same catalog and configuration schemas.
 
 The operation-specific actions use a fixed MCP tool identity with that tool's input validation, permissions, and audit context. Configuration cannot substitute another tool. **MCP call** remains available when you need to select a built-in or configured external tool directly.
 
@@ -117,6 +117,27 @@ These actions write their structured response to `steps.<stepId>.output`. Keep t
 An action that queues background work can succeed as soon as it returns a durable job or operation ID. Its success handle confirms dispatch, not completion. Follow with a supported wait action or a separate result-triggered workflow; use the returned ID with read actions to inspect status before dependent work. Existing steps that explicitly wait, such as the Tailscale fleet steps below, keep that behavior. Inspect the kind's description before connecting a dependent action.
 
 When a dedicated action accepts `requestId` and you leave it unset, the runtime generates the same value for retries of that run's node. Keep an explicit request ID stable when retrying the exact same operation; changing the reviewed input requires a new review and request identity.
+
+### Refreshing Git state before a condition
+
+Add **Refresh worktree** (`WORKTREE_REFRESH_STATE`) after an AI session or command that resolves conflicts, then connect its `success` handle to **If**. The refresh reads live Git state on the owning agent and waits for the result before continuing. It replaces all four flags, including `false` after a conflict, merge, or rebase finishes:
+
+| Session path | What it reports |
+| --- | --- |
+| `worktree.dirty` | Whether staged, unstaged, or untracked changes remain |
+| `worktree.hasConflicts` | Whether Git reports unmerged paths |
+| `worktree.rebaseInProgress` | Whether a rebase is unfinished |
+| `worktree.mergeInProgress` | Whether a merge is unfinished |
+
+For a completion check, choose **All of these are true** and compare each flag with the boolean `false`. A clean worktree alone does not prove that a merge or rebase has finished. Handle the refresh's `failure` branch before relying on its flags.
+
+The step requires `worktree.id` and an online agent. Leave **Worktree** empty to use the current workflow worktree; an explicit ID must match it. This read does not fetch or modify the repository, and can run while an iOS build is active on an updated agent.
+
+Use **Inspect worktree Git state** (`WORKTREE_INSPECT_GIT`) for the dirty flag, branches, stashes, and their truncation flags. Use **Inspect worktree** (`WORKTREE_INSPECT`) for commits and changed-file lists.
+
+### Using Jira ticket links
+
+**Load Jira ticket** (`JIRA_LOAD_TICKET`) and Jira steps that refresh the ticket write its browser URL to `ticket.url`, alongside fields such as `ticket.key` and `ticket.title`. Bind a later URL field to `ticket.url`, or use `{{ticket.url}}` in a notification or AI prompt. The workflow preserves the URL returned as `jiraUrl` or `url` by the Jira result.
 
 ### Event triggers and thresholds
 

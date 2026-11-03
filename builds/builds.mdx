@@ -62,6 +62,12 @@ The build dialog offers **Any iOS Simulator** or **Any Physical iOS Device** imm
 
 The web destination picker keeps unavailable physical devices visible with their state and disables their selection. **Available (paired)** means the device is paired and has a detected wired or local-network transport, even if its tunnel is idle. **Connected** devices are also selectable. The server checks availability again before accepting a build for a specific device.
 
+### Repository access during a build
+
+On an updated agent, an iOS build holds off Git mutations and background repository reconciliation in its codebase until it finishes. Read-only worktree inspections, Git-state reads, and diffs can still run during the build, even when a mutation is waiting. Queued operations resume in order after the build settles.
+
+[Auto Sync](/worktrees/worktrees#auto-sync) stays enabled but defers new sync work while an iOS build is active in that codebase, including queued and preparing builds. It retries automatically after the build finishes. These rules apply to builds started from either the web or native iOS app.
+
 <Warning>
   Deleting a build permanently removes the build record *and* its build folder —
   logs, products, archives, and exports. There is no undo.

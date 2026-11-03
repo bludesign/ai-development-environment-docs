@@ -205,7 +205,11 @@ Worktree action errors appear beside the worktree that failed. An error on one c
   <Accordion title="Rebase conflicts" icon="triangle-exclamation">
     A rebase that stops on conflicts leaves the worktree in **Rebase paused**. Resolve them by running a merge-conflict quick-action workflow, or **Cancel rebase** to restore the branch to its pre-rebase state.
 
+    On web cards and table rows, active conflict workflows remain visible after the conflicts clear or the rebase finishes. Use the workflow button or **Manage running** control to follow the remaining steps. Inactive conflict workflows are hidden once they are no longer needed, and **Rebase paused** and **Cancel rebase** disappear when the rebase ends.
+
     A preparation conflict is detected before Sync or Rebase modifies the worktree. The dialog lists the managed paths and offers a force action only for this result. Forcing clears managed paths and assume-unchanged flags, discards edits on assume-only paths, runs Git, and reapplies preparations. A genuine Git conflict suspends preparations until the rebase is cancelled or completed.
+
+    When authoring a resolution workflow, use [**Refresh worktree** followed by **If**](/workflows/workflow-edit#refreshing-git-state-before-a-condition) to verify live changes, conflicts, and unfinished merge or rebase state before reporting success.
   </Accordion>
   <Accordion title="Opening in an editor" icon="code">
     **Open in VS Code** and **Open in VS Code Insiders** launch the worktree folder on its agent. They sit in the **Customize worktree** menu, alongside the worktree's tags and highlight color.
@@ -265,6 +269,8 @@ The action is unavailable when the worktree has no staged or unstaged changes, h
 It can also handle conflicts for you — enable **Run a quick-action workflow to resolve merge conflicts automatically** and select a merge-conflict workflow, optionally with a specific trigger choice. Auto Sync can be paused, resumed, and cancelled.
 
 Worktree cards show a green **Auto Syncing** indicator while Auto Sync is active. Multiple worktrees can keep Auto Sync enabled for the same codebase. When another Git operation holds that codebase, Auto Sync waits and retries automatically after the operation completes. A completed sync cycle leaves room for other work before checking again.
+
+An active iOS build also defers Auto Sync for every worktree in the same codebase, including while the build is queued or preparing. Auto Sync stays enabled and retries after the build finishes; it does not start a sync job that would wait behind the build. With an updated agent, read-only worktree status and diff inspections remain available during the build.
 
 Auto Sync never forces through a preparation conflict automatically. It pauses with a preparation reason and shows the affected paths. **Force Sync** runs the existing conflict workflow when needed, reapplies repository preparations, and resumes Auto Sync after success.
 
