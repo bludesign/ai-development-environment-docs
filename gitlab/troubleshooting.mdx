@@ -57,6 +57,8 @@ An outage can cause the cache to serve stale data. A previous failed job may bel
 
 Resolve the reported GitLab requirement, such as a draft, conflict, approval, discussion, pipeline, or rebase requirement. Project policy controls merge method and whether squash or source-branch removal can be changed. Refresh the dialog after the source branch advances; the control plane will not silently submit the old selection against a different commit.
 
+For a rebase requirement, you can select **Auto sync branch** when a matching linked worktree is available. Update the agent if the option reports an unsupported capability. The managed flow waits for passing CI on the synced revision even when the repository permits a merge without CI. A missing pipeline therefore remains **Waiting for CI**. Conflicts, dirty worktrees, or an unrelated source change require manual resolution and an explicit resume after reviewing the current commit.
+
 ## Auto-merge is enabled but the request is still open
 
 GitLab is still waiting for its merge requirements. Inspect the request in GitLab and review the pending operation in **Merge**. You can cancel auto-merge when the token permits it. Jira completion and worktree deletion wait until the control plane confirms a merged state.

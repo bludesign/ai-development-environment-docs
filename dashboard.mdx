@@ -214,3 +214,11 @@ The sidebar hides unapproved requests and requests with pipelines in progress by
     Open a blocked or waiting run to repair its session data or replay a step.
   </Card>
 </Columns>
+
+## Refresh pull requests
+
+On the full Action Center page, **Refresh Pull Requests** sits beside **Refresh**. It refreshes GitHub pull requests and GitLab merge requests directly from their providers, including CI checks and approval state. Ordinary **Refresh** reloads the queue. The native iOS Action Center provides the same actions.
+
+Select a request’s number to open it in GitHub or GitLab. **Rebase needed** or behind badges identify requests whose source branch needs updating. A request can remain in the compact sidebar when it needs a rebase and meets the existing pipeline, approval, age, and account rules; merging stays subject to provider readiness.
+
+When an already observed request changes from unapproved to approved, the control plane creates an approval notification. Its notification preference is enabled by default and can be disabled independently on [Notifications](/notifications).

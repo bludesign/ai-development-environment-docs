@@ -130,7 +130,7 @@ Separators are horizontal markers in the timeline. They are shared across all th
 | **Manual** | **+ Separator** in the page header, with an optional name                                                       |
 | **Build**  | Automatically when a build starts, named `Build · <configuration> · <destination>` and badged with the build ID |
 
-Because a build separator lands at the moment the build was created, everything above it is output from that build. Hovering a separator reveals a delete button.
+A build-run separator is added after the app successfully launches, once for each Run batch even when several devices launch it. Building, installing without launching, and failed launches do not create one. Historical creation markers remain labeled **Build created**. Hovering a separator reveals a delete button.
 
 ## Editing and clearing
 
@@ -273,3 +273,9 @@ The page subscribes to telemetry changes and reconciles in place. New records ap
     `telemetryTimeline`, `clearTelemetry`, and the rest of the telemetry graph.
   </Card>
 </Columns>
+
+## Build and session context
+
+Build and session IDs use a monospaced font. Their filters show the complete ID on the first line and its earliest retained event date and time on the second. Dates use the shared local date display. Selecting a build ID badge opens its build details.
+
+Build-run separators appear by default after a successful app launch, once per Run batch. Use **Show Build Run Separators** to hide or show them; manual separators and historical **Build created** markers remain available. Object keys containing spaces display their text without added bracket-and-quote notation; stored data and filtering paths retain their original meaning. The native telemetry views provide matching ID filters, links, and separator controls.

@@ -29,7 +29,7 @@ Every notification type can be routed to four independent channels. They are eva
 
 ## Notification types
 
-Types are grouped into five categories on the **Settings** tab. Every type defaults to **Sidebar**, **Browser**, and **Native** on, and **Web Push** off — except **Plan or session cancelled**, which defaults to Sidebar only.
+Types are grouped by category on the **Settings** tab. Every type defaults to **Sidebar**, **Browser**, and **Native** on, and **Web Push** off — except **Plan or session cancelled**, which defaults to Sidebar only.
 
 <AccordionGroup>
   <Accordion title="Builds" icon="hammer">
@@ -78,6 +78,14 @@ Types are grouped into five categories on the **Settings** tab. Every type defau
 <Tip>
   Individual workflows can opt out of their own success notifications without changing the global preference — see [Workflow editor](/workflows/workflow-edit).
 </Tip>
+
+## Worktree and approval notifications
+
+**Worktree created** is enabled by default. It fires after a managed worktree is created successfully; select the notification to open that worktree. The iOS inbox and native APNs alert also open its worktree details. Turn off this type in **Settings** or native **Preferences** to stop these alerts.
+
+If a deleted worktree’s Xcode build data could not be removed, **Worktree cleanup failed** links to the deletion job. The checkout can already be deleted when this warning appears.
+
+The GitHub pull request and GitLab merge request approval preferences are also enabled by default. An alert is created when a previously observed request changes from unapproved to approved. Initial discovery of an already-approved request does not create a new approval alert. Turn off the corresponding preference to stop it.
 
 ## History
 

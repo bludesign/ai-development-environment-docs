@@ -109,3 +109,9 @@ The page subscribes to telemetry changes and reconciles in place, so records fro
     Query the unified timeline with `telemetryTimeline(view: UNIFIED)`.
   </Card>
 </Columns>
+
+## Build and session context
+
+Build and session IDs use a monospaced font. Their filters show the complete ID on the first line and its earliest retained event date and time on the second. Dates use the shared local date display. Selecting a build ID badge opens its build details.
+
+Build-run separators appear by default after a successful app launch, once per Run batch. Use **Show Build Run Separators** to hide or show them; manual separators and historical **Build created** markers remain available. Object keys containing spaces display their text without added bracket-and-quote notation; stored data and filtering paths retain their original meaning. The native telemetry views provide matching ID filters, links, and separator controls.
