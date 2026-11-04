@@ -24,8 +24,8 @@ Start a build from a [worktree](/worktrees/worktrees) or the repository Build ca
 
 <Columns cols={3}>
   <Card title="Repository" icon="code-fork" href="/codebases/repository-detail">
-    The iOS App project, saved build configurations, and which build scripts are
-    allowed.
+    The iOS App project, default destination type, saved build configurations,
+    and which build scripts are allowed.
   </Card>
   <Card title="Worktree" icon="code-branch" href="/worktrees/worktrees">
     Where a build is started: pick a configuration and a destination.
@@ -88,6 +88,8 @@ If Xcode settings place output in a shared directory outside that cache, builds 
 Select **Custom** after the saved configuration cards to configure one build without saving a name or icon. On the web, Custom settings open inline below the configuration cards, so you can switch to a saved configuration at any time. Custom is selected automatically when the repository has an iOS App project but no saved configurations. Select an Xcode source, scheme, configuration, action, and build options using the same source inspection controls as the configuration editor, then choose **Use settings**.
 
 For a selected configuration, **Physical Device** and **Simulator** tabs, the device picker, and build scripts stay visible. Expand **Details** for the source summary, action, advanced settings, export settings, and command preview. Archive requires a generic physical-device destination. Test Without Building requires compatible prior test products, including matching Custom source settings.
+
+The web and native Start Build controls initially use **Default destination type** from the repository's [iOS App settings](/codebases/repository-detail). The default is **Simulator**; choose **Physical Device** there to prefer device builds across the repository's checkouts and worktrees. This applies to saved and Custom configurations. You can switch types for a build without changing the saved preference. If the preferred type has no available destination, an available type is selected instead. Archive always uses a physical-device destination.
 
 The **Configurations** tab lists reusable configurations with their repositories, icons, and settings. Open a card to inspect or edit it and review its paginated history.
 
@@ -334,6 +336,8 @@ an explicit Custom marker and the settings required by `rebuildBuild`.
 Use `buildConfigurations` and `buildConfiguration(id:)` for saved settings. Build history
 accepts `configurationId` and `repositoryId` filters. Repository `latestBuild` is the newest
 record across all worktrees and agents, including failed and running builds.
+
+`CodebaseProject.defaultDestinationType` stores the repository's initial destination preference. Use `updateIosAppProject(id:, defaultDestinationType:)` to set it to `SIMULATOR` or `PHYSICAL_DEVICE`; `HOST` is rejected. This preference initializes client selection. API callers still supply the destination for each build.
 
 Use `buildScripts` to list active scripts, `saveBuildScript(input:)` to create or update one, and `deleteBuildScript(id:)` to remove it. `setCodebaseBuildScripts(codebaseId:, scriptIds:)` replaces the shared repository's allowed list in the supplied order; it applies across that repository's checkouts. Subscribe to `buildScriptsChanged` to refresh after saves, deletions, or assignment changes. MCP exposes `get_build_scripts`, `save_build_script`, and `delete_build_script`.
 

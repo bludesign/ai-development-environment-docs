@@ -1214,6 +1214,17 @@ type Mutation {
   ): CodebaseProject!
 
   """
+  Updates the shared iOS app project build defaults. HOST is not a supported default destination.
+  """
+  updateIosAppProject(
+    """Identifier of the iOS app project."""
+    id: ID!
+
+    """Default destination type: SIMULATOR or PHYSICAL_DEVICE."""
+    defaultDestinationType: BuildDestinationType!
+  ): CodebaseProject!
+
+  """
   Saves a build configuration and returns the updated build configuration.
   """
   saveBuildConfiguration(
@@ -7160,6 +7171,11 @@ type CodebaseProject {
 
   """Category of this codebase project."""
   type: CodebaseProjectType!
+
+  """
+  Destination type initially selected for builds. Simulator or physical device; archive builds always use a physical device.
+  """
+  defaultDestinationType: BuildDestinationType!
 
   """The repository associated with this codebase project."""
   repository: CodebaseRepository!

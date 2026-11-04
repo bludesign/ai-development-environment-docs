@@ -64,6 +64,9 @@ The page has seven tabs.
       <Step title="Add the iOS App project" icon="mobile">
         **Add iOS App project** registers the repository as having an Xcode project. This alone enables Start Build, including **Custom** builds before any saved configuration exists.
       </Step>
+      <Step title="Choose the default destination type" icon="mobile">
+        Set **Default destination type** to **Physical Device** or **Simulator**. The default is **Simulator**. The web and native Start Build controls use this repository-wide preference when selecting a destination for a saved or Custom configuration. You can choose another type for an individual build. Archive always uses a physical-device destination; if the preferred type has no available destination, Start Build selects an available type instead.
+      </Step>
       <Step title="Create build configurations" icon="sliders">
         A configuration selects a repository-relative Xcode source and saves its scheme, configuration, action, and optional advanced settings. Configurations are repository-wide and available from every worktree. **Collect dSYMs** under advanced settings keeps a build's dSYMs for [crash symbolication](/debugging/dsyms#collect-dsyms-from-builds): automatically for archives, always, or never.
       </Step>
@@ -77,7 +80,7 @@ The page has seven tabs.
     </Note>
     A green **Valid** badge identifies successfully validated configuration settings. **Remove iOS App project** asks for confirmation, then removes the project, its configurations, sources, and observations together. Repository files, build history, artifacts, and script assignments remain. Any active build in this repository, including a Custom build, prevents removal until it finishes.
 
-    In the native app, open **Edit Repository → iOS App project** to manage the project and configurations using native controls.
+    In the native app, open **Edit Repository → iOS App project** to manage the project and configurations using native controls. Tap **Save** after changing **Default destination type**. The web selector saves the preference as soon as you choose it.
   </Tab>
   <Tab title="Auto Retry">
     Durable rules that automatically rerun GitHub Actions workflows or jobs.
@@ -143,6 +146,6 @@ The native app offers this flow from **Edit Repository**. See [Import and export
 ## iOS project management
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/repository-ios-project.png" alt="Repository iOS project with configuration validation and removal action" />
-  <img className="hidden dark:block" src="/images/dark/repository-ios-project.png" alt="Repository iOS project management in dark theme" />
+  <img className="block dark:hidden" src="/images/light/repository-ios-project.png" alt="Repository iOS project with default destination type, configuration validation, and removal action" />
+  <img className="hidden dark:block" src="/images/dark/repository-ios-project.png" alt="Repository iOS project default destination type and configuration management in dark theme" />
 </Frame>
