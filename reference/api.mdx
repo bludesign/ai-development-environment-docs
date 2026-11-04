@@ -75,6 +75,61 @@ For the current run, select the greatest `generation` whose `supersededAt` is `n
 
 OpenCode has no standalone native transcript path. Imported runs have no AIDE activity journal. These fields report stored filesystem locations, not log contents or download URLs; see [Session info](/ai/session-detail#session-info) for provider and retention details.
 
+### Claude agent sessions
+
+Read synchronized Claude child sessions independently of the parent run's activity feed. Both queries read control-plane storage, so previously synchronized history remains available while the owning agent is offline. They return children of non-superseded run attempts.
+
+```graphql
+query ClaudeAgents($runId: ID!) {
+  runSubagents(runId: $runId) {
+    id
+    attemptId
+    nativeId
+    parentNativeId
+    toolUseId
+    label
+    agentType
+    status
+    prompt
+    finalOutput
+    startedAt
+    finishedAt
+    transcriptStatus
+    transcriptError
+    messageCount
+    updatedAt
+  }
+}
+```
+
+`id` identifies the stored child session; use it as `subagentId` when loading messages. `nativeId` and `parentNativeId` describe provider agent relationships within an attempt. `status` is `RUNNING`, `COMPLETED`, `FAILED`, `CANCELLED`, or `UNKNOWN`. `transcriptStatus` is `AVAILABLE`, `PARTIAL`, or `UNAVAILABLE`; preserve known metadata and saved messages when collection is incomplete.
+
+```graphql
+query ClaudeAgentMessages($runId: ID!, $subagentId: ID!, $before: ID) {
+  runSubagentMessages(
+    runId: $runId
+    subagentId: $subagentId
+    before: $before
+    first: 200
+  ) {
+    events {
+      id
+      sequence
+      type
+      summary
+      detailMarkdown
+      raw
+      createdAt
+    }
+    nextCursor
+  }
+}
+```
+
+Omit `before` to read the newest page. Each page's `events` are chronological. Pass the returned `nextCursor` unchanged as `before` to load the next older page; `null` means there are no more messages. The cursor identifies a stored provider message, not an activity event. `first` counts provider messages, defaults to `200`, and is bounded to `1`–`500`. A message can yield several activity events for its content blocks.
+
+Subscribe to `agentRunChanged(runId:)` and refetch the agent list and open transcripts when the parent run changes. Deduplicate appended activity by event `id`. When combining pages, order events by `createdAt`, then `sequence`, then `id`. Fetching these child sessions does not depend on the parent `runEvents` search or pagination. See [Agent sessions](/ai/session-detail#agent-sessions) for the user-facing behavior and retention notes.
+
 ### Action Center and sidebar preferences
 
 Read `actionCenterSettings`, save with `saveActionCenterSettings(input:)`, and subscribe to `actionCenterSettingsChanged` for the saved values. Alongside the required request-age and queue-visibility fields, the save input accepts optional `confirmClearAllNotifications`, `showIntegrationCountsInSidebar`, and `showWorktreeCountsInSidebar` booleans. Each defaults to `true` for new settings; omitting one preserves its saved value.
