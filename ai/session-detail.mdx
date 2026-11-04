@@ -64,6 +64,8 @@ A temporary HTTP or WebSocket failure does not turn a completed provider run int
 
 Transcript events are journaled on the agent and uploaded incrementally from the last acknowledged position. After a restart, journal recovery preserves complete events and discards an incomplete final line before appending new output. Imported native history synchronizes in the background so it does not delay command recovery or the agent's notification connection.
 
+On updated agents, a managed Session and an iOS build cannot execute against the same source worktree at the same time. The Session holds this source protection through provider startup, execution, final checkpoints, and process cleanup. A completed, cancelled, or failed status does not by itself prove that interrupted provider processes have stopped. Recovery retains protection and retries cleanup until it can verify that they have exited; check the agent's cleanup error if a build continues waiting. This protection is separate from the Session lane's concurrency limit.
+
 ## Intervening
 
 <Steps>

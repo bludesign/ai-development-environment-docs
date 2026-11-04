@@ -113,14 +113,18 @@ Four intervals control how often this agent performs recurring work. Codebase sc
     Browse the agent's filesystem to pick a directory, or **Clear directory** to unset it. Browsing requires the agent to be online and recent enough to advertise the directory-browse capability.
   </Accordion>
   <Accordion title="Xcode Derived Data" icon="hammer">
-    Chooses where this agent stores Xcode's DerivedData, in one of three modes:
+    Chooses which legacy Xcode DerivedData locations this agent scans, in one of three modes:
 
-    - **Default Xcode location** — leave Xcode's own behavior alone.
+    - **Default Xcode location** — scan Xcode's standard DerivedData directory.
     - **Custom absolute directory** — one fixed path on this agent.
     - **Relative to every worktree** — a folder name checked beneath every active tracked worktree, giving each checkout its own DerivedData.
+
+    Updated agents also scan the managed worktree caches under the effective Builds directory. Managed builds use those caches through `-derivedDataPath`, independently of this legacy-location setting. See [Worktree Derived Data](/builds/builds#worktree-derived-data).
   </Accordion>
   <Accordion title="Builds directory" icon="box">
     Build logs, copied products, archives, and exports are written into one folder per build. The default is the base repository directory with `/Builds` appended. Override it with a custom absolute directory, or **Use base repository default** to go back.
+
+    Managed builds reuse a separate `.worktree-derived-data/<worktree-id>` cache beneath this directory. [Build Data](/system/build-data) includes these caches in its scan and cleanup controls.
 
     The page shows the **effective directory** so you can confirm what will actually be used.
   </Accordion>

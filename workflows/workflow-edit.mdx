@@ -282,6 +282,21 @@ The web editor checks the draft locally 200 ms after a workflow edit. **Checking
   </Step>
 </Steps>
 
+### Avoid parallel session-data writes
+
+`PARALLEL_WRITE_CONFLICT` means two steps can run in the same execution without an ordering connection and write overlapping session-data paths. For example, two **Load Jira ticket** steps on parallel branches both write `ticket.*`. Connect them in sequence when both must run; a join after the writers does not order those writes.
+
+The validator recognizes alternatives selected by an **If** step, a choice trigger, or separate triggers:
+
+| Paths to the writers | Result |
+| --- | --- |
+| Two branches from the same output | Overlapping writes conflict because both branches can run |
+| The `true` and `false` outputs of the same **If** | Overlapping writes are allowed because only one branch runs |
+| Different output keys of one choice trigger | Overlapping writes are allowed because the run selects one choice |
+| Paths from separate triggers | Overlapping writes are allowed because each run starts from one trigger |
+
+These alternatives remain distinct through nested decisions and joins. If another path lets both writers run together, the conflict still applies. The check includes each step's declared outputs and **Additional provided paths**, including parent and child paths such as `ticket.*` and `ticket.status`. Each step's own `steps.<stepId>.*` output stays separate from other steps' outputs.
+
 ### Find the affected connection or step
 
 Connection errors name both ends and the output branch, such as `Release menu (Ship release) → Notify team`, instead of asking you to identify an internal connection ID. Names fall back to the catalog label when you have not named a card. Missing endpoints include their stored IDs.
@@ -311,7 +326,7 @@ The diagnostic targeting fields available to GraphQL and MCP clients are documen
 | Cycle in the graph | The graph must be acyclic |
 | Unreachable step | A step no path reaches |
 | Join step required | Parallel branches must reconverge through an explicit join |
-| Parallel write conflict | Two branches write the same session path |
+| Parallel write conflict | Two unordered steps can run in the same execution and write overlapping session-data paths |
 | Unsatisfied requirement | A step's required session path is not provided upstream |
 | Invalid session binding / Unresolved reference | A binding points at a path that does not exist |
 | Secret in plain text | A credential was typed as a literal instead of referenced |

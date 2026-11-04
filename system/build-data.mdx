@@ -44,6 +44,8 @@ Per-agent scan progress is reported individually, so a single unreachable Mac do
 
 ## Derived Data
 
+Updated agents scan both the configured Xcode DerivedData locations and the managed caches at `<builds-directory>/.worktree-derived-data/<worktree-id>`. A managed cache belongs to one worktree and is reused across that worktree's builds. It is separate from each build's immutable artifact folder. See [Worktree Derived Data](/builds/builds#worktree-derived-data).
+
 | Column | What it shows |
 | --- | --- |
 | **Folder** | The DerivedData folder name, plus a status badge when it is not a plain linked project |
@@ -68,9 +70,7 @@ Per-agent scan progress is reported individually, so a single unreachable Mac do
 
 The same protection covers entries with executing work — a build or run currently using that worktree — even when they are not locked.
 
-<Warning>
-  Overriding the protection prompt deletes DerivedData out from under a running build. The build fails rather than corrupting anything, but it fails.
-</Warning>
+On agents advertising `operation.resources.v1`, a delete job also reserves the target paths. Confirming protected deletion does not bypass a conflicting active build's path reservation; deletion waits until that build releases it. Older agents do not provide this path coordination.
 
 ## iOS Device Support
 
@@ -102,7 +102,7 @@ The **Deletion history** card lists what was removed from each agent over the la
 
 ## Notes
 
-- Which directories are scanned depends on each agent's DerivedData location setting, so an agent using a non-default location is scanned there.
+- The agent's DerivedData location setting selects its legacy scan roots. Updated agents also scan the managed cache root beneath the effective Builds directory.
 - Deletion requires the target agent to be online at the moment the job is created — an offline agent's entries cannot be removed until it reconnects.
 - Sizes are a point-in-time measurement. Rescan before acting on numbers from an earlier session.
 - Removing DerivedData never affects source code, worktrees, or Git state. The cost is a slower next build.

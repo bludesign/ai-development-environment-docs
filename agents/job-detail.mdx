@@ -37,11 +37,21 @@ The pane follows output automatically while you are scrolled to the bottom. Scro
 
 **Cancel** is offered while the job is **Queued** or **Running**. It moves the job to **Cancelling**; the agent stops the work and reports the final **Cancelled** state.
 
+On agents advertising `operation.resources.v1`, conflicting work keeps waiting until subprocess cleanup is verified and the control plane accepts completion. A cancellation, timeout, disconnection, or terminal status alone does not release an outstanding execution claim.
+
+## Waiting for resources
+
+Jobs can remain **Queued** while another operation holds a worktree, output path, build cache, or destination they need. Independent work proceeds without waiting for that resource. Older agents use the wider codebase scheduling rules. See [build concurrency](/builds/builds#concurrency) for build-script scopes and source protection.
+
+For GraphQL clients, `AgentJob.operationResources` describes the resources the job needs and `AgentJob.blockedReason` explains a queued conflict when one is known. `Worktree.activeJobs` lists associated jobs, while `Worktree.blockingJob` identifies a job blocking changes. The web worktree action row links to the corresponding job details.
+
 ## Durability
 
 <AccordionGroup>
   <Accordion title="How a job survives a restart" icon="arrows-rotate">
-    Job records live in the control plane's database, not in agent memory. On its job reconciliation interval, the agent asks the control plane for anything queued, running, or cancelled and picks up where it left off — so a dropped WebSocket, an agent restart, or a missed event does not lose the work.
+    Job records live in the control plane's database. On its job reconciliation interval, the agent discovers queued work and reconciles interrupted executions after a dropped WebSocket, restart, or missed event. Start a new request when recovery reports an interrupted job as failed.
+
+    Updated agents journal launched processes and verify that interrupted processes have stopped before releasing their execution claims. If cleanup cannot be verified, protection remains held and recovery retries. Inspect the agent's cleanup error and stop the original processes as directed before retrying the operation.
 
     Tune that interval under **Agent cadence** on the [agent detail page](/agents/agent-detail).
   </Accordion>

@@ -41,6 +41,7 @@ Your first save changes the page to the saved workflow's editor while keeping an
 - At least one step, with every step reachable from a trigger.
 - An acyclic graph with no unreachable steps.
 - Parallel branches reconverged through an explicit join.
+- No [overlapping session-data writes](/workflows/workflow-edit#avoid-parallel-session-data-writes) from steps that can run together without an ordering connection.
 - Every step's required session paths provided by something upstream.
 - No secrets typed as literals.
 

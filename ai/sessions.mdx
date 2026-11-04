@@ -25,6 +25,8 @@ An active managed Session no longer causes a second otherwise eligible Session t
 
 Starting a resumed follow-up from a **paused** Session cancels the parent and atomically transfers its admission slot to the child. This keeps newer queued Sessions from starting between the two.
 
+The lane limit is separate from [build source protection](/builds/builds#concurrency). On updated agents, a managed Session and a build cannot execute against the same worktree concurrently, even when the Session lane has capacity. Source protection remains until provider process cleanup is verified.
+
 ## The run list
 
 Rows are grouped by creation day, with queued and active runs pulled into a leading **Active** group.

@@ -42,7 +42,9 @@ Open **Merge** to fetch current readiness and project policy. The dialog offers:
 | Move Jira ticket to Done | Available when the linked ticket and its configured Done status support it. |
 | Delete linked worktree | Available for a matching non-primary worktree; cleanup checks the branch, commit, repository, and clean working tree. |
 
-**Merge now** submits an immediate merge. **Enable auto-merge** asks GitLab to merge when its requirements are met. The dialog explains why an action is unavailable. If auto-merge is already enabled, **Cancel auto-merge** cancels the pending request when your token permits it.
+**Merge now** submits an immediate merge when GitLab's requirements and local operation checks permit it. With a linked worktree, **Enable auto-merge** saves an operation managed by the control plane, which waits for merge requirements and conflicting local operations before submitting the merge. Without a linked worktree, GitLab manages auto-merge. The dialog explains why an action is unavailable. If auto-merge is already enabled, **Cancel auto-merge** cancels the pending request when your token permits it.
+
+Linked-worktree auto-merge stays managed even with **Auto sync branch** off. Before a build starts, the control plane takes over native auto-merge associated with a saved active operation. If native auto-merge was enabled outside that operation, disable it at the provider before building.
 
 ### Rebase before auto-merge
 
@@ -78,7 +80,7 @@ The control plane saves the merge operation and observes GitLab until it confirm
 
 If a follow-up fails, the merged request remains merged. Open **Merge follow-ups**, read the error, resolve the issue, and choose **Retry follow-ups**. Completed steps are recorded so retries continue the remaining work. Worktree cleanup does not run for an unconfirmed merge or a worktree that no longer matches the merged source.
 
-If GitLab disables auto-merge, review the current options and explicitly enable it again. The control plane does not re-enable it automatically.
+For requests using native GitLab auto-merge, review the current options and explicitly enable it again if GitLab disables it. The control plane does not re-enable native auto-merge automatically.
 
 Pending operations survive a control-plane restart. Changing the configured GitLab instance, replacing the source commit, or losing a required capability can move an operation to **Action required**.
 

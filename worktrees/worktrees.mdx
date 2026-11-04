@@ -164,6 +164,10 @@ MCP exposes `get_worktree_ticket_branch_context` and `generate_worktree_ticket_b
 
 Worktree action errors appear beside the worktree that failed. An error on one card does not appear on another card, and a successful retry clears that worktree's operation error.
 
+On updated agents advertising `operation.resources.v1`, operations reserve the worktrees, paths, and other resources they need. Independent worktrees in the same codebase can work concurrently. Conflicting requests queue and resume when their resources become available; codebase-wide and agent-wide reservations still affect every worktree in that scope. Older agents keep codebase-wide serialization.
+
+Web worktree action rows link each queued or executing job to its [job details](/agents/job-detail), with its status. A read-only inspection can appear alongside a build without disabling Git actions on unrelated worktrees. The GraphQL `activeJobs` field exposes these jobs; `blockingJob` identifies an executing job that conflicts with mutations on this worktree.
+
 <AccordionGroup>
   <Accordion title="Git operations" icon="code-branch">
     | Action | Effect |
@@ -197,7 +201,7 @@ Worktree action errors appear beside the worktree that failed. An error on one c
 
     When Git cannot switch because of local changes, the action offers **Stash and retry**: it stashes tracked and untracked changes, retries, and leaves the stash for you to restore by hand. The one-step default-branch item has no retry of its own — it reports the error, and **Change branch** is where you stash and retry.
 
-    Git and worktree actions wait while a command or workflow terminal step configured to block Git is running on the same codebase. Commands that leave Git blocking off can run alongside these actions.
+    Git and worktree actions wait for conflicting operations on their target. A worktree-targeted command or workflow terminal step configured to block Git protects that checkout; commands that leave Git blocking off can run alongside these actions. Codebase-wide or agent-wide protection also blocks affected worktrees.
   </Accordion>
   <Accordion title="Starting a run" icon="play">
     **New session** and **New plan** open the [new run page](/ai/run-new) with this worktree already selected, and its Jira ticket filled in when it has one.
@@ -256,7 +260,7 @@ Worktree action errors appear beside the worktree that failed. An error on one c
   A partial commit rebuilds the index from your selection. Anything you had staged but did not tick is left uncommitted and unstaged rather than being carried along.
 </Warning>
 
-The action is unavailable when the worktree has no staged or unstaged changes, has another operation running, is paused mid-rebase, or lives on an agent too old to support it. A commit that ends up with nothing staged fails with **No staged changes to commit** rather than creating an empty commit.
+The action is unavailable when the worktree has no staged or unstaged changes, has a conflicting operation running, is paused mid-rebase, or lives on an agent too old to support it. A commit that ends up with nothing staged fails with **No staged changes to commit** rather than creating an empty commit.
 
 <Tip>
   The same operation is available to automation: the **Commit worktree changes** workflow step and the `commit_worktree` MCP tool take the same message, signing, stage-all, and path options. Omitting the signing option there follows the worktree's Git configuration.
@@ -268,15 +272,17 @@ The action is unavailable when the worktree has no staged or unstaged changes, h
 
 It can also handle conflicts for you — enable **Run a quick-action workflow to resolve merge conflicts automatically** and select a merge-conflict workflow, optionally with a specific trigger choice. Auto Sync can be paused, resumed, and cancelled.
 
-Worktree cards show a green **Auto Syncing** indicator while Auto Sync is active. Multiple worktrees can keep Auto Sync enabled for the same codebase. When another Git operation holds that codebase, Auto Sync waits and retries automatically after the operation completes. A completed sync cycle leaves room for other work before checking again.
+Worktree cards show a green **Auto Syncing** indicator while Auto Sync is active. Multiple worktrees can keep Auto Sync enabled for the same codebase. When another operation holds a resource needed by the sync, Auto Sync waits and retries automatically after the operation completes. A completed sync cycle leaves room for other work before checking again.
 
-An active iOS build also defers Auto Sync for every worktree in the same codebase, including while the build is queued or preparing. Auto Sync stays enabled and retries after the build finishes; it does not start a sync job that would wait behind the build. With an updated agent, read-only worktree status and diff inspections remain available during the build.
+On agents advertising `operation.resources.v1`, a build blocks Auto Sync on its source worktree, while independent worktrees can continue. A build script can widen that protection to the codebase or agent. Older agents defer Auto Sync across the codebase while a build is queued or executing. Read-only worktree status and diff inspections remain available during a build on updated agents.
 
 Auto Sync never forces through a preparation conflict automatically. It pauses with a preparation reason and shows the affected paths. **Force Sync** runs the existing conflict workflow when needed, reapplies repository preparations, and resumes Auto Sync after success.
 
 ## Auto Merge
 
-**Auto Merge** merges a GitHub pull request or GitLab merge request after its checks, reviews, and branch rules are satisfied. Leave **Auto sync branch** off to use the provider's existing native auto-merge behavior. Select it when you want the control plane to rebase and push the linked branch before merging, including when a rebase requirement blocks native auto-merge.
+**Auto Merge** merges a GitHub pull request or GitLab merge request after its checks, reviews, and branch rules are satisfied. For requests linked to local worktrees, the control plane coordinates the merge with protected local work even when **Auto sync branch** is off. Select **Auto sync branch** when you also want it to rebase and push the linked branch before merging, including when a rebase requirement blocks native auto-merge.
+
+Merge submission waits for conflicting source work across managed checkouts of the same repository and branch. The control plane retains its reservation until it confirms the provider's outcome, including after an interrupted response. Before a linked worktree starts a build, it migrates provider-native Auto Merge associated with a saved active AI Development Environment operation into managed coordination. Native Auto Merge enabled outside those saved operations blocks the build; disable it at the provider before retrying.
 
 Enabled Auto Merge appears as green **Auto Merging** on web and iOS worktree cards, including native auto-merge enabled at the provider. The indicator stays visible when the request becomes ready to merge. Paused operations show their action-required state instead. Open the automation controls to review or cancel the operation.
 
@@ -308,7 +314,7 @@ The control plane saves the operation before starting Git work. The agent verifi
 
 After syncing, the control plane waits for successful CI associated with the resulting source revision and for the provider's merge requirements. An older green pipeline, missing CI, pending or failed checks, cancellation, or skipped-only CI cannot authorize the merge. If the target advances while waiting, the control plane syncs again and checks CI for the resulting revision. Native auto-merge stays disabled during this managed flow.
 
-Git work waits when another operation holds the codebase and resumes automatically when it can proceed. The same applies to worktree cleanup after merging. Temporary codebase contention does not require **Resume Auto Merge**. Existing operations paused solely by that contention error recover automatically after the control plane revalidates their saved identities.
+Git work waits when another operation holds a conflicting resource and resumes automatically when it can proceed. The same applies to merge submission and worktree cleanup after merging. Temporary resource contention does not require **Resume Auto Merge**. Existing operations paused solely by the earlier codebase-contention error recover automatically after the control plane revalidates their saved identities.
 
 | Progress | Meaning |
 | --- | --- |
@@ -393,7 +399,7 @@ Select **Bulk Sync** beside **Fetch now** on Worktrees or an app's Worktrees tab
 
 Eligible worktrees start checked. Uncheck any checkout to exclude it. Each row shows its branch, repository, agent, base branch, and commits behind; blocked checkouts remain visible with their reason and cannot be selected. Choose **Sync selected** to start the batch. Sync uses the existing worktree sync behavior and does not enable Auto Sync.
 
-The control plane continues the batch after you close the sheet or navigate away. Worktrees in the same codebase run serially, while separate codebases can progress independently. Reopen the active batch from Worktrees to see pending, running, succeeded, failed, skipped, and attention-required outcomes. One failure does not stop other codebases. Pending checkouts whose agent goes offline are skipped with a reason. If an agent disconnects after a job is submitted, that job remains active until the agent reports its terminal recovery result; the codebase stays reserved. Address conflicts and preparation issues through the worktree's existing recovery actions.
+The control plane continues the batch after you close the sheet or navigate away. Sync requests for the same worktree run serially; independent worktrees can progress concurrently on updated agents, subject to resource conflicts. Older agents retain codebase-wide serialization. Reopen the active batch from Worktrees to see pending, running, succeeded, failed, skipped, and attention-required outcomes. One failure does not stop independent worktrees. Pending checkouts whose agent goes offline are skipped with a reason. If an agent disconnects after a job is submitted, that job remains active until the agent reports its terminal recovery result; its protected resources stay reserved until cleanup is verified. Address conflicts and preparation issues through the worktree's existing recovery actions.
 
 <Frame>
   <img className="block dark:hidden" src="/images/light/worktree-bulk-sync-all-results.png" alt="Bulk Sync progress and outcomes in light theme" />

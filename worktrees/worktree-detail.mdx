@@ -53,6 +53,8 @@ Plans and Sessions use separate FIFO lanes. Plans allow unlimited concurrency by
 
 Queue records are durable. The control plane reconciles them after a restart or a missed completion event and promotes eligible work when capacity returns.
 
+Agent jobs have separate resource scheduling. On updated agents, [builds](/builds/builds#concurrency) and other operations wait for conflicting resources while independent worktrees can continue. The web action row links queued and executing jobs to their details; those jobs are not entries in this run queue card.
+
 <Note>
   The card shows queued entries only. Active and excluded runs are not included, and the two AI run lanes may advance independently before an exclusive workflow reaches the front.
 </Note>

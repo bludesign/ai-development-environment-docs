@@ -43,7 +43,7 @@ An LCOV or Istanbul [coverage import](/builds/build-coverage#importing-coverage-
 
 | Status    | Meaning                                     |
 | --------- | ------------------------------------------- |
-| Queued    | Accepted, waiting for the agent             |
+| Queued    | Accepted, waiting for the agent or a conflicting operation |
 | Preparing | Setting up the build folder and environment |
 | Running   | `xcodebuild` is executing                   |
 | Succeeded | Completed with no failure                   |
@@ -62,11 +62,21 @@ The build dialog offers **Any iOS Simulator** or **Any Physical iOS Device** imm
 
 The web destination picker keeps unavailable physical devices visible with their state and disables their selection. **Available (paired)** means the device is paired and has a detected wired or local-network transport, even if its tunnel is idle. **Connected** devices are also selectable. The server checks availability again before accepting a build for a specific device.
 
-### Repository access during a build
+## Concurrency
 
-On an updated agent, an iOS build holds off Git mutations and background repository reconciliation in its codebase until it finishes. Read-only worktree inspections, Git-state reads, and diffs can still run during the build, even when a mutation is waiting. Queued operations resume in order after the build settles.
+On an agent advertising `operation.resources.v1`, a build protects its source worktree, Derived Data, output paths, and any specific test destination it uses. Git mutations, another build, and managed Sessions on that source wait until the build finishes. Read-only worktree inspections, Git-state reads, and diffs can still run, even when a mutation is waiting. Unrelated worktrees can build or run Git operations concurrently when they do not share protected resources.
 
-[Auto Sync](/worktrees/worktrees#auto-sync) stays enabled but defers new sync work while an iOS build is active in that codebase, including queued and preparing builds. It retries automatically after the build finishes. These rules apply to builds started from either the web or native iOS app.
+[Auto Sync](/worktrees/worktrees#auto-sync) stays enabled and waits for conflicting source work to finish. Build scripts can widen protection to the codebase or agent with **Protect resources**. Older agents retain codebase-wide serialization. These scheduling rules apply to builds started from either the web or native iOS app.
+
+A queued build's [details page](/builds/build-detail) shows why a resource is unavailable. If its source branch or HEAD changed while it waited, the build fails validation; refresh the worktree and start a new build.
+
+### Worktree Derived Data
+
+Managed builds pass `-derivedDataPath` to Xcode and reuse `<builds-directory>/.worktree-derived-data/<worktree-id>` for that worktree. Different worktrees use separate caches, while each build retains its own artifact folder. The [Build Data](/system/build-data) page scans these managed caches alongside the agent's configured Xcode locations.
+
+Deleting an individual build removes its artifact folder and leaves the reusable worktree cache. Use Build Data to remove the cache when you need to reclaim it.
+
+If Xcode settings place output in a shared directory outside that cache, builds also coordinate access to the discovered output paths. Choose a wider script protection scope when a hook writes shared files that the build cannot infer.
 
 <Warning>
   Deleting a build permanently removes the build record *and* its build folder —
@@ -134,9 +144,12 @@ Open **Builds → Build Scripts** to create or edit reusable JavaScript hooks. O
 | **Post-build JavaScript** | Code to run after `xcodebuild` or during failure and cancellation cleanup; receives additional outcome fields |
 | **Timeout in seconds** | A separate timeout for each hook, from 1 to 3600 seconds; defaults to 300 seconds |
 | **Failure behavior** | **Fail the build** (`FAIL_BUILD`) or **Continue with a warning** (`CONTINUE`) |
+| **Protect resources** | Web editor: **This worktree** (`WORKTREE`, default), **All worktrees in this codebase** (`CODEBASE`), or **All worktrees on this agent** (`AGENT`) |
 | **Preselect this script for builds** | Initially selects it in Start Build; the native editor calls this **Enabled by default** |
 
 Provide at least one non-empty pre-build or post-build script. Select the allowed scripts you want to run in **Start Build**. The preselection setting initializes the dialog; it does not make a script mandatory or select it for API callers.
+
+Select **All worktrees in this codebase** when a hook changes files shared by linked worktrees. Select **All worktrees on this agent** when it changes shared files across repositories on that machine. The selected scopes protect the whole build, including its pre-build and post-build hooks; they are scheduling declarations and do not restrict what trusted script code can access.
 
 <Warning>
   Build scripts are trusted Node.js ESM code. They run from the selected
@@ -285,7 +298,7 @@ Cancelling the build stops the active pre-build hook or `xcodebuild`. Post-build
 
 ### Edit, delete, and rebuild
 
-When you queue a build, the control plane captures each selected script's source, name, order, timeout, and failure behavior. Editing or deleting the library script, or changing its repository assignments, does not change hooks already captured for that build.
+When you queue a build, the control plane captures each selected script's source, name, order, timeout, failure behavior, and resource protection scope. Editing or deleting the library script, or changing its repository assignments, does not change hooks already captured for that build.
 
 **Rebuild** selects the original script IDs but reads their current library definitions, limits, and repository order. It does not replay the old source text. If a selected script has been deleted or is no longer allowed for the repository, rebuilding fails validation. Start a new build with an allowed selection instead.
 
@@ -324,7 +337,7 @@ record across all worktrees and agents, including failed and running builds.
 
 Use `buildScripts` to list active scripts, `saveBuildScript(input:)` to create or update one, and `deleteBuildScript(id:)` to remove it. `setCodebaseBuildScripts(codebaseId:, scriptIds:)` replaces the shared repository's allowed list in the supplied order; it applies across that repository's checkouts. Subscribe to `buildScriptsChanged` to refresh after saves, deletions, or assignment changes. MCP exposes `get_build_scripts`, `save_build_script`, and `delete_build_script`.
 
-Script saves accept nullable `iconKey` and optional `repositoryIds`. Omit a field to preserve its value; `iconKey: null` clears the icon, and an empty repository array clears this script's assignments. Saving the script and its assignments is transactional.
+Script saves accept nullable `iconKey`, optional `repositoryIds`, and optional `lockScope` (`WORKTREE`, `CODEBASE`, or `AGENT`). Omit these fields to preserve their values; `iconKey: null` clears the icon, and an empty repository array clears this script's assignments. New scripts default to `WORKTREE`. Saving the script and its assignments is transactional.
 
 Pass `scriptIds` explicitly to `startBuild`, `startWorktreeCoverage`, or their MCP equivalents. Omitting the field or supplying an empty list runs no scripts, including those marked `enabledByDefault`. The control plane validates that every requested script is active and allowed for the worktree's repository, ignores duplicate IDs, and uses the repository's saved execution order.
 

@@ -175,6 +175,22 @@ See [Import and export](/apps/import-export) for selection behavior, paused auto
 
 `symbolicateCrashReport` starts a fresh symbolication, `updateDsymUpload` changes an upload's project, build ID, and link, and `updateCrashSettings` changes collection, the symbolication agent, and retention. Uploading files happens over REST — see [Crashes](/debugging/crashes) and [dSYMs](/debugging/dsyms). Subscribe to `crashReportsChanged` and `dsymsChanged` for live updates.
 
+## Operation resources
+
+Worktree admission limits and execution locks are separate. Admission decides which Plans, Sessions, and workflows can start together; execution locks protect the resources used by each operation. Independent worktrees can execute concurrently. A build normally protects its source worktree while allowing read-only inspection.
+
+| Field | Use |
+| --- | --- |
+| `Worktree.activeJobs` | List queued and executing jobs associated with a worktree. |
+| `Worktree.blockingJob` | Identify an executing job that conflicts with worktree mutations. |
+| `AgentJob.operationResources` | Read the versioned resource descriptor used for scheduling. |
+| `AgentJob.blockedReason`, `Build.blockedReason` | Explain why queued work is waiting for a conflicting resource. |
+| `BuildScript.lockScope` | Protect the selected `WORKTREE` (default), its `CODEBASE`, or the `AGENT`. |
+
+Set `SaveBuildScriptInput.lockScope` to change a script's scope; omit it to preserve the saved value. See [build concurrency](/builds/builds#concurrency) for choosing a scope.
+
+Resource-aware agents advertise `operation.resources.v1` and supply a stable `executionToken` to `claimAgentJob` or `claimRunCommand`. Reuse the token when retrying that execution, and return it with `completeAgentJob` or `completeRunCommand`. The corresponding `AgentJob.executionToken` and `RunCommand.executionToken` identify live executions until physical process cleanup is acknowledged. A cancelled or failed status alone does not prove that a conflicting operation can start. See [Jobs](/agents/job-detail) for recovery behavior.
+
 ## Worktree admission queues
 
 `worktreeRunQueue` returns the effective queued order for one worktree or the queued entries associated with one workflow. A worktree query combines workflow runs, Plans, and Sessions:
