@@ -712,6 +712,15 @@ type AgentJob {
   """Structured payload associated with this agent job."""
   payload: JSON!
 
+  """Versioned execution resources used for worktree-scoped scheduling."""
+  operationResources: JSON
+
+  """The resource currently keeping this queued job from executing."""
+  blockedReason: String
+
+  """Ownership token returned to the executing agent."""
+  executionToken: String
+
   """Current status of this agent job."""
   status: AgentJobStatus!
 
@@ -965,6 +974,9 @@ type Mutation {
   claimAgentJob(
     """Identifier of the job."""
     jobId: ID!
+
+    """Stable ownership token for this agent execution."""
+    executionToken: String
   ): AgentJob!
 
   """
@@ -997,6 +1009,9 @@ type Mutation {
 
     """The error used to filter or perform the operation."""
     error: String
+
+    """Ownership token for the executing agent session."""
+    executionToken: String
   ): AgentJob!
 
   """Cancels an agent job and returns an agent job."""
@@ -2854,6 +2869,11 @@ type Mutation {
   claimRunCommand(
     """Identifier of the resource to return or affect."""
     id: ID!
+
+    """
+    Unique identity of this provider execution; retries reuse the same token.
+    """
+    executionToken: String
   ): RunCommand!
 
   """Completes a run command and returns a run command."""
@@ -2866,6 +2886,9 @@ type Mutation {
 
     """The error used to filter or perform the operation."""
     error: String
+
+    """Execution token returned when this provider command was claimed."""
+    executionToken: String
   ): RunCommand!
 
   """Begins a run attempt and returns a run attempt."""
@@ -6950,6 +6973,18 @@ enum BuildScriptFailureBehavior {
   CONTINUE
 }
 
+"""Resources protected for builds that run this script."""
+enum BuildScriptLockScope {
+  """Protect only the selected worktree."""
+  WORKTREE
+
+  """Protect all worktrees in the selected codebase."""
+  CODEBASE
+
+  """Protect all worktrees on the selected agent."""
+  AGENT
+}
+
 """Represents a build source observation in the GraphQL API."""
 type BuildSourceObservation {
   """Stable identifier for this build source observation."""
@@ -7066,6 +7101,9 @@ type BuildConfiguration {
 
 """Represents a build script in the GraphQL API."""
 type BuildScript {
+  """Resources protected for builds using this script."""
+  lockScope: BuildScriptLockScope!
+
   """Optional icon from the build configuration icon library."""
   iconKey: String
 
@@ -7665,6 +7703,9 @@ type BuildExport {
 
 """Represents a build in the GraphQL API."""
 type Build {
+  """Why a queued build is waiting for a conflicting resource."""
+  blockedReason: String
+
   """Stable identifier for this build."""
   id: ID!
 
@@ -7898,6 +7939,11 @@ input SaveBuildConfigurationInput {
 
 """Values used to save a build script."""
 input SaveBuildScriptInput {
+  """
+  Resources protected for builds using this script. Omit to preserve the current scope.
+  """
+  lockScope: BuildScriptLockScope
+
   """Optional icon. Omit to preserve the current icon; null clears it."""
   iconKey: String
 
@@ -12025,6 +12071,9 @@ type AgentDiskSpaceWorktree {
 
 """Configuration for agent disk space."""
 type AgentDiskSpaceConfiguration {
+  """Managed worktree Derived Data cache root."""
+  managedDerivedDataRoot: String
+
   """Whether this agent disk space configuration is enabled."""
   enabled: Boolean!
 
@@ -20066,6 +20115,11 @@ type RunCommand {
   """Stable identifier for this run command."""
   id: ID!
 
+  """
+  Token of the live provider execution, retained until its process cleanup is verified.
+  """
+  executionToken: String
+
   """Identifier of the related run."""
   runId: ID!
 
@@ -24161,7 +24215,12 @@ type WorkflowDiagnostic {
   triggerId: ID
 
   """
-  Filesystem path associated with this workflow diagnostic. May be null when unavailable or not applicable.
+  Identifier of the related connection. May be null when unavailable or not applicable.
+  """
+  edgeId: ID
+
+  """
+  Definition field or session-data path associated with this diagnostic. May be null when unavailable or not applicable.
   """
   path: String
 }
@@ -25531,6 +25590,12 @@ type Worktree {
   """
   activeJob: AgentJob
 
+  """An executing operation that conflicts with mutations on this worktree."""
+  blockingJob: AgentJob
+
+  """Concurrent queued or executing jobs associated with this worktree."""
+  activeJobs: [AgentJob!]!
+
   """
   The auto sync associated with this worktree. May be null when unavailable or not applicable.
   """
@@ -26268,6 +26333,11 @@ input WorktreeInventoryInput {
 
 """Input values for codebase worktree report."""
 input CodebaseWorktreeReportInput {
+  """
+  When this inventory snapshot began; prevents stale complete reports replacing newer state.
+  """
+  observedAt: String
+
   """Identifier of the codebase to use."""
   codebaseId: ID!
 

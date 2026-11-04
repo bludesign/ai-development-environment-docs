@@ -17,7 +17,7 @@ The new workflow page at `/dashboard/workflows/new` opens the [workflow editor](
     Open **Workflow settings** and give the workflow a name and description. Both show up wherever the workflow is listed or offered as a button. Its **Running** section also controls overlap, the [scope](/workflows/workflow-edit#overlap-scope) that overlap is measured in, worktree admission, and whether command-like steps block Git operations.
   </Step>
   <Step title="Add a trigger" icon="play">
-    Drag exactly one trigger onto the canvas. Start with **Manual** if you just want to run it by hand, or a **Resource** trigger if it should be launched from a worktree, pull request, or ticket page.
+    Keep the default **Manual** trigger if you want to run the workflow by hand, or add a **Resource** trigger to launch it from a worktree, pull request, or ticket page. A workflow can have several triggers, each connected to an entry path.
   </Step>
   <Step title="Add steps" icon="code-fork">
     Drag steps from the palette and connect each one's handles. Most steps offer `success` and `failure`; control-flow steps name their own branches.
@@ -26,17 +26,19 @@ The new workflow page at `/dashboard/workflows/new` opens the [workflow editor](
     Fill in the typed configuration form. Bind values to session data where a step should read something an earlier step produced, rather than hard-coding it.
   </Step>
   <Step title="Validate" icon="circle-check">
-    **Validate** checks the whole graph and reports diagnostics against the specific nodes and edges at fault.
+    The web editor checks edits locally after 200 ms. Click **Validate** to save the current canvas and run the server checks. Click a diagnostic to reveal its affected step, trigger, or connection; see [Finding workflow errors](/workflows/workflow-edit#find-the-affected-connection-or-step).
   </Step>
   <Step title="Save, then publish" icon="upload">
     **Save draft** keeps your work. **Publish** creates the first immutable version — until then the workflow has nothing to run.
   </Step>
 </Steps>
 
+Your first save changes the page to the saved workflow's editor while keeping any newer edits you made during the request. Changes made during validation need a new check before publishing.
+
 ## What a valid workflow needs
 
-- Exactly one trigger, with no incoming connection.
-- At least one step reachable from that trigger.
+- At least one trigger, with no incoming connection; each trigger must connect to a step.
+- At least one step, with every step reachable from a trigger.
 - An acyclic graph with no unreachable steps.
 - Parallel branches reconverged through an explicit join.
 - Every step's required session paths provided by something upstream.

@@ -10,6 +10,8 @@ description: "Drag steps onto the canvas, connect typed handles, then validate a
 
 The workflow editor at `/dashboard/workflows/{id}/edit` is a visual canvas for building durable automations. You place one or more triggers and a set of typed steps, connect their handles, configure each one, validate the graph, and publish an immutable version.
 
+For native iOS navigation from a diagnostic to a step or connection row, see [Draft diagnostics in iOS](/workflows/workflow-detail#draft-diagnostics-in-ios).
+
 ## Anatomy of a workflow
 
 <Columns cols={2}>
@@ -266,17 +268,38 @@ These limits control AI runs on one worktree. They are independent of **Maximum 
 
 ## Validate, save, publish
 
+The web editor checks the draft locally 200 ms after a workflow edit. **Checking workflow…** means the check is pending. **No local issues. Validate to run server checks.** means the graph passes local checks; server checks such as RE2 pattern compilation and pinned subworkflow validation still need **Validate** or **Publish**. Moving cards or changing the canvas layout does not invalidate a check.
+
 <Steps>
   <Step title="Validate" icon="circle-check">
-    Runs the full checker and lists **Validation diagnostics** against the offending nodes and edges.
+    Checks the current canvas, saves it, then runs the server checks. Errors appear in **Validation diagnostics** against the affected steps, triggers, and connections. A schema error that prevents saving is reported locally first.
   </Step>
   <Step title="Save draft" icon="floppy-disk">
     Persists your work in progress. The draft has no effect on running behavior.
   </Step>
   <Step title="Publish" icon="upload">
-    Creates a new immutable version and makes it the one that runs. Save before publishing — the editor will tell you if you have not.
+    Saves and validates the current canvas before creating an immutable version. Blocking errors leave you in the editor with their diagnostics. A new workflow needs its first save before you can publish it.
   </Step>
 </Steps>
+
+### Find the affected connection or step
+
+Connection errors name both ends and the output branch, such as `Release menu (Ship release) → Notify team`, instead of asking you to identify an internal connection ID. Names fall back to the catalog label when you have not named a card. Missing endpoints include their stored IDs.
+
+- Click the issue count to reveal **Validation diagnostics**.
+- Click a diagnostic to bring the affected cards or connection into view. This exits **Basic preview**, unlocks the view, and selects the target. Step and trigger errors open their inspector after the canvas moves.
+- Error connections and cards are highlighted in red; warnings use amber. A selected connection shows its endpoint summary, related messages, and **Delete connection**.
+- A connection with missing endpoints can still be selected and deleted through its diagnostic, even when the canvas cannot draw it. Workflow-wide errors, such as a missing trigger, have no canvas target.
+
+If you remove or rename a choice trigger's output key in the web editor, its existing connection stays visible on a red **Removed option** output. You cannot create another connection from that output. Restore the original key, or delete the connection and reconnect it to a current choice. Editing a choice label while keeping its key preserves its connection.
+
+### Keep edits made during a request
+
+Saving a draft preserves edits you make while the request is in progress. If you change the workflow during validation, the editor ignores that result and asks you to validate or publish the current draft again. Presentation changes such as moving a card do not invalidate the result.
+
+If you edit after publication has already been sent, the validated snapshot can still be published. The editor keeps your newer edits open and reports that they remain in the editor; save and publish them separately when ready.
+
+The diagnostic targeting fields available to GraphQL and MCP clients are documented under [Workflow validation diagnostics](/reference/api#workflow-validation-diagnostics).
 
 ### Common diagnostics
 

@@ -45,6 +45,14 @@ A read-only rendering of the published graph, using the same node styling as the
 
 Whether the graph honors the positions you authored or auto-arranges for the available width is controlled by the **Viewer layout** setting in the editor.
 
+### Draft diagnostics in iOS
+
+The native iOS workflow detail shows the saved draft's steps and connections. Loading or refreshing the detail also checks that draft on the control plane and displays every returned diagnostic.
+
+Diagnostics name the affected step or the connection's source, output branch or choice, and destination. Errors highlight the related step or connection rows in red; warnings use orange. Tap a diagnostic to scroll to its related row. Workflow-wide errors without a target remain informational rows.
+
+Choose **Edit Draft** to repair the definition through the native editor's advanced JSON controls, then return to or refresh the detail to review the saved result. The web [workflow editor](/workflows/workflow-edit#validate-save-publish) provides the canvas and checks edits locally after 200 ms.
+
 ## Quick actions
 
 This is where you decide whether the workflow appears as a button on other pages, and where.
