@@ -61,7 +61,9 @@ For a rebase requirement, you can select **Auto sync branch** when a matching li
 
 ## Auto-merge is enabled but the request is still open
 
-GitLab is still waiting for its merge requirements. Inspect the request in GitLab and review the pending operation in **Merge**. You can cancel auto-merge when the token permits it. Jira completion and worktree deletion wait until the control plane confirms a merged state.
+The request may be waiting for GitLab requirements or for a local build or conflicting worktree operation to finish. Linked-worktree auto-merge is managed by the control plane even when **Auto sync branch** is off. Inspect the request in GitLab and review the pending operation in **Merge**. You can cancel auto-merge when the token permits it. Jira completion and worktree deletion wait until the control plane confirms a merged state.
+
+If a merge submission times out or provider access fails, restore access and refresh its status before retrying. The control plane retains the merge reservation while the outcome is uncertain, then reconciles it with the provider's current state.
 
 ## The request merged but a follow-up failed
 

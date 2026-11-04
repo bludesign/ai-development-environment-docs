@@ -58,7 +58,7 @@ While a run waits, the page shows **Waiting to start** with the current reason. 
 The **Queue** table shows every command run competing for the target. Target holders appear first, followed by waiting runs in queue order. Each row includes the run number, name, status, concurrency mode, and queued time. Badges identify **This run**, **Holds the target**, and the exact runs that are **Blocking** it. Select another run number to open it.
 
 <Note>
-  Excluded runs do not participate in this command queue. A queued worktree command may also be waiting for an active Git or worktree operation on its codebase.
+  Excluded runs do not participate in this command queue. Resource scheduling still applies when Git blocking is enabled: on updated agents, a worktree command waits for conflicting operations on its target checkout. Older agents retain codebase-wide serialization. Agent-home commands with Git blocking enabled reserve the agent across its managed worktrees.
 </Note>
 
 ## Attempts

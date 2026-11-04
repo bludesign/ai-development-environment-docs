@@ -39,6 +39,8 @@ The picker starts on the build agent and can switch to another eligible Mac. Cro
 
 The scheme, action, destination, commit, build ID, start and finish times, duration, and the build folder path on the agent.
 
+While a build is **Queued**, the web page shows its resource-blocking reason when one is available, such as an active build, AI Session, worktree move, or pending merge confirmation. It starts automatically when the conflicting operation releases its protection. GraphQL clients can read the same message from `Build.blockedReason`.
+
 The **Command summary** shows the exact `xcodebuild` invocation, with **Copy command summary** to reproduce it by hand. Advanced settings captured at build time are listed too; older builds may report that advanced settings were not captured.
 
 An **Install** button appears immediately after **Run** when the build contains an IPA. It uses the newest eligible IPA and keeps the same HTTPS, export-method, and metadata checks as artifact installation. On unsupported browser devices, select the disabled-looking button for “Open this page on an iPhone or iPad to install.” Copied installation links always open this build's page.

@@ -54,14 +54,14 @@ Concurrency decides whether command runs may share the same target. A target is 
 The default is **Non-exclusive**. Queue order prevents an exclusive run from being starved by a steady stream of new non-exclusive work.
 
 <Note>
-  A worktree command can still wait while Git or worktree work holds its codebase. It retries when the codebase becomes available instead of failing with a busy-codebase error.
+  Resource scheduling is separate from this command queue. A command that blocks Git can still wait for a conflicting operation, even in **Excluded** mode. It starts when the required resources become available.
 </Note>
 
 ### Git and worktree operations
 
-Enable **Block Git operations while this command runs** when the script can change repository or worktree state. While a worktree command with this setting is active, Git and worktree operations on the same codebase wait. Leave it off for scripts that only read files or run unrelated tools.
+Enable **Block Git operations while this command runs** when the script can change repository or worktree state. On updated agents advertising `operation.resources.v1`, a worktree command with this setting protects its target checkout; conflicting Git, worktree, and build operations wait, while independent worktrees can continue. Older agents retain codebase-wide serialization. Leave it off for scripts that only read files or run unrelated tools.
 
-Exclusive commands always block Git and worktree operations, so the setting is enabled and locked when **Requires exclusive** is selected. Agent-home commands have no worktree codebase to block.
+Exclusive commands always block Git and worktree operations, so the setting is enabled and locked when **Requires exclusive** is selected. For agent-home commands, enabling Git blocking reserves the agent across its managed worktrees because there is no single checkout to protect.
 
 ## Restart policy
 

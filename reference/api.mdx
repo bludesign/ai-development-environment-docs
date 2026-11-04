@@ -172,6 +172,39 @@ Changing the document or decisions requires a fresh preview. The server also rec
 
 Dedicated operation actions use fixed built-in tools and return structured data at `steps.<stepId>.output`. Actions that queue work return durable identities rather than automatically waiting for the work to finish. The [editor reference](/workflows/workflow-edit#dedicated-actions-and-results) explains output bindings, request IDs, and result triggers; [trigger timing](/workflows/workflow-edit#event-triggers-and-thresholds) covers dirty duration, signing expiry, and build-data thresholds.
 
+### Workflow validation diagnostics
+
+Save the current definition with `saveWorkflowDraft` before calling `validateWorkflowDraft(id:)`. The query checks the saved draft without changing it. MCP `validate_workflow` checks the saved draft too; MCP tools that edit the draft return fresh diagnostics after saving their changes. A result is `valid: false` when it contains an `ERROR`; `WARNING` diagnostics do not block publication.
+
+```graphql
+query WorkflowValidation($id: ID!) {
+  validateWorkflowDraft(id: $id) {
+    valid
+    diagnostics {
+      severity
+      code
+      message
+      nodeId
+      triggerId
+      edgeId
+      path
+    }
+  }
+}
+```
+
+Use the targeting fields to locate a problem in the same definition that was validated. Do not parse an ID out of `message`: connection messages describe the source, output branch or choice, and destination in readable terms.
+
+| Field | Meaning |
+| --- | --- |
+| `severity`, `code`, `message` | Error or warning, diagnostic code, and readable explanation |
+| `nodeId` | Related step ID, when available |
+| `triggerId` | Related trigger ID, when available; a requirement error can also identify its failing step through `nodeId` |
+| `edgeId` | Related connection ID, when available |
+| `path` | Definition location such as `edges.2.sourceHandle` or `nodes.0.name`, or a required session-data path such as `worktree.id` |
+
+Definition-array indices are zero-based. An indexed path can identify a row even when its ID is malformed or duplicated; use it before an ID lookup when resolving that row. Workflow-wide errors can omit all targets. Discard a validation result when the definition changes, since indices and requirements may have changed. See [the web editor's checks and error navigation](/workflows/workflow-edit#validate-save-publish).
+
 ### Agent build-transfer routes
 
 Cross-agent app deployment uses REST routes under `/api/agent/build-artifact-transfers/{transferId}`. They support transfer status and metadata, `HEAD` offset inspection, sequential `PATCH` upload chunks, completion, and ranged download. These endpoints accept only the enrolled source or target agent assigned to that transfer; browser sessions and general API keys cannot substitute for that identity. Their payloads are intentionally small or ranged so reverse proxies never receive a whole large `.app` archive in one request.
