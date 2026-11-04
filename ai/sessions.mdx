@@ -33,6 +33,8 @@ Rows are grouped by creation day, with queued and active runs pulled into a lead
 
 For imported native runs, background synchronization applies changed prompts, status, and archive state even when transcript events have not changed. Unchanged snapshots do not rewrite the run or emit another update, and repeated synchronization preserves the original archive timestamp.
 
+Open a Claude Session to inspect its delegated tasks in the [**Agents** card](/ai/session-detail#agent-sessions). Expand individual agents to read their prompts, results, and session activity. Updated agents also synchronize this history for managed and imported Sessions created before the feature was available, when the provider still retains it.
+
 | Column | What it shows |
 | --- | --- |
 | ID | `#1234`, the Session's display number |
@@ -82,7 +84,7 @@ The table loads 200 rows at a time and extends as you scroll, and an `agentRunsC
 
 <Columns cols={2}>
   <Card title="Session details" icon="terminal" href="/ai/session-detail">
-    Live transcript, steering, questions, checkpoints, and cost.
+    Live transcript, Claude agent sessions, steering, questions, checkpoints, and cost.
   </Card>
   <Card title="New run" icon="plus" href="/ai/run-new">
     Pick a worktree, model, effort, and tools, then start.

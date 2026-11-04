@@ -1,6 +1,6 @@
 ---
 title: "Session details"
-description: "Watch a Session's live transcript, steer it, and review changes and cost."
+description: "Watch a Session and its Claude agents, steer the run, and review changes and cost."
 ---
 
 <Frame>
@@ -34,7 +34,7 @@ A failed run surfaces its error at the top of the page. So does a phase like *St
 
 <AccordionGroup>
   <Accordion title="Activity" icon="activity">
-    The transcript streams over a subscription into a scrolling pane that stays pinned to the newest event unless you scroll away from the bottom. History pages in 500 events at a time, and the search box re-queries the server rather than filtering what has already loaded.
+    The transcript streams over a subscription into a scrolling pane that stays pinned to the newest event unless you scroll away from the bottom. The pane opens with the newest 200 events; **Load more** adds older events in pages of 200. The search box re-queries the server rather than filtering what has already loaded.
 
     Related events collapse into a single expandable node — a tool call together with its result, a streamed message with its parts. Expanding a row shows the parsed detail, with the untouched payload available behind a raw toggle and a copy button.
 
@@ -58,7 +58,43 @@ A failed run surfaces its error at the top of the page. So does a phase like *St
   </Accordion>
 </AccordionGroup>
 
-### Recovering from a control-plane outage
+## Agent sessions
+
+For a Claude run with discovered child agents, the **Agents** card appears above **Activity** in the web app. This card lists Claude's delegated tasks; the [Agents](/agents/agents) page manages the machines that run them.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/session-agents.png" alt="Compact Claude agent rows with expanded session activity in light theme" />
+  <img className="hidden dark:block" src="/images/dark/session-agents.png" alt="Compact Claude agent rows with expanded session activity in dark theme" />
+</Frame>
+
+Each compact row shows the task name, agent type when known, status, and start time. A nested agent also shows **Spawned by** with its parent. Status can be **Running**, **Completed**, **Failed**, **Cancelled**, or **Unknown**.
+
+Expand a row to read its **Prompt**, **Summary** when available, and its own session activity. You can keep several agents open to compare their work. Activity entries expand into parsed details, with their payloads behind **Raw**.
+
+Opening a row loads its newest 200 stored messages. **Load more** adds older messages without closing the other agents. Status and open transcripts refresh as the run changes. Searching the main **Activity** pane does not hide agents or filter their sessions.
+
+### Use the native iOS app
+
+Open the run's **Activity** tab to find the **Agents** section above the main activity timeline. Each disclosure row shows the task, type, status, start time, and parent when known. You can expand several agents at once.
+
+An expanded agent shows its **Prompt**, **Final Output** when available, and messages. Expand a message to read its full text, then open **Message Data** to inspect the provider payload. **Load Older Messages** adds older history, and **Retry** reloads a failed read. Pull to refresh to update the agent list and open sessions; live run changes and returning to the foreground also refresh them.
+
+### Older runs and missing transcripts
+
+Updated control agents synchronize child sessions for both managed and imported Claude runs. Older runs can gain an **Agents** card after the owning agent next synchronizes, while the provider still retains their child history. The card stays hidden when no agents have been discovered.
+
+| Situation | What you can read |
+| --- | --- |
+| Owning agent is offline | Previously synchronized agent details and messages remain available from the control plane. New progress waits for the agent to reconnect. |
+| Partial transcript | Saved messages remain visible, with a notice that only part of the session is available. Collection errors or history limits can leave a partial transcript. |
+| Unavailable transcript | The card keeps the known task, prompt, status, and result and explains that the transcript is unavailable. |
+| Read fails | **Try again** retries loading the saved details or messages. Background synchronization supplies newly available provider history. |
+
+<Note>
+  Child prompts, results, tool inputs and outputs, and raw message payloads are stored with run history on the control plane. Apply the same access and backup policies as for the parent Session. Reading these saved sessions does not require downloading native transcript files from the agent.
+</Note>
+
+## Recovering from a control-plane outage
 
 A temporary HTTP or WebSocket failure does not turn a completed provider run into a failed run. While the agent remains running, it keeps the provider result and retries reporting its final checkpoint, attempt result, and command completion after transient failures. Permanent request failures and agent shutdown stop those retries. The displayed status can lag until the control plane accepts completion.
 
