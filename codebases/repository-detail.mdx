@@ -19,8 +19,13 @@ The page has seven tabs.
     | **Repository name** | The shared name used everywhere this repository appears |
     | **Repository description** | Optional context |
     | **Jira branch regex override** | Extracts a ticket key from a branch name for this repository. Leave empty to inherit the default from [Codebases settings](/codebases/codebases). The first capture group is used when present, otherwise the whole match. |
-    | **Keep base branch up to date** | After a successful fetch, fast-forward the base branch when there are no staged changes. Applies on every agent. |
+    | **Default branch matches** | Add exact names such as `develop` and wildcard patterns such as `release/*`, one per line. Matches are case-sensitive and cover the full branch name; `*` matches any characters, including `/`. Other characters are literal. The remote default branch is always included. An empty list adds no extra default branches. |
+    | **Keep default branches up to date** | After fetches, fast-forward clean matching worktrees from their same-named branch on `origin`. Dirty worktrees pause automatically and resume when clean. Local ahead or diverged histories are preserved. Applies on every agent. |
     | **Skill groups** | The project skill groups synchronized into every checkout and worktree of this repository. |
+
+    Automatic default-branch maintenance requires an updated agent. Older agents continue fetching but do not perform this maintenance.
+
+    In iOS, open **Edit Repository** to change the same patterns and update setting. Existing **Keep base branch up to date** values are retained under the new label. A worktree stops these automatic updates as soon as its checked-out branch no longer qualifies. Changing its comparison base does not change which remote branch supplies updates.
 
     <Tip>
       Skill groups are how a repository gets a consistent set of agent skills on every machine. Define them under [Skills](/skills/skill-groups), then assign them here once instead of per checkout.
@@ -123,7 +128,7 @@ A repository is usually checked out on more than one Mac, and each checkout can 
 
 Use **Import** or **Export** in repository details to open the shared configuration review. Save pending repository details and preparation edits first; transfers use the saved definition.
 
-Export can include the repository name, description, Jira regex, base-branch update setting, reviewer pools, preparations, iOS build configurations, repository commands, and workflows. Uncheck any item or individual repository setting you want to leave out. Imported reviewer pools are checked against the destination provider and current membership; unresolved groups or people block that selection. See [Reviewer preferences in packages](/apps/import-export#reviewer-preferences-in-packages).
+Export can include the repository name, description, Jira regex, default-branch update setting and branch patterns, reviewer pools, preparations, iOS build configurations, repository commands, and workflows. Uncheck any item or individual repository setting you want to leave out. Imported reviewer pools are checked against the destination provider and current membership; unresolved groups or people block that selection. See [Reviewer preferences in packages](/apps/import-export#reviewer-preferences-in-packages).
 
 Import applies selected settings to the repository you are editing. Its Git origin and existing checkouts stay in place. When an app package contains several repositories, choose **Repository to use as the template**. Additional clones are optional. The preview shows current and imported values, shared definitions affected elsewhere, and dependencies that need local mappings.
 

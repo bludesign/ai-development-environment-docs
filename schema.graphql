@@ -709,6 +709,11 @@ type AgentJob {
   """Category of this agent job."""
   kind: String!
 
+  """
+  The saved command name captured when this job's command run started. Null for other jobs or unavailable runs.
+  """
+  commandName: String
+
   """Structured payload associated with this agent job."""
   payload: JSON!
 
@@ -8142,6 +8147,35 @@ input ExportBuildArchiveInput {
   requestId: ID!
 }
 
+"""A live update for an existing script execution in a build."""
+input BuildScriptExecutionProgressInput {
+  """Script phase: PRE_BUILD or POST_BUILD."""
+  phase: String!
+
+  """Zero-based position of the script in the build snapshot."""
+  position: Int!
+
+  """Execution status: RUNNING, SUCCEEDED, FAILED, TIMED_OUT, or CANCELLED."""
+  status: String!
+
+  """Exit code once execution finishes, if available."""
+  exitCode: Int
+
+  """Execution duration in milliseconds, if available."""
+  durationMs: Int
+
+  """Whether this script failure caused the build to fail."""
+  causedBuildFailure: Boolean
+
+  """
+  Relative path to the script output within the build artifact directory.
+  """
+  outputRelativePath: String
+
+  """Error reported by the script, if any."""
+  error: String
+}
+
 """Input values for build progress."""
 input BuildProgressInput {
   """Identifier of the build to use."""
@@ -8158,6 +8192,9 @@ input BuildProgressInput {
 
   """The error to use for the request."""
   error: String
+
+  """Live updates for script executions already present in this build."""
+  scriptExecutions: [BuildScriptExecutionProgressInput!]
 }
 
 """Input values for build log chunk."""
@@ -9146,9 +9183,14 @@ type CodebaseRepository {
   jiraBranchRegex: String
 
   """
-  Whether the keep base branch up to date condition is true for this codebase repository.
+  Whether clean default branch checkouts are automatically fast-forwarded from their same-name origin branches.
   """
   keepBaseBranchUpToDate: Boolean!
+
+  """
+  Exact branch names or full-name patterns where * matches any characters, in addition to the remote default.
+  """
+  defaultBranchPatterns: [String!]!
 
   """Skill groups associated with this codebase repository."""
   skillGroups: [SkillGroup!]!
@@ -9432,9 +9474,14 @@ type AgentCodebaseRegistration {
   defaultBranch: String
 
   """
-  Whether the keep base branch up to date condition is true for this agent codebase registration.
+  Whether this agent supports and should maintain clean default branch checkouts.
   """
   keepBaseBranchUpToDate: Boolean!
+
+  """
+  Exact branch names or full-name patterns where * matches any characters, in addition to the remote default.
+  """
+  defaultBranchPatterns: [String!]!
 
   """
   ISO 8601 timestamp when this agent codebase registration was last fetched. May be null when unavailable or not applicable.
@@ -9660,8 +9707,15 @@ input UpdateCodebaseRepositoryInput {
   """The Jira branch regex to use for the request."""
   jiraBranchRegex: String
 
-  """Whether keep base branch up to date applies to the request."""
+  """
+  Whether clean default branch checkouts should be kept up to date from their same-name origin branches.
+  """
   keepBaseBranchUpToDate: Boolean!
+
+  """
+  Additional exact or wildcard default branch names; omitted values preserve existing patterns.
+  """
+  defaultBranchPatterns: [String!]
 
   """Identifiers of the skill groups to use."""
   skillGroupIds: [ID!]
@@ -16021,6 +16075,11 @@ type GitLabMergeOptions {
 
 """Merge outcome is separate from deferred follow-up errors."""
 type GitLabMergeResult {
+  """
+  Jira transition warning returned after activation; auto merge remains enabled.
+  """
+  ticketTransitionError: String
+
   """Fresh provider merge-request state after the requested action."""
   mergeRequest: GitLabMergeRequest!
 
@@ -16424,6 +16483,11 @@ type JiraProject {
   Identifier of the related done status. May be null when unavailable or not applicable.
   """
   doneStatusId: ID
+
+  """
+  Status set when worktree auto merge is enabled; null disables the transition.
+  """
+  autoMergeStatusId: ID
 
   """
   Status used after reviewers are assigned from a worktree; null disables the transition.
@@ -17376,6 +17440,11 @@ input UpdateJiraProjectDisplaySettingsInput {
 
   """Identifier of the done status to use."""
   doneStatusId: ID
+
+  """
+  Status set when worktree auto merge is enabled; null disables the transition.
+  """
+  autoMergeStatusId: ID
 
   """
   Status used after reviewers are assigned from a worktree; null disables the transition.
@@ -25562,6 +25631,11 @@ type WorktreeOperationResult {
 """Represents a worktree auto merge in the GraphQL API."""
 type WorktreeAutoMerge {
   """
+  Jira transition warning returned after activation; auto merge remains enabled.
+  """
+  ticketTransitionError: String
+
+  """
   Whether AIDE syncs the linked branch and waits for passing CI before merging.
   """
   autoSync: Boolean!
@@ -25648,6 +25722,21 @@ type Worktree {
   Git branch associated with this worktree. May be null when unavailable or not applicable.
   """
   branch: String
+
+  """
+  Whether the current branch is the remote default or matches repository default branch patterns.
+  """
+  isDefaultBranch: Boolean!
+
+  """
+  Whether automatic same-name remote branch maintenance applies to this checkout.
+  """
+  defaultBranchUpdateEnabled: Boolean!
+
+  """
+  Whether automatic branch maintenance is paused by local changes, conflicts, divergence, or an unavailable checkout or same-name origin branch.
+  """
+  defaultBranchUpdatePaused: Boolean!
 
   """
   Git commit SHA associated with this worktree. May be null when unavailable or not applicable.

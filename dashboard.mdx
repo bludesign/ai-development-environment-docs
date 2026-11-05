@@ -178,9 +178,9 @@ The web sidebar also shows **Dirty** and **Off Main** when **Show Dirty and Off 
 | Counter | What it counts | Opens |
 | --- | --- | --- |
 | **Dirty** | Worktrees with staged or unstaged changes. | Worktrees with **Dirty worktrees** and all branches selected. |
-| **Off Main** | Worktrees off a known repository default branch, including detached HEADs. The default branch can have any name. | Worktrees with all change states and **Not on default branch** selected. |
+| **Off Main** | Worktrees outside the remote default branch and configured default-branch matches, including detached HEADs. | Worktrees with all change states and **Not on default branch** selected. |
 
-These totals use saved reports across agents, include hidden worktrees, and exclude missing worktrees. **Off Main** excludes repositories whose default branch is unknown. The links select the corresponding changes and branch filters; other filters and the [Active Agent selector](/worktrees/worktrees#use-the-active-agent) still apply. See [Finding a worktree](/worktrees/worktrees#finding-a-worktree).
+These totals use saved reports across agents, include hidden worktrees, and exclude missing worktrees. When the remote default is unknown, **Off Main** still counts worktrees that do not match a configured default-branch pattern. The links select the corresponding changes and branch filters; other filters and the [Active Agent selector](/worktrees/worktrees#use-the-active-agent) still apply. See [Finding a worktree](/worktrees/worktrees#finding-a-worktree).
 
 ## Mini Action Center
 
