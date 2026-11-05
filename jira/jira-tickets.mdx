@@ -131,7 +131,11 @@ A transition that Jira requires a screen for is listed but disabled and labelled
 
     **In review ticket status** moves a linked ticket to your selected workflow status after **Assign** adds new reviewers to a worktree's open pull or merge request. Leave it unset to keep the ticket's status. Previewing **Random Assign**, refreshing reviewers, or a failed assignment does not transition a ticket. If reviewers are assigned but Jira rejects the transition, the reviewers stay assigned and the sheet shows a warning; complete the ticket transition in Jira.
 
-    **Auto Merge done status** is the status linked tickets are moved to after Auto Merge merges the pull request on the [worktree](/worktrees/worktrees). Leave it unset to skip that step.
+    **Auto merge status** moves linked tickets to the selected status when worktree Auto Merge is turned on. Leave it unset to keep their current status. Editing an already-enabled operation does not repeat this transition. If Jira rejects it, auto merge stays enabled and the merge sheet shows a warning.
+
+    **Auto merge done status** moves linked tickets after a confirmed **Merge** or **Auto Merge** when **Move ticket to done** is selected. Leave it unset to skip the transition. A failed merge never moves the ticket. The project’s default Resolution still applies when Jira requires one.
+
+    In the native iOS app, select a project, then open **Merge ticket statuses** to configure both statuses.
   </Accordion>
   <Accordion title="Branch naming" icon="code">
     Each project uses **JavaScript** by default. Enable **AI branch naming** to use a saved provider, model, effort, and prompt instead. Save the naming mode and AI settings separately from the JavaScript function; switching modes preserves both configurations.

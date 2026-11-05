@@ -15,8 +15,8 @@ The **Worktrees** page at `/dashboard/worktrees` is the busiest page in the prod
 - **Search** across branches, agents, repositories, tickets, and codebases.
 - **Filter by agent** and **filter by repository** using searchable dropdowns on the web. Search agents by name or hostname, and repositories by name or origin. Choose **All agents** or **All repositories** to clear a filter. On the web, long selected names and options use ellipses; hover to read their full text. This also applies to Worktrees inside apps.
 - **Filter by changes** narrows the list to **Dirty worktrees** or **Clean worktrees**. A worktree counts as dirty when it has staged or unstaged changes — the same rule behind its **Dirty** badge.
-- **Filter by branch** can show only worktrees **Not on default branch**. Detached worktrees count when the repository's default branch is known; repositories whose default branch is unknown are excluded because they cannot be classified.
-- Use **Group by agent** or **Group by repository** to choose the primary grouping. The other dimension remains visible on each worktree.
+- **Filter by branch** can show only worktrees **Not on default branch**. The filter uses the repository’s remote default and configured default-branch patterns.
+- Use **Group by agent** or **Group by repository** to choose the primary grouping. The other dimension remains visible on each worktree. Default-branch worktrees follow all other worktrees within the chosen group, including worktrees from other nested checkouts.
 - Switch between **Card layout** and **Table layout**.
 - **Refresh** re-reads status; **Fetch now** runs `git fetch origin` for eligible codebases.
 
@@ -43,7 +43,7 @@ The [Active Agent selector](/index#focus-on-an-agent) applies to this page and W
 
 In iOS, the dedicated toolbar icon opens the same global selection. The Worktree Actions menu shows the locked agent filter and its explanation. The app saves the underlying agent choice separately for each Worktrees view.
 
-Each worktree shows its branch, path, base branch, agent, repository, upstream status, base freshness, nonzero commit counts, and — where they exist — its pull request, latest build, review decision, and comment count.
+Each worktree shows its branch, path, base branch, agent, repository, upstream status, base freshness, nonzero commit counts, and latest build where available. Cards omit the pull-request summary line; open worktree details for the full request information. Tables retain their request details.
 
 <Tip>
   **Manage tags** creates reusable global tags with badge colors, and **Highlight** assigns a worktree a color that follows it everywhere — the Action Center, notifications, and run pages all pick it up. The palette includes lavender, maroon, brown, olive, and navy. Use the trash button beside **Highlight** to clear the current color.
@@ -57,6 +57,19 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
 | Base freshness | Current with an ahead count, or a count of commits behind base |
 | Working tree | Dirty when staged or unstaged changes exist; otherwise clean |
 | Review decision | Approved, changes requested, review requested, review required, or no decision |
+
+## Default branches
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktrees-default-branches.png" alt="Default-branch worktrees following feature worktrees, with dirty updates paused" />
+  <img className="hidden dark:block" src="/images/dark/worktrees-default-branches.png" alt="Default-branch maintenance and paused dirty worktrees in dark theme" />
+</Frame>
+
+The remote default branch and any branches matching **Default branch matches** in [Repository details](/codebases/repository-detail) use a compact card. **Sync**, **Rebase**, and **Push** are available from **More**, while **Auto Sync** and **Auto Merge** controls are hidden. Default branches remain below other worktrees within the selected agent or repository group.
+
+Enable **Keep default branches up to date** in repository settings to update clean default-branch worktrees after fetches. Updates only fast-forward from the same-named `origin` branch. A different comparison base still supplies the displayed base-behind count, but is never rebased or synced into the branch by this setting. Local commits, divergence, and dirty files are preserved. Dirty worktrees show paused updates until they become clean again.
+
+Switching to a branch that is not a default stops this automatic maintenance and restores the ordinary card and automation controls. A default branch behind its comparison base shows **N commits behind base** in a neutral badge. The native iOS app uses the same classification, ordering, maintenance status, and controls.
 
 ## Review details
 
@@ -332,7 +345,11 @@ The native iOS merge sheets expose the same setting, eligibility reason, progres
 
 GraphQL callers set `autoSync: true` on `ConfigureWorktreeAutoMergeInput` for GitHub and also provide the reviewed `expectedHeadSha`. GitLab callers set `autoMerge: true` and `autoSync: true` on `SubmitGitLabMergeRequestMergeInput`, retaining its required reviewed `sha`. Merge options expose `canAutoMergeWithSync`, `autoSyncBlockedReason`, and `defaultAutoSync`; saved operations expose `autoSync` and their current `state`.
 
+Enabling worktree **Auto Merge** moves linked Jira tickets to the project’s configured **Auto merge status**, when set. If Jira rejects that transition, auto merge stays enabled and a warning explains that the ticket still needs attention. Saving an already-enabled operation does not repeat the transition.
+
 Auto Merge reports **Auto Merge complete** after merging and completing its selected follow-ups. Retry unfinished follow-ups after fixing their error; this does not submit another merge.
+
+When **Move ticket to done** is selected, both **Merge** and **Auto Merge** move linked Jira tickets to **Auto merge done status** after the provider confirms the merge. An unset status skips the transition. Failed merges leave Jira unchanged.
 
 ## Moving a worktree to another agent
 
@@ -397,7 +414,7 @@ The Start Build sheet keeps destination tabs, device selection, and scripts visi
 
 Select **Bulk Sync** beside **Fetch now** on Worktrees or an app's Worktrees tab to review outdated worktrees before syncing. The centered web sheet includes every outdated worktree in that page's app or global scope and respects Active Agent. List search, repository, changes, and branch filters do not exclude checkouts from the bulk sheet.
 
-Eligible worktrees start checked. Uncheck any checkout to exclude it. Each row shows its branch, repository, agent, base branch, and commits behind; blocked checkouts remain visible with their reason and cannot be selected. Choose **Sync selected** to start the batch. Sync uses the existing worktree sync behavior and does not enable Auto Sync.
+Default branches are excluded from Bulk Sync; use repository **Keep default branches up to date** for their same-named remote updates. Eligible worktrees start checked. Uncheck any checkout to exclude it. Each row shows its branch, repository, agent, base branch, and commits behind; blocked checkouts remain visible with their reason and cannot be selected. Choose **Sync selected** to start the batch. Sync uses the existing worktree sync behavior and does not enable Auto Sync.
 
 The control plane continues the batch after you close the sheet or navigate away. Sync requests for the same worktree run serially; independent worktrees can progress concurrently on updated agents, subject to resource conflicts. Older agents retain codebase-wide serialization. Reopen the active batch from Worktrees to see pending, running, succeeded, failed, skipped, and attention-required outcomes. One failure does not stop independent worktrees. Pending checkouts whose agent goes offline are skipped with a reason. If an agent disconnects after a job is submitted, that job remains active until the agent reports its terminal recovery result; its protected resources stay reserved until cleanup is verified. Address conflicts and preparation issues through the worktree's existing recovery actions.
 
