@@ -81,6 +81,10 @@ When **Retry** is unavailable it explains why on hover: no verified GitHub App, 
   </Step>
 </Steps>
 
+After you submit a merge, the action changes to **Continue in background**. Select it to dismiss the web or iOS sheet while the submitted merge continues. Opening the same request again shows its pending state and prevents a second submission. Navigating to another screen does not cancel the request.
+
+A later failure does not reopen the sheet. The originating merge action shows an attention indicator; select it or reopen the request's merge sheet to inspect the error. On the web, Pull Requests and the Action Center also retain an error notice after the merged row leaves the list. Choose **Review merge error** to reopen its result, or **Dismiss merge error** to acknowledge the notice. Web state survives route navigation for the current browser session. The native app retains the operation while it stays open; saved managed Auto Merge operations continue independently on the control plane.
+
 Active local builds or conflicting worktree operations can also block an immediate merge. The dialog shows the blocking reason. Managed **Auto Merge** waits for the required local resources and retries when they become available; see [worktree operations](/worktrees/worktrees).
 
 <Tip>

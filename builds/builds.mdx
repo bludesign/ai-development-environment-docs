@@ -50,9 +50,11 @@ An LCOV or Istanbul [coverage import](/builds/build-coverage#importing-coverage-
 | Failed    | The build or a script failed                |
 | Canceled  | Stopped by hand                             |
 
-Filter by status and repository. The searchable repository selector matches names and origins; choose **All repositories** to clear it. On the web, long repository names show an ellipsis; hover over the selection or a dropdown option to read the full name. Repository and status filters combine. On the web they apply to **Load more** and live history refreshes. Changing the repository starts a fresh result list and clears your build selection. App build history offers the app's assigned repositories; a saved configuration's history stays scoped to that configuration.
+Filter by status, repository, and branch. The searchable repository selector matches names and origins; choose **All repositories** to clear it. On the web, long repository names show an ellipsis; hover over the selection or a dropdown option to read the full name. The searchable branch selector lists branches recorded anywhere in the current repository, app, or configuration's build history, including branches whose worktrees are no longer present. Choose **All branches** to clear it.
 
-In iOS, tap **Repository** to open its searchable list. The chosen repository combines with status and app scope when loading or refreshing build history.
+On the web, all three filters combine and apply to **Load more** and live history refreshes. A selected branch matches its full, case-sensitive name. Changing the repository resets the branch filter, starts a fresh result list, and clears your build selection. App build history offers the app's assigned repositories; a saved configuration's history stays scoped to that configuration.
+
+In iOS, tap **Repository** or **Branch** to open its searchable list. These selections combine with status and app scope when loading or refreshing build history.
 
 Select builds individually or a whole day at once, and **Delete selected**. The list pages with **Load more**.
 
@@ -69,6 +71,12 @@ On an agent advertising `operation.resources.v1`, a build protects its source wo
 [Auto Sync](/worktrees/worktrees#auto-sync) stays enabled and waits for conflicting source work to finish. Build scripts can widen protection to the codebase or agent with **Protect resources**. Older agents retain codebase-wide serialization. These scheduling rules apply to builds started from either the web or native iOS app.
 
 A queued build's [details page](/builds/build-detail) shows why a resource is unavailable. If its source branch or HEAD changed while it waited, the build fails validation; refresh the worktree and start a new build.
+
+### Process cleanup warnings
+
+The agent allows 30 seconds for each `/bin/ps` process inspection during build cleanup. If inspection times out after a protected iOS build has already completed, the agent preserves the build's original outcome, artifacts, and reports and adds a warning. Build history and Build Details show the warning.
+
+Protected worktree and output resources remain held until cleanup is verified. A saved checkpoint lets the agent retry verification after restarting. The warning does not turn a completed build into a failure; builds on older agents without resource protection keep their previous cleanup behavior.
 
 ### Worktree Derived Data
 
@@ -334,7 +342,7 @@ remain separate inputs. Custom runs create no saved configuration. Their snapsho
 an explicit Custom marker and the settings required by `rebuildBuild`.
 
 Use `buildConfigurations` and `buildConfiguration(id:)` for saved settings. Build history
-accepts `configurationId` and `repositoryId` filters. Repository `latestBuild` is the newest
+accepts `configurationId`, `repositoryId`, and exact `branch` filters. Query `buildBranches` with the same app, configuration, and repository scope to populate a branch selector; its choices are independent of the status filter. Repository `latestBuild` is the newest
 record across all worktrees and agents, including failed and running builds.
 
 `CodebaseProject.defaultDestinationType` stores the repository's initial destination preference. Use `updateIosAppProject(id:, defaultDestinationType:)` to set it to `SIMULATOR` or `PHYSICAL_DEVICE`; `HOST` is rejected. This preference initializes client selection. API callers still supply the destination for each build.

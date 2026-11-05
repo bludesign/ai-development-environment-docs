@@ -44,6 +44,8 @@ Open **Merge** to fetch current readiness and project policy. The dialog offers:
 
 **Merge now** submits an immediate merge when GitLab's requirements and local operation checks permit it. With a linked worktree, **Enable auto-merge** saves an operation managed by the control plane, which waits for merge requirements and conflicting local operations before submitting the merge. Without a linked worktree, GitLab manages auto-merge. The dialog explains why an action is unavailable. If auto-merge is already enabled, **Cancel auto-merge** cancels the pending request when your token permits it.
 
+After you submit a merge, select **Continue in background** to dismiss the web or iOS sheet while the submitted request continues. Reopening the same request shows its pending state without submitting it again. A later failure does not reopen the sheet; the originating merge action shows an attention indicator so you can reopen the options and read the error. On the web, Merge Requests and the Action Center retain an error notice even after the merged row leaves the list. Choose **Review merge error** to reopen its result, or **Dismiss merge error** to acknowledge the notice. Saved follow-up errors remain readable and retryable if loading fresh merge options fails. This client state survives navigation during the current browser or app session. Saved managed operations continue independently on the control plane.
+
 Linked-worktree auto-merge stays managed even with **Auto sync branch** off. Before a build starts, the control plane takes over native auto-merge associated with a saved active operation. If native auto-merge was enabled outside that operation, disable it at the provider before building.
 
 ### Rebase before auto-merge

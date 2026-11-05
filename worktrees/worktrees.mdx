@@ -65,7 +65,7 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
   <img className="hidden dark:block" src="/images/dark/worktrees-default-branches.png" alt="Default-branch maintenance and paused dirty worktrees in dark theme" />
 </Frame>
 
-The remote default branch and any branches matching **Default branch matches** in [Repository details](/codebases/repository-detail) use a compact card. **Sync**, **Rebase**, and **Push** are available from **More**, while **Auto Sync** and **Auto Merge** controls are hidden. Default branches remain below other worktrees within the selected agent or repository group.
+The remote default branch and any branches matching **Default branch matches** in [Repository details](/codebases/repository-detail) use a compact card with a **Default branch** badge. Cards and table rows use a light gray highlight when you have not assigned a color; an explicit highlight takes precedence. The iOS worktree cards show the same badge and fallback tint. **Sync**, **Rebase**, and **Push** are available from **More**, while **Auto Sync** and **Auto Merge** controls are hidden. Default branches remain below other worktrees within the selected agent or repository group.
 
 Enable **Keep default branches up to date** in repository settings to update clean default-branch worktrees after fetches. Updates only fast-forward from the same-named `origin` branch. A different comparison base still supplies the displayed base-behind count, but is never rebased or synced into the branch by this setting. Local commits, divergence, and dirty files are preserved. Dirty worktrees show paused updates until they become clean again.
 
@@ -245,6 +245,8 @@ Web worktree action rows link each queued or executing job to its [job details](
     Workflow and command quick actions share one row when space allows, separated by a divider. They wrap into separate rows on narrower cards.
 
     An active command adds a spinner menu beside its button. Open it to **Terminate**, **Restart**, or **View** each active run. The command button remains available, so you can start another run; its concurrency setting decides whether it starts or queues.
+
+    A conflict-resolution quick action stays visible while its workflow runs, including after conflicts are resolved or the rebase finishes. Idle conflict actions disappear when they are no longer needed.
 
     An active workflow adds its own spinner menu beside the quick-action button. The spinner shows a count when more than one run is active, and the menu identifies each run by number. Choose **View** to open a run. The workflow button remains available so you can start another run; the workflow's overlap and worktree-concurrency settings determine when it starts.
   </Accordion>
