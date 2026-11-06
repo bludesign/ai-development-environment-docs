@@ -33,6 +33,8 @@ An **Out of date** badge appears when the worktree has moved on since this build
 
 **Rebuild** stays on this build. After the replacement is queued, an inline success notice offers an explicit link to the new build. **Run** uses the shared detailed device picker: checkbox multi-selection, per-device quick play, platform and OS details, live availability, **Select All**, **Clear**, and **Run Selected**.
 
+After a run is accepted, the web and iOS apps continue watching its installation and launch result. A later failure remains visible on Build Details even after the picker closes; open **Runs and exports** for the destination and full error. A successful queue response alone does not mean the app launched.
+
 The picker starts on the build agent and can switch to another eligible Mac. Cross-agent deployments show their target agent and transfer state in **Runs and exports**. While the app package moves through the relay, Build Details reports upload/download progress; checksum, compatibility, disk-space, extraction, signing, installation, and launch failures remain attached to that deployment with an actionable message.
 
 ## Overview
@@ -40,6 +42,8 @@ The picker starts on the build agent and can switch to another eligible Mac. Cro
 The scheme, action, destination, commit, build ID, start and finish times, duration, and the build folder path on the agent.
 
 While a build is **Queued**, the web page shows its resource-blocking reason when one is available, such as an active build, AI Session, worktree move, or pending merge confirmation. It starts automatically when the conflicting operation releases its protection. GraphQL clients can read the same message from `Build.blockedReason`.
+
+A process cleanup warning can appear alongside an otherwise completed build. The agent keeps the original outcome and captured artifacts while retrying cleanup verification; conflicting work remains protected until verification succeeds. See [Process cleanup warnings](/builds/builds#process-cleanup-warnings).
 
 The **Command summary** shows the exact `xcodebuild` invocation, with **Copy command summary** to reproduce it by hand. Advanced settings captured at build time are listed too; older builds may report that advanced settings were not captured.
 

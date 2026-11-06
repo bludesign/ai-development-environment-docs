@@ -1017,6 +1017,11 @@ type Mutation {
 
     """Ownership token for the executing agent session."""
     executionToken: String
+
+    """
+    Whether subprocess cleanup has been verified. False preserves a completed iOS build while retaining its execution resources until a later verified acknowledgement.
+    """
+    cleanupVerified: Boolean! = true
   ): AgentJob!
 
   """Cancels an agent job and returns an agent job."""
@@ -4604,7 +4609,24 @@ type Query {
 
     """Saved configuration whose builds to return."""
     configurationId: ID
+
+    """Exact historical branch name captured when the build started."""
+    branch: String
   ): BuildPage!
+
+  """
+  Distinct historical build branches within the selected scope, independent of status.
+  """
+  buildBranches(
+    """App whose assigned repositories scope the choices."""
+    appId: ID
+
+    """Repository whose historical branches to return."""
+    repositoryId: ID
+
+    """Saved configuration whose historical branches to return."""
+    configurationId: ID
+  ): [String!]!
 
   """Returns a build, or null when it cannot be found."""
   build(
@@ -7793,6 +7815,11 @@ type Build {
   Error message when this build did not complete successfully. May be null when unavailable or not applicable.
   """
   error: String
+
+  """
+  Nonfatal warnings recorded while preserving this build's completed result.
+  """
+  warnings: [String!]!
 
   """Whether the out of date condition is true for this build."""
   outOfDate: Boolean!
