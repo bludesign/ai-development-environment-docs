@@ -17,7 +17,7 @@
           {
             "group": "Getting Started",
             "icon": "rocket",
-            "pages": ["index", "quickstart", "screenshots"]
+            "pages": ["index", "quickstart", "native-apps", "screenshots"]
           },
           {
             "group": "Dashboard",
