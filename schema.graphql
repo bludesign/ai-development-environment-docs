@@ -4999,6 +4999,20 @@ type Query {
   """Returns an agent disk space configuration."""
   agentDiskSpaceConfiguration: AgentDiskSpaceConfiguration!
 
+  """
+  Persisted merge follow-up progress, including after the primary checkout switches branches.
+  """
+  githubPullRequestMergeOperation(
+    """Owner of the GitHub target repository."""
+    owner: String!
+
+    """Name of the GitHub target repository."""
+    name: String!
+
+    """Pull request number within the target repository."""
+    number: Int!
+  ): WorktreeAutoMerge
+
   """Returns GitHub settings."""
   githubSettings: GitHubSettings!
 
@@ -5242,6 +5256,23 @@ type Query {
     """Keys used to filter or perform the operation."""
     keys: [GitHubPipelineRecordKeyInput!]!
   ): [GitHubPipelineRecord!]!
+
+  """
+  Unfinished persisted checkout follow-ups for the selected worktrees, including after their branches change.
+  """
+  gitlabWorktreeMergeOperations(
+    """Checkout identifiers whose saved follow-ups should be recovered."""
+    worktreeIds: [ID!]!
+  ): [GitLabMergeOperation!]!
+
+  """Persisted merge and follow-up status without a provider request."""
+  gitlabMergeOperation(
+    """Target project identifier."""
+    projectId: ID!
+
+    """Project-scoped merge-request number."""
+    iid: Int!
+  ): GitLabMergeOperation
 
   """
   List durable reviewer membership cached separately from live approvals.
@@ -14331,6 +14362,18 @@ type GitHubPullRequestDetail {
 
 """Represents GitHub pull request merge options in the GraphQL API."""
 type GitHubPullRequestMergeOptions {
+  """Whether the linked primary checkout can return to the default branch."""
+  canSwitchToDefaultBranch: Boolean!
+
+  """Whether returning to the default branch is selected by default."""
+  defaultSwitchToDefaultBranch: Boolean!
+
+  """Reviewed repository default branch."""
+  switchToDefaultBranchName: String
+
+  """Reason returning to the default branch is unavailable."""
+  switchToDefaultBranchUnavailableReason: String
+
   """Whether the linked worktree supports managed sync and merge."""
   canAutoMergeWithSync: Boolean!
 
@@ -14439,6 +14482,14 @@ type GitHubPullRequestMergeOptions {
 
 """The result of GitHub pull request merge."""
 type GitHubPullRequestMergeResult {
+  """Checkout associated with the persisted merge follow-ups."""
+  worktreeId: ID
+
+  """
+  Progress of returning the primary checkout to the updated default branch.
+  """
+  postMergeSwitch: PostMergeSwitchStatus
+
   """
   Error raised while scheduling or performing post-merge actions. May be null when the actions succeed or are not requested.
   """
@@ -14556,6 +14607,11 @@ input UpdateGitHubRepositoryInput {
 
 """Values used to merge a GitHub pull request."""
 input MergeGitHubPullRequestInput {
+  """
+  Return the primary checkout to the updated default branch after merging.
+  """
+  switchToDefaultBranch: Boolean = false
+
   """
   Selected targeting worktrees to update only after the merge is confirmed.
   """
@@ -14971,6 +15027,12 @@ type GitLabProjectCandidatePage {
 
 """GitLabMergeRequest values exposed by the GitLab integration."""
 type GitLabMergeRequest implements SourceControlRequest {
+  """Commit created when GitLab merged this request, when available."""
+  mergeCommitSha: String
+
+  """Commit created by squashing the source branch, when available."""
+  squashCommitSha: String
+
   """Project namespace and name."""
   projectPath: String
 
@@ -15202,6 +15264,12 @@ type GitLabCommentPage {
 
 """GitLabMergeRequestDetail values exposed by the GitLab integration."""
 type GitLabMergeRequestDetail {
+  """Commit created when GitLab merged this request, when available."""
+  mergeCommitSha: String
+
+  """Commit created by squashing the source branch, when available."""
+  squashCommitSha: String
+
   """Project namespace and name."""
   projectPath: String
 
@@ -15948,6 +16016,15 @@ type GitLabReviewerDirectory {
 
 """Persisted merge intent and independently retryable follow-ups."""
 type GitLabMergeOperation {
+  """Target project identifier for the saved merge request."""
+  projectId: ID!
+
+  """Project-scoped merge-request number."""
+  iid: Int!
+
+  """Progress of returning the primary checkout to the default branch."""
+  postMergeSwitch: PostMergeSwitchStatus
+
   """Whether AIDE syncs the linked branch before merging."""
   autoSync: Boolean!
 
@@ -15991,6 +16068,18 @@ type GitLabMergeOperation {
 Current GitLab project policy, readiness, defaults and linked follow-ups.
 """
 type GitLabMergeOptions {
+  """Whether the linked primary checkout can return to the default branch."""
+  canSwitchToDefaultBranch: Boolean!
+
+  """Whether returning to the default branch is selected by default."""
+  defaultSwitchToDefaultBranch: Boolean!
+
+  """Reviewed repository default branch."""
+  switchToDefaultBranchName: String
+
+  """Reason returning to the default branch is unavailable."""
+  switchToDefaultBranchUnavailableReason: String
+
   """Whether the linked worktree supports managed sync and merge."""
   canAutoMergeWithSync: Boolean!
 
@@ -16123,6 +16212,11 @@ type GitLabMergeResult {
 Submit the SHA reviewed in the merge sheet. Omitted messages use GitLab defaults.
 """
 input SubmitGitLabMergeRequestMergeInput {
+  """
+  Return the linked primary checkout to the updated default branch after merge.
+  """
+  switchToDefaultBranch: Boolean = false
+
   """
   Rebase and push the linked branch before waiting for passing CI and merging.
   """
@@ -25655,8 +25749,29 @@ type WorktreeOperationResult {
   preparationConflictPaths: [String!]!
 }
 
+"""
+Progress of returning a primary checkout to its default branch after a merge.
+"""
+type PostMergeSwitchStatus {
+  """Reviewed default branch to check out after the confirmed merge."""
+  branch: String!
+
+  """
+  Durable switch lifecycle: PENDING, UPDATING, COMPLETED, or ACTION_REQUIRED.
+  """
+  state: String!
+
+  """Reason the post-merge switch needs attention, when one exists."""
+  lastError: String
+}
+
 """Represents a worktree auto merge in the GraphQL API."""
 type WorktreeAutoMerge {
+  """
+  Progress of returning the primary checkout to the updated default branch.
+  """
+  postMergeSwitch: PostMergeSwitchStatus
+
   """
   Jira transition warning returned after activation; auto merge remains enabled.
   """
@@ -26870,6 +26985,11 @@ input ConfigureWorktreeAutoSyncInput {
 
 """Values used to configure a worktree auto merge."""
 input ConfigureWorktreeAutoMergeInput {
+  """
+  Return the primary checkout to the updated default branch after merging.
+  """
+  switchToDefaultBranch: Boolean = false
+
   """
   Rebase and push the linked branch before waiting for passing CI and merging.
   """
