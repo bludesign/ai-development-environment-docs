@@ -1,9 +1,9 @@
 ---
 title: "Authentication"
-description: "Configure password or OIDC sign-in, bootstrap the first user, and understand which routes accept each credential."
+description: "Configure password or OIDC sign-in, nearby Apple TV authentication, first-account setup, and credential access."
 ---
 
-AI Development Environment uses Better Auth for user accounts, browser and mobile sessions, OAuth/OIDC identities, and API keys. Every signed-in user has the same access. Optional incoming [MCP OAuth](/reference/mcp-oauth) gives connected applications separate read, write, and destructive permissions without granting application sessions. Agent credentials keep their narrower run and enrollment permissions.
+AI Development Environment uses Better Auth for user accounts, browser and native app sessions, OAuth/OIDC identities, and API keys. Native apps include iPhone, iPad, and Apple TV. Every signed-in user has the same access. Optional incoming [MCP OAuth](/reference/mcp-oauth) gives connected applications separate read, write, and destructive permissions without granting application sessions. Agent credentials keep their narrower run and enrollment permissions.
 
 ## Production settings
 
@@ -126,7 +126,7 @@ The server does not link a new OIDC identity to a password account solely becaus
 
 ## Credential behavior
 
-| Surface                                | Browser/mobile session | `X-API-Key`  | `agent_` token        | Anonymous                                  |
+| Surface                                | Browser/native session | `X-API-Key`  | `agent_` token        | Anonymous                                  |
 | -------------------------------------- | ---------------------- | ------------ | --------------------- | ------------------------------------------ |
 | Dashboard and control-plane REST       | Full                   | No           | Agent routes only     | No                                         |
 | GraphQL HTTP and WebSocket             | Full                   | Full         | Agent operations only | Only `enrollAgent` with an `enroll_` token |
@@ -167,6 +167,32 @@ Keep `/api/graphql`, first-party `/api/ios/notification-devices`, enrollment sta
 The iOS app fetches `/api/auth/config` for the selected server before it initializes the dashboard. It stores a bearer session in Keychain, scoped to that server origin. Password sign-in stays native. OIDC opens an `ASWebAuthenticationSession`, returns through the `aide-auth` URL scheme with an opaque authorization code, and redeems that code with the in-memory PKCE verifier. The one-minute code is single-use and is not itself a Better Auth session or token.
 
 Signing out invalidates the server session, removes the Keychain item, clears Apollo's cache, closes subscriptions, and defers first-party push registration until the next sign-in.
+
+## Apple TV nearby sign-in
+
+On Apple TV, choose **Sign In with iPhone or iPad** and follow Apple's nearby-device prompt. The assisting device opens the control plane's existing web authentication screens. Password sign-in, configured OIDC, registration, and first-account setup follow the same `AUTH_MODE` and registration rules as browser sign-in. If the assisting browser already has a valid session, the flow continues directly to completion. You can also enter a password on TV when the server enables password authentication.
+
+Update the server before deploying the TV app. Updated servers advertise `nearbySignInEnabled: true` from `GET /api/auth/config`; native clients treat a missing capability as `false` and show update-required guidance. The extension uses the existing verification records and requires no database migration. It preserves the iOS `/api/auth/mobile/oauth/start` and `/api/auth/mobile/oauth/complete` flow and its session behavior.
+
+The TV flow uses the same redemption request and response formats as native iOS OIDC:
+
+1. The TV app creates independent 32-byte random `state` and `code_verifier` values. Its `ASWebAuthenticationSession` opens `GET /api/auth/mobile/start` with `state`, the S256 `code_challenge`, and `code_challenge_method=S256`.
+2. The server validates the trusted origin and creates a separate HttpOnly `aide-mobile-nearby-state` browser cookie, with a ten-minute lifetime. Sign-in returns to `GET /api/auth/mobile/complete`; an already authenticated browser reaches that endpoint directly.
+3. Completion validates the browser state and session, then returns only an opaque authorization `code` and the app's `state` through `aide-auth://callback`. The server stores the television session purpose with that code; the redemption request cannot select it.
+4. The TV validates the callback scheme, host, and state, then posts `{"code":"…","code_verifier":"…"}` to `/api/auth/mobile/redeem` on the server where the attempt started. The code expires after one minute and is consumed atomically on its first redemption attempt, including an attempt with an incorrect verifier.
+5. After validating PKCE and the assisting browser's session, the server creates a fresh Better Auth session for TV. It returns the usual `token`, `expiresAt`, and `user` fields. The assisting browser keeps its own session and cookie.
+
+The TV stores its bearer session in its own server-scoped Keychain. Its token differs from the browser's token: signing out or revoking one session leaves the other session active. The verifier stays in memory for the active attempt. Changing servers or starting another attempt invalidates the previous attempt, so a stale callback cannot install credentials for the new connection. Cancel the nearby prompt to return to sign-in, or start a new attempt after an expired or failed exchange.
+
+<Note>
+  Apple TV and the assisting iPhone or iPad must both reach the selected server.
+  A loopback address refers to each device itself. Native API proxy headers stay
+  on TV and are not copied into the assisting browser. If your reverse proxy
+  requires browser authentication, complete that authentication on the assisting
+  device as well.
+</Note>
+
+See [Native apps](/native-apps) for TV setup, Siri Remote controls, unsupported local-device actions, and iPhone/iPad Handoff.
 
 ## Upgrade from the MCP environment token
 

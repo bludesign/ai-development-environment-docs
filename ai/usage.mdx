@@ -103,9 +103,15 @@ The page distinguishes several kinds of "nothing here", so the fix is never a gu
 
 On the web, select **Usage today** in the sidebar to open **Usage over the last 7 days**. In the native iOS app, open **Status Center** and select **Spend Today**. Both show today's spend followed by the total for the last seven calendar days, including today, plus the latest collection time and **View full usage**. Chart dates use a readable month, day, and year, such as **Oct 11, 2026**. Opening this view reads retained observations and does not start agent collection jobs. Missing days are displayed as zero; an empty history shows an empty-state message. Use **Retry** if the read fails.
 
+On smaller web screens, open the navigation sidebar first. The popup stays inside the screen and scrolls when vertical space is limited. **View full usage** opens the Usage page and closes mobile navigation.
+
 <Frame>
   <img className="block dark:hidden" src="/images/light/sidebar-usage.png" alt="Seven-day usage popover in the sidebar" />
   <img className="hidden dark:block" src="/images/dark/sidebar-usage.png" alt="Seven-day usage popover in dark theme" />
+</Frame>
+
+<Frame caption="The usage popup on a narrow web screen.">
+  <img className="mx-auto block max-w-sm" src="/images/light/sidebar-usage-mobile.png" alt="Usage popup with the seven-day chart and View full usage link on a phone screen" />
 </Frame>
 
 ## Related pages
