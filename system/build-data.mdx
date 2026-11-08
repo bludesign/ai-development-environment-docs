@@ -1,6 +1,6 @@
 ---
 title: "Build Data"
-description: "Inspect and clean up Xcode DerivedData across enrolled agents."
+description: "Inspect and clean up Derived Data, shared Xcode caches, and device support files."
 ---
 
 <Frame>
@@ -8,17 +8,17 @@ description: "Inspect and clean up Xcode DerivedData across enrolled agents."
   <img className="hidden dark:block" src="/images/dark/build-data.png" alt="Build Data page in dark theme" />
 </Frame>
 
-The **Build Data** page at `/system/build-data` is a fleet-wide view of the disk that Xcode consumes but never reclaims: per-project DerivedData folders, shared Xcode caches, and the iOS Device Support symbols kept for every iOS version that has ever been connected to one of your Macs.
+Open **System → Build Data** at `/system/build-data` to inspect project Derived Data, shared Xcode caches, and support files for devices connected to your Macs.
 
-Instead of visiting each machine and deleting folders by hand, you scan every enrolled agent at once, see which folders still belong to a live worktree and which are orphans, and delete across machines in a single action.
+Choose an agent to scope disk monitoring, scans, and deletion history to that Mac. Choose **All Agents** to scan the fleet. While a global active agent is set, Build Data follows it. Clearing the global selection restores your saved page filter.
 
 ## How a scan works
 
-Nothing is read from disk until you ask for it, and measuring sizes is far more expensive than listing folders.
+Build Data lists folders when you open the page or switch agents. Measuring sizes takes longer and runs on demand.
 
 <Steps>
   <Step title="Refresh lists the folders" icon="refresh-cw">
-    **Refresh** dispatches a scan job to every eligible agent. Each agent walks its configured DerivedData directories and reports folder names, paths, modification times, and the volume each one lives on. The footer shows *Scanned N of M eligible agents* while this runs.
+    **Refresh** dispatches a scan job to each eligible agent in the current view. Each agent walks its configured Derived Data directories and reports folder names, paths, modification times, and the volume each one lives on. The progress panel shows *Scanned N of M eligible agents* while this runs.
   </Step>
   <Step title="The server links folders to worktrees" icon="link">
     Each folder's recorded workspace path is matched against the [worktrees](/worktrees/worktrees) known for that agent, choosing the longest matching path. That match is what turns a nameless `MyApp-abc123` folder into a row you can act on confidently.
@@ -72,15 +72,16 @@ The same protection covers entries with executing work — a build or run curren
 
 On agents advertising `operation.resources.v1`, a delete job also reserves the target paths. Confirming protected deletion does not bypass a conflicting active build's path reservation; deletion waits until that build releases it. Older agents do not provide this path coordination.
 
-## iOS Device Support
+## Device Support
 
-Xcode keeps a folder of symbols and support files for every iOS version it has ever seen on a connected device. These accumulate for years and are commonly the largest single reclaim on a developer Mac.
+<Frame>
+  <img className="block dark:hidden" src="/images/light/build-data-device-support.png" alt="iOS and tvOS Device Support entries in light theme" />
+  <img className="hidden dark:block" src="/images/dark/build-data-device-support.png" alt="iOS and tvOS Device Support entries in dark theme" />
+</Frame>
 
-The card lists them by **iOS version**, **Disk usage**, and **Agent**, and supports the same select-and-delete flow.
+Xcode stores symbols and support files for connected devices by platform and operating system version. The **Device Support** card includes the platform folders found on each agent, such as iOS, tvOS, watchOS, and visionOS.
 
-<Note>
-  Deleting these is low-risk. Xcode recreates the folder for a given iOS version the next time a device running it is connected — you pay one slow reconnect, not a permanent loss.
-</Note>
+Review the platform, version, and agent before you calculate disk usage or delete a cache. Xcode can recreate the cache the next time a matching device connects. Open [Simulators](/system/simulators) from this card to manage simulator devices and their installed apps.
 
 ## Automatic cleanup
 
@@ -98,7 +99,7 @@ Everything the monitor removes is recorded in the deletion history with source *
 
 The **Deletion history** card lists what was removed from each agent over the last 90 days, with the folder, worktree path, agent, deletion time, and whether the source was **User** or **Automatic**. Long histories page with **Load more**.
 
-**Clear history** empties the records only. It does not restore anything, and it does not touch files on any agent.
+**Clear History** removes deletion records for the selected agent, or for all agents when **All Agents** is selected.
 
 ## Notes
 

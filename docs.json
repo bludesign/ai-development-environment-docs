@@ -190,6 +190,8 @@
               "system/cli-health-checks",
               "system/polling",
               "system/build-data",
+              "system/simulators",
+              "system/simulator-detail",
               "system/provisioning-profiles",
               "system/provisioning-profile-detail",
               "system/devices",
