@@ -32,7 +32,7 @@ The package can include:
 | Reviewer pools | Preferred people for code owner and approval groups, including provider identity and profile metadata. Destination discovery validates groups and members before import. |
 | Preparations | Individual write, delete, and assume-unchanged rules; selected write rules include uploaded bytes. |
 | iOS App settings | The repository's default destination type, including projects without saved configurations. |
-| iOS App configuration | Saved source paths, schemes, build configurations, actions, advanced settings, and export settings. Agent observations and past build artifacts are not transferred. |
+| iOS App configuration | Shared and per-platform source paths, schemes, build configurations, actions, advanced settings, and export settings. The import preserves platform order and uses the first platform as the default. |
 | Build scripts | Selected reusable scripts and their repository assignments. |
 | Skill groups | Repository assignments, mapped to groups on the destination control plane. |
 | Auto Retry | Repository rules and their targets; imported rules are paused. |
