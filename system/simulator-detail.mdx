@@ -1,0 +1,31 @@
+---
+title: "Simulator detail"
+description: "Manage one simulator and locate the bundles and data folders for its installed apps."
+---
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/simulator-detail.png" alt="Simulator detail and installed apps in light theme" />
+  <img className="hidden dark:block" src="/images/dark/simulator-detail.png" alt="Simulator detail and installed apps in dark theme" />
+</Frame>
+
+Select a device from [Simulators](/system/simulators) to see its agent, model, runtime, state, and UUID. The detail stays on that device when you switch the global active agent.
+
+## Manage the device
+
+- **Start**, **Shut Down**, and **Restart** follow the current state of the simulator.
+- **Rename** updates the device's name.
+- Shut down the simulator before duplicating or erasing it. **Duplicate** creates a separate device. **Erase Contents and Settings** clears the simulator's apps and settings and keeps its UUID.
+- **Delete** removes a shut-down simulator and its data. You can also delete an unavailable simulator that Xcode lists as stuck in **Creating**.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/simulator-detail-unavailable.png" alt="An unavailable simulator with Delete enabled in light theme" />
+  <img className="hidden dark:block" src="/images/dark/simulator-detail-unavailable.png" alt="An unavailable simulator with Delete enabled in dark theme" />
+</Frame>
+
+If the detail shows `runtime profile not found`, the selected Xcode cannot load that simulator's runtime. The simulator may still appear in the inventory after the runtime becomes unavailable.
+
+## Inspect installed apps
+
+The **Installed apps** list shows user-installed apps, including their bundle ID and version where available. You can inspect apps on a shut-down simulator. Use **Launch** and **Stop** while the simulator is running.
+
+Use **Reveal App Bundle** to select the bundle in Finder or **Open App Data Folder** to open the app's container. Finder opens on the Mac running the selected agent. The agent needs access to a graphical session. You can also copy the path when a container is available.
