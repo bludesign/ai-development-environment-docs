@@ -20,6 +20,19 @@ Choose an agent to see its devices, or choose **All Agents** to see the fleet. T
 
 An agent needs Xcode and simulator management support. If the agent is offline, reconnect it before refreshing its inventory or sending an action.
 
+## Delete multiple simulators
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/simulators-edit.png" alt="Simulator Edit mode with two devices selected in light theme" />
+  <img className="hidden dark:block" src="/images/dark/simulators-edit.png" alt="Simulator Edit mode with two devices selected in dark theme" />
+</Frame>
+
+1. Choose **Edit** to show selection controls.
+2. Select individual simulators, or use the checkbox in an agent's group to select every visible simulator on that Mac that can be deleted. You can select shut-down devices and unavailable devices stuck in **Creating**. Set your filters before selecting devices.
+3. Choose **Delete selected**, review the device count, and confirm. This removes the selected devices and their data.
+
+The list refreshes after deletion. If a device could not be deleted, review the error before retrying. Choose **Done** to leave Edit mode.
+
 ## Reset to default simulators
 
 Choose **Reset to Default Simulators** for the Mac whose roster you want to replace. Shut down its simulators before confirming. The agent validates the default roster for its installed runtimes, creates the replacements, and removes the original devices.
