@@ -101,6 +101,10 @@ The **Deletion history** card lists what was removed from each agent over the la
 
 **Clear History** removes deletion records for the selected agent, or for all agents when **All Agents** is selected.
 
+## Scope automation to an agent
+
+Pass `agentId` to `refresh_build_data`, `get_build_data_deletion_history`, or `clear_build_data_history` to work with one agent. In a workflow, select an agent or bind an agent ID in `BUILD_DATA_REFRESH` and `BUILD_DATA_CLEAR_HISTORY`. Leave the agent unset to use fleet scope.
+
 ## Notes
 
 - The agent's DerivedData location setting selects its legacy scan roots. Updated agents also scan the managed cache root beneath the effective Builds directory.

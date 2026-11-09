@@ -48,7 +48,7 @@ The outgoing handles a node offers depend on its kind:
 
 ## The canvas
 
-The left panel toggles between the **palette** and the **outline**. The palette groups steps and triggers by category — Agents, AI runs, Builds, Codebases, Control flow, Extensibility, GitHub, GitHub Actions, GitLab, Human loop, Jira, Manual, Plans and sessions, Schedule, Skills, Workflows, and Worktrees — and searches across label, kind, category, and description. Drag an entry onto the canvas to add it.
+The left panel toggles between the **palette** and the **outline**. The palette groups steps and triggers by category and searches across label, kind, category, and description. Drag an entry onto the canvas to add it.
 
 Canvas controls:
 
@@ -110,7 +110,7 @@ Selecting a node opens its inspector.
 
 ### Dedicated actions and results
 
-The current catalog has **346 typed step kinds**. Dedicated actions cover resource discovery, repository and worktree setup, build configuration and scripts, command and skill authoring, agent administration, apps, transfers, crashes, telemetry, notifications, caches, and tool/preset administration. Use the palette search rather than maintaining a separate list of every operation. The web and iOS editors use the same catalog and configuration schemas.
+Dedicated actions cover resource discovery, repository and worktree setup, build configuration and scripts, command and skill authoring, agent administration, apps, transfers, crashes, telemetry, notifications, caches, and tool and preset administration. Search the web palette or open **Workflow Catalog** in the iOS and tvOS apps to see the current kinds and configuration schemas.
 
 The operation-specific actions use a fixed MCP tool identity with that tool's input validation, permissions, and audit context. Configuration cannot substitute another tool. **MCP call** remains available when you need to select a built-in or configured external tool directly.
 
@@ -119,6 +119,25 @@ These actions write their structured response to `steps.<stepId>.output`. Keep t
 An action that queues background work can succeed as soon as it returns a durable job or operation ID. Its success handle confirms dispatch, not completion. Follow with a supported wait action or a separate result-triggered workflow; use the returned ID with read actions to inspect status before dependent work. Existing steps that explicitly wait, such as the Tailscale fleet steps below, keep that behavior. Inspect the kind's description before connecting a dependent action.
 
 When a dedicated action accepts `requestId` and you leave it unset, the runtime generates the same value for retries of that run's node. Keep an explicit request ID stable when retrying the exact same operation; changing the reviewed input requires a new review and request identity.
+
+### Automating simulators
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/workflow-simulators.png" alt="Simulator actions in the workflow palette in light theme" />
+  <img className="hidden dark:block" src="/images/dark/workflow-simulators.png" alt="Simulator actions in the workflow palette in dark theme" />
+</Frame>
+
+Use the **Simulators** category to refresh inventory, inspect a device, create a simulator, run device and app actions, open folders on the Mac, delete selected devices, or reset one agent's roster. Simulator steps wait for the agent and write results to `steps.<stepId>.output` before following the `success` or `failure` handle.
+
+To inspect, boot, and launch an app on a known simulator, connect these steps by their `success` handles:
+
+1. Set up **Inspect simulator** (`SIMULATOR_INSPECT`) with the agent and simulator UUID. If the step ID is `inspect`, subsequent steps can bind their agent and simulator to `steps.inspect.output.agentId` and `steps.inspect.output.simulatorId`.
+2. Add **Control simulator** (`SIMULATOR_DEVICE_ACTION`) with `action` set to `BOOT` and those bindings.
+3. Add **Control simulator app** (`SIMULATOR_APP_ACTION`) with `action` set to `LAUNCH_APP`. Use the same bindings and the installed app's bundle ID.
+
+Erase, delete, and reset require `confirm: true`. For `SIMULATOR_DELETE`, pass an array of `{ agentId, simulatorId }` targets. Read `steps.<stepId>.output.targets` for each target's job or admission error, including when the overall step follows `failure`. The step waits for all accepted jobs before continuing.
+
+Use `SIMULATOR_OPERATION_RESULT` to start a workflow after a simulator action from the app or standalone MCP. Set `agentId` to watch one Mac, `operation` to match an action such as `DELETE`, or `status` to match `SUCCEEDED`, `FAILED`, `CANCELLED`, or `TIMED_OUT`. The trigger seeds `agent.id`, `simulator.id` when available, and `simulatorOperation` with `jobId`, `operation`, `status`, and `error`. Bulk deletion emits a separate event per device job. The trigger observes creation, reset, and device, app, and Finder actions. Workflow-started jobs complete through their step results.
 
 ### Refreshing Git state before a condition
 
@@ -143,7 +162,7 @@ Use **Inspect worktree Git state** (`WORKTREE_INSPECT_GIT`) for the dirty flag, 
 
 ### Event triggers and thresholds
 
-The catalog has **124 trigger kinds**. The additional domain triggers cover existing application events:
+The catalog includes triggers for application events across these domains:
 
 | Domain | Trigger kinds |
 | --- | --- |
@@ -151,6 +170,7 @@ The catalog has **124 trigger kinds**. The additional domain triggers cover exis
 | Telemetry ingestion | `TELEMETRY_CONSOLE_INGESTED`, `TELEMETRY_ANALYTICS_INGESTED` |
 | CLI health | `CLI_HEALTH_RESULT` |
 | Tailscale Serve | `TAILSCALE_SERVE_STATE_CHANGED`, `TAILSCALE_SERVE_OPERATION_RESULT` |
+| Simulators | `SIMULATOR_OPERATION_RESULT` |
 | Repository transfers | `REPOSITORY_TRANSFER_RESULT` |
 | App and definition changes | `APP_CHANGED`, `COMMAND_DEFINITION_CHANGED`, `BUILD_SCRIPT_CHANGED`, `SKILL_DEFINITION_CHANGED` |
 | Notifications and attention | `NOTIFICATION_CREATED`, `ACTION_CENTER_CHANGED` |

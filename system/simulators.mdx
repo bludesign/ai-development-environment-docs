@@ -42,3 +42,28 @@ Choose **Reset to Default Simulators** for the Mac whose roster you want to repl
 </Warning>
 
 If part of the reset fails, read the error and check the refreshed list before retrying. To clear one simulator's apps and settings while keeping its UUID, use **Erase Contents and Settings** on its detail page.
+
+## Automate simulators with MCP
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/tools-simulators.png" alt="Simulator MCP tools in light theme" />
+  <img className="hidden dark:block" src="/images/dark/tools-simulators.png" alt="Simulator MCP tools in dark theme" />
+</Frame>
+
+Open the **Simulators** group in [Tools](/system/tools) or discover it in your MCP client. Use `agentId` to choose the Mac. Use the simulator UUID as `simulatorId` for device and app operations, and use `bundleId` for app operations. Creation uses `name`, `runtimeId`, and `deviceTypeId` from the target agent's inventory.
+
+| Permission | Tools |
+| --- | --- |
+| Read | `refresh_simulator_inventory`, `inspect_simulator`, `get_simulator_job` |
+| Write | `create_simulator`, `rename_simulator`, `clone_simulator`, `open_simulator_data_folder`, `reveal_simulator_app_bundle`, `open_simulator_app_data_folder` |
+| Destructive | `boot_simulator`, `shutdown_simulator`, `reboot_simulator`, `erase_simulator`, `delete_simulators`, `reset_simulators`, `launch_simulator_app`, `terminate_simulator_app` |
+
+1. Queue `refresh_simulator_inventory` with the target `agentId` and a `requestId` you generate. The response gives you a `jobId`.
+2. Poll `get_simulator_job` with the same `agentId` and the returned `jobId`. `QUEUED`, `RUNNING`, and `CANCELLING` mean the operation is still in progress. On `SUCCEEDED`, read `job.inventory` for devices, runtimes, and compatible device types. On failure, review `job.error`.
+3. Queue `inspect_simulator` with the agent, a simulator UUID from inventory, and a new `requestId`. Poll its job and read `job.details` for the simulator and its installed apps. Boot the simulator to load the full app list.
+
+Create and clone jobs return the resulting device UUID in `job.simulatorId`. Inspection can include paths on the owning Mac. Finder tools open those locations on that Mac.
+
+Keep `requestId` stable when retrying the same submission. Choose a new ID when changing the operation or its inputs. Erase, delete, and reset require `confirm: true`. `delete_simulators` accepts 1 to 200 `{ agentId, simulatorId }` pairs in `targets` and returns a job or queue error for each target. Poll each accepted job to confirm deletion. A run-scoped tool call can target only the run's own agent, including every target in a bulk deletion.
+
+To wait for simulator work and pass its results to subsequent actions, use [simulator workflow steps](/workflows/workflow-edit#automating-simulators).

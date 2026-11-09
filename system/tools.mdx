@@ -26,7 +26,7 @@ MCP `get_server_url_settings` reads these settings, and `update_server_url_setti
 
 ## Tool catalog
 
-With every production dependency available, the built-in registry contains **560 tools in 30 top-level groups**. The live catalog remains the source of truth for names, schemas, required inputs, and provider availability. Saved presets and existing run snapshots keep their explicit selections when new tools are added.
+Use the live catalog for tool names, schemas, required inputs, and provider availability. Saved presets and existing run snapshots keep their explicit selections when new tools are added.
 
 Tools are grouped by source. Built-in tools ship with the server and cover agents, builds, codebases, commands, worktrees, GitHub, GitLab, Jira, skills, runs, workflows, notifications, signing assets, devices, disk space, usage, and debugging. Each external MCP server you add contributes its own group.
 
@@ -44,6 +44,8 @@ The built-in **Builds** group includes `import_coverage_report`. It records an L
 
 The built-in **Tailscale** group reads the fleet Serve overview, inspects agents, upserts typed templates, toggles individual assignments, and deletes templates. Its write tools operate through durable agent jobs and expose operation progress rather than raw CLI output. See [Tailscale Serve](/system/tailscale#automation-interfaces) for the complete catalog and safety constraints.
 
+The built-in **Simulators** group inventories, inspects, and manages Xcode simulators on your Mac agents. Queue actions by agent and simulator UUID, then use `get_simulator_job` to read their results. See [Automate simulators with MCP](/system/simulators#automate-simulators-with-mcp) for tool permissions and polling.
+
 ### Capability coverage
 
 The catalog exposes the same user-facing services used by the dashboard. Use these groups to find administrative and automation operations as well as resource reads:
@@ -60,7 +62,7 @@ The catalog exposes the same user-facing services used by the dashboard. Use the
 | Apps, agents, and Action Center | Manage apps and memberships, rename agents, run CLI health checks, edit custom checks, refresh attention, and acknowledge or dismiss supported items |
 | Tools and presets | Create, update, export, preview-import, or delete presets; manage external-server metadata and clear completed audit records |
 | Notifications and debugging | Inspect and test subscriptions or registered devices, manage telemetry and SSE views, presets, and filters, and inspect APNs readiness |
-| Operational services | Manage Tailscale Serve, disk and build-data operations, cache settings and storage cleanup, usage history, and model-cost sources |
+| Operational services | Manage Tailscale Serve, simulators, disk and build-data operations, cache settings and storage cleanup, usage history, and model-cost sources |
 
 Some operations return a job or operation immediately. Read that operation or use a result trigger before treating the work as complete. See [workflow action results](/workflows/workflow-edit#dedicated-actions-and-results) and [reviewed automation requests](/reference/api#reviewed-automation-requests).
 

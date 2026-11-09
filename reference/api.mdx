@@ -223,7 +223,7 @@ Changing the document or decisions requires a fresh preview. The server also rec
 
 ### Workflow catalog and authoring
 
-`workflowCatalog` returns the live step and trigger definitions, configuration schemas, required/provided session paths, handles, and effect flags. The current catalog contains **345 steps and 124 triggers**. MCP clients can call `list_workflow_step_kinds`, `list_workflow_trigger_kinds`, `describe_workflow_kind`, and `list_workflow_session_paths` before authoring; validate the draft before publishing.
+`workflowCatalog` returns the live step and trigger definitions, configuration schemas, required and provided session paths, handles, and effect flags. MCP clients can call `list_workflow_step_kinds`, `list_workflow_trigger_kinds`, `describe_workflow_kind`, and `list_workflow_session_paths` before authoring. Validate the draft before publishing.
 
 Dedicated operation actions use fixed built-in tools and return structured data at `steps.<stepId>.output`. Actions that queue work return durable identities rather than automatically waiting for the work to finish. The [editor reference](/workflows/workflow-edit#dedicated-actions-and-results) explains output bindings, request IDs, and result triggers; [trigger timing](/workflows/workflow-edit#event-triggers-and-thresholds) covers dirty duration, signing expiry, and build-data thresholds.
 
@@ -427,7 +427,7 @@ Everything under `/api/public/*` is intentionally unauthenticated: iOS enrollmen
 
 The catalog spans agents, builds, codebases, worktrees, commands, workflows, runs, GitHub, GitLab, Jira, skills, notifications, signing, devices, disk space, usage, and debugging. Discovery tools include `global_search`, `get_action_center`, `get_apps`, `get_app`, `get_installation_status`, `get_agent_cli_health`, `get_crash_reports`, `get_crash_report`, `get_dsyms`, and `get_dsym`. Browse and export the catalog, run tools by hand, and inspect call history from [Tools](/system/tools).
 
-The full production registry contains **560 built-in tools in 30 top-level groups**. Available providers and external discovery affect the live catalog; use its schemas instead of assuming that a tool is callable from its name alone. Coverage includes reviewed repository transfers, run drafts/import controls, crash processing, build setup, provider administration, tags and branch cleanup, presets, notifications, and operational settings. See the [grouped capability coverage](/system/tools#capability-coverage).
+Available providers and external discovery affect the live catalog. Use its schemas to check each tool's availability and inputs. See the [grouped capability coverage](/system/tools#capability-coverage).
 
 ### Reviewed automation requests
 
