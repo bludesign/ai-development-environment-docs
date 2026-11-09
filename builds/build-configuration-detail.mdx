@@ -14,11 +14,18 @@ Use the **Configurations** breadcrumb to return to the configuration list.
 
 ## Inspect and edit
 
-The page shows the configuration's icon, repository, source path, scheme, Xcode configuration, and default action. Expand **Advanced settings** to inspect build and export options.
+The page shows the configuration's icon, repository, and shared Xcode settings. Expand **Advanced settings** to inspect build and export options. In the editor, use **Platforms** to add entries and **Default platform** to choose which one is selected first when you start a build.
 
-Select an available checkout for parsing, then choose **Edit build configuration**. Source discovery and validation run on that checkout's agent. A green **Valid** badge means the selected source, scheme, and Xcode configuration are available in that checkout. Saving updates future builds; existing build snapshots keep their captured settings.
+Each platform can use the shared settings or specify its own source, scheme, Xcode configuration, action, advanced settings, signing, and archive export. For a separate watchOS target, choose its scheme in the watchOS entry. iPhone and iPad use the iOS entry, with the device chosen in **Start Build**.
 
-The native app offers **Configurations** on Builds, with configuration details and an **Edit** action. Repository settings also provide an **iOS App project** screen for creating and removing configurations.
+<Frame>
+  <img className="block dark:hidden" src="/images/light/build-configuration-platforms.png" alt="Editing the tvOS settings in an iOS and tvOS build configuration" />
+  <img className="hidden dark:block" src="/images/dark/build-configuration-platforms.png" alt="Editing platform settings in the build configuration dialog in dark theme" />
+</Frame>
+
+Select an available checkout for parsing, then choose **Edit build configuration**. Source and destination discovery use Xcode on that checkout’s agent. A green **Valid** badge means the selected source, scheme, and Xcode configuration are available in that checkout. Saving updates future builds; existing build snapshots keep their captured settings.
+
+The native app offers **Configurations** on Builds, with configuration details and an **Edit** action. Repository settings also provide an **Apple app project** screen for creating and removing configurations.
 
 ## Build history
 
@@ -28,7 +35,7 @@ A build retains the configuration name captured when it started. If the saved co
 
 ## Custom builds
 
-Select **Custom** in Start Build to enter source and build settings for one run. This creates no saved configuration or configuration-details page. Rebuilding a Custom build uses the settings captured in its snapshot, subject to current repository, agent, destination, and script validation.
+Select **Custom** in Start Build to enter platform and build settings for one submission. This creates no saved configuration or configuration-details page. Rebuilding a Custom build uses the settings captured in its snapshot, subject to current repository, agent, destination, and script validation.
 
 ## Related pages
 

@@ -1,6 +1,6 @@
 ---
 title: "Builds"
-description: "Configure, run, inspect, deploy, and export iOS builds, and track imported coverage reports."
+description: "Configure, run, inspect, deploy, and export Apple-platform builds, and track imported coverage reports."
 ---
 
 <Frame>
@@ -16,7 +16,7 @@ description: "Configure, run, inspect, deploy, and export iOS builds, and track 
   />
 </Frame>
 
-The **Builds** page at `/dashboard/builds` holds build and imported-coverage history, plus the reusable JavaScript hooks that run around each iOS build. It has **History**, **Configurations**, and **Build Scripts** tabs.
+The **Builds** page at `/dashboard/builds` holds build and imported-coverage history, plus the reusable JavaScript hooks that run around each Xcode build. It has **History**, **Configurations**, and **Build Scripts** tabs.
 
 Start a build from a [worktree](/worktrees/worktrees) or the repository Build cards on an [app overview](/apps/app-detail). The native Builds page also offers Start Build.
 
@@ -28,7 +28,7 @@ Start a build from a [worktree](/worktrees/worktrees) or the repository Build ca
     and which build scripts are allowed.
   </Card>
   <Card title="Worktree" icon="code-branch" href="/worktrees/worktrees">
-    Where a build is started: pick a configuration and a destination.
+    Pick a configuration, platforms, and destinations for a build.
   </Card>
   <Card title="Builds page" icon="hammer">
     History of every build, and the library of reusable build scripts.
@@ -37,7 +37,7 @@ Start a build from a [worktree](/worktrees/worktrees) or the repository Build ca
 
 ## History
 
-Every build record appears newest first, with its status, captured configuration name, destination, duration, and artifact count. Saved configuration names link to [configuration details](/builds/build-configuration-detail). Deleted configurations retain their captured names without links. One-time builds explicitly show **Custom**.
+Every build record appears newest first, with its status, captured configuration name, platform, destination, duration, and artifact count. Saved configuration names link to [configuration details](/builds/build-configuration-detail). Deleted configurations retain their captured names without links. One-time builds explicitly show **Custom**.
 
 An LCOV or Istanbul [coverage import](/builds/build-coverage#importing-coverage-from-other-test-runners) appears here as a `HOST` destination. That record ran no simulator or device build; it exists to hold the worktree snapshot, import status, logs, and coverage report.
 
@@ -58,11 +58,11 @@ In iOS, tap **Repository** or **Branch** to open its searchable list. These sele
 
 Select builds individually or a whole day at once, and **Delete selected**. The list pages with **Load more**.
 
-Starting a build or coverage build closes its dialog and refreshes the surface where you started it. Rebuild behaves the same way. None of these actions automatically navigate to this page.
+A successful submission closes its dialog and refreshes the page where you started it. If a platform could not be queued, **Start Build** stays open and shows the error for that platform. Retry the failed selections from the same dialog. Accepted builds already appear in history.
 
-The build dialog offers **Any iOS Simulator** or **Any Physical iOS Device** immediately, then refreshes the live destination list in the background. You can start with the generic destination without waiting. If the refresh fails, the dialog shows a warning and keeps the generic destination available. The agent validates the scheme, configuration, and destination before running pre-build scripts. This Xcode preflight has a 180-second timeout. A failed Xcode preflight skips pre-build scripts and `xcodebuild`, but selected post-build scripts still run for cleanup. See [Execution and failures](#execution-and-failures).
+The build agent uses the selected scheme and Xcode configuration to discover available simulators, physical devices, Mac destinations, and generic build targets. Additional platforms require an updated control agent and the relevant Xcode SDKs and simulator runtimes. The agent validates the selected destination before executing pre-build scripts. Xcode preflight has a 180-second timeout. If preflight fails, selected post-build scripts still run for cleanup. See [Execution and failures](#execution-and-failures).
 
-The web destination picker keeps unavailable physical devices visible with their state and disables their selection. **Available (paired)** means the device is paired and has a detected wired or local-network transport, even if its tunnel is idle. **Connected** devices are also selectable. The server checks availability again before accepting a build for a specific device.
+The destination picker shows unavailable devices with their state or compatibility reason. **Available (paired)** means the device is paired and has a detected wired or local-network transport, even if its tunnel is idle.
 
 ## Concurrency
 
@@ -74,7 +74,7 @@ A queued build's [details page](/builds/build-detail) shows why a resource is un
 
 ### Process cleanup warnings
 
-The agent allows 30 seconds for each `/bin/ps` process inspection during build cleanup. If inspection times out after a protected iOS build has already completed, the agent preserves the build's original outcome, artifacts, and reports and adds a warning. Build history and Build Details show the warning.
+The agent allows 30 seconds for each `/bin/ps` process inspection during build cleanup. If inspection times out after a protected Xcode build has already completed, the agent preserves the build's original outcome, artifacts, and reports and adds a warning. Build history and Build Details show the warning.
 
 Protected worktree and output resources remain held until cleanup is verified. A saved checkpoint lets the agent retry verification after restarting. The warning does not turn a completed build into a failure; builds on older agents without resource protection keep their previous cleanup behavior.
 
@@ -93,11 +93,18 @@ If Xcode settings place output in a shared directory outside that cache, builds 
 
 ## Saved and Custom configurations
 
-Select **Custom** after the saved configuration cards to configure one build without saving a name or icon. On the web, Custom settings open inline below the configuration cards, so you can switch to a saved configuration at any time. Custom is selected automatically when the repository has an iOS App project but no saved configurations. Select an Xcode source, scheme, configuration, action, and build options using the same source inspection controls as the configuration editor, then choose **Use settings**.
+Select a saved configuration or choose **Custom** to enter one-time settings. In the configuration editor, add the platforms you want to use and adjust each platform's source, scheme, Xcode configuration, action, advanced settings, signing, or archive export. Shared settings apply wherever you leave a platform override unset. For example, you can use a shared scheme for iOS and tvOS and choose a separate watchOS scheme.
 
-For a selected configuration, **Physical Device** and **Simulator** tabs, the device picker, and build scripts stay visible. Expand **Details** for the source summary, action, advanced settings, export settings, and command preview. Archive requires a generic physical-device destination. Test Without Building requires compatible prior test products, including matching Custom source settings.
+**Start Build** selects the first configured platform by default. Add any other platforms you want to build, then choose one destination per platform. Expand **Details** to review the effective settings and command preview. Each platform starts an independent build with its own status, logs, reports, and artifacts. Builds that share a worktree wait for its protected resources.
 
-The web and native Start Build controls initially use **Default destination type** from the repository's [iOS App settings](/codebases/repository-detail). The default is **Simulator**; choose **Physical Device** there to prefer device builds across the repository's checkouts and worktrees. This applies to saved and Custom configurations. You can switch types for a build without changing the saved preference. If the preferred type has no available destination, an available type is selected instead. Archive always uses a physical-device destination.
+<Frame>
+  <img className="block dark:hidden" src="/images/light/build-start-platforms.png" alt="Start Build with iOS and tvOS selected and an Apple TV simulator as the tvOS destination" />
+  <img className="hidden dark:block" src="/images/dark/build-start-platforms.png" alt="Start Build with multiple platforms selected in dark theme" />
+</Frame>
+
+**Default destination type** in the repository's [iOS App settings](/codebases/repository-detail) is the starting preference for Simulator or Physical Device. Mac targets use a Mac destination. Archive uses the generic device or Mac destination for the selected platform. Test Without Building requires prior test products from a compatible platform, destination type, and configuration.
+
+GraphQL clients can call `startBuilds` with one selection per platform. Each result includes the platform, the build record when one was created, and a queueing error when applicable. Replay the same input with the same request ID after an interrupted request. Use a new request ID to retry only a subset.
 
 The **Configurations** tab lists reusable configurations with their repositories, icons, and settings. Open a card to inspect or edit it and review its paginated history.
 
@@ -107,11 +114,11 @@ The web and native **Start Build** sheets offer a **Server URL** selector with t
 
 The control plane snapshots all three base addresses, the selected kind, and the selected base address when it queues a build. Later settings changes do not change that queued build or its hooks. **Rebuild** retains the original kind and resolves its current configured address. Older builds without a recorded choice use current defaults. Rebuilding a Proxy build after removing Proxy fails with an actionable configuration error.
 
-GraphQL `StartBuildInput.serverUrlKind` and MCP build inputs accept `LOCAL`, `REMOTE`, or `PROXY`. Omit the field to use the destination's default. Worktree coverage builds use the same selection and contract.
+GraphQL `StartBuildInput.serverUrlKind`, `StartBuildSelectionInput.serverUrlKind`, and MCP build inputs accept `LOCAL`, `REMOTE`, or `PROXY`. Omit the field to use the destination's default. Worktree coverage builds use the same selection and contract.
 
 ## Choosing a build device
 
-Start Build uses the same searchable, two-line destination rows as Run, with single selection and no play buttons. For simulators, the first line shows **device name · device type**, such as **QA Phone · iPhone 17 Pro**; the second shows the iOS version and status. Identical names and types are displayed once. Older agents without device-type metadata continue to show the device name.
+Start Build uses the same searchable, two-line destination rows as Run, with one selection per platform. For simulators, the first line shows **device name · device type**, such as **QA Phone · iPhone 17 Pro**; the second shows the OS version and status. Identical names and types are displayed once. Older agents without device-type metadata continue to show the device name.
 
 <Frame>
   <img className="block dark:hidden" src="/images/light/build-start-devices.png" alt="Searchable two-line simulator picker in Start Build" />
@@ -120,10 +127,17 @@ Start Build uses the same searchable, two-line destination rows as Run, with sin
 
 ## Running on devices
 
-**Run** opens the same detailed destination picker on Builds, Build Details, Worktrees, Worktree Details, Plan and Session build cards, and the Action Center.
+**Run** opens the destination picker for the selected build on Builds, Build Details, Worktrees, Worktree Details, Plan and Session build cards, and the Action Center. The picker shows destinations that can run that artifact. Select a platform when the build supports multiple runtimes. For example, an eligible iOS artifact can also run on Vision Pro or an Apple silicon Mac in **Designed for iPad** mode. Use the build row for another SDK when you want to run its artifact.
 
-- Agent tabs appear above device search. The Mac that produced the build is selected first and labeled **Build agent**; other macOS agents appear beside it. Offline, outdated, non-macOS, and known architecture-incompatible agents remain visible with a reason but cannot be selected.
-- Switching agents clears the current device selection and loads that agent's destinations on demand. Search, **Select All**, **Clear**, quick run, and **Run Selected** always apply only to the active agent.
+On Mac, **Designed for iPad** launches on the build agent and requires an iOS development profile that includes that Apple silicon Mac. For a Vision Pro simulator, use an eligible iOS Simulator build.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/build-run-platform.png" alt="Run picker showing Apple Vision Designed for iPad as a compatible destination" />
+  <img className="hidden dark:block" src="/images/dark/build-run-platform.png" alt="Run platform picker in dark theme" />
+</Frame>
+
+- Agent tabs appear above device search. The Mac that produced the build is selected first and labeled **Build agent**. Mac and Mac Catalyst apps launch on this Mac. Eligible devices and simulators can also run on other agents. Offline, outdated, non-macOS, and known architecture-incompatible agents remain visible with a reason but cannot be selected.
+- Switching agents or platforms clears the current device selection and loads that agent's destinations on demand. Search, **Select All**, **Clear**, quick run, and **Run Selected** always apply only to the active agent.
 - Each row has a checkbox, the device name, and a second line with platform, OS version, and a humanized state such as **Connected**, **Offline**, or **Running**.
 - Booted destinations appear first, followed by other available destinations and then unavailable ones. The first booted simulator is therefore the default when one is present.
 - Select an available row anywhere except its play button to toggle it for a multi-device run.

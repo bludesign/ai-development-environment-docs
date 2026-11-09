@@ -23,7 +23,7 @@ The build details page at `/dashboard/builds/{id}` covers one immutable build fr
 | Action             | Available when                                                              |
 | ------------------ | --------------------------------------------------------------------------- |
 | **Cancel build**   | The build is queued, preparing, or running                                  |
-| **Rebuild**        | Always — starts a fresh build from the same configuration                   |
+| **Rebuild**        | Always — starts a fresh build for the captured platform                   |
 | **Run**            | The build produced a runnable app and a compatible destination is connected |
 | **Install**        | An archive has been exported for over-the-air installation                  |
 | **Export archive** | The build captured an `.xcarchive`                                          |
@@ -35,11 +35,11 @@ An **Out of date** badge appears when the worktree has moved on since this build
 
 After a run is accepted, the web and iOS apps continue watching its installation and launch result. A later failure remains visible on Build Details even after the picker closes; open **Runs and exports** for the destination and full error. A successful queue response alone does not mean the app launched.
 
-The picker starts on the build agent and can switch to another eligible Mac. Cross-agent deployments show their target agent and transfer state in **Runs and exports**. While the app package moves through the relay, Build Details reports upload/download progress; checksum, compatibility, disk-space, extraction, signing, installation, and launch failures remain attached to that deployment with an actionable message.
+The picker starts on the build agent. Mac and Mac Catalyst builds launch there. For other artifacts, the picker can switch to another eligible Mac to run on one of its compatible simulators or devices. Cross-agent deployments show their target agent and transfer state in **Runs and exports**. While the app package moves through the relay, Build Details reports upload/download progress; checksum, compatibility, disk-space, extraction, signing, installation, and launch failures remain attached to that deployment with an actionable message.
 
 ## Overview
 
-The scheme, action, destination, commit, build ID, start and finish times, duration, and the build folder path on the agent.
+The platform, scheme, action, destination, commit, build ID, start and finish times, duration, and the build folder path on the agent.
 
 While a build is **Queued**, the web page shows its resource-blocking reason when one is available, such as an active build, AI Session, worktree move, or pending merge confirmation. It starts automatically when the conflicting operation releases its protection. GraphQL clients can read the same message from `Build.blockedReason`.
 
@@ -96,11 +96,11 @@ Once parsed you get totals — tests, passed, failed, skipped — and a browsabl
 
 ## Exporting an archive
 
-**Export archive** writes the captured `.xcarchive` out locally as an IPA.
+**Export archive** exports the captured `.xcarchive` on the build agent. Device exports can produce an IPA. Mac and Mac Catalyst exports can produce an app or installer package.
 
 <Steps>
   <Step title="Choose a distribution method" icon="box">
-    **Debugging**, **Release Testing**, **Enterprise**, or **App Store Connect**.
+    Choose from the export methods available for the archive’s platform. Mac and Mac Catalyst support **Copy App**, **Developer ID**, and **App Store Connect**.
   </Step>
   <Step title="Select the team and signing" icon="shield">
     Pick a development team from those installed on the build agent, then a signing certificate — chosen automatically or named explicitly. **Parse project** reads the scheme's signable targets and matches installed provisioning profiles, giving you one profile selector per app and extension.
@@ -114,8 +114,7 @@ Once parsed you get totals — tests, passed, failed, skipped — and a browsabl
 </Steps>
 
 <Note>
-  Exports are written locally as an IPA. These settings never upload to App
-  Store Connect.
+  The agent writes exports locally, including exports prepared for App Store Connect.
 </Note>
 
 <Warning>
