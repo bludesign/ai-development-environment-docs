@@ -28,6 +28,11 @@ The page is organized into three groups.
 
 ### Server URLs
 
+<Frame>
+  <img className="block dark:hidden" src="/images/light/settings-server-urls.png" alt="Server URLs settings with simulator and physical iOS build defaults" />
+  <img className="hidden dark:block" src="/images/dark/settings-server-urls.png" alt="Server URLs settings with build defaults in dark theme" />
+</Frame>
+
 **Server URLs** is the single place to configure the control plane's client-facing addresses. Endpoint help, enrollment commands, MCP configurations, webhooks, and artifact links use these settings in both the web and iOS apps.
 
 | Setting                      | Behavior                                                                                               |
@@ -35,10 +40,11 @@ The page is organized into three groups.
 | **Local base URL override**  | Optional override of the detected private browsing origin or server network address                    |
 | **Remote base URL override** | Optional override of `PUBLIC_BASE_URL`, falling back to the browsing origin                            |
 | **Proxy URL**                | Optional address such as `https://my-server.example.ts.net`; Proxy choices appear only when configured |
-| **Default server URL**       | Initializes address selectors and builds; initially **Local**                                          |
-| **Simulator default**        | Optional build default for simulators; **Use global default** inherits the global choice               |
+| **Default server URL**       | Initializes address selectors and builds without a destination default; initially **Local**             |
+| **Simulator default**       | Optional build default for simulators; **Use global default** inherits the global choice                  |
+| **Physical iOS build default**  | Optional build default for physical iPhone and iPad destinations, including generic iOS archives         |
 
-Enter an HTTP(S) origin only, for example `http://192.168.1.20:3000` or `https://aide.example.com`. Trailing slashes are removed. Paths, credentials, query strings, and fragments are rejected. Clear an override to resume detection. A Proxy default requires a configured Proxy URL; removing it requires choosing another default in the same save.
+Enter an HTTP(S) origin only, for example `http://192.168.1.20:3000` or `https://aide.example.com`. Trailing slashes are removed. Paths, credentials, query strings, and fragments are rejected. Clear an override to resume detection. Select **Use global default** to clear a build default. A Proxy default requires a configured Proxy URL; to remove it, change any defaults that select Proxy in the same save.
 
 Endpoint screens display **Local**, **Remote**, and configured **Proxy** with copy actions and a **Manage server URLs** link. Selectors show the name and address on separate lines. HTTPS and host restrictions still apply to enrollment, OTA installation, and webhook registration; choosing Local does not bypass them.
 
