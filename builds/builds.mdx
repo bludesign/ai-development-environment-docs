@@ -143,7 +143,7 @@ On Mac, **Designed for iPad** launches on the build agent and requires an iOS de
 - Select an available row anywhere except its play button to toggle it for a multi-device run.
 - Use the trailing play button to run immediately on only that device without changing the multi-selection.
 - **Select All** selects every runnable compatible device. **Clear** removes the selection. **Run Selected** stays visible in the picker and starts the selected destinations together once at least one is selected.
-- Offline and otherwise unavailable devices stay visible for status awareness, but their selection and play controls are disabled.
+- Offline and otherwise unavailable devices stay visible with disabled selection and play controls. When a device reports a reason, the picker displays the full message below its status.
 
 The server rechecks availability when a run starts. You can select a reachable, paired iPhone or iPad before its device tunnel advertises install and launch capabilities. If a device disconnects or the app cannot be installed or launched, the run reports the failure.
 
