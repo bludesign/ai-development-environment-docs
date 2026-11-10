@@ -429,3 +429,27 @@ The control plane continues the batch after you close the sheet or navigate away
 </Frame>
 
 The native iOS app offers the same selection and progress sheets from global and app-scoped Worktrees. API clients can start a batch with `startWorktreeSyncBatch`, inspect `worktreeSyncBatch`, and rediscover running batches through `worktreeOverview.activeSyncBatches`.
+
+## Bulk Merge
+
+Select **Bulk Merge** beside **Bulk Sync** on Worktrees or an app’s Worktrees tab. The web and iOS sheets use the current app and **Active Agent** scope. Search and display filters on the Worktrees list do not change which checkouts appear in the sheet.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-bulk-merge.png" alt="Bulk Merge review with selected GitHub and GitLab requests in light theme" />
+  <img className="hidden dark:block" src="/images/dark/worktree-bulk-merge.png" alt="Bulk Merge review with selected GitHub and GitLab requests in dark theme" />
+</Frame>
+
+1. Select individual requests or use **Select all ready**. The sheet starts with nothing selected. If a PR or MR appears on more than one checkout, select the checkout that should receive the local follow-ups.
+2. Open a row’s merge settings to review its commit options and follow-ups. Each row starts with the single-merge defaults for that request. Changes apply to this batch.
+3. Review the selected follow-ups and choose **Merge N requests**. The control plane checks each request again before submitting it. If a source commit, target branch, or merge requirement changes, the control plane skips that row and continues the batch.
+
+Blocked requests show their reason in the review sheet. A draft, pending checks, missing approval, or an existing merge operation may make a request unavailable.
+
+The batch continues on the control plane after you close the sheet. Reopen Bulk Merge to see progress and the latest results. A confirmed merge can have a separate follow-up warning, such as a checkout that could not be deleted. Review an unconfirmed result on the provider before trying it again.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-bulk-merge-results.png" alt="Bulk Merge results with a confirmed merge and a skipped request in light theme" />
+  <img className="hidden dark:block" src="/images/dark/worktree-bulk-merge-results.png" alt="Bulk Merge results with a confirmed merge and a skipped request in dark theme" />
+</Frame>
+
+GraphQL clients can use `worktreeMergeCandidates` to review readiness, `startWorktreeMergeBatch` to submit a selection, and `worktreeMergeBatch` or `worktreeMergeBatches` to read progress. Reuse the same request ID to recover the result of an interrupted submission for the same scope and settings.
