@@ -334,18 +334,21 @@ Git work waits when another operation holds a conflicting resource and resumes a
 | Progress | Meaning |
 | --- | --- |
 | **Syncing branch** | A saved sync request is waiting for the agent or running a guarded rebase and push. |
+| **Resolving merge conflicts** | The selected workflow is running on the paused rebase. |
 | **Waiting for CI** | The current source revision still needs passing CI. |
 | **Waiting for merge requirements** | CI passed, but provider readiness, approvals, or branch rules still block merging. |
 | **Merging** | The control plane submitted the merge and is awaiting confirmation. |
 | **Action required** | Review and resolve the displayed problem before resuming. |
 
-Conflicts, dirty worktrees, and preparation conflicts pause the operation. Resolve any rebase manually, finish and push it, then refresh the merge options, review the current source commit, and choose **Resume Auto Merge**. This flow does not invoke a conflict workflow or force through preparations. Unrelated source commits, retargeting, or changes to the linked worktree's identity also require explicit review and resume. CI retries remain available through the existing pipeline controls and retry rules.
+Enable **Auto resolve merge conflicts** under **Auto sync branch** and choose an eligible merge conflict workflow. If the workflow offers trigger choices, choose the one you want to run. This option requires an agent that supports guarded conflict resolution. The control plane runs the workflow once when its rebase hits a conflict. Configure it to resolve the local rebase and leave the push to Auto Merge. When the workflow succeeds, the agent verifies the resolved rebase and pushes with the original source lease. Auto Merge then waits for CI and the provider's rules on the resolved commit.
 
-**Cancel Auto Merge** cancels pending sync work and prevents further merge attempts. A rebase already pushed is preserved. If the provider already accepted the merge, the control plane confirms it and handles the saved follow-ups. Closing the web or iOS app does not stop a saved operation. Standalone **Auto Sync** keeps its configuration while the merge operation coordinates access to the worktree.
+With **Auto resolve merge conflicts** off, resolve any rebase manually, finish and push it, then refresh the merge options, review the current source commit, and choose **Resume Auto Merge**. A failed workflow, unresolved conflicts, changed source or target revisions during resolution, or preparations blocking the rebase also pause the operation. The agent does not force through preparations. CI retries remain available through the existing pipeline controls.
+
+**Cancel Auto Merge** cancels pending sync and conflict workflow work and prevents further merge attempts. A rebase already pushed is preserved. If the provider already accepted the merge, the control plane confirms it and handles the saved follow-ups. Closing the web or iOS app does not stop a saved operation. Standalone **Auto Sync** keeps its configuration while the merge operation coordinates access to the worktree.
 
 The native iOS merge sheets expose the same setting, eligibility reason, progress, cancellation, and resume controls. After updating the control plane, apply its database migrations and update the control agents before using branch syncing.
 
-GraphQL callers set `autoSync: true` on `ConfigureWorktreeAutoMergeInput` for GitHub and also provide the reviewed `expectedHeadSha`. GitLab callers set `autoMerge: true` and `autoSync: true` on `SubmitGitLabMergeRequestMergeInput`, retaining its required reviewed `sha`. Merge options expose `canAutoMergeWithSync`, `autoSyncBlockedReason`, and `defaultAutoSync`; saved operations expose `autoSync` and their current `state`.
+GraphQL callers set `autoSync: true` on `ConfigureWorktreeAutoMergeInput` for GitHub and also provide the reviewed `expectedHeadSha`. GitLab callers set `autoMerge: true` and `autoSync: true` on `SubmitGitLabMergeRequestMergeInput`, retaining its required reviewed `sha`. Set `conflictWorkflowId` to opt into conflict resolution and provide `conflictWorkflowChoice` when the trigger requires a choice. Merge options include the eligible `mergeConflictWorkflows` and the saved defaults. Saved operations expose `autoSync` and their current `state`.
 
 Enabling worktree **Auto Merge** moves linked Jira tickets to the project’s configured **Auto merge status**, when set. If Jira rejects that transition, auto merge stays enabled and a warning explains that the ticket still needs attention. Saving an already-enabled operation does not repeat the transition.
 

@@ -50,7 +50,7 @@ Linked-worktree auto-merge stays managed even with **Auto sync branch** off. Bef
 
 ### Rebase before auto-merge
 
-If GitLab requires a rebase, select **Auto sync branch** in the web or iOS merge sheet, review the source commit and follow-ups, then enable auto-merge. A matching linked worktree and an updated control agent are required. The setting defaults to off, and an unavailable option explains what is missing.
+If GitLab requires a rebase, select **Auto sync branch** in the web or iOS merge sheet, review the source commit and follow-ups, then enable auto-merge. A matching linked worktree and an updated control agent are required. The setting defaults to off, and an unavailable option explains what is missing. To continue automatically after a conflicted rebase, enable **Auto resolve merge conflicts** and choose a [merge conflict workflow](/worktrees/worktrees#sync-the-branch-before-merging).
 
 With syncing selected, the control plane manages the operation: it rebases and pushes the branch, waits for passing CI associated with the resulting revision, and submits a merge only when GitLab's requirements are satisfied. It keeps native GitLab auto-merge disabled during this flow. Target-branch changes trigger another sync; an earlier green pipeline cannot authorize a different source revision. The operation remains saved after you close the sheet or app.
 

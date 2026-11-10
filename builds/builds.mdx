@@ -110,7 +110,7 @@ The **Configurations** tab lists reusable configurations with their repositories
 
 ## Choose the server URL for a build
 
-The web and native **Start Build** sheets offer a **Server URL** selector with the name and URL on separate lines. It starts with the global default from [Settings](/system/settings#server-urls). Simulator destinations use the simulator default when configured, otherwise they inherit the global default. Switching destination type updates this suggestion until you explicitly choose Local, Remote, or Proxy.
+The web and native **Start Build** sheets offer a **Server URL** selector with the name and URL on separate lines. It starts with the global default from [Settings](/system/settings#server-urls). Simulator destinations use **Simulator default**. Physical iPhone and iPad destinations, including generic iOS archives, use **Physical iOS build default**. Both inherit **Default server URL** when unset. Other destinations use the global default. Switching platforms or destination types updates the suggestion until you explicitly choose Local, Remote, or Proxy.
 
 The control plane snapshots all three base addresses, the selected kind, and the selected base address when it queues a build. Later settings changes do not change that queued build or its hooks. **Rebuild** retains the original kind and resolves its current configured address. Older builds without a recorded choice use current defaults. Rebuilding a Proxy build after removing Proxy fails with an actionable configuration error.
 
@@ -118,7 +118,7 @@ GraphQL `StartBuildInput.serverUrlKind`, `StartBuildSelectionInput.serverUrlKind
 
 ## Choosing a build device
 
-Start Build uses the same searchable, two-line destination rows as Run, with one selection per platform. For simulators, the first line shows **device name · device type**, such as **QA Phone · iPhone 17 Pro**; the second shows the OS version and status. Identical names and types are displayed once. Older agents without device-type metadata continue to show the device name.
+Start Build uses the same searchable, two-line destination rows as Run, with one selection per platform. For simulators, the first line shows **device name · device type**, such as **QA Phone · iPhone 17 Pro**; the second shows the OS version and status. Identical names and types are displayed once. Older agents without device-type metadata continue to show the device name. For iOS, the picker reads the agent’s device inventory and Xcode validates the selected destination when the build starts.
 
 <Frame>
   <img className="block dark:hidden" src="/images/light/build-start-devices.png" alt="Searchable two-line simulator picker in Start Build" />
@@ -145,7 +145,7 @@ On Mac, **Designed for iPad** launches on the build agent and requires an iOS de
 - **Select All** selects every runnable compatible device. **Clear** removes the selection. **Run Selected** stays visible in the picker and starts the selected destinations together once at least one is selected.
 - Offline and otherwise unavailable devices stay visible for status awareness, but their selection and play controls are disabled.
 
-Availability is rechecked by the server when a run starts. A device that disconnected after the picker opened is rejected instead of receiving stale work.
+The server rechecks availability when a run starts. You can select a reachable, paired iPhone or iPad before its device tunnel advertises install and launch capabilities. If a device disconnects or the app cannot be installed or launched, the run reports the failure.
 
 Running on the build agent uses the existing local path. For another agent, AIDE packages the runnable `.app`, uploads it into the control plane's authenticated artifact cache in resumable 16 MiB chunks, and has the target agent download, verify, extract, install, and launch it. The target does not need the source repository or worktree. If the package is already cached, a target agent can run it even when the original build agent is offline.
 

@@ -178,7 +178,12 @@ A build-run separator is added after the app successfully launches, once for eac
 
 The header button reading **Console on** or **Console off** is the ingestion switch. Turning it off does not reject requests — the endpoint keeps validating payloads and answers `202 Accepted` without storing anything, so a device in the field never sees an error.
 
-The gear icon opens **Observability settings**, shared by all three views, with collection controls and copyable Local, Remote, and configured Proxy endpoints. URL editing lives in [Settings → Server URLs](/system/settings#server-urls); **Manage server URLs** opens it. The same settings apply to analytics, SSE, crash uploads, enrollment, and MCP.
+<Frame>
+  <img className="block dark:hidden" src="/images/light/observability-settings.png" alt="Observability settings with copyable ingestion endpoints and one Server URLs settings link" />
+  <img className="hidden dark:block" src="/images/dark/observability-settings.png" alt="Observability endpoint addresses in dark theme" />
+</Frame>
+
+The gear icon opens **Observability settings**, shared by all three views, with copyable Local, Remote, and configured Proxy endpoints for console logs and analytics events. URL editing lives in [Settings → Server URLs](/system/settings#server-urls); **Manage server URLs** opens it. The same settings apply to analytics, SSE, crash uploads, enrollment, and MCP.
 
 Build hooks receive `server.selectedBaseUrl`, `endpointPaths.consoleLogs`, and the collection flags. Compose the URL with `new URL(endpointPaths.consoleLogs, server.selectedBaseUrl)`. See the [hook contract](/builds/builds#hook-server-and-endpoint-contract) for all paths and environment variables.
 

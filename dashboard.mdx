@@ -130,7 +130,9 @@ Question batches come from Plans and Sessions directly, and from workflow runs b
 
 The full queue includes GitHub **Mine** requests (authored or assigned), GitLab requests you authored, and requests asking the connected provider account to review. A request that belongs to both categories appears once. Drafts remain visible with a **Draft** indicator; closed and merged requests leave the queue after refresh.
 
-Each card shows its provider, repository, branch, pipeline status, and overall approval status. Open the pipeline link to inspect checks. A green **Merge** button opens the existing provider merge dialog, where you review the current commit, available merge method, and optional follow-up actions. The dialog checks readiness again before merging. Unknown or blocked readiness does not show a green button.
+Each card shows its provider, repository, branch, pipeline status, and overall approval status. **No decision** is neutral when approval is optional, **Not approved** is yellow when required approvals are missing, and **Approved** is green. When the provider cannot confirm approval, the card shows **Unknown**. Open the pipeline link to inspect checks.
+
+Failed pipelines appear in **Needs attention**. A request also appears there with a green **Merge** button when it meets the provider’s requirements, including when no approval is required. The button opens the provider merge dialog, where you review the current commit, method, and follow-up actions. The dialog rechecks readiness before merging.
 
 Approving a request removes its review-category membership. Your own or assigned requests remain visible even when approved, so you can merge them. A dismissed or revoked approval makes a request eligible for the review queue again. Overall approval and your personal approval are separate: a request can still need other reviewers after you approve it.
 

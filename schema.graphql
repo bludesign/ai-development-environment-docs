@@ -8271,6 +8271,9 @@ input CustomBuildConfigurationInput {
   """Xcode build configuration."""
   buildConfiguration: String!
 
+  """Shared export settings inherited by platform overrides."""
+  exportSettings: JSON
+
   """Ordered platform overrides for this submission."""
   platformConfigurations: [BuildPlatformConfigurationInput!]
 }
@@ -8559,6 +8562,9 @@ enum ProvisioningProfileType {
 
   """Represents the App Store option."""
   APP_STORE
+
+  """Represents the Developer ID option."""
+  DEVELOPER_ID
 }
 
 """Represents a signing team in the GraphQL API."""
@@ -14632,6 +14638,23 @@ type GitHubPullRequestMergeOptions {
   """Previously selected branch syncing setting."""
   defaultAutoSync: Boolean!
 
+  """Enabled merge conflict workflows available to the linked worktree."""
+  mergeConflictWorkflows: [Workflow!]!
+
+  """Previously selected merge conflict workflow."""
+  defaultConflictWorkflowId: ID
+
+  """Previously selected merge conflict workflow trigger choice."""
+  defaultConflictWorkflowChoice: String
+
+  """Reason a conflict workflow cannot be selected."""
+  conflictWorkflowBlockedReason: String
+
+  """
+  Whether the branch already has conflicts and needs a workflow to start Auto Merge.
+  """
+  autoSyncRequiresConflictWorkflow: Boolean!
+
   """Saved merge operation for the linked worktree."""
   autoMergeOperation: WorktreeAutoMerge
 
@@ -16338,6 +16361,23 @@ type GitLabMergeOptions {
   """Previously selected branch syncing setting."""
   defaultAutoSync: Boolean!
 
+  """Enabled merge conflict workflows available to the linked worktree."""
+  mergeConflictWorkflows: [Workflow!]!
+
+  """Previously selected merge conflict workflow."""
+  defaultConflictWorkflowId: ID
+
+  """Previously selected merge conflict workflow trigger choice."""
+  defaultConflictWorkflowChoice: String
+
+  """Reason a conflict workflow cannot be selected."""
+  conflictWorkflowBlockedReason: String
+
+  """
+  Whether the branch already has conflicts and needs a workflow to start Auto Merge.
+  """
+  autoSyncRequiresConflictWorkflow: Boolean!
+
   """
   Targeting worktrees and the reviewed destination for post-merge base updates.
   """
@@ -16470,6 +16510,16 @@ input SubmitGitLabMergeRequestMergeInput {
   Rebase and push the linked branch before waiting for passing CI and merging.
   """
   autoSync: Boolean = false
+
+  """
+  Run this merge conflict workflow if Auto Merge branch syncing stops at a conflict.
+  """
+  conflictWorkflowId: ID
+
+  """
+  Optional resource trigger choice for the selected merge conflict workflow.
+  """
+  conflictWorkflowChoice: String
 
   """
   Selected targeting worktrees to update only after the merge is confirmed.
@@ -21331,6 +21381,9 @@ type ServerUrlSettings {
   """Optional simulator build default. Null inherits the global default."""
   simulatorDefaultServerUrlKind: ServerUrlKind
 
+  """Optional physical iOS build default. Null inherits the global default."""
+  physicalDefaultServerUrlKind: ServerUrlKind
+
   """ISO timestamp of the last saved settings change."""
   updatedAt: String!
 }
@@ -21355,6 +21408,9 @@ input SaveServerUrlSettingsInput {
 
   """Simulator default. Null inherits the global default."""
   simulatorDefaultServerUrlKind: ServerUrlKind
+
+  """Physical iOS build default. Null inherits the global default."""
+  physicalDefaultServerUrlKind: ServerUrlKind
 }
 
 """
@@ -27420,6 +27476,16 @@ input ConfigureWorktreeAutoMergeInput {
   Rebase and push the linked branch before waiting for passing CI and merging.
   """
   autoSync: Boolean = false
+
+  """
+  Run this merge conflict workflow if Auto Merge branch syncing stops at a conflict.
+  """
+  conflictWorkflowId: ID
+
+  """
+  Optional resource trigger choice for the selected merge conflict workflow.
+  """
+  conflictWorkflowChoice: String
 
   """Reviewed source revision, required when autoSync is selected."""
   expectedHeadSha: String
