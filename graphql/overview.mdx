@@ -175,6 +175,14 @@ See [Import and export](/apps/import-export) for selection behavior, paused auto
 
 `symbolicateCrashReport` starts a fresh symbolication, `updateDsymUpload` changes an upload's project, build ID, and link, and `updateCrashSettings` changes collection, the symbolication agent, and retention. Uploading files happens over REST — see [Crashes](/debugging/crashes) and [dSYMs](/debugging/dsyms). Subscribe to `crashReportsChanged` and `dsymsChanged` for live updates.
 
+### Android builds and emulators
+
+Use `androidAppProject` to read the Android project and saved Gradle configurations for a repository. Configure it with `createAndroidAppProject` and `saveAndroidBuildConfiguration`. Call `startAndroidBuild` with the worktree, saved configuration, and a client-generated request ID. Track progress through the build and build log operations. Use `buildArtifactLinks` to get the APK download URL and `inspectBuildRunDestinations` and `runBuild` to deploy to an agent's Android device.
+
+Use `discoverAndroidBuildSources` to find Gradle project directories on a worktree. Use `inspectAndroidBuildSource` to list application modules and variants for the selected directory.
+
+For emulator management, pass `platform: ANDROID` to the simulator inventory, inspect, create, and action operations. Simulator IDs use the `android:` prefix. Managed Gradle cache entries have kind `GRADLE_PROJECT` in Build Data.
+
 ## Operation resources
 
 Worktree admission limits and execution locks are separate. Admission decides which Plans, Sessions, and workflows can start together; execution locks protect the resources used by each operation. Independent worktrees can execute concurrently. A build normally protects its source worktree while allowing read-only inspection.

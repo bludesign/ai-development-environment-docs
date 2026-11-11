@@ -25,8 +25,10 @@ The build details page at `/dashboard/builds/{id}` covers one immutable build fr
 | **Cancel build**   | The build is queued, preparing, or running                                  |
 | **Rebuild**        | Always — starts a fresh build for the captured platform                   |
 | **Run**            | The build produced a runnable app and a compatible destination is connected |
-| **Install**        | An archive has been exported for over-the-air installation                  |
+| **Install**        | An eligible IPA is available on iPhone or iPad                              |
+| **Install on Android** | A signed APK is available in an Android browser                         |
 | **Export archive** | The build captured an `.xcarchive`                                          |
+| **Export APK**     | The Android build produced an APK                                           |
 | **Delete build**   | Always                                                                      |
 
 An **Out of date** badge appears when the worktree has moved on since this build was made. Select it for a **Rebuild** menu; the current surface refreshes and shows any queuing error. The header shows **Custom** or the captured configuration name, with a link when the saved configuration still exists.
@@ -139,6 +141,31 @@ Requirements and limits:
 ## Runs and exports
 
 A record of every time this build has been run on a device or exported, so a single build's distribution history stays in one place. Device deployments identify the target agent as well as the destination, which prevents identical simulator or device identifiers on different Macs from being conflated.
+
+## Install or export an Android APK
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/android-build-detail.png" alt="Android build details with an APK export action" />
+  <img className="hidden dark:block" src="/images/dark/android-build-detail.png" alt="Android build details in dark theme" />
+</Frame>
+
+- **Run** queues installation and launch on an emulator or an authorized Android device connected to a managed agent. Inspect the result under **Runs and exports** if installation or launch fails.
+- On an Android phone, choose **Install on Android**, then **Download APK**. Open the download and follow Android's package installer. Android may ask you to allow installation from your browser or file manager, and your device's policy may restrict the install.
+- **Export APK** downloads the same package for later use. In the iOS app, open **Export APK** to share the download link or prepare the APK file and share it through the system share sheet.
+
+<Frame caption="Open the build in an Android browser to use Install on Android.">
+  <img className="block dark:hidden" width="390" src="/images/light/android-build-install.png" alt="Android phone displaying the Install on Android action on a build" />
+  <img className="hidden dark:block" width="390" src="/images/dark/android-build-install.png" alt="Android phone displaying the Install on Android action in dark theme" />
+</Frame>
+
+Anyone who can reach the server with a shared signed URL can download the APK until the URL expires. Use a fresh link after expiry. For an in-place update, the installed app and the APK must use a compatible signing key.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/android-build-run.png" alt="Run picker showing Android emulators and physical devices" />
+  <img className="hidden dark:block" src="/images/dark/android-build-run.png" alt="Android Run picker in dark theme" />
+</Frame>
+
+[Android website distribution and installation](https://developer.android.com/distribute/marketing-tools/alternative-distribution) · [Android app signing](https://developer.android.com/studio/publish/app-signing)
 
 ## Related pages
 

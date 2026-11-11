@@ -87,6 +87,30 @@ The page has seven tabs.
 
     In the native app, open **Edit Repository → Apple app project** to manage the project and configurations. Tap **Save** after changing **Default destination type**. The web selector saves the preference as soon as you choose it.
   </Tab>
+  <Tab title="Android App">
+    <Frame>
+      <img className="block dark:hidden" src="/images/light/android-build-configuration.png" alt="Android build configuration for a Gradle application module and variant" />
+      <img className="hidden dark:block" src="/images/dark/android-build-configuration.png" alt="Android build configuration in dark theme" />
+    </Frame>
+
+    Open **Repository settings → Android App** and select **Enable Android builds**. In the iOS app, open **Edit Repository → Android app project** and select **Add Android App Project**.
+
+    Add a saved Android configuration for each Gradle application variant you want to build. The settings apply to every worktree of this repository.
+
+    | Setting | Example |
+    | --- | --- |
+    | Name | Internal debug |
+    | Gradle project directory | `.` for a wrapper at the worktree root, or `android` for a wrapper in that subdirectory |
+    | Application module | `:app` or `:apps:mobile` |
+    | Build variant | `debug` or `internalDebug` |
+    | APK path | Optional worktree-relative path to a signed, standalone APK, such as `android/app/build/outputs/apk/debug/app-debug.apk` |
+
+    Keep the Gradle wrapper in the selected project directory. The agent uses the module and variant to assemble the APK. If automatic selection finds multiple APKs, choose a single standalone output in the configuration or have Gradle produce a universal APK. Configure signing in your Gradle project for variants that require a signing configuration.
+
+    Select an available checkout to discover Gradle project directories and inspect application modules and variants. Discovery runs on the selected agent. Enter the values manually when the checkout is unavailable.
+
+    See [Android builds](/builds/builds#start-an-android-build) for agent setup and how to build and run the APK.
+  </Tab>
   <Tab title="Auto Retry">
     Durable rules that automatically rerun GitHub Actions workflows or jobs.
 

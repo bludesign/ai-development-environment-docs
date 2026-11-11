@@ -24,8 +24,7 @@ Start a build from a [worktree](/worktrees/worktrees) or the repository Build ca
 
 <Columns cols={3}>
   <Card title="Repository" icon="code-fork" href="/codebases/repository-detail">
-    The iOS App project, default destination type, saved build configurations,
-    and which build scripts are allowed.
+    Apple and Android projects, saved build configurations, and Apple build destinations and scripts.
   </Card>
   <Card title="Worktree" icon="code-branch" href="/worktrees/worktrees">
     Pick a configuration, platforms, and destinations for a build.
@@ -34,6 +33,24 @@ Start a build from a [worktree](/worktrees/worktrees) or the repository Build ca
     History of every build, and the library of reusable build scripts.
   </Card>
 </Columns>
+
+## Start an Android build
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/android-build-start.png" alt="Starting an Android build with a saved Gradle configuration" />
+  <img className="hidden dark:block" src="/images/dark/android-build-start.png" alt="Starting an Android build in dark theme" />
+</Frame>
+
+1. On a managed Mac, install a JDK compatible with the repository's Gradle wrapper and Android Gradle Plugin. Install Android SDK command-line tools and Build Tools, along with the SDK platform the project compiles against. Set `ANDROID_HOME` and, when needed, `JAVA_HOME` in the environment of the account that runs the agent. Accept the SDK licenses for that account.
+2. In [repository settings](/codebases/repository-detail), enable Android builds and save a Gradle configuration for the application module and variant.
+3. From the worktree, choose **Build → Start Android build**. On iPhone or iPad, open **Start Build**, then **Start Android Build**. Select the worktree and saved configuration.
+4. Open the queued build in **Builds** to follow Gradle logs and get the APK. **Rebuild** uses the configuration captured on the original build.
+
+The worktree's agent builds the APK before you choose where to run it. To use **Run**, install Android SDK Platform Tools on a target agent. For an emulator, also install Android Emulator and a system image compatible with the agent's CPU. For a physical device, enable USB debugging, connect it to the agent, unlock it, and accept the device's debugging authorization prompt. The Run picker shows compatible emulators and devices on eligible agents.
+
+Gradle must produce one signed, standalone APK. Choose a universal APK or an individually installable APK for the architecture you intend to run.
+
+[Android command-line build guide](https://developer.android.com/build/building-cmdline) · [Run on a hardware device](https://developer.android.com/studio/run/device)
 
 ## History
 

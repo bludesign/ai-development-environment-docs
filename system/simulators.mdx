@@ -1,6 +1,6 @@
 ---
 title: "Simulators"
-description: "Create, start, and manage Xcode simulators on your Mac agents."
+description: "Create, start, and manage Xcode simulators and Android emulators on your Mac agents."
 ---
 
 <Frame>
@@ -19,6 +19,19 @@ Choose an agent to see its devices, or choose **All Agents** to see the fleet. T
 3. Use **Start** or **Shut Down** from the list. Select the simulator name to open its [details](/system/simulator-detail).
 
 An agent needs Xcode and simulator management support. If the agent is offline, reconnect it before refreshing its inventory or sending an action.
+
+## Manage Android emulators
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/android-emulators.png" alt="Android emulator inventory grouped by agent" />
+  <img className="hidden dark:block" src="/images/dark/android-emulators.png" alt="Android emulator inventory in dark theme" />
+</Frame>
+
+Choose **Android emulators** on the web, or **Android Emulators** in the native app. Install Android Emulator, SDK Platform Tools, SDK command-line tools, and a compatible Android system image on the agent first. The emulator runs under the same account as the agent.
+
+Create an emulator by selecting an agent, an installed system image, and a device profile. Use **Start** and **Shut Down** from the list, or open a device to inspect it and manage its apps. Shut down an emulator before renaming, duplicating, erasing, or deleting it. Duplicating an Android emulator creates a fresh device with the same profile and system image.
+
+[Android Emulator command line](https://developer.android.com/studio/run/emulator-commandline) · [Android Virtual Device manager](https://developer.android.com/tools/avdmanager)
 
 ## Delete multiple simulators
 

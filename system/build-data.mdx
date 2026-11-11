@@ -1,6 +1,6 @@
 ---
 title: "Build Data"
-description: "Inspect and clean up Derived Data, shared Xcode caches, and device support files."
+description: "Inspect and clean up Xcode build data, device support files, and managed Gradle project caches."
 ---
 
 <Frame>
@@ -8,7 +8,7 @@ description: "Inspect and clean up Derived Data, shared Xcode caches, and device
   <img className="hidden dark:block" src="/images/dark/build-data.png" alt="Build Data page in dark theme" />
 </Frame>
 
-Open **System → Build Data** at `/system/build-data` to inspect project Derived Data, shared Xcode caches, and support files for devices connected to your Macs.
+Open **System → Build Data** at `/system/build-data` to inspect project Derived Data, shared Xcode caches, device support files, and the agent-managed Gradle project caches for Android builds.
 
 Choose an agent to scope disk monitoring, scans, and deletion history to that Mac. Choose **All Agents** to scan the fleet. While a global active agent is set, Build Data follows it. Clearing the global selection restores your saved page filter.
 
@@ -71,6 +71,17 @@ Updated agents scan both the configured Xcode DerivedData locations and the mana
 The same protection covers entries with executing work — a build or run currently using that worktree — even when they are not locked.
 
 On agents advertising `operation.resources.v1`, a delete job also reserves the target paths. Confirming protected deletion does not bypass a conflicting active build's path reservation; deletion waits until that build releases it. Older agents do not provide this path coordination.
+
+## Gradle Build Data
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/android-build-data.png" alt="Managed Gradle build data grouped by worktree" />
+  <img className="hidden dark:block" src="/images/dark/android-build-data.png" alt="Managed Gradle build data in dark theme" />
+</Frame>
+
+**Gradle Build Data** lists the managed project caches that the agent creates for Android worktrees. An entry's size can include a conventional module `build/` directory containing APK outputs when Git identifies it as ignored and untracked. Refresh the inventory, calculate an entry's size, protect it from deletion, or delete an idle entry to reclaim space. Active builds protect their entries until they finish. The next build recreates its project cache and outputs.
+
+Build history, exported APKs, SDKs, emulators, the global Gradle user cache, and custom Gradle output locations are outside this cleanup.
 
 ## Device Support
 
