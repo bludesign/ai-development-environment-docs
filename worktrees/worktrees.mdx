@@ -453,3 +453,27 @@ The batch continues on the control plane after you close the sheet. Reopen Bulk 
 </Frame>
 
 GraphQL clients can use `worktreeMergeCandidates` to review readiness, `startWorktreeMergeBatch` to submit a selection, and `worktreeMergeBatch` or `worktreeMergeBatches` to read progress. Reuse the same request ID to recover the result of an interrupted submission for the same scope and settings.
+
+## Bulk Change Branch
+
+Open **Bulk Change Branch** on Worktrees or an app’s **Worktrees** tab in the web or iOS app. The picker follows your current search and filters, including **Active Agent**.
+
+1. Choose **Existing Branch**, **New Branch**, or **Jira Ticket**. For a Jira ticket, pick a naming checkout and confirm the exact branch name before selecting worktrees.
+2. Select the worktrees to change. You can select one worktree per clone because Git allows only one checkout of a branch in that clone. Existing Branch requires the destination to be present. New Branch and Jira Ticket require the name to be unused in each selected clone.
+3. Review the origin base shown for each checkout. The dialog uses its current base when available and otherwise uses the clone’s origin default. You can choose a shared origin base for the selection. Submit the selected worktrees when you’re ready.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-bulk-change-branch.png" alt="Selecting worktrees to change to a shared branch in light theme" />
+  <img className="hidden dark:block" src="/images/dark/worktree-bulk-change-branch.png" alt="Selecting worktrees to change to a shared branch in dark theme" />
+</Frame>
+
+Unavailable checkouts show a reason. A sibling checkout can hold the branch even if it is outside your current filters. Git carries local edits when it can switch safely. If Git refuses the switch, the result shows the error so you can address it and try again.
+
+The control plane continues the batch after you close the dialog. Reopen **Bulk Change Branch** in the same app and Active Agent scope to view active batches or the latest completed batch. Each row shows its result and any preparation warning. A failed or skipped checkout does not prevent other checkouts from changing branches.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-bulk-change-branch-results.png" alt="Bulk Change Branch results showing a successful switch and a failed switch in light theme" />
+  <img className="hidden dark:block" src="/images/dark/worktree-bulk-change-branch-results.png" alt="Bulk Change Branch results showing a successful switch and a failed switch in dark theme" />
+</Frame>
+
+GraphQL clients can submit with `startWorktreeBranchBatch`, read one batch with `worktreeBranchBatch`, or find batches for a scope with `worktreeBranchBatches`. Reuse the request ID when retrying the same submission.
