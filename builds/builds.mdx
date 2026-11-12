@@ -42,13 +42,13 @@ Start a build from a [worktree](/worktrees/worktrees) or the repository Build ca
 </Frame>
 
 1. On a managed Mac, install a JDK compatible with the repository's Gradle wrapper and Android Gradle Plugin. Install Android SDK command-line tools and Build Tools, along with the SDK platform the project compiles against. Set `ANDROID_HOME` and, when needed, `JAVA_HOME` in the environment of the account that runs the agent. Accept the SDK licenses for that account.
-2. In [repository settings](/codebases/repository-detail), enable Android builds and save a Gradle configuration for the application module and variant.
-3. From the worktree, choose **Build → Start Android build**. On iPhone or iPad, open **Start Build**, then **Start Android Build**. Select the worktree and saved configuration.
+2. In [repository settings](/codebases/repository-detail), enable Android builds and save a Gradle configuration for the application module and variant. On the web, check **Build agents** in the **Android App** tab for checkout readiness.
+3. On the web, open **Build** on an available worktree whose agent is online and supports Android builds. If the menu offers both platforms, select **Android App**. Choose the saved configuration and select **Start Android build**. On iPhone or iPad, open **Start Build**, then **Start Android Build**. Select the worktree and saved configuration.
 4. Open the queued build in **Builds** to follow Gradle logs and get the APK. **Rebuild** uses the configuration captured on the original build.
 
-The worktree's agent builds the APK before you choose where to run it. To use **Run**, install Android SDK Platform Tools on a target agent. For an emulator, also install Android Emulator and a system image compatible with the agent's CPU. For a physical device, enable USB debugging, connect it to the agent, unlock it, and accept the device's debugging authorization prompt. The Run picker shows compatible emulators and devices on eligible agents.
+If Android configuration or tooling keeps **Build** unavailable on the web, select **Go to repository settings to configure builds** from the button to open the **Android App** tab.
 
-Gradle must produce one signed, standalone APK. Choose a universal APK or an individually installable APK for the architecture you intend to run.
+The worktree's agent builds the APK before you choose where to run it. **Run** needs a signed, standalone APK and Android SDK Platform Tools on a [run agent](/builds/build-detail#install-or-export-an-android-apk). Choose a universal APK or an individually installable APK for the architecture you intend to run.
 
 [Android command-line build guide](https://developer.android.com/build/building-cmdline) · [Run on a hardware device](https://developer.android.com/studio/run/device)
 

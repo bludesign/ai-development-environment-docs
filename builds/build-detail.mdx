@@ -149,7 +149,7 @@ A record of every time this build has been run on a device or exported, so a sin
   <img className="hidden dark:block" src="/images/dark/android-build-detail.png" alt="Android build details in dark theme" />
 </Frame>
 
-- **Run** queues installation and launch on an emulator or an authorized Android device connected to a managed agent. Inspect the result under **Runs and exports** if installation or launch fails.
+- **Run** queues installation and launch on an emulator or an authorized physical device. On the web, reopening **Run** refreshes the agent and destination lists. The picker keeps your selected agent while it is eligible. Otherwise, it chooses the build agent if eligible or another available agent. In the iOS app, if the build agent lacks Android SDK Platform Tools, the picker selects another agent when one is available. Inspect the result under **Runs and exports** if installation or launch fails.
 - On an Android phone, choose **Install on Android**, then **Download APK**. Open the download and follow Android's package installer. Android may ask you to allow installation from your browser or file manager, and your device's policy may restrict the install.
 - **Export APK** downloads the same package for later use. In the iOS app, open **Export APK** to share the download link or prepare the APK file and share it through the system share sheet.
 
@@ -159,6 +159,8 @@ A record of every time this build has been run on a device or exported, so a sin
 </Frame>
 
 Anyone who can reach the server with a shared signed URL can download the APK until the URL expires. Use a fresh link after expiry. For an in-place update, the installed app and the APK must use a compatible signing key.
+
+Install Android SDK Platform Tools on the run agent. To use an **Emulator**, also install Android Emulator and a compatible system image. The agent starts the selected emulator if needed. To use a **Physical Device**, enable debugging, connect the device to the agent over USB or Wi-Fi, and authorize the agent on the device.
 
 <Frame>
   <img className="block dark:hidden" src="/images/light/android-build-run.png" alt="Run picker showing Android emulators and physical devices" />
