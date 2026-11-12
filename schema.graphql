@@ -26785,6 +26785,11 @@ type WorktreeCodebaseGroup {
   blockingJob: AgentJob
 
   """
+  Whether this repository has preparations that the agent must apply when changing branches.
+  """
+  hasPreparations: Boolean!
+
+  """
   Whether the iOS build configured condition is true for this worktree codebase group.
   """
   iosBuildConfigured: Boolean!
