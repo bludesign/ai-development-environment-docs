@@ -10,7 +10,7 @@ description: "Manage settings shared by every registered checkout of a repositor
 
 The repository details page at `/dashboard/codebases/repositories/{id}` manages settings that belong to the *logical* repository rather than to any one checkout. Everything here applies across every agent checkout and every worktree that shares the origin.
 
-The page has seven tabs.
+The page has eight tabs.
 
 <Tabs>
   <Tab title="Repository details">
@@ -89,7 +89,7 @@ The page has seven tabs.
   </Tab>
   <Tab title="Android App">
     <Frame>
-      <img className="block dark:hidden" src="/images/light/android-build-configuration.png" alt="Android build configuration for a Gradle application module and variant" />
+      <img className="block dark:hidden" src="/images/light/android-build-configuration.png" alt="Android build configuration with an icon, Gradle project, application module, and variant" />
       <img className="hidden dark:block" src="/images/dark/android-build-configuration.png" alt="Android build configuration in dark theme" />
     </Frame>
 
@@ -100,14 +100,19 @@ The page has seven tabs.
     | Setting | Example |
     | --- | --- |
     | Name | Internal debug |
-    | Gradle project directory | `.` for a wrapper at the worktree root, or `android` for a wrapper in that subdirectory |
+    | Icon | Choose an optional icon to identify the configuration |
+    | Gradle project path | `.` for a wrapper at the worktree root, or `android` for a wrapper in that subdirectory |
     | Application module | `:app` or `:apps:mobile` |
     | Build variant | `debug` or `internalDebug` |
     | APK path | Optional worktree-relative path to a signed, standalone APK, such as `android/app/build/outputs/apk/debug/app-debug.apk` |
 
     Keep the Gradle wrapper in the selected project directory. The agent uses the module and variant to assemble the APK. If automatic selection finds multiple APKs, choose a single standalone output in the configuration or have Gradle produce a universal APK. Configure signing in your Gradle project for variants that require a signing configuration.
 
-    Select an available checkout to discover Gradle project directories and inspect application modules and variants. Discovery runs on the selected agent. Enter the values manually when the checkout is unavailable.
+    On the web, the editor searches an available checkout for Gradle Wrapper projects when it opens. Choose a project and select **Inspect build variants** to list its application modules and variants. Choose **Enter manually** to use a value outside the list. If discovery or inspection is unavailable, the editor accepts manual input.
+
+    In the iOS app, choose a worktree under **Gradle Discovery**. Select **Discover Gradle Projects** or **Inspect Gradle Modules** when the agent supports the operation. You can also enter the settings manually.
+
+    On the web, **Build agents** shows whether each checkout is ready, offline, unavailable, or missing Android build support. Save the first configuration to enable **Build** on available worktrees with an online agent that supports Android builds.
 
     See [Android builds](/builds/builds#start-an-android-build) for agent setup and how to build and run the APK.
   </Tab>

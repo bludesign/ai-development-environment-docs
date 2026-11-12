@@ -179,6 +179,8 @@ See [Import and export](/apps/import-export) for selection behavior, paused auto
 
 Use `androidAppProject` to read the Android project and saved Gradle configurations for a repository. Configure it with `createAndroidAppProject` and `saveAndroidBuildConfiguration`. Call `startAndroidBuild` with the worktree, saved configuration, and a client-generated request ID. Track progress through the build and build log operations. Use `buildArtifactLinks` to get the APK download URL and `inspectBuildRunDestinations` and `runBuild` to deploy to an agent's Android device.
 
+Set `SaveAndroidBuildConfigurationInput.iconKey` to choose an icon from the build configuration library. Omit it to preserve the current icon or pass `null` to clear it. In `worktreeOverview`, `WorktreeCodebaseGroup.androidProjectEnabled` indicates that the repository has an Android app project. `androidBuildConfigured` indicates that it has a saved Android build configuration. Subscribe to `codebaseOverviewChanged` to refresh after repository settings change.
+
 Use `discoverAndroidBuildSources` to find Gradle project directories on a worktree. Use `inspectAndroidBuildSource` to list application modules and variants for the selected directory.
 
 For emulator management, pass `platform: ANDROID` to the simulator inventory, inspect, create, and action operations. Simulator IDs use the `android:` prefix. Managed Gradle cache entries have kind `GRADLE_PROJECT` in Build Data.

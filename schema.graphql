@@ -7599,6 +7599,9 @@ type AndroidBuildConfiguration {
   """Display name."""
   name: String!
 
+  """Optional build configuration icon."""
+  iconKey: String
+
   """Worktree-relative directory containing the Gradle wrapper."""
   projectPath: String!
 
@@ -7622,6 +7625,11 @@ input SaveAndroidBuildConfigurationInput {
 
   """Display name of the build configuration."""
   name: String!
+
+  """
+  Icon from the build configuration icon library. Omit to keep the existing icon or set null to clear it.
+  """
+  iconKey: String
 
   """Worktree-relative directory containing the Gradle wrapper."""
   projectPath: String!
@@ -26794,7 +26802,14 @@ type WorktreeCodebaseGroup {
   """
   iosBuildConfigured: Boolean!
 
-  """Whether Android builds are enabled for this codebase's repository."""
+  """
+  Whether an Android app project is enabled for this codebase's repository.
+  """
+  androidProjectEnabled: Boolean!
+
+  """
+  Whether this codebase's repository has a saved Android build configuration.
+  """
   androidBuildConfigured: Boolean!
 
   """Quick actions associated with this worktree codebase group."""
