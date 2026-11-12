@@ -1207,6 +1207,57 @@ type Mutation {
     locked: Boolean!
   ): DerivedDataCollection!
 
+  """Enables Android builds for a codebase's repository."""
+  createAndroidAppProject(
+    """Codebase whose repository to configure."""
+    codebaseId: ID!
+  ): CodebaseProject!
+
+  """Removes the repository's Android project and saved configurations."""
+  deleteAndroidAppProject(
+    """Android project identifier."""
+    id: ID!
+  ): Boolean!
+
+  """Creates or updates a saved Android Gradle build configuration."""
+  saveAndroidBuildConfiguration(
+    """Gradle configuration to save."""
+    input: SaveAndroidBuildConfigurationInput!
+  ): AndroidBuildConfiguration!
+
+  """Removes a saved Android build configuration."""
+  deleteAndroidBuildConfiguration(
+    """Saved configuration identifier."""
+    id: ID!
+  ): Boolean!
+
+  """Queues a Gradle build that produces an APK."""
+  startAndroidBuild(
+    """Worktree and configuration for the build."""
+    input: StartAndroidBuildInput!
+  ): Build!
+
+  """Finds Gradle wrapper roots in the worktree."""
+  discoverAndroidBuildSources(
+    """Worktree to scan."""
+    worktreeId: ID!
+
+    """Identifier to reuse when retrying this scan."""
+    requestId: ID!
+  ): [String!]!
+
+  """Finds application modules and enabled variants in a Gradle project."""
+  inspectAndroidBuildSource(
+    """Worktree containing the Gradle project."""
+    worktreeId: ID!
+
+    """Worktree-relative directory containing the Gradle wrapper."""
+    projectPath: String!
+
+    """Identifier to reuse when retrying this inspection."""
+    requestId: ID!
+  ): [AndroidBuildModule!]!
+
   """
   Reports a successful device or simulator launch from the owning deployment agent.
   """
@@ -3180,6 +3231,9 @@ type Mutation {
 
   """Queues a fresh simulator inventory on the selected Mac agent."""
   refreshSimulatorInventory(
+    """Simulator toolchain. Omit to list Apple simulators."""
+    platform: SimulatorPlatform
+
     """The selected Mac agent."""
     agentId: ID!
 
@@ -3189,10 +3243,13 @@ type Mutation {
 
   """Queues inspection of one simulator on the selected Mac agent."""
   inspectSimulator(
+    """Simulator toolchain. Omit to infer it from the simulator identifier."""
+    platform: SimulatorPlatform
+
     """The selected Mac agent."""
     agentId: ID!
 
-    """The simulator UUID on this agent."""
+    """The simulator identifier on this agent."""
     simulatorId: ID!
 
     """The client-generated request identifier for retries."""
@@ -4633,6 +4690,27 @@ type Query {
     """Identifier of the codebase."""
     codebaseId: ID!
   ): CodebaseProject
+
+  """Returns the Android project for a codebase's repository."""
+  androidAppProject(
+    """Codebase whose repository owns the project."""
+    codebaseId: ID!
+  ): CodebaseProject
+
+  """Returns saved Android configurations in the selected scope."""
+  androidBuildConfigurations(
+    """Repository whose Android build configurations to return."""
+    repositoryId: ID
+
+    """App whose assigned repositories to include."""
+    appId: ID
+  ): [AndroidBuildConfiguration!]!
+
+  """Returns a saved Android build configuration."""
+  androidBuildConfiguration(
+    """Saved configuration identifier."""
+    id: ID!
+  ): AndroidBuildConfiguration
 
   """Returns build signing options."""
   buildSigningOptions(
@@ -6865,6 +6943,9 @@ enum BuildDataEntryKind {
 
   """Represents the device support option."""
   DEVICE_SUPPORT
+
+  """Agent-managed Gradle project cache for an Android build."""
+  GRADLE_PROJECT
 }
 
 """Values supported for derived data delete source."""
@@ -7072,6 +7153,9 @@ type DerivedDataDeletionHistoryPage {
 enum CodebaseProjectType {
   """Represents the iOS app option."""
   IOS_APP
+
+  """Represents an Android app project."""
+  ANDROID_APP
 }
 
 """Values supported for build source."""
@@ -7142,7 +7226,7 @@ enum BuildDestinationType {
   HOST
 }
 
-"""Apple SDK family or compatible runtime used by an Xcode destination."""
+"""Platform used by a build or deployment destination."""
 enum BuildPlatform {
   """iOS and iPadOS."""
   IOS
@@ -7167,6 +7251,9 @@ enum BuildPlatform {
 
   """An iOS app running on Apple Vision."""
   VISIONOS_DESIGNED_FOR_IPAD
+
+  """Android."""
+  ANDROID
 }
 
 """Lifecycle statuses for build."""
@@ -7465,6 +7552,9 @@ type CodebaseProject {
   """Configurations associated with this codebase project."""
   configurations: [BuildConfiguration!]!
 
+  """Gradle configurations associated with this project."""
+  androidConfigurations: [AndroidBuildConfiguration!]!
+
   """Allowed scripts associated with this codebase project."""
   allowedScripts: [AllowedBuildScript!]!
 
@@ -7473,6 +7563,78 @@ type CodebaseProject {
 
   """ISO 8601 timestamp when this codebase project was last updated."""
   updatedAt: String!
+}
+
+"""A repository-scoped Android Gradle build configuration."""
+type AndroidBuildConfiguration {
+  """Stable configuration identifier."""
+  id: ID!
+
+  """Owning repository."""
+  repository: CodebaseRepository!
+
+  """Display name."""
+  name: String!
+
+  """Worktree-relative directory containing the Gradle wrapper."""
+  projectPath: String!
+
+  """Gradle application module path."""
+  module: String!
+
+  """Android application build variant."""
+  variant: String!
+
+  """Optional worktree-relative standalone APK output path."""
+  apkPath: String
+}
+
+"""Settings for a saved Android Gradle build configuration."""
+input SaveAndroidBuildConfigurationInput {
+  """Identifier of the existing configuration to edit. Omit to create one."""
+  id: ID
+
+  """Codebase whose repository owns the configuration."""
+  codebaseId: ID!
+
+  """Display name of the build configuration."""
+  name: String!
+
+  """Worktree-relative directory containing the Gradle wrapper."""
+  projectPath: String!
+
+  """Gradle path of the Android application module."""
+  module: String!
+
+  """Android application build variant to assemble."""
+  variant: String!
+
+  """Optional worktree-relative standalone APK output path."""
+  apkPath: String
+}
+
+"""Queue a saved Gradle configuration for an Android worktree build."""
+input StartAndroidBuildInput {
+  """Worktree to build."""
+  worktreeId: ID!
+
+  """Saved Gradle build configuration to use."""
+  configurationId: ID!
+
+  """Identifier to reuse when retrying the same submission."""
+  requestId: ID!
+
+  """Repository build scripts. Omit to select enabled defaults."""
+  scriptIds: [ID!]
+}
+
+"""An Android application module and its available Gradle variants."""
+type AndroidBuildModule {
+  """Gradle path of the Android application module."""
+  module: String!
+
+  """Enabled application build variants."""
+  variants: [String!]!
 }
 
 """Represents a build artifact in the GraphQL API."""
@@ -7875,6 +8037,9 @@ enum BuildRunAgentUnavailableReason {
   """The agent is not running macOS."""
   NOT_MACOS
 
+  """Android SDK Platform Tools are unavailable on the agent."""
+  ANDROID_TOOLS_UNAVAILABLE
+
   """A Mac app must run on the agent that built it."""
   LOCAL_MAC_ONLY
 }
@@ -8027,7 +8192,7 @@ type Build {
   """The destination type associated with this build."""
   destinationType: BuildDestinationType!
 
-  """Apple SDK family for the build. Imported coverage has no platform."""
+  """Platform for the build. Imported coverage has no platform."""
   platform: BuildPlatform
 
   """The destination associated with this build."""
@@ -8079,6 +8244,11 @@ type Build {
   The configuration associated with this build. May be null when unavailable or not applicable.
   """
   configuration: BuildConfiguration
+
+  """
+  Saved Gradle configuration associated with the build, if still available.
+  """
+  androidConfiguration: AndroidBuildConfiguration
 
   """Artifacts associated with this build."""
   artifacts: [BuildArtifact!]!
@@ -9505,6 +9675,9 @@ type RepositoryPreparation {
 type CodebaseRepository {
   """The repository-wide iOS App project, if enabled."""
   iosAppProject: CodebaseProject
+
+  """The repository-wide Android app project, if enabled."""
+  androidAppProject: CodebaseProject
 
   """Newest build across every checkout and worktree of this repository."""
   latestBuild: Build
@@ -21764,19 +21937,21 @@ input CreateApplePortalProfileInput {
 
 """A simulator on an enrolled Mac agent."""
 type Simulator {
-  """The simulator UUID on this agent."""
+  """
+  The simulator identifier on this agent, an Apple UUID or an android-prefixed AVD name.
+  """
   id: ID!
 
   """The configured simulator name."""
   name: String!
 
-  """The CoreSimulator runtime identifier."""
+  """The CoreSimulator runtime or Android system image identifier."""
   runtimeId: ID!
 
   """The name of the runtime, when installed."""
   runtimeName: String
 
-  """The Apple platform of the runtime."""
+  """The runtime platform, including ANDROID for Android emulators."""
   platform: String!
 
   """The CoreSimulator device type identifier, when known."""
@@ -21793,6 +21968,15 @@ type Simulator {
 
   """The data directory on the selected Mac, when available."""
   dataPath: String
+}
+
+"""The toolchain that manages the selected simulator."""
+enum SimulatorPlatform {
+  """CoreSimulator on macOS."""
+  APPLE
+
+  """Android Virtual Devices on macOS."""
+  ANDROID
 }
 
 """A device type supported by a simulator runtime."""
@@ -21902,6 +22086,9 @@ enum SimulatorAction {
 
 """The simulator and runtime to create on a selected agent."""
 input CreateSimulatorInput {
+  """Simulator toolchain. Omit to create an Apple simulator."""
+  platform: SimulatorPlatform
+
   """The selected Mac agent."""
   agentId: ID!
 
@@ -21920,13 +22107,16 @@ input CreateSimulatorInput {
 
 """An operation and its target simulator on a selected agent."""
 input SimulatorActionInput {
+  """Simulator toolchain. Omit to infer it from the simulator identifier."""
+  platform: SimulatorPlatform
+
   """The selected Mac agent."""
   agentId: ID!
 
   """The client-generated request identifier for retries."""
   requestId: ID!
 
-  """The simulator UUID on this agent."""
+  """The simulator identifier on this agent."""
   simulatorId: ID!
 
   """The operation to run."""
@@ -26569,6 +26759,9 @@ type WorktreeCodebaseGroup {
   Whether the iOS build configured condition is true for this worktree codebase group.
   """
   iosBuildConfigured: Boolean!
+
+  """Whether Android builds are enabled for this codebase's repository."""
+  androidBuildConfigured: Boolean!
 
   """Quick actions associated with this worktree codebase group."""
   quickActions: [Workflow!]!
