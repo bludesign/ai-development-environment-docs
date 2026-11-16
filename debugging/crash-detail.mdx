@@ -8,14 +8,14 @@ description: "Read one crash report's symbolicated threads, find the dSYMs it st
   <img className="hidden dark:block" src="/images/dark/crash-detail.png" alt="Crash details page in dark theme" />
 </Frame>
 
-The crash details page at `/debugging/crashes/{id}` shows one crash report with every name the dSYMs could add. The iOS app shows the same summary, threads, missing dSYMs, and similar crashes on its crash detail screen.
+The crash details page at `/debugging/crashes/{id}` shows an iOS crash report or disk-write diagnostic with the symbols supplied by matched dSYMs. You can review both report types in the iOS app.
 
 ## Header actions
 
 | Action | What it does |
 | --- | --- |
 | **Symbolicate again** | Discards the stored symbols and symbolicates from scratch with the dSYMs uploaded now. Available once the crash is not already being symbolicated |
-| **Symbolicated report** | Downloads the report in Apple's text format with every added symbol, whatever format it arrived in |
+| **Symbolicated report** | Downloads a text rendering of the report with the added symbols |
 | **Original file** | Downloads the file exactly as it was uploaded |
 | Delete | Deletes the report and, once no other crash from the same upload needs it, its file |
 
@@ -44,6 +44,19 @@ The crashed thread is first and expanded. Other threads are collapsed; click one
 Each frame shows its number, binary, and function. App frames are highlighted. A frame a dSYM named is marked **from dSYM** and shows its source file and line. When the compiler inlined functions, `atos` reports each one: the inlined functions come first, marked **inlined**, followed by the function that contains them, all with the same frame number.
 
 Frames in system libraries keep the names the device gave them.
+
+## Disk-write diagnostics
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/disk-write-detail.png" alt="Disk-write summary and heaviest stack in light theme" />
+  <img className="hidden dark:block" src="/images/dark/disk-write-detail.png" alt="Disk-write summary and heaviest stack in dark theme" />
+</Frame>
+
+iOS generates a disk-write diagnostic when an app exceeds a write budget. The summary shows the amount of file-backed memory dirtied, the write budget and its time window, the event duration and average rate, and any action the system took.
+
+**Heaviest Stack** opens by default. Switch to **Sampled Call Tree** to expand other paths. Counts show how many samples include each frame at that position. The summary also shows the time covered by sampling and the number of lost samples when the device reports them. Use an Instruments File Activity trace to measure specific operations or files.
+
+The **Similar** tab groups reports with the same app and sampled path. The dashboard offers the original export and a symbolicated text rendering.
 
 ## Other tabs
 

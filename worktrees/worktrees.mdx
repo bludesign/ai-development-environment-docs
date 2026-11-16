@@ -445,7 +445,14 @@ Select **Bulk Merge** beside **Bulk Sync** on Worktrees or an app’s Worktrees 
 
 Blocked requests show their reason in the review sheet. A draft, pending checks, missing approval, or an existing merge operation may make a request unavailable.
 
-The batch continues on the control plane after you close the sheet. Reopen Bulk Merge to see progress and the latest results. A confirmed merge can have a separate follow-up warning, such as a checkout that could not be deleted. Review an unconfirmed result on the provider before trying it again.
+On the web, choose **Continue in background** to close the sheet while the control plane processes the batch. Worktrees shows how many requests have been processed below the toolbar. Choose **View progress** to reopen the sheet.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-bulk-merge-background.png" alt="Bulk Merge progress below the Worktrees toolbar in light theme" />
+  <img className="hidden dark:block" src="/images/dark/worktree-bulk-merge-background.png" alt="Bulk Merge progress below the Worktrees toolbar in dark theme" />
+</Frame>
+
+Reopen **Bulk Merge** after the batch finishes to see its results. A confirmed merge can have a separate follow-up warning, such as a checkout that could not be deleted. Review an unconfirmed result on the provider before trying it again.
 
 <Frame>
   <img className="block dark:hidden" src="/images/light/worktree-bulk-merge-results.png" alt="Bulk Merge results with a confirmed merge and a skipped request in light theme" />

@@ -173,6 +173,8 @@ See [Import and export](/apps/import-export) for selection behavior, paused auto
 
 `crashReports(filter:, first:, after:)` pages crash reports newest first, and `crashReport(id:)` returns one with its symbolicated `threads`, `binaryImages`, `missingImages`, `attachedDsyms`, and `similarCrashes`. Frame fields such as `symbol`, `sourceFile`, `sourceLine`, and `inlined` already include what the dSYMs added, and `symbolicatedText` renders the whole report in Apple's text format. `dsyms` and `dsym(id:)` list the indexed dSYMs with their `slices` and `crashes`; `dsymUploads` lists uploads still in progress or failed.
 
+`CrashReport.kind` is `CRASH` or `DISK_WRITES`. Use `crashReports(filter: {kind: DISK_WRITES})` to list disk-write diagnostics. `occurredAt` gives the event time. For a disk-write report, select `diskWrites` for the write volume, limit, rate, OS action, and sampling details. Its `heaviestStack` and `callTree` return sample counts and frames with dSYM symbols where available. Each call-tree node links to its parent through `parentId`.
+
 `symbolicateCrashReport` starts a fresh symbolication, `updateDsymUpload` changes an upload's project, build ID, and link, and `updateCrashSettings` changes collection, the symbolication agent, and retention. Uploading files happens over REST — see [Crashes](/debugging/crashes) and [dSYMs](/debugging/dsyms). Subscribe to `crashReportsChanged` and `dsymsChanged` for live updates.
 
 ### Android builds and emulators
