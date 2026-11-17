@@ -47,7 +47,7 @@ A command travels between control planes as a JSON file. **Export** writes it; *
   Agent identifiers are specific to one install, so a specifically targeted agent travels by name; a missing agent widens the command to **Any agent home** and switches off its Quick Action. Repository targets travel with both canonical origins and names. A version 2 import keeps every repository it can match. If any selected repository is missing, the imported command keeps the matched allow-list but its Quick Action is switched off. Only when none of the repositories match does the target widen to **Any worktree**. Version 1 exports with one repository name remain supported.
 </Note>
 
-An exported file carries the command's name, description, script, target, restart policy, quick action settings, and notification setting. A hand-written file containing just those fields imports as well, without the export envelope.
+An exported file carries the command's name, description, script, optional local port (`port`), target, restart policy, quick action settings, and notification setting. A hand-written file containing just those fields imports as well, without the export envelope.
 
 For commands that target repositories in an app, [app and repository import/export](/apps/import-export) provides a shared package with repository settings and workflows. Its review requires missing target mappings to be resolved or the command excluded; it does not silently widen the command's scope. Existing `.command.json` files continue to use this page's command-only import flow.
 
@@ -86,11 +86,32 @@ The web browser saves this page's Agent choice for your account. The [Active Age
 
 **Run custom** executes a script without saving a definition. Choose where it runs, paste the script, and go. The run is still durable and still retained in immutable history — it just has no reusable definition behind it. Custom runs use non-exclusive concurrency.
 
+Set **Local port** if the script starts a service. The run stores the port with the script, so you can open any matching [Tailscale Serve addresses](/commands/command-run#tailscale-addresses) from the run page.
+
 ## Quick actions
 
 A saved command can be surfaced as a button on the pages of the things it targets: agent-home commands appear on the [Agents](/agents/agents) page and agent detail, and worktree commands appear on eligible worktree pages. A command scoped to selected repositories appears on worktrees from every repository in its allow-list. Configure the icon and button style when you create or edit the command.
 
 When the command has active runs on that target, a spinner menu appears beside its button. The menu lists every active run and lets you **Terminate**, **Restart**, or **View** it. Select the command button again to start another run; its concurrency setting decides whether it starts or queues. **Restart** terminates the selected run and creates a successor from its snapshot. The successor waits for the original to finish.
+
+The command menu also lists the observed Tailscale Serve addresses for a matching **Local port** on that agent.
+
+## Resolving a port conflict
+
+When you start or rerun a command with a local port, the control plane checks other command runs that have reserved that port on the same agent. The warning lists the runs and offers three choices.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/command-port-conflict.png" alt="Command port conflict warning in light theme" />
+  <img className="hidden dark:block" src="/images/dark/command-port-conflict.png" alt="Command port conflict warning in dark theme" />
+</Frame>
+
+| Choice | Effect |
+| --- | --- |
+| **Continue** | Submit the command and leave the listed runs running. The script may still fail if it cannot bind the port. |
+| **Cancel** | Close the prompt without starting a run. |
+| **Terminate and Run** | Stop the listed runs and queue the new command until they finish stopping. |
+
+If the set of conflicting runs grows before you submit your choice, review the updated list. Workflow command steps [wait for the same choice](/workflows/workflow-run#resolving-a-command-port-conflict).
 
 ## Notes
 

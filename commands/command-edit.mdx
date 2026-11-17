@@ -14,7 +14,7 @@ The edit command page at `/dashboard/commands/{id}/edit` updates an existing def
 
 <Columns cols={2}>
   <Card title="Command" icon="file-code">
-    **Name**, **Description**, and the **Shell script**.
+    **Name**, **Description**, **Shell script**, and the optional **Local port**.
   </Card>
   <Card title="Target scope" icon="crosshairs">
     Any agent home, a specific agent home, any worktree, or a worktree in one or more selected repositories.
@@ -32,11 +32,12 @@ The edit command page at `/dashboard/commands/{id}/edit` updates an existing def
 
 ## How edits interact with history
 
-Each run stores an immutable **snapshot** of the name, description, script, target kind, concurrency mode, Git-blocking setting, restart policy, restart limit, and notification setting that were in force when it started. Editing the definition never rewrites those snapshots.
+Each run stores an immutable **snapshot** of the name, description, script, local port, target kind, concurrency mode, Git-blocking setting, restart policy, restart limit, and notification setting that were in force when it started. Editing the definition never rewrites those snapshots.
 
 | Change | Effect |
 | --- | --- |
 | Script or name | Applies to the next run; existing runs keep their snapshot |
+| Local port | Applies to new launches. Existing runs and their reruns use the port in their snapshot |
 | Target scope or repository allow-list | Applies to the next launch; runs already placed on an agent stay there |
 | Concurrency | Applies to the next run; a queued or active run keeps the mode it started with |
 | Block Git operations | Applies to the next run; an active run keeps the setting it started with |

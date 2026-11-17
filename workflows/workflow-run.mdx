@@ -35,18 +35,23 @@ The card updates as workflow and AI run state changes. It disappears after this 
 
 A run that is not finishing shows a **Waiting on** card above the run graph, naming every step that is currently sitting still and why.
 
-Steps sit still for two different reasons, and the card separates them:
+The card distinguishes the reasons a step can be waiting.
 
 | | What it means | What resolves it |
 | --- | --- | --- |
 | **Parked** | The step handed work to something outside the runtime — an agent job, a Plan or Session, a build, a command — and is waiting for it to report back. It holds no worktree or codebase lock while it waits. | The external work finishing, or the wait timing out |
 | **Held** | The step never started, because the codebase or worktree it needs is busy with another run. | The other run releasing it |
+| **Command port conflict** | Another command on the same agent has reserved the step's local port. | An operator choosing how to proceed |
 
 Each parked step lists what it is **Waiting on** — a link straight to the job, Plan, or Session — along with how long it has been waiting, when it **Times out**, and when the runtime next checks. A held step shows the contention that is blocking it instead.
 
 <Tip>
   A parked step is normal, not stuck. Use **Times out** to tell the difference: a wait that is still well short of its timeout is simply slow external work, while one approaching it will fail the step and surface a real error.
 </Tip>
+
+## Resolving a command port conflict
+
+Open the workflow run to see the port, agent, and conflicting command runs. Choose **Continue** to submit the launch with the conflicts acknowledged, **Terminate and Run** to stop the listed runs before dispatch, or **Cancel** to skip the launch and follow the step's failure path. An error branch can handle that failure. Other ready steps can continue while you decide.
 
 ## Live run graph
 

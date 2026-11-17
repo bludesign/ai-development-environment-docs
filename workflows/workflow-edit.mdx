@@ -189,6 +189,12 @@ Use **Filters** to match the event's session paths. Payloads expose public resou
 
 Threshold comparisons fire when the condition becomes true and stay quiet until it becomes false again. A later crossing is a new event, including a return to a previously observed size.
 
+### Configuring a command port
+
+**Saved command** steps use the saved command's **Local port**. Set **Local port** directly on a **Custom command** step when its script starts a service. **Rerun command** steps use the port from the original run's snapshot. If the chosen agent already has a command using the port, the step [waits for an operator's decision](/workflows/workflow-run#resolving-a-command-port-conflict), including in scheduled and event-triggered workflows.
+
+**Call MCP tool** steps that launch or rerun commands through the built-in **Commands** tools also wait for the operator's decision.
+
 ### Reacting to command output
 
 **Saved command** and **Custom command** steps can route work as soon as their output matches a case-sensitive RE2 regular expression. Set **Output match pattern (RE2)**, keep **Completion** on **Wait for exit**, then connect the `match` handle to an independent branch.
