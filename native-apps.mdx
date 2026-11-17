@@ -7,6 +7,23 @@ Use the native AI Development Environment app on iPhone, iPad, or Apple TV to ma
 
 On iPhone or iPad, you can configure and start [Android builds](/builds/builds#start-an-android-build), run them on an Android destination connected to an agent, and export the APK for sharing. **System → Simulators** also offers [Android emulator management](/system/simulators#manage-android-emulators), and [Build Data](/system/build-data#gradle-build-data) shows managed Gradle project caches.
 
+## Widgets and Live Activities
+
+Sign in to your control plane on iPhone or iPad, then add an **AI Dev** widget from the system widget gallery. **Usage**, **Open Pull Requests**, and **Action Center** show today's model cost, the sidebar's open-request count, and work that is active or needs attention. Tap a widget to open its corresponding destination in the app.
+
+<Frame caption="Usage, pull requests, and Action Center widgets, with an in-progress Live Activity.">
+  <img className="block dark:hidden" width="430" src="/images/ios/widgets-light.png" alt="AI Dev Usage, Open pull requests, and Action Center widgets with a Live Activity in light appearance" />
+  <img className="hidden dark:block" width="430" src="/images/ios/widgets-dark.png" alt="AI Dev Usage, Open pull requests, and Action Center widgets with a Live Activity in dark appearance" />
+</Frame>
+
+Widgets use the app's selected server and signed-in account. They refresh on a timeline and can also receive APNs refresh signals when server status changes. Apple budgets and delivers [WidgetKit push updates](https://developer.apple.com/documentation/widgetkit/updating-widgets-with-widgetkit-push-notifications) opportunistically, so an update can be delayed. The control plane must remain reachable from the device to fetch fresh data.
+
+Live Activities summarize in-progress work on the Lock Screen and Dynamic Island. An activity starts while the app is open and work is active, receives APNs updates after you leave the app, and ends when no active work remains. New activities do not start remotely while the app is closed. You can turn them off under **Settings → Widgets and Live Activities** in the app; iOS must also allow Live Activities for **AI Dev**.
+
+Configure the control plane's existing [APNs provider key](/system/settings#push-notifications) for push updates. Widget and Live Activity registrations are separate from the native alert devices on the [Notifications](/notifications) page. The app and widget extension share authentication through a Keychain access group and cache status in their App Group container; signing out or switching servers or accounts clears that shared status. Work summaries can appear on the Lock Screen, so use the device's widget and Live Activity settings to control visibility.
+
+When building the app, enable App Groups and Keychain Sharing for the app and widget extension, and Push Notifications for the extension. The extension uses `com.bludesign.aidevelopmentenvironment.widgets`; the app and extension share `group.com.bludesign.aidevelopmentenvironment`. Run `bundle exec fastlane certificates force:true` after configuring these capabilities to regenerate both targets' development and distribution profiles. The existing Fastlane iOS profile and export lanes include both bundle identifiers. Deploy the server's `20261117150000_ios_status_subscriptions` migration before using push updates.
+
 ## Open a command's Tailscale address
 
 On iPhone or iPad, set **Local port** when you create a saved command or run a one-off script. Open the command's menu on a worktree card or its run details to find the agent's observed [Tailscale Serve addresses](/commands/command-run#tailscale-addresses). If another command has reserved the port, choose how to proceed in the launch prompt or on the workflow run page.
