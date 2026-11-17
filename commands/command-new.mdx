@@ -17,8 +17,13 @@ The new command page at `/dashboard/commands/new` creates a reusable command def
 | **Name** | How the command appears in lists, quick actions, and run history |
 | **Description** | Optional context shown alongside the name |
 | **Shell script** | The script to execute |
+| **Local port** | Optional port used by the script on the selected agent, from 1 through 65535 |
 
 The script runs through the agent user's non-interactive login shell.
+
+Set **Local port** for a command that starts a service, such as a development server on port `3000`. Configure the script to listen on that port. When [Tailscale Serve](/system/tailscale) observes a route forwarding to the port on the selected agent, the command menu and run page show the listener addresses you can open.
+
+If another command on the same agent has reserved the port, the launch asks you to [choose how to proceed](/commands/commands#resolving-a-port-conflict). This applies across worktrees on that agent.
 
 <Warning>
   Interactive input and PTY applications are not supported. A script that waits on a prompt, opens an editor, or expects a terminal will hang until the job times out.

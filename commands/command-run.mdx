@@ -24,9 +24,14 @@ The run number and status badge, with **Rerun** and — while the run is active 
 | Origin | Manual, Quick action, Workflow, or Rerun |
 | Agent | Name and hostname of the Mac it ran on |
 | Worktree | Folder and branch, for worktree-scoped commands |
+| Local port | The port captured when the run was created, if configured |
 | Exit code and signal | How the last attempt ended |
 | Error | The failure message, when there is one |
 | Next restart | When a restarting run will try again |
+
+## Tailscale addresses
+
+Open an address on the run page to reach the agent's [Tailscale Serve](/system/tailscale) listener. The page looks for observed routes that forward to the run's local port and shows available MagicDNS, IPv4, and IPv6 addresses. The listener can use a different port or have a mount path. For example, a route can serve `/dashboard` over HTTPS on port `443` and forward it to the command on port `3000`.
 
 ## Terminal output
 
@@ -50,6 +55,7 @@ While a run waits, the page shows **Waiting to start** with the current reason. 
 | Waiting for agent | The job was handed to the agent but has not been picked up |
 | Agent offline | The selected agent must reconnect before the run can start |
 | Waiting for predecessor | A **Restart** or **Rerun** successor waits for the run it replaces to finish |
+| Waiting for port release | **Terminate and Run** waits for the confirmed conflicting runs to stop |
 | Restart delay | The next attempt is waiting for the restart delay |
 | Target busy | One or more active runs hold the target |
 | Queued behind | A blocking run is ahead of this run in the target's queue |
@@ -71,7 +77,7 @@ Queued, started, and finished timestamps, plus total duration.
 
 ## Immutable command snapshot
 
-The name, description, script, target kind, concurrency mode, Git-blocking setting, restart policy, restart limit, and notification setting captured when the run started, with **Copy** for the script.
+The name, description, script, local port, target kind, concurrency mode, Git-blocking setting, restart policy, restart limit, and notification setting captured when the run started, with **Copy** for the script.
 
 <Note>
   This snapshot is why history stays trustworthy. Editing or deleting the command definition later does not change what this page reports — it shows what actually ran.
