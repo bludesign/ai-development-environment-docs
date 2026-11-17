@@ -8,7 +8,7 @@ description: "Review notification history and choose how each event reaches you.
   <img className="hidden dark:block" src="/images/dark/notifications.png" alt="Notifications page in dark theme" />
 </Frame>
 
-The **Notifications** page at `/dashboard/notifications` has two jobs: it is the permanent record of every notification the control plane has raised, and it is where you decide which of four delivery channels each event type uses.
+The **Notifications** page at `/dashboard/notifications` records notifications and lets you configure delivery channels and Live Activities.
 
 The page has two tabs — **History** and **Settings**.
 
@@ -115,6 +115,19 @@ The web sidebar's clear-all button opens a confirmation menu by default. To clea
 ### Notification types
 
 A grid of every type with a **Sidebar**, **Browser**, **Web Push**, and **Native** toggle in each row. Each toggle saves on change.
+
+### Live Activities
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/notification-settings.png" alt="Notification settings with Live Activity work type controls in light theme" />
+  <img className="hidden dark:block" src="/images/dark/notification-settings.png" alt="Notification settings with Live Activity work type controls in dark theme" />
+</Frame>
+
+Choose which work types contribute to the iOS Live Activity's progress total and summary: **Plans**, **Sessions**, **Builds**, **Workflow runs**, **Command runs**, **GitHub Actions runs**, and **GitLab pipelines**. All types are enabled by default. Each toggle saves immediately and applies to the control plane's registered iOS clients.
+
+The activity stays visible while selected active work exists, including work queued to run. Paused, blocked, failed, or completed work and items waiting for your answer do not keep it visible. **Needs attention** remains a separate count while the activity is visible. Pull requests, reviews, and worktree status do not contribute to the progress total.
+
+Turning off every type ends existing activities. Open the iOS app to start a new activity after re-enabling types. These choices apply to Live Activities; the web sidebar and status widgets retain their own counts. See [Native apps](/native-apps#widgets-and-live-activities) for device setup and push refresh behavior.
 
 ### Browser delivery
 
