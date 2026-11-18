@@ -63,6 +63,7 @@ This is where you decide whether the workflow appears as a button on other pages
     | --- | --- |
     | **Standard** | Alongside the normal worktree actions |
     | **Merge conflict** | Starts while a worktree rebase is stopped on conflicts; active runs remain accessible after resolution |
+    | **Failing pipeline** | In the **Pipeline failing** box on a worktree with failing GitHub checks or GitLab pipelines |
     | **GitHub Actions** | In matching GitHub pipeline and job menus |
     | **None** | Nowhere — the workflow is run from its own page only |
   </Step>
@@ -82,6 +83,12 @@ On web worktree cards and table rows, a running merge-conflict action keeps its 
 <Note>
   A quick action only renders when the workflow is published, enabled, and has a resource trigger matching the selected action type. All four conditions have to hold — the page states this inline as a reminder.
 </Note>
+
+### Pass failing pipeline details to a workflow
+
+Add a **Resource manual** or **Resource manual choice** trigger for **Worktree**, publish the workflow, then set its quick action type to **Failing pipeline**. You can launch the published workflow from the [web or iOS worktree](/worktrees/worktrees#in-progress-runs-and-failing-pipelines).
+
+The action makes the failure details at launch available to workflow steps as `worktree.failingPipelines`. Each entry contains `provider`, `id`, `status`, `headSha`, and `url` when available. GitHub entries include `repositoryGithubId` and may include `workflowRunId`. GitLab entries include `projectId`. Bind the full array or reference a field such as `worktree.failingPipelines[0].url`. GitHub can report a failing rollup before the individual checks are available. In that case, the array is empty.
 
 ## Queue
 

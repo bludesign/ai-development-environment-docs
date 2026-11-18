@@ -58,6 +58,25 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
 | Working tree | Dirty when staged or unstaged changes exist; otherwise clean |
 | Review decision | Approved, changes requested, review requested, review required, or no decision |
 
+## In-progress runs and failing pipelines
+
+On web and iOS, look below the worktree title for **Session in progress** and **Plan in progress** badges. Each badge gives the number of runs of that kind currently in progress on the worktree.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-failing-pipeline.png" alt="Worktree card with plan and session progress badges and a failing pipeline action" />
+  <img className="hidden dark:block" src="/images/dark/worktree-failing-pipeline.png" alt="Worktree badges and failing pipeline action in dark theme" />
+</Frame>
+
+When a worktree has failing CI and an eligible workflow, **Pipeline failing** appears below the pipeline status on the web card and below the worktree row on iOS. Select a named workflow button to start it. If the workflow offers choices, select the path you want to run.
+
+GitHub uses the checks on the pull request linked to the worktree. GitLab uses the latest pipeline for each source on the checked-out commit, such as the latest push pipeline and the latest merge request pipeline. When the applicable checks recover, the launch buttons disappear. You can still open a workflow run you already started.
+
+<Frame>
+  <img width="390" src="/images/ios/worktree-failing-pipeline.png" alt="iOS worktree row with session and plan badges below the branch and a failing pipeline workflow below the metadata" />
+</Frame>
+
+Set up these buttons in [Workflow Details](/workflows/workflow-detail#quick-actions).
+
 ## Default branches
 
 <Frame>
