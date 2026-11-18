@@ -3958,6 +3958,14 @@ type Mutation {
     input: ChangeWorktreeBranchInput!
   ): AgentJob!
 
+  """
+  Renames the checked-out local branch in place and returns an agent job.
+  """
+  renameWorktreeBranch(
+    """Values for the requested rename."""
+    input: RenameWorktreeBranchInput!
+  ): AgentJob!
+
   """Moves a worktree and returns a worktree move."""
   moveWorktree(
     """Values for the requested operation."""
@@ -26424,6 +26432,9 @@ enum WorktreeOperation {
   """Represents the push option."""
   PUSH
 
+  """Pushes the local branch to the same name on origin and tracks it."""
+  PUBLISH
+
   """Represents the reset option."""
   RESET
 
@@ -28287,6 +28298,9 @@ input RunWorktreeOperationInput {
   """The operation to use for the request."""
   operation: WorktreeOperation!
 
+  """The checked-out branch required for publishing."""
+  expectedBranch: String
+
   """Identifier of the request to use."""
   requestId: ID!
 
@@ -28379,6 +28393,21 @@ input ChangeWorktreeBranchInput {
 
   """Whether stash on failure applies to the request."""
   stashOnFailure: Boolean = false
+}
+
+"""Values used to rename the checked-out local branch."""
+input RenameWorktreeBranchInput {
+  """Identifier of the worktree."""
+  worktreeId: ID!
+
+  """The branch that must still be checked out."""
+  expectedBranch: String!
+
+  """The new local branch name."""
+  branchName: String!
+
+  """Identifier of the request."""
+  requestId: ID!
 }
 
 """Values used to move a worktree."""
