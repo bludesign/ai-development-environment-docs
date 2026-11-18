@@ -1,6 +1,6 @@
 ---
 title: "Connected Applications"
-description: "Review MCP OAuth permissions, revoke one approval, or disconnect an application from your account in the web and iOS apps."
+description: "Review MCP OAuth permissions, revoke one approval, or disconnect an application from your account."
 ---
 
 <Frame>
@@ -54,24 +54,13 @@ Disconnect the application, then reconnect from its MCP settings. The client mus
 
 If ChatGPT requests only read access, the resulting approval has only `mcp:read`. Reconnecting without a request for additional scopes produces another read-only approval. See [MCP OAuth](/reference/mcp-oauth#choose-permissions) for scope selection and client setup.
 
-## Manage connections on iOS
-
-Open **System → Connected Applications** in the native navigation, or open it from **Settings**. The app uses the same account-scoped management endpoint as the web app with your existing server session.
-
-The native screen shows the same client identity, dates, counts, permission explanations, and individual approvals. Choose **Revoke** for one approval or **Disconnect** for the whole application, then confirm. Pull to refresh or use **Refresh** in the toolbar. The page also explains disabled OAuth, offline access, and reconnection. Request failures keep existing approvals visible and allow retry.
-
-<Frame>
-  <img className="block dark:hidden" src="/images/light/ios-connected-applications.png" alt="Native iOS Connected Applications screen in light theme" style={{ maxHeight: "700px", width: "auto", margin: "0 auto" }} />
-  <img className="hidden dark:block" src="/images/dark/ios-connected-applications.png" alt="Native iOS Connected Applications screen in dark theme" style={{ maxHeight: "700px", width: "auto", margin: "0 auto" }} />
-</Frame>
-
 ## Management API
 
-The web and native apps use `GET /api/auth/mcp-connections` to read the OAuth enabled state and the current user's applications and approvals. Authorization IDs identify approvals; they are not tokens.
+Send `GET /api/auth/mcp-connections` to read the OAuth enabled state and the current user's applications and approvals. Authorization IDs identify approvals.
 
 Send `DELETE` to the same endpoint with `clientId` and `authorizationId` to revoke one approval. Send only `clientId` to disconnect all of that application's approvals for your account. Repeating a revocation for your own saved approval succeeds without restoring it.
 
-These operations require a browser or native user session. MCP OAuth tokens and API keys cannot manage connections. The server checks both account and client ownership, rejects malformed requests, and never exposes token values.
+These operations require a signed-in user session. MCP OAuth tokens and API keys cannot manage connections. The server checks both account and client ownership, rejects malformed requests, and never exposes token values.
 
 ## Related pages
 

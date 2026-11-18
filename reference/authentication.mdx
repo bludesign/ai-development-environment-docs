@@ -145,7 +145,7 @@ Invalid credentials fail with `401`; conflicting credentials fail with `400`. Th
 
 ## Incoming MCP OAuth
 
-`MCP_OAUTH_ENABLED` defaults to `false`, independently of `AUTH_MODE`. Enable it with a configured canonical HTTPS origin to connect ChatGPT and Codex directly. OAuth tokens work only at `/api/mcp`; presets narrow the selected tools without granting permissions. Manage approvals and immediate revocation in **System → Connected Applications** or **Settings → Connected Applications** in the web and native iOS apps. [Connected Applications](/system/connected-applications) supports both per-approval **Revoke** and application-wide **Disconnect**. Follow the [MCP OAuth setup guide](/reference/mcp-oauth) for consent, scopes, discovery, optional DCR, Cloudflare connectivity, and rollout.
+`MCP_OAUTH_ENABLED` defaults to `false`, independently of `AUTH_MODE`. Enable it with a configured canonical HTTPS origin to connect ChatGPT and Codex directly. OAuth tokens work only at `/api/mcp`. Presets narrow the selected tools without granting permissions. Open [**System → Connected Applications**](/system/connected-applications) or **Settings → Connected Applications** to revoke an individual approval or disconnect an application. Follow the [MCP OAuth setup guide](/reference/mcp-oauth) for consent, scopes, discovery, optional DCR, Cloudflare connectivity, and rollout.
 
 ## Public routes
 

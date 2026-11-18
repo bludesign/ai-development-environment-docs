@@ -86,7 +86,7 @@ On web worktree cards and table rows, a running merge-conflict action keeps its 
 
 ### Pass failing pipeline details to a workflow
 
-Add a **Resource manual** or **Resource manual choice** trigger for **Worktree**, publish the workflow, then set its quick action type to **Failing pipeline**. You can launch the published workflow from the [web or iOS worktree](/worktrees/worktrees#in-progress-runs-and-failing-pipelines).
+Add a **Resource manual** or **Resource manual choice** trigger for **Worktree**, publish the workflow, then set its quick action type to **Failing pipeline**. Launch the published workflow from the [worktree card](/worktrees/worktrees#in-progress-runs-and-failing-pipelines).
 
 The action makes the failure details at launch available to workflow steps as `worktree.failingPipelines`. Each entry contains `provider`, `id`, `status`, `headSha`, and `url` when available. GitHub entries include `repositoryGithubId` and may include `workflowRunId`. GitLab entries include `projectId`. Bind the full array or reference a field such as `worktree.failingPipelines[0].url`. GitHub can report a failing rollup before the individual checks are available. In that case, the array is empty.
 
