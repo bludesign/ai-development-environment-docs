@@ -239,12 +239,19 @@ Results are written under `tailscale.*` and include the operation, per-agent pro
 | **Details** | **Name** and **Description** | How the workflow is identified across the app |
 | **Running** | **Overlap policy** | **Queue every event**, **Run concurrently**, or **Keep latest pending event** |
 | **Running** | **Maximum concurrent runs** | The ceiling on simultaneous executions. Shown only for **Run concurrently** |
+| **Running** | **Maximum automatic pipeline retries** | Additional workflow runs if CI is still failing after a successful repair |
 | **Running** | **Overlap scope** | Whether the policy is counted **Per worktree** or across **Every worktree** |
 | **Running** | **Worktree concurrency** | Choose exclusive, non-exclusive, or excluded worktree admission |
 | **Running** | **Block Git operations during command and terminal steps** | Prevent concurrent Git and worktree operations while command-like steps run. Always enabled for exclusive workflows |
 | **Running** | **Notify when this workflow completes successfully** | Turn off to suppress success notifications for this workflow only |
 | **Canvas** | **Viewer layout** | **Regular** uses your authored positions in read-only views; **Basic** auto-arranges them for the available width, leaving your positions untouched |
 | **Canvas** | **Step connectors** | Handles drawn **On the sides** or **On top and bottom** |
+
+### Automatic pipeline retries
+
+For a published **Failing pipeline** quick action used by [Auto Sync or Auto Merge](/worktrees/worktrees#resolve-failing-pipelines-automatically), set **Maximum automatic pipeline retries** from 0 through 10. The default of 0 allows one automatic run. If that run succeeds and CI still fails, a higher limit allows additional runs.
+
+Use `worktree.failingPipelines` to inspect the failures. In an **If / else** step, compare `worktree.pipelineRepair.retryCount` with a number to change behavior between attempts. The initial run receives `0`, the first retry receives `1`, and `worktree.pipelineRepair.maxRetries` holds the configured limit for the repair.
 
 ### Overlap scope
 
