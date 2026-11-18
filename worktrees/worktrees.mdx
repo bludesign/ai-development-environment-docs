@@ -58,6 +58,21 @@ Each worktree shows its branch, path, base branch, agent, repository, upstream s
 | Working tree | Dirty when staged or unstaged changes exist; otherwise clean |
 | Review decision | Approved, changes requested, review requested, review required, or no decision |
 
+## In-progress runs and failing pipelines
+
+Counts for runs in progress appear on the right side of the worktree header. The blue terminal badge counts sessions, and the purple clipboard badge counts plans. Hover over a badge for its full label.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-failing-pipeline.png" alt="Worktree card with plan and session progress badges and a failing pipeline action" />
+  <img className="hidden dark:block" src="/images/dark/worktree-failing-pipeline.png" alt="Worktree badges and failing pipeline action in dark theme" />
+</Frame>
+
+When a worktree has failing CI and an eligible workflow, **Pipeline failing** appears below the pipeline status on the worktree card. Select a named workflow button to start it. If the workflow offers choices, select the path you want to run.
+
+GitHub uses the checks on the pull request linked to the worktree. GitLab uses the latest pipeline for each source on the checked-out commit, such as the latest push pipeline and the latest merge request pipeline. When the applicable checks recover, the launch buttons disappear. You can still open a workflow run you already started.
+
+Set up these buttons in [Workflow Details](/workflows/workflow-detail#quick-actions).
+
 ## Default branches
 
 <Frame>
@@ -294,6 +309,13 @@ The action is unavailable when the worktree has no staged or unstaged changes, h
 
 It can also handle conflicts for you — enable **Run a quick-action workflow to resolve merge conflicts automatically** and select a merge-conflict workflow, optionally with a specific trigger choice. Auto Sync can be paused, resumed, and cancelled.
 
+In **Configure Auto Sync**, enable **Auto resolve failing pipelines** and choose a published **Failing pipeline** workflow available to the repository. Choose a trigger if the workflow offers choices. Auto Sync checks CI for the current pushed branch of a clean worktree after syncing.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-auto-sync-options.png" alt="Configure Auto Sync with failing pipeline resolution enabled in light theme" />
+  <img className="hidden dark:block" src="/images/dark/worktree-auto-sync-options.png" alt="Configure Auto Sync with failing pipeline resolution enabled in dark theme" />
+</Frame>
+
 Worktree cards show a green **Auto Syncing** indicator while Auto Sync is active. Multiple worktrees can keep Auto Sync enabled for the same codebase. When another operation holds a resource needed by the sync, Auto Sync waits and retries automatically after the operation completes. A completed sync cycle leaves room for other work before checking again.
 
 On agents advertising `operation.resources.v1`, a build blocks Auto Sync on its source worktree, while independent worktrees can continue. A build script can widen that protection to the codebase or agent. Older agents defer Auto Sync across the codebase while a build is queued or executing. Read-only worktree status and diff inspections remain available during a build on updated agents.
@@ -342,6 +364,7 @@ Git work waits when another operation holds a conflicting resource and resumes a
 | --- | --- |
 | **Syncing branch** | A saved sync request is waiting for the agent or running a guarded rebase and push. |
 | **Resolving merge conflicts** | The selected workflow is running on the paused rebase. |
+| **Running pipeline repair or waiting for CI** | The selected workflow is running or the control plane is checking its result on the provider. |
 | **Waiting for CI** | The current source revision still needs passing CI. |
 | **Waiting for merge requirements** | CI passed, but provider readiness, approvals, or branch rules still block merging. |
 | **Merging** | The control plane submitted the merge and is awaiting confirmation. |
@@ -349,9 +372,17 @@ Git work waits when another operation holds a conflicting resource and resumes a
 
 Enable **Auto resolve merge conflicts** under **Auto sync branch** and choose an eligible merge conflict workflow. If the workflow offers trigger choices, choose the one you want to run. This option requires an agent that supports guarded conflict resolution. The control plane runs the workflow once when its rebase hits a conflict. Configure it to resolve the local rebase and leave the push to Auto Merge. When the workflow succeeds, the agent verifies the resolved rebase and pushes with the original source lease. Auto Merge then waits for CI and the provider's rules on the resolved commit.
 
-With **Auto resolve merge conflicts** off, resolve any rebase manually, finish and push it, then refresh the merge options, review the current source commit, and choose **Resume Auto Merge**. A failed workflow, unresolved conflicts, changed source or target revisions during resolution, or preparations blocking the rebase also pause the operation. The agent does not force through preparations. CI retries remain available through the existing pipeline controls.
+With **Auto resolve merge conflicts** off, resolve any rebase manually, finish and push it, then refresh the merge options, review the current source commit, and choose **Resume Auto Merge**. A failed workflow, unresolved conflicts, changed source or target revisions during resolution, or preparations blocking the rebase also pause the operation. The agent does not force through preparations.
 
-**Cancel Auto Merge** cancels pending sync and conflict workflow work and prevents further merge attempts. A rebase already pushed is preserved. If the provider already accepted the merge, the control plane confirms it and handles the saved follow-ups. Closing the web or iOS app does not stop a saved operation. Standalone **Auto Sync** keeps its configuration while the merge operation coordinates access to the worktree.
+### Resolve failing pipelines automatically
+
+Enable **Auto resolve failing pipelines** under **Auto sync branch** and select a **Failing pipeline** workflow. Auto Merge uses the current pull request or merge request CI result. The conflict and pipeline options can both be enabled.
+
+The workflow can rerun CI on the same commit. To fix the code, have the workflow commit its changes and finish with **Run worktree operation** set to **Push**. Use an updated agent that records the pushed commit. Auto Merge verifies the recorded push against the checkout and provider, then checks CI and merge requirements on the verified revision.
+
+**Maximum automatic pipeline retries** in the [workflow settings](/workflows/workflow-edit#automatic-pipeline-retries) controls additional runs after a successful workflow leaves CI failing. A workflow failure, cancellation, or exhausted retry budget pauses the automation. Review the run, then use **Resume Auto Sync** or **Resume Auto Merge** to start with a fresh budget.
+
+**Cancel Auto Merge** cancels pending sync, conflict, and pipeline repair work and prevents further merge attempts. A rebase already pushed is preserved. If the provider already accepted the merge, the control plane confirms it and handles the saved follow-ups. Closing the web or iOS app does not stop a saved operation. Standalone **Auto Sync** keeps its configuration while the merge operation coordinates access to the worktree.
 
 The native iOS merge sheets expose the same setting, eligibility reason, progress, cancellation, and resume controls. After updating the control plane, apply its database migrations and update the control agents before using branch syncing.
 

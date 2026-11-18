@@ -4340,6 +4340,11 @@ type Subscription {
 
     """Only emit changes for runs with this origin."""
     origin: RunOrigin
+
+    """
+    Only emit run lifecycle and archive changes, skipping incremental output and usage updates.
+    """
+    stateOnly: Boolean = false
   ): Boolean!
 
   """Emits an agent run whenever agent runs change."""
@@ -15134,6 +15139,15 @@ type GitHubPullRequestMergeOptions {
   """Enabled merge conflict workflows available to the linked worktree."""
   mergeConflictWorkflows: [Workflow!]!
 
+  """Eligible worktree quick actions for repairing failed CI."""
+  failingPipelineWorkflows: [Workflow!]!
+
+  """Previously selected failing pipeline workflow, if any."""
+  defaultPipelineWorkflowId: ID
+
+  """Previously selected trigger choice for the failing pipeline workflow."""
+  defaultPipelineWorkflowChoice: String
+
   """Previously selected merge conflict workflow."""
   defaultConflictWorkflowId: ID
 
@@ -16857,6 +16871,15 @@ type GitLabMergeOptions {
   """Enabled merge conflict workflows available to the linked worktree."""
   mergeConflictWorkflows: [Workflow!]!
 
+  """Eligible worktree quick actions for repairing failed CI."""
+  failingPipelineWorkflows: [Workflow!]!
+
+  """Previously selected failing pipeline workflow, if any."""
+  defaultPipelineWorkflowId: ID
+
+  """Previously selected trigger choice for the failing pipeline workflow."""
+  defaultPipelineWorkflowChoice: String
+
   """Previously selected merge conflict workflow."""
   defaultConflictWorkflowId: ID
 
@@ -17013,6 +17036,12 @@ input SubmitGitLabMergeRequestMergeInput {
   Optional resource trigger choice for the selected merge conflict workflow.
   """
   conflictWorkflowChoice: String
+
+  """Failing pipeline workflow used for automatic repair."""
+  pipelineWorkflowId: ID
+
+  """Optional trigger choice for the failing pipeline workflow."""
+  pipelineWorkflowChoice: String
 
   """
   Selected targeting worktrees to update only after the merge is confirmed.
@@ -25323,6 +25352,9 @@ enum WorkflowQuickActionKind {
   """Represents the merge conflict option."""
   MERGE_CONFLICT
 
+  """Offers a workflow on a worktree with a failing CI pipeline."""
+  FAILING_PIPELINE
+
   """Represents the GitHub actions option."""
   GITHUB_ACTIONS
 
@@ -25371,6 +25403,11 @@ type Workflow {
 
   """The max concurrent runs associated with this workflow."""
   maxConcurrentRuns: Int!
+
+  """
+  Maximum automatic reruns after a successful pipeline repair leaves CI failing.
+  """
+  maxPipelineRepairRetries: Int!
 
   """Whether successful workflow runs create completion notifications."""
   completionNotificationsEnabled: Boolean!
@@ -26220,6 +26257,11 @@ input CreateWorkflowInput {
   """The max concurrent runs to use for the request."""
   maxConcurrentRuns: Int = 1
 
+  """
+  Maximum automatic reruns after a successful pipeline repair leaves CI failing.
+  """
+  maxPipelineRepairRetries: Int
+
   """Whether successful workflow runs create completion notifications."""
   completionNotificationsEnabled: Boolean = true
 
@@ -26253,6 +26295,11 @@ input SaveWorkflowDraftInput {
 
   """The max concurrent runs to use for the request."""
   maxConcurrentRuns: Int
+
+  """
+  Maximum automatic reruns after a successful pipeline repair leaves CI failing.
+  """
+  maxPipelineRepairRetries: Int
 
   """Whether successful workflow runs create completion notifications."""
   completionNotificationsEnabled: Boolean
@@ -26549,6 +26596,9 @@ enum WorktreeAutoSyncPauseReason {
   """
   BRANCH_CHANGED
 
+  """Pipeline repair could not clear the failure or needs review."""
+  PIPELINE_REPAIR
+
   """Auto Sync encountered another error."""
   ERROR
 }
@@ -26725,6 +26775,12 @@ type WorktreeAutoSync {
   The conflict workflow choice associated with this worktree auto sync. May be null when unavailable or not applicable.
   """
   conflictWorkflowChoice: String
+
+  """Failing pipeline workflow used for automatic repair."""
+  pipelineWorkflowId: ID
+
+  """Optional trigger choice for the failing pipeline workflow."""
+  pipelineWorkflowChoice: String
 
   """
   The last error associated with this worktree auto sync. May be null when unavailable or not applicable.
@@ -27052,9 +27108,24 @@ type Worktree {
   pullRequest: GitHubPullRequest
 
   """
+  Saved GitHub pipeline status for the exact worktree commit when it differs from or has no linked pull request.
+  """
+  gitHubHeadPipelineStatus: GitHubPipelineStatusSnapshot
+
+  """
+  GitHub repository identifier for monitoring the worktree commit's pipeline status, when known.
+  """
+  gitHubPipelineRepositoryId: ID
+
+  """
   The provider-neutral pull or merge request associated with this worktree.
   """
   sourceControlRequest: SourceControlRequest
+
+  """
+  Identifier of the configured GitLab project for this worktree's repository.
+  """
+  gitLabProjectId: ID
 
   """GitLab pipelines associated with the worktree's current commit."""
   gitLabPipelines: [GitLabPipeline!]!
@@ -27151,6 +27222,21 @@ type WorktreeCodebaseGroup {
   Merge conflict quick actions associated with this worktree codebase group.
   """
   mergeConflictQuickActions: [Workflow!]!
+
+  """Failing pipeline quick actions available to this repository."""
+  failingPipelineQuickActions: [Workflow!]!
+}
+
+"""Counts of plans and sessions in progress on a worktree."""
+type WorktreeInProgressRunCount {
+  """Identifier of the worktree."""
+  worktreeId: ID!
+
+  """Number of plans in progress."""
+  planCount: Int!
+
+  """Number of sessions in progress."""
+  sessionCount: Int!
 }
 
 """Represents a worktree agent group in the GraphQL API."""
@@ -27169,6 +27255,11 @@ type WorktreeOverview {
 
   """Agents associated with this worktree overview."""
   agents: [WorktreeAgentGroup!]!
+
+  """
+  In-progress plan and session counts for worktrees with active runs in this overview.
+  """
+  inProgressRunCounts: [WorktreeInProgressRunCount!]!
 
   """Tags associated with this worktree overview."""
   tags: [WorktreeTag!]!
@@ -28450,6 +28541,12 @@ input ConfigureWorktreeAutoSyncInput {
 
   """The conflict workflow choice to use for the request."""
   conflictWorkflowChoice: String
+
+  """Failing pipeline workflow used for automatic repair."""
+  pipelineWorkflowId: ID
+
+  """Optional trigger choice for the failing pipeline workflow."""
+  pipelineWorkflowChoice: String
 }
 
 """Values used to configure a worktree auto merge."""
@@ -28473,6 +28570,12 @@ input ConfigureWorktreeAutoMergeInput {
   Optional resource trigger choice for the selected merge conflict workflow.
   """
   conflictWorkflowChoice: String
+
+  """Failing pipeline workflow used for automatic repair."""
+  pipelineWorkflowId: ID
+
+  """Optional trigger choice for the failing pipeline workflow."""
+  pipelineWorkflowChoice: String
 
   """Reviewed source revision, required when autoSync is selected."""
   expectedHeadSha: String
