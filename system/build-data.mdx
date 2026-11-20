@@ -18,7 +18,7 @@ Build Data lists folders when you open the page or switch agents. Measuring size
 
 <Steps>
   <Step title="Refresh lists the folders" icon="refresh-cw">
-    **Refresh** dispatches a scan job to each eligible agent in the current view. Each agent walks its configured Derived Data directories and reports folder names, paths, modification times, and the volume each one lives on. The progress panel shows *Scanned N of M eligible agents* while this runs.
+    **Refresh** dispatches a scan job to each eligible agent in the current view. The agent reports folder names, paths, modification times, and volumes for Xcode build data and managed Gradle project caches. The progress panel shows *Scanned N of M eligible agents* while this runs.
   </Step>
   <Step title="The server links folders to worktrees" icon="link">
     Each folder's recorded workspace path is matched against the [worktrees](/worktrees/worktrees) known for that agent, choosing the longest matching path. That match is what turns a nameless `MyApp-abc123` folder into a row you can act on confidently.
@@ -79,7 +79,9 @@ On agents advertising `operation.resources.v1`, a delete job also reserves the t
   <img className="hidden dark:block" src="/images/dark/android-build-data.png" alt="Managed Gradle build data in dark theme" />
 </Frame>
 
-**Gradle Build Data** lists the managed project caches that the agent creates for Android worktrees. An entry's size can include a conventional module `build/` directory containing APK outputs when Git identifies it as ignored and untracked. Refresh the inventory, calculate an entry's size, protect it from deletion, or delete an idle entry to reclaim space. Active builds protect their entries until they finish. The next build recreates its project cache and outputs.
+**Gradle Build Data** lists the project caches that the agent creates under `<builds-directory>/.android-gradle` for Android worktrees. An entry can include a conventional module `build/` directory containing APK outputs when Git identifies it as ignored and untracked. Refresh the inventory, calculate an entry's size, protect it from deletion, or delete an idle entry to reclaim space. Active builds protect their entries until they finish. The next build recreates its project cache and outputs.
+
+On updated agents, [automatic cleanup](#automatic-cleanup) can reclaim these caches when their build storage runs low. Deleting a worktree also removes its managed cache when the agent can verify that the cache belongs to that checkout. See [Deleting a worktree](/worktrees/worktrees#deleting-a-worktree).
 
 Build history, exported APKs, SDKs, emulators, the global Gradle user cache, and custom Gradle output locations are outside this cleanup.
 
@@ -96,9 +98,9 @@ Review the platform, version, and agent before you calculate disk usage or delet
 
 ## Automatic cleanup
 
-The Disk Space monitor in the sidebar can reclaim DerivedData on its own when a monitored volume runs low. It is deliberately conservative:
+The Disk Space monitor in the sidebar can reclaim Xcode project Derived Data and managed Gradle project caches when a monitored volume runs low.
 
-- Only **project** entries linked to a known worktree are eligible. Unlinked folders, shared caches, and Device Support are never touched automatically.
+- Eligible entries are Xcode project caches and recognized managed Gradle project caches linked to a known worktree on that volume. Shared caches, Device Support, and unlinked folders remain available for manual review.
 - Locked entries and worktrees with executing work are excluded, and the check is repeated immediately before deletion in case work started in between.
 - Exactly one entry — the **oldest by modification time** on the low volume — is removed per pass, then the monitor waits for the next disk report to decide whether more is needed.
 
@@ -108,7 +110,12 @@ Everything the monitor removes is recorded in the deletion history with source *
 
 ## Deletion history
 
-The **Deletion history** card lists what was removed from each agent over the last 90 days, with the folder, worktree path, agent, deletion time, and whether the source was **User** or **Automatic**. Long histories page with **Load more**.
+The **Deletion history** card lists build data removed from each agent over the last 90 days. Each entry shows the folder, worktree path, agent, deletion time, and whether the source was **User** or **Automatic**. Android cache removals carry a **Gradle Build Data** badge. Select **Load more** to see older records.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/build-data-deletion-history.png" alt="Automatic Gradle cache removal in deletion history in light theme" />
+  <img className="hidden dark:block" src="/images/dark/build-data-deletion-history.png" alt="Automatic Gradle cache removal in deletion history in dark theme" />
+</Frame>
 
 **Clear History** removes deletion records for the selected agent, or for all agents when **All Agents** is selected.
 
