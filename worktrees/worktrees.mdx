@@ -258,6 +258,8 @@ For a command with a **Local port**, open its menu on the card to find matching 
 
     Starting a build or rebuild closes its dialog and refreshes this worktree in place. It does not send you to Build History.
 
+    Open the [worktree details](/worktrees/worktree-detail#auto-build) to configure **Auto Build** for new local revisions of a clean checkout.
+
     Every **Latest build** status badge, including **Preparing** and **Failed**, is a keyboard-accessible link to the [build details](/builds/build-detail) page. The build action badge with a dropdown arrow opens its menu. Rebuild and run actions remain available beside it. Builds that produced a runnable app use the detailed agent-and-device picker described on the [Builds page](/builds/builds#running-on-devices), so the app can run locally or be transferred to another eligible Mac without leaving the worktree.
   </Accordion>
   <Accordion title="Navigation" icon="arrow-up-right-from-square">
@@ -424,9 +426,9 @@ If destination changes block the branch switch, choose **Stash and continue** �
   All staged, unstaged, and untracked changes in the worktree are permanently lost. There is no stash-first option on delete.
 </Warning>
 
-## Hidden worktrees
+On updated agents, deleting a worktree also removes its associated Xcode build data and its managed Gradle project caches. If checkout deletion succeeds but build data cleanup fails, a notification links to the deletion job. Review the job's warning and manage remaining entries in [Build Data](/system/build-data).
 
-Deleting a worktree also removes Xcode build data associated with that checkout when it exists, using an updated macOS agent with the cleanup capability. Older agents retain their existing deletion behavior. Cleanup targets the deleted checkout’s data. If checkout deletion succeeds but Xcode cleanup fails, a notification links to the deletion job so you can inspect the warning and remove the remaining data.
+## Hidden worktrees
 
 A worktree that disappears from disk is not deleted immediately — it moves to **Hidden** and is retained for seven days. If the agent rediscovers it in that window, its saved metadata, tags, and highlight come back. **Purge** and **Purge all** remove hidden entries early.
 
