@@ -37,6 +37,21 @@ In the web app, select the review-status badge to inspect [review details](/work
 
 **Assign** opens the shared [reviewer picker](/worktrees/worktrees#assign-reviewers) when this worktree has an open GitHub PR or GitLab MR and configured repository reviewer pools. Select people manually or preview a random selection for the applicable approval groups, then save the reviewer changes. In the web picker, requested people start checked and can be unchecked to remove them. **Load all reviewers** expands the choices beyond saved preferences. The native iOS app retains its additive assignment flow.
 
+## Auto Build
+
+Use **Auto Build** to queue a build when the local commit of this worktree changes and the checkout is clean. A new commit or a pull that advances the checkout can trigger a build. A fetch that only updates remote refs leaves the current checkout unchanged.
+
+1. In the **Auto Build** card, select **Configure Auto Build**.
+2. Choose a saved **Build configuration** for Apple or Android. For an Apple configuration, select its **Platform** and a compatible generic **Destination**. Auto Build uses the standard Build action for Apple configurations. Android builds use **Agent host**.
+3. Select **Enable Auto Build**. Auto Build starts off for each worktree and waits for the next local commit change after you enable it or change the configuration.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/light/worktree-auto-build.png" alt="Configuring Auto Build for a worktree in light theme" />
+  <img className="hidden dark:block" src="/images/dark/worktree-auto-build.png" alt="Configuring Auto Build for a worktree in dark theme" />
+</Frame>
+
+A dirty checkout waits until it is clean. Auto Build requires an updated control agent that can check Git status again before running build scripts. Open **Last queued build** to inspect its logs and artifacts. To change the configuration, reopen **Configure Auto Build** and select **Save Auto Build**. Select **Disable Auto Build** to stop queuing future builds.
+
 ## Build history
 
 The **Build History** card loads the latest 50 builds for this worktree and appends older records with **Load more**. Select a row to open its immutable build details. Select any **Out of date** badge to open **Rebuild** without leaving this surface. **Copy path** in the worktree actions copies the complete folder path. **Rebuild** queues a new build without leaving the page, and a successful runnable build adds **Run** with the shared agent and device picker.

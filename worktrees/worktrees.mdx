@@ -196,7 +196,7 @@ On updated agents advertising `operation.resources.v1`, operations reserve the w
 
 Web worktree action rows link each queued or executing job to its [job details](/agents/job-detail), with its status. A read-only inspection can appear alongside a build without disabling Git actions on unrelated worktrees. The GraphQL `activeJobs` field exposes these jobs; `blockingJob` identifies an executing job that conflicts with mutations on this worktree.
 
-For a command with a **Local port**, open its menu on the card to find matching [Tailscale Serve addresses](/commands/command-run#tailscale-addresses). If another command on the agent is using the port, launching the command opens the [port conflict prompt](/commands/commands#resolving-a-port-conflict).
+For a command with a **Local port**, open its menu on the card to find matching [Tailscale Serve addresses](/commands/command-run#tailscale-addresses). If you click the command button while another run on the agent has reserved the port, a warning popover opens beside the button. See [Resolving a port conflict](/commands/commands#resolving-a-port-conflict).
 
 <Frame>
   <img className="block dark:hidden" src="/images/light/worktree-command-addresses.png" alt="Tailscale addresses in a worktree command menu in light theme" />
@@ -257,6 +257,8 @@ For a command with a **Local port**, open its menu on the card to find matching 
     **Start Build** picks a saved configuration or **Custom**, then a destination. Custom is available as soon as the repository has an iOS App project. The selected configuration names its source path, scheme, build configuration, and the agent the build will run on — the one that owns the codebase — so you can tell where the work is going before you start it.
 
     Starting a build or rebuild closes its dialog and refreshes this worktree in place. It does not send you to Build History.
+
+    Open the [worktree details](/worktrees/worktree-detail#auto-build) to configure **Auto Build** for new local revisions of a clean checkout.
 
     Every **Latest build** status badge, including **Preparing** and **Failed**, is a keyboard-accessible link to the [build details](/builds/build-detail) page. The build action badge with a dropdown arrow opens its menu. Rebuild and run actions remain available beside it. Builds that produced a runnable app use the detailed agent-and-device picker described on the [Builds page](/builds/builds#running-on-devices), so the app can run locally or be transferred to another eligible Mac without leaving the worktree.
   </Accordion>
@@ -424,9 +426,9 @@ If destination changes block the branch switch, choose **Stash and continue** �
   All staged, unstaged, and untracked changes in the worktree are permanently lost. There is no stash-first option on delete.
 </Warning>
 
-## Hidden worktrees
+On updated agents, deleting a worktree also removes its associated Xcode build data and its managed Gradle project caches. If checkout deletion succeeds but build data cleanup fails, a notification links to the deletion job. Review the job's warning and manage remaining entries in [Build Data](/system/build-data).
 
-Deleting a worktree also removes Xcode build data associated with that checkout when it exists, using an updated macOS agent with the cleanup capability. Older agents retain their existing deletion behavior. Cleanup targets the deleted checkout’s data. If checkout deletion succeeds but Xcode cleanup fails, a notification links to the deletion job so you can inspect the warning and remove the remaining data.
+## Hidden worktrees
 
 A worktree that disappears from disk is not deleted immediately — it moves to **Hidden** and is retained for seven days. If the agent rediscovers it in that window, its saved metadata, tags, and highlight come back. **Purge** and **Purge all** remove hidden entries early.
 

@@ -4053,6 +4053,20 @@ type Mutation {
   purgeAllHiddenWorktrees: Int!
 
   """
+  Enables automatic builds for future clean local revisions of a worktree.
+  """
+  configureWorktreeAutoBuild(
+    """Build settings for this worktree."""
+    input: ConfigureWorktreeAutoBuildInput!
+  ): WorktreeAutoBuild!
+
+  """Disables automatic builds for this worktree."""
+  cancelWorktreeAutoBuild(
+    """Identifier of the worktree."""
+    worktreeId: ID!
+  ): Boolean!
+
+  """
   Configures a worktree auto sync and returns the updated worktree auto sync.
   """
   configureWorktreeAutoSync(
@@ -6906,6 +6920,12 @@ type Query {
     """Identifier of the resource to return or affect."""
     id: ID!
   ): WorktreeMove
+
+  """Returns the automatic build rule for a worktree when enabled."""
+  worktreeAutoBuild(
+    """Identifier of the worktree."""
+    worktreeId: ID!
+  ): WorktreeAutoBuild
 
   """Returns a worktree auto sync, or null when it cannot be found."""
   worktreeAutoSync(
@@ -12833,6 +12853,9 @@ enum DiskSpaceVolumeRole {
 
   """Represents the derived data option."""
   DERIVED_DATA
+
+  """Volume containing the agent's managed Gradle build data."""
+  GRADLE_BUILD_DATA
 }
 
 """Lifecycle statuses for disk space agent."""
@@ -12979,6 +13002,11 @@ type AgentDiskSpaceWorktree {
 type AgentDiskSpaceConfiguration {
   """Managed worktree Derived Data cache root."""
   managedDerivedDataRoot: String
+
+  """
+  Managed Gradle project cache root. Null when no Builds directory is configured.
+  """
+  managedGradleRoot: String
 
   """Whether this agent disk space configuration is enabled."""
   enabled: Boolean!
@@ -26758,6 +26786,33 @@ type WorktreeLatestBuild {
   createdAt: String!
 }
 
+"""Build configuration automatically queued after clean worktree updates."""
+type WorktreeAutoBuild {
+  """Identifier of the related worktree."""
+  worktreeId: ID!
+
+  """Saved build configuration for this worktree's repository."""
+  configurationId: ID!
+
+  """Platform of the automatic builds."""
+  platform: BuildPlatform!
+
+  """Generic Apple destination type or the Android host."""
+  destinationType: BuildDestinationType!
+
+  """Local commit of the most recent automatic build."""
+  lastQueuedHeadSha: String
+
+  """Identifier of the most recent automatic build, when it still exists."""
+  lastQueuedBuildId: ID
+
+  """Most recent error while dispatching an automatic build."""
+  lastError: String
+
+  """ISO 8601 timestamp when the rule was last updated."""
+  updatedAt: String!
+}
+
 """Represents a worktree auto sync in the GraphQL API."""
 type WorktreeAutoSync {
   """Identifier of the related worktree."""
@@ -27148,6 +27203,9 @@ type Worktree {
 
   """Concurrent queued or executing jobs associated with this worktree."""
   activeJobs: [AgentJob!]!
+
+  """Enabled automatic build rule for this worktree."""
+  autoBuild: WorktreeAutoBuild
 
   """
   The auto sync associated with this worktree. May be null when unavailable or not applicable.
@@ -28261,6 +28319,11 @@ input WorktreeInventoryInput {
   """Whether has unstaged changes applies to the request."""
   hasUnstagedChanges: Boolean
 
+  """
+  Whether the checkout has no changes, including inside submodules, and no merge or rebase in progress.
+  """
+  cleanForAutoBuild: Boolean
+
   """Whether rebase in progress applies to the request."""
   rebaseInProgress: Boolean
 
@@ -28355,6 +28418,11 @@ input WorktreeActivityReportInput {
 
   """Whether has unstaged changes applies to the request."""
   hasUnstagedChanges: Boolean
+
+  """
+  Whether the checkout has no changes, including inside submodules, and no merge or rebase in progress.
+  """
+  cleanForAutoBuild: Boolean
 
   """Whether rebase in progress applies to the request."""
   rebaseInProgress: Boolean
@@ -28529,6 +28597,21 @@ input DeleteWorktreeInput {
 
   """Identifier of the request to use."""
   requestId: ID!
+}
+
+"""Values used to enable automatic builds for a worktree."""
+input ConfigureWorktreeAutoBuildInput {
+  """Identifier of the worktree to build."""
+  worktreeId: ID!
+
+  """Saved configuration for the worktree's repository."""
+  configurationId: ID!
+
+  """Platform to build."""
+  platform: BuildPlatform!
+
+  """Generic Apple destination type or the Android host."""
+  destinationType: BuildDestinationType!
 }
 
 """Values used to configure a worktree auto sync."""
