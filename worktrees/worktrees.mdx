@@ -196,7 +196,7 @@ On updated agents advertising `operation.resources.v1`, operations reserve the w
 
 Web worktree action rows link each queued or executing job to its [job details](/agents/job-detail), with its status. A read-only inspection can appear alongside a build without disabling Git actions on unrelated worktrees. The GraphQL `activeJobs` field exposes these jobs; `blockingJob` identifies an executing job that conflicts with mutations on this worktree.
 
-For a command with a **Local port**, open its menu on the card to find matching [Tailscale Serve addresses](/commands/command-run#tailscale-addresses). If another command on the agent is using the port, launching the command opens the [port conflict prompt](/commands/commands#resolving-a-port-conflict).
+For a command with a **Local port**, open its menu on the card to find matching [Tailscale Serve addresses](/commands/command-run#tailscale-addresses). If you click the command button while another run on the agent has reserved the port, a warning popover opens beside the button. See [Resolving a port conflict](/commands/commands#resolving-a-port-conflict).
 
 <Frame>
   <img className="block dark:hidden" src="/images/light/worktree-command-addresses.png" alt="Tailscale addresses in a worktree command menu in light theme" />

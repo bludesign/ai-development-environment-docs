@@ -28319,6 +28319,11 @@ input WorktreeInventoryInput {
   """Whether has unstaged changes applies to the request."""
   hasUnstagedChanges: Boolean
 
+  """
+  Whether the checkout has no changes, including inside submodules, and no merge or rebase in progress.
+  """
+  cleanForAutoBuild: Boolean
+
   """Whether rebase in progress applies to the request."""
   rebaseInProgress: Boolean
 
@@ -28413,6 +28418,11 @@ input WorktreeActivityReportInput {
 
   """Whether has unstaged changes applies to the request."""
   hasUnstagedChanges: Boolean
+
+  """
+  Whether the checkout has no changes, including inside submodules, and no merge or rebase in progress.
+  """
+  cleanForAutoBuild: Boolean
 
   """Whether rebase in progress applies to the request."""
   rebaseInProgress: Boolean

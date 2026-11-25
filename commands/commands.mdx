@@ -98,20 +98,20 @@ The command menu also lists the observed Tailscale Serve addresses for a matchin
 
 ## Resolving a port conflict
 
-When you start or rerun a command with a local port, the control plane checks other command runs that have reserved that port on the same agent. The warning lists the runs and offers three choices.
+When you click a command quick-action button in the web app, the control plane checks whether another run has reserved the command's local port on the same agent. If there is a conflict, a warning popover opens beside the button and lists the conflicting runs.
 
 <Frame>
-  <img className="block dark:hidden" src="/images/light/command-port-conflict.png" alt="Command port conflict warning in light theme" />
-  <img className="hidden dark:block" src="/images/dark/command-port-conflict.png" alt="Command port conflict warning in dark theme" />
+  <img className="block dark:hidden" src="/images/light/command-port-conflict.png" alt="Command port conflict popover in light theme" />
+  <img className="hidden dark:block" src="/images/dark/command-port-conflict.png" alt="Command port conflict popover in dark theme" />
 </Frame>
 
 | Choice | Effect |
 | --- | --- |
-| **Continue** | Submit the command and leave the listed runs running. The script may still fail if it cannot bind the port. |
-| **Cancel** | Close the prompt without starting a run. |
-| **Terminate and Run** | Stop the listed runs and queue the new command until they finish stopping. |
+| **Run anyway** | Submit the command while the listed runs keep running. The script may still fail if it cannot bind the port. |
+| **Cancel** | Dismiss the popover and abandon this launch. |
+| **Terminate and run** | Stop the listed runs and queue the new command until they finish stopping. |
 
-If the set of conflicting runs grows before you submit your choice, review the updated list. Workflow command steps [wait for the same choice](/workflows/workflow-run#resolving-a-command-port-conflict).
+If the set of conflicting runs grows before you submit your choice, review the updated list. For workflow command steps, see [Resolving a command port conflict](/workflows/workflow-run#resolving-a-command-port-conflict).
 
 ## Notes
 
